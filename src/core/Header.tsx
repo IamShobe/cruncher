@@ -39,7 +39,6 @@ import { DateSelector, isDateSelectorOpen } from "./DateSelector";
 import { Editor } from "./Editor";
 import { tree } from "./indexes/timeIndex";
 import { headerShortcuts } from "./keymaps";
-import { workerInstance } from "./pipelineEngine/worker";
 import {
   actualEndTimeAtom,
   actualStartTimeAtom,
@@ -583,4 +582,10 @@ const notifyError = (message: string, error: Error) => {
     }
   );
 };
+
+// worker instance
+const workerInstance = new ComlinkWorker<typeof import("./sw/pipelineWorker")>(
+    new URL("./sw/pipelineWorker", import.meta.url)
+);
+
 export default Header;

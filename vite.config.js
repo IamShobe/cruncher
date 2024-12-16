@@ -18,7 +18,7 @@ export default defineConfig({
     dts({ include: ['lib', 'src'], rollupTypes: true, tsconfigPath: './tsconfig.app.json' }),
   ],
   worker: {
-    plugins: [comlink()],
+    plugins: [comlink(), tsconfigPaths()],
   },
   resolve: {
     extensions: ['.js', '.ts', '.jsx', '.tsx'],
