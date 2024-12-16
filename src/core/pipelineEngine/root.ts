@@ -6,13 +6,14 @@ import { processStats } from "./stats";
 import { processTable } from "./table";
 import { processSort } from "./sort";
 import { processWhere } from "./where";
-import {produce} from "immer"
+
+import { produce } from "immer";
 
 
 export const getPipelineItems = (data: ProcessedData[], pipeline: PipelineItem[]) => {
     const currentData = {
         type: "events",
-        data: data,
+        data: JSON.parse(JSON.stringify(data)),
     } satisfies Events;
 
     const allData = [currentData, undefined] as [Events, Table | undefined];

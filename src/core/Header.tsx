@@ -10,6 +10,7 @@ import { Mutex } from "async-mutex";
 import { generateCsv, mkConfig } from "export-to-csv";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useMemo, useRef, useState } from "react";
+import toast from "react-hot-toast";
 import { CiExport } from "react-icons/ci";
 import {
   LuClipboardCopy,
@@ -18,6 +19,7 @@ import {
   LuSearchCode,
   LuSearchX,
 } from "react-icons/lu";
+import { CloseButton } from "~components/ui/close-button";
 import {
   MenuContent,
   MenuItem,
@@ -37,7 +39,7 @@ import { DateSelector, isDateSelectorOpen } from "./DateSelector";
 import { Editor } from "./Editor";
 import { tree } from "./indexes/timeIndex";
 import { headerShortcuts } from "./keymaps";
-import { getPipelineItems } from "./pipelineEngine/root";
+import { workerInstance } from "./pipelineEngine/worker";
 import {
   actualEndTimeAtom,
   actualStartTimeAtom,
@@ -54,8 +56,6 @@ import {
 } from "./store/queryState";
 import { store } from "./store/store";
 import { Timer } from "./Timer";
-import toast from "react-hot-toast";
-import { CloseButton } from "~components/ui/close-button";
 
 const StyledHeader = styled.form`
   display: flex;
@@ -165,12 +165,12 @@ const Header: React.FC<HeaderProps> = ({ controller }) => {
     },
   });
 
-  const startProcessingData = (
+  const startProcessingData = async (
     data: ProcessedData[],
     pipeline: PipelineItem[]
   ) => {
     try {
-      const finalData = getPipelineItems(data, pipeline);
+      const finalData = await workerInstance.getPipelineItems(data, pipeline);
       console.log(finalData);
       setDataViewModel(finalData);
     } catch (error) {
@@ -223,7 +223,7 @@ const Header: React.FC<HeaderProps> = ({ controller }) => {
         if (!isForced && compareExecutions(executionQuery, lastExecutedQuery)) {
           console.log("using cached data");
           dataForPipelines = originalData;
-          startProcessingData(dataForPipelines, parsedTree.pipeline);
+          await startProcessingData(dataForPipelines, parsedTree.pipeline);
         } else {
           try {
             tree.clear();
@@ -232,7 +232,7 @@ const Header: React.FC<HeaderProps> = ({ controller }) => {
               toTime: toTime,
               cancelToken: cancelToken,
               limit: 100000,
-              onBatchDone: (data) => {
+              onBatchDone: async (data) => {
                 dataForPipelines = merge<ProcessedData>(
                   [dataForPipelines, data],
                   compareProcessedData
@@ -244,7 +244,7 @@ const Header: React.FC<HeaderProps> = ({ controller }) => {
                   tree.set(timestamp, toAppendTo);
                 });
 
-                startProcessingData(dataForPipelines, parsedTree.pipeline);
+                await startProcessingData(dataForPipelines, parsedTree.pipeline);
               },
             });
 

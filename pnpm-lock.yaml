@@ -41,6 +41,9 @@ importers:
       chevrotain:
         specifier: ^11.0.3
         version: 11.0.3
+      comlink:
+        specifier: ^4.4.2
+        version: 4.4.2
       d3-scale:
         specifier: ^4.0.2
         version: 4.0.2
@@ -153,6 +156,9 @@ importers:
       vite:
         specifier: ^6.0.1
         version: 6.0.3(@types/node@22.10.1)(less@4.2.1)
+      vite-plugin-comlink:
+        specifier: ^5.1.0
+        version: 5.1.0(comlink@4.4.2)(vite@6.0.3(@types/node@22.10.1)(less@4.2.1))
       vite-plugin-dts:
         specifier: ^4.3.0
         version: 4.3.0(@types/node@22.10.1)(rollup@4.28.0)(typescript@5.6.3)(vite@6.0.3(@types/node@22.10.1)(less@4.2.1))
@@ -1474,6 +1480,9 @@ packages:
   color-name@1.1.4:
     resolution: {integrity: sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA==}
 
+  comlink@4.4.2:
+    resolution: {integrity: sha512-OxGdvBmJuNKSCMO4NTl1L47VRp6xn2wG4F/2hYzB6tiCb709otOxtEYCSvK80PtjODfXXZu8ds+Nw5kVCjqd2g==}
+
   compare-versions@6.1.1:
     resolution: {integrity: sha512-4hm4VPpIecmlg59CHXnRDnqGplJFrbLG4aFEl5vl6cK1u76ws3LLvX7ikFnTDl5vo39sjWD6AaDPYodJp/NNHg==}
 
@@ -2036,6 +2045,9 @@ packages:
     resolution: {integrity: sha512-Jo6dJ04CmSjuznwJSS3pUeWmd/H0ffTlkXXgwZi+eq1UCmqQwCh+eLsYOYCwY991i2Fah4h1BEMCx4qThGbsiA==}
     engines: {node: '>=10'}
 
+  magic-string@0.30.12:
+    resolution: {integrity: sha512-Ea8I3sQMVXr8JhN4z+H/d8zwo+tYDgHE9+5G4Wnrwhs0gaK9fXTKx0Tw5Xwsd/bCPTTZNRAdpyzvoeORe9LYpw==}
+
   magic-string@0.30.14:
     resolution: {integrity: sha512-5c99P1WKTed11ZC0HMJOj6CDIue6F8ySu+bJL+85q1zBEIY8IklrJ1eiKC2NDRh3Ct3FcvmJPyQHb9erXMTJNw==}
 
@@ -2446,6 +2458,10 @@ packages:
     resolution: {integrity: sha512-UjgapumWlbMhkBgzT7Ykc5YXUT46F0iKu8SGXq0bcwP5dz/h0Plj6enJqjz1Zbq2l5WaqYnrVbwWOWMyF3F47g==}
     engines: {node: '>=0.10.0'}
 
+  source-map@0.7.4:
+    resolution: {integrity: sha512-l3BikUxvPOcn5E74dZiq5BGsTb5yEwhaTSzccU6t4sDOH8NWJCstKO5QT2CvtFoK6F0saL7p9xHAqHOlCPJygA==}
+    engines: {node: '>= 8'}
+
   sprintf-js@1.0.3:
     resolution: {integrity: sha512-D9cPgkvLlV3t3IzL0D0YLvGA9Ahk4PcvVwUbN0dSGr1aP0Nrt4AEnTUbuGvquEC0mA64Gqt1fzirlRs5ibXx8g==}
 
@@ -2628,6 +2644,12 @@ packages:
     resolution: {integrity: sha512-uPAwSr57kYjAUux+8E2j0q0Fxpn8M9VoyfGiRI8Kfktz9NcYMCenwY5RnZxnF1WTu3TGiYipirIzacLL3VVGFg==}
     engines: {node: ^18.0.0 || >=20.0.0}
     hasBin: true
+
+  vite-plugin-comlink@5.1.0:
+    resolution: {integrity: sha512-ROKDAITiEasFstFQD3Hyd0F980qLWUsMfx9HvD1z4r/ZyzJf4agWoj5dfOE9pNxSGj3meOw7bmMujTjzR5zxTA==}
+    peerDependencies:
+      comlink: ^4.3.1
+      vite: '>=2.9.6'
 
   vite-plugin-dts@4.3.0:
     resolution: {integrity: sha512-LkBJh9IbLwL6/rxh0C1/bOurDrIEmRE7joC+jFdOEEciAFPbpEKOLSAr5nNh5R7CJ45cMbksTrFfy52szzC5eA==}
@@ -4470,6 +4492,8 @@ snapshots:
 
   color-name@1.1.4: {}
 
+  comlink@4.4.2: {}
+
   compare-versions@6.1.1: {}
 
   computeds@0.0.1: {}
@@ -5046,6 +5070,10 @@ snapshots:
     dependencies:
       yallist: 4.0.0
 
+  magic-string@0.30.12:
+    dependencies:
+      '@jridgewell/sourcemap-codec': 1.5.0
+
   magic-string@0.30.14:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.0
@@ -5457,6 +5485,8 @@ snapshots:
 
   source-map@0.6.1: {}
 
+  source-map@0.7.4: {}
+
   sprintf-js@1.0.3: {}
 
   stack-generator@2.0.10:
@@ -5620,6 +5650,14 @@ snapshots:
       - sugarss
       - supports-color
       - terser
+
+  vite-plugin-comlink@5.1.0(comlink@4.4.2)(vite@6.0.3(@types/node@22.10.1)(less@4.2.1)):
+    dependencies:
+      comlink: 4.4.2
+      json5: 2.2.3
+      magic-string: 0.30.12
+      source-map: 0.7.4
+      vite: 6.0.3(@types/node@22.10.1)(less@4.2.1)
 
   vite-plugin-dts@4.3.0(@types/node@22.10.1)(rollup@4.28.0)(typescript@5.6.3)(vite@6.0.3(@types/node@22.10.1)(less@4.2.1)):
     dependencies:
