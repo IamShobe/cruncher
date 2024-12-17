@@ -129,7 +129,7 @@ const MainContentInner: React.FC<MainContentProps> = ({ controller }) => {
           display={"flex"}
           flexDirection={"column"}
         >
-          {tableView !== undefined && (
+          {tableView && (
             <TableView
               columns={tableView.columns}
               dataPoints={tableView.dataPoints}

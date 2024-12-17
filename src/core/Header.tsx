@@ -9,7 +9,7 @@ import { css } from "@emotion/react";
 import { Mutex } from "async-mutex";
 import { generateCsv, mkConfig } from "export-to-csv";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { CiExport } from "react-icons/ci";
 import {
@@ -55,6 +55,9 @@ import {
 } from "./store/queryState";
 import { store } from "./store/store";
 import { Timer } from "./Timer";
+
+import WebWorker from "./sw/pipelineWorker?worker&inline";
+import { WorkerMessageRequest, WorkerMessageResponse } from "./sw/types";
 
 const StyledHeader = styled.form`
   display: flex;
@@ -137,6 +140,7 @@ const Header: React.FC<HeaderProps> = ({ controller }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [originalData, setOriginalData] = useAtom(originalDataAtom);
   const setDataViewModel = useSetAtom(dataViewModelAtom);
+  const { runPipeline } = useWebWorker();
 
   const [lastExecutedQuery, setLastExecutedQuery] =
     useState<QueryExecutionHistory>();
@@ -169,7 +173,7 @@ const Header: React.FC<HeaderProps> = ({ controller }) => {
     pipeline: PipelineItem[]
   ) => {
     try {
-      const finalData = await workerInstance.getPipelineItems(data, pipeline);
+      const finalData = await runPipeline(data, pipeline);
       console.log(finalData);
       setDataViewModel(finalData);
     } catch (error) {
@@ -243,7 +247,10 @@ const Header: React.FC<HeaderProps> = ({ controller }) => {
                   tree.set(timestamp, toAppendTo);
                 });
 
-                await startProcessingData(dataForPipelines, parsedTree.pipeline);
+                await startProcessingData(
+                  dataForPipelines,
+                  parsedTree.pipeline
+                );
               },
             });
 
@@ -583,9 +590,50 @@ const notifyError = (message: string, error: Error) => {
   );
 };
 
-// worker instance
-const workerInstance = new ComlinkWorker<typeof import("./sw/pipelineWorker")>(
-    new URL("./sw/pipelineWorker", import.meta.url)
-);
+type Subscribers = Record<string, Function>;
+
+const worker = new WebWorker();
+const useWebWorker = () => {
+  const subscribers = useRef<Subscribers>({});
+
+  useEffect(() => {
+    worker.onmessage = (event: MessageEvent<WorkerMessageResponse>) => {
+      const message = event.data;
+      console.log("Worker received message", message);
+
+      if (message.id && subscribers.current[message.id]) {
+        subscribers.current[message.id](message);
+      }
+    };
+  }, []);
+
+  const awaitResponse = (id: string) => {
+    return new Promise<WorkerMessageResponse>((resolve) => {
+      subscribers.current[id] = resolve;
+    });
+  };
+
+  const runPipeline = async (
+    data: ProcessedData[],
+    pipeline: PipelineItem[]
+  ) => {
+    const id = Math.random().toString(36).substring(7);
+    const transferable = {
+      type: "runPipeline",
+      id,
+      data: {
+        data,
+        pipeline,
+      },
+    } satisfies WorkerMessageRequest;
+
+    worker.postMessage(transferable);
+
+    const response = await awaitResponse(id);
+    return response.data;
+  };
+
+  return { runPipeline };
+};
 
 export default Header;
