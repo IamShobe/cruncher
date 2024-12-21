@@ -59,6 +59,8 @@ import toast from "react-hot-toast";
 import { CloseButton } from "~components/ui/close-button";
 import equal from "fast-deep-equal";
 import { ControllerIndexParam, Search } from "./qql/grammar";
+import { WorkerMessageRequest, WorkerMessageResponse } from "./sw/types";
+import WebWorker from "./sw/pipelineWorker?worker&inline";
 
 const StyledHeader = styled.form`
   display: flex;
@@ -133,6 +135,7 @@ const Header: React.FC<HeaderProps> = ({ controller }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [originalData, setOriginalData] = useAtom(originalDataAtom);
   const setDataViewModel = useSetAtom(dataViewModelAtom);
+  const { runPipeline } = useWebWorker();
 
   const [lastExecutedQuery, setLastExecutedQuery] =
     useState<QueryExecutionHistory>();
@@ -161,14 +164,15 @@ const Header: React.FC<HeaderProps> = ({ controller }) => {
     },
   });
 
-  const startProcessingData = (
+  const startProcessingData = async (
     data: ProcessedData[],
     pipeline: PipelineItem[],
     startTime: Date,
     endTime: Date
   ) => {
     try {
-      const finalData = getPipelineItems(data, pipeline, startTime, endTime);
+      const finalData = await runPipeline(data, pipeline, startTime, endTime);
+      // const finalData = getPipelineItems(data, pipeline, startTime, endTime);
       setDataViewModel(finalData);
     } catch (error) {
       // check error is of type Error
@@ -227,7 +231,7 @@ const Header: React.FC<HeaderProps> = ({ controller }) => {
         if (!isForced && compareExecutions(executionQuery, lastExecutedQuery)) {
           console.log("using cached data");
           dataForPipelines = originalData;
-          startProcessingData(dataForPipelines, parsedTree.pipeline, fromTime, toTime);
+          await startProcessingData(dataForPipelines, parsedTree.pipeline, fromTime, toTime);
         } else {
           try {
             tree.clear();
@@ -588,4 +592,59 @@ const notifyError = (message: string, error: Error) => {
     }
   );
 };
+
+
+type Subscribers = Record<string, Function>;
+
+const worker = new WebWorker();
+const useWebWorker = () => {
+  const subscribers = useRef<Subscribers>({});
+
+  useEffect(() => {
+    worker.onmessage = (event: MessageEvent<WorkerMessageResponse>) => {
+      // console.log("received message", event.data);
+      // const rawMessage = new TextDecoder().decode(event.data);
+      // const message = JSON.parse(rawMessage);
+      const message = event.data;
+      console.log("processed message", message);
+
+      if (message.id && subscribers.current[message.id]) {
+        subscribers.current[message.id](message);
+      }
+    };
+  }, []);
+
+  const awaitResponse = (id: string) => {
+    return new Promise<WorkerMessageResponse>((resolve) => {
+      subscribers.current[id] = resolve;
+    });
+  };
+
+  const runPipeline = async (
+    data: ProcessedData[],
+    pipeline: PipelineItem[],
+    dateStart: Date,
+    dateEnd: Date,
+  ) => {
+    const id = Math.random().toString(36).substring(7);
+    const transferable = {
+      type: "runPipeline",
+      id,
+      data: {
+        data,
+        pipeline,
+        timeStart: dateStart.getTime(),
+        timeEnd: dateEnd.getTime(),
+      },
+    } satisfies WorkerMessageRequest;
+
+    worker.postMessage(transferable);
+
+    const response = await awaitResponse(id);
+    return response.data;
+  };
+
+  return { runPipeline };
+};
+
 export default Header;

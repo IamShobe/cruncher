@@ -25,12 +25,13 @@ export const getPipelineItems = (data: ProcessedData[], pipeline: PipelineItem[]
     const pipelineStart = new Date();
     console.log("[Pipeline] Start time: ", pipelineStart);
     try {
-        const result = produce(allData, (draft) => {
-            const res = processPipeline(draft, pipeline, 0, startTime, endTime);
-            draft.events = res.events;
-            draft.table = res.table;
-            draft.view = res.view;
-        });
+        const result = processPipeline(allData, pipeline, 0, startTime, endTime);
+        // const result = produce(allData, (draft) => {
+        //     const res = processPipeline(draft, pipeline, 0, startTime, endTime);
+        //     draft.events = res.events;
+        //     draft.table = res.table;
+        //     draft.view = res.view;
+        // });
         console.log("[Pipeline] Result: ", result);
 
         return result;
