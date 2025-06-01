@@ -10,9 +10,12 @@
     "module": "ESNext",
     "skipLibCheck": true,
     "paths": {
+      "~lib/*": [
+        "./src/lib/*"
+      ],
       "~*": [
-        "./src/*"
-      ]
+        "./src/renderer/*"
+      ],
     },
     "baseUrl": ".",
     /* Bundler mode */
@@ -34,7 +37,7 @@
     "noFallthroughCasesInSwitch": true
   },
   "include": [
-    "src",
-    "lib"
+    "src/renderer",
+    "lib",
   ]
 }

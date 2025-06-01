@@ -6,13 +6,13 @@ export {DateType} from "~core/store/dateState";
 export type {FullDate} from "~core/store/dateState";
 
 // QQL
-export * from "~core/qql";
+export * from "~lib/qql";
 
 // controllers
 export * from "~core/common/interface";
 export {
     MockController,
-} from "~adapters/local/controller";
+} from "src/adapters/mocked_data/controller";
 export {
     GrafanaController
 } from "~adapters/grafana/controller";

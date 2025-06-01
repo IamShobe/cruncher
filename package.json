@@ -1,15 +1,63 @@
 {
   "name": "cruncher",
-  "private": true,
-  "version": "0.2.0",
-  "type": "module",
-  "main": "build/cruncher.js",
-  "types": "build/cruncher.d.ts",
+  "productName": "cruncher",
+  "version": "1.0.0",
+  "description": "Cruncher is a tool for analyzing and processing data efficiently.",
+  "main": ".vite/build/main.js",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "lint": "eslint .",
-    "preview": "vite preview"
+    "start": "electron-forge start",
+    "package": "electron-forge package",
+    "make": "electron-forge make",
+    "publish": "electron-forge publish",
+    "lint": "eslint --ext .ts,.tsx ."
+  },
+  "keywords": [],
+  "author": {
+    "name": "Elran Shefer"
+  },
+  "license": "GPL-3.0-only",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "electron",
+      "electron-winstaller"
+    ]
+  },
+  "devDependencies": {
+    "@electron-forge/cli": "^7.8.1",
+    "@electron-forge/maker-deb": "^7.8.1",
+    "@electron-forge/maker-rpm": "^7.8.1",
+    "@electron-forge/maker-squirrel": "^7.8.1",
+    "@electron-forge/maker-zip": "^7.8.1",
+    "@electron-forge/plugin-fuses": "^7.8.1",
+    "@electron-forge/plugin-vite": "^7.8.1",
+    "@electron/fuses": "^1.8.0",
+    "@emotion/eslint-plugin": "^11.12.0",
+    "@eslint/compat": "^1.2.9",
+    "@eslint/eslintrc": "^3.3.1",
+    "@eslint/js": "^9.28.0",
+    "@types/d3-scale": "^4.0.8",
+    "@types/electron-squirrel-startup": "^1.0.2",
+    "@types/node": "^22.10.1",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@types/regex-escape": "^3.4.1",
+    "@typescript-eslint/eslint-plugin": "^8.33.0",
+    "@typescript-eslint/parser": "^8.33.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "electron": "^36.3.2",
+    "eslint": "^9.15.0",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-import-x": "^4.15.0",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "eslint-plugin-react-refresh": "^0.4.14",
+    "globals": "^15.15.0",
+    "less": "^4.2.1",
+    "prettier": "^3.4.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3",
+    "vite": "^5.4.19",
+    "vite-tsconfig-paths": "^5.1.4",
+    "vitest": "^2.1.8"
   },
   "dependencies": {
     "@chakra-ui/react": "^3.2.3",
@@ -25,6 +73,7 @@
     "chevrotain": "^11.0.3",
     "d3-scale": "^4.0.2",
     "date-fns": "^4.1.0",
+    "electron-squirrel-startup": "^1.0.1",
     "export-to-csv": "^1.4.0",
     "fast-deep-equal": "^3.1.3",
     "immer": "^10.1.1",
@@ -44,29 +93,7 @@
     "recharts": "^2.15.0",
     "regex-escape": "^3.4.10",
     "sorted-btree": "^1.8.1",
-    "use-chrome-storage": "^1.3.2"
-  },
-  "devDependencies": {
-    "@crxjs/vite-plugin": "^2.0.0-beta.28",
-    "@emotion/eslint-plugin": "^11.12.0",
-    "@eslint/js": "^9.15.0",
-    "@types/d3-scale": "^4.0.8",
-    "@types/node": "^22.10.1",
-    "@types/react": "^18.3.12",
-    "@types/react-dom": "^18.3.1",
-    "@types/regex-escape": "^3.4.1",
-    "@vitejs/plugin-react": "^4.3.4",
-    "eslint": "^9.15.0",
-    "eslint-plugin-react-hooks": "^5.0.0",
-    "eslint-plugin-react-refresh": "^0.4.14",
-    "globals": "^15.12.0",
-    "less": "^4.2.1",
-    "prettier": "^3.4.2",
-    "typescript": "~5.6.2",
-    "typescript-eslint": "^8.15.0",
-    "vite": "^6.0.1",
-    "vite-plugin-dts": "^4.3.0",
-    "vite-tsconfig-paths": "^5.1.3",
-    "vitest": "^2.1.8"
+    "yaml": "^2.8.0",
+    "zod": "^3.25.46"
   }
 }
