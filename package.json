@@ -41,6 +41,7 @@
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@types/regex-escape": "^3.4.1",
+    "@types/ws": "^8.18.1",
     "@typescript-eslint/eslint-plugin": "^8.33.0",
     "@typescript-eslint/parser": "^8.33.0",
     "@vitejs/plugin-react": "^4.3.4",
@@ -93,6 +94,10 @@
     "recharts": "^2.15.0",
     "regex-escape": "^3.4.10",
     "sorted-btree": "^1.8.1",
+    "superjson": "^2.2.2",
+    "utf-8-validate": "^6.0.5",
+    "uuid": "^11.1.0",
+    "ws": "^8.18.2",
     "yaml": "^2.8.0",
     "zod": "^3.25.46"
   }

@@ -1,12 +1,11 @@
-import { randomUUID } from "node:crypto";
+import { v4 as uuidv4 } from 'uuid';
 import { supportedPlugins } from "./supported_plugins"
 import { PluginInstance, QueryTask, SerializeableParams } from "./types";
-import { QueryOptions, QueryProvider } from "~lib/adapters";
+import { QueryProvider } from "~lib/adapters";
 import fs from "node:fs";
 import YAML from 'yaml'
 import { CruncherConfigSchema } from "src/config/types";
 import { ControllerIndexParam, Search } from "~lib/qql/grammar";
-import { parse } from "~lib/qql";
 import { ProcessedData } from "~lib/adapters/logTypes";
 
 const initializedPlugins: PluginInstanceContainer[] = [];
@@ -40,7 +39,7 @@ export const controller = {
         }
 
         const pluginInstance: PluginInstance = {
-            id: randomUUID().toString(),
+            id: uuidv4(),
             name: name,
             description: plugin.description,
             pluginRef: plugin.ref,
@@ -72,7 +71,7 @@ export const controller = {
 
         const { provider } = pluginContainer;
 
-        const taskId = randomUUID().toString();
+        const taskId = uuidv4();
         const task: QueryTask = {
             id: taskId,
             instanceId: instanceId,
@@ -94,7 +93,7 @@ export const controller = {
             cancelToken: queryTaskState.abortController.signal,
             onBatchDone: (data) => {
                 // Handle batch done - emit event to client
-                console.log(`Batch done for task ${taskId}`, data);
+                console.log(`Batch done for task ${taskId}`);
                 messageSender.batchDone(taskId, data);
             }
         }).then(() => {

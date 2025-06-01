@@ -38,6 +38,7 @@ export const queryEndTimeAtom = atom<Date | undefined>(undefined);
 export const isQuerySuccessAtom = atom(true);
 
 export const setup = async (controller: QueryProvider) => {
+    await controller?.waitForReady?.();
     // this can be done async to the loading of the app - no need to block
     controller.getControllerParams().then((params) => {
         store.set(availableControllerParamsAtom, params);

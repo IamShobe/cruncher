@@ -1,8 +1,9 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
-import { getMessageSender, registerIPCListeners } from './plugins_engine/ipc';
-import { MessageSender, setupPluginsFromConfig } from './plugins_engine/controller';
+import { setupPluginsFromConfig } from './plugins_engine/controller';
+import { getServer, setupEngine } from './lib/websocket/server';
+import { getRoutes, getMessageSender as getWebsocketMessageSender } from './plugins_engine/websocket';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
@@ -28,12 +29,19 @@ const createWindow = () => {
 
   // Open the DevTools.
   mainWindow.webContents.openDevTools();
-
-  const messageSender = getMessageSender(mainWindow);
-  registerIPCListeners(ipcMain, messageSender);
 };
 
-const ready = () => {
+const ready = async () => {
+  // get free port
+  const serverContainer = await getServer();
+  console.log(`Server is running on port ${serverContainer.port}`);
+  const messageSender = getWebsocketMessageSender(serverContainer);
+  const routes = await getRoutes(messageSender);
+  await setupEngine(serverContainer, routes);
+  ipcMain.handle('getPort', async () => {
+    return serverContainer.port;
+  });
+
   setupPluginsFromConfig();
   createWindow();
 }
