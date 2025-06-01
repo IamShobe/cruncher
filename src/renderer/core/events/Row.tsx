@@ -78,7 +78,7 @@ const DataRow: React.FC<DataRowProps> = ({ row, index }) => {
         >
           <div
             style={{
-              width: 160
+              width: 170,
             }}
           >
             {formatDataTime(asDateField(row.object._time).value)}

@@ -8,6 +8,13 @@ import { CruncherConfigSchema } from "src/config/types";
 import { ControllerIndexParam, Search } from "~lib/qql/grammar";
 import { ProcessedData } from "~lib/adapters/logTypes";
 
+
+const configFilePath = 'cruncher.config.yaml';
+
+// file should be in ~/.config/cruncher/cruncher.config.yaml
+
+const defaultConfigFilePath = `${process.env.HOME}/.config/cruncher/${configFilePath}`;
+
 const initializedPlugins: PluginInstanceContainer[] = [];
 
 type PluginInstanceContainer = {
@@ -139,8 +146,12 @@ export const setupPluginsFromConfig = () => {
     // load default plugins from cruncher.config.yaml file
 
     // read file content
+    if (!fs.existsSync(defaultConfigFilePath)) {
+        console.warn(`Configuration file not found at ${defaultConfigFilePath}`);
+        return;
+    }
 
-    const fileContent = fs.readFileSync('cruncher.config.yaml', 'utf8');
+    const fileContent = fs.readFileSync(defaultConfigFilePath, 'utf8');
 
     // parse YAML content
     const config = YAML.parse(fileContent);

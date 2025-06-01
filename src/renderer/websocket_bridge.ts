@@ -1,5 +1,5 @@
 import { QueryProvider } from "~core/common/interface";
-import { getWebsocketConnection, invokeSyncRequest as originalSyncInvoke, invokeAsyncRequest as originalAsyncInvoke } from "~lib/websocket/client";
+import { getWebsocketConnection, invokeSyncRequest as originalSyncInvoke, invokeAsyncRequest as originalAsyncInvoke, WebsocketClientWrapper } from "~lib/websocket/client";
 import type { InvokeWebSocketHandler, AsyncInvokeWebSocketHandler } from "./websocket_messages"
 import { PluginInstance } from "src/plugins_engine/types";
 import { QueryBatchDoneSchema, QueryJobUpdatedSchema } from "src/plugins_engine/protocol_out";
@@ -17,28 +17,31 @@ window.invokeSyncRequestTyped = (method, params) => invokeSyncRequestTyped(ws, m
 // @ts-ignore
 window.invokeAsyncRequestTyped = (message, params) => invokeAsyncRequestTyped(ws, message, params); // Expose the WebSocket connection globally for debugging
 
-const ws = getWebsocketConnection(`ws://localhost:${await window.electronAPI.getPort()}`);
-
+let ws: ReturnType<typeof getWebsocketConnection> | undefined = undefined;
 let isReady = false;
-
 let selectedPlugin: PluginInstance | undefined = undefined;
 
-ws.onReady(async () => {
-    isReady = true;
-    console.log("WebSocket connection established");
+const setup = async () => {
+    ws = getWebsocketConnection(`ws://localhost:${await window.electronAPI.getPort()}`);
 
-    const response = await invokeSyncRequestTyped(ws, "getSupportedPlugins", {})
-    console.log("Supported plugins:", response);
+    ws.onReady(async () => {
+        isReady = true;
+        console.log("WebSocket connection established");
 
-    const initializedPlugins = await invokeSyncRequestTyped(ws, "getInitializedPlugins", {});
-    if (initializedPlugins.length === 0) {
-        console.warn("No plugins initialized, initializing default plugin...");
-        return;
-    }
+        const response = await invokeSyncRequestTyped(ws, "getSupportedPlugins", {})
+        console.log("Supported plugins:", response);
 
-    selectedPlugin = initializedPlugins[0];
+        const initializedPlugins = await invokeSyncRequestTyped(ws, "getInitializedPlugins", {});
+        if (initializedPlugins.length === 0) {
+            console.warn("No plugins initialized, initializing default plugin...");
+            return;
+        }
 
-})
+        selectedPlugin = initializedPlugins[0];
+
+    })
+}
+setup()
 
 export const WEBSOCKET_BRIDGE: QueryProvider = {
     waitForReady: async () => {
@@ -62,6 +65,9 @@ export const WEBSOCKET_BRIDGE: QueryProvider = {
         return await invokeSyncRequestTyped(ws, "getControllerParams", { instanceId: selectedPlugin.id });
     },
     query: async (params, searchTerm, queryOptions) => {
+        if (!ws) {
+            throw new Error("WebSocket connection is not established. Please wait for the WebSocket to be ready.");
+        }
         if (!selectedPlugin) {
             throw new Error("No plugin selected. Please ensure that at least one plugin is initialized.");
         }
@@ -109,6 +115,10 @@ export const WEBSOCKET_BRIDGE: QueryProvider = {
         });
 
         return new Promise((resolve, reject) => {
+            if (!ws) {
+                throw new Error("WebSocket connection is not established. Please wait for the WebSocket to be ready.");
+            }
+
             const unsubscribeJobUpdateHandler = ws.subscribe(
                 (message: any) => {
                     const parseResponse = QueryJobUpdatedSchema.safeParse(message);

@@ -3,13 +3,11 @@
 
 // Preload (Isolated World)
 import { contextBridge, ipcRenderer } from 'electron';
-import { registerPreloadIPC } from './plugins_engine/ipc';
 
 export const electronAPI = {
   getPort: async () => {
     return await ipcRenderer.invoke('getPort') as Promise<number>;
   },
-  ...registerPreloadIPC(ipcRenderer),
 };
 
 contextBridge.exposeInMainWorld('electronAPI', electronAPI);
