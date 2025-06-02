@@ -24,7 +24,6 @@ import {
 } from "~components/ui/menu";
 import { Shortcut } from "~components/ui/shortcut";
 import { Tooltip } from "~components/ui/tooltip";
-import { QueryProvider } from "./common/interface";
 import { DateSelector, isDateSelectorOpen } from "./DateSelector";
 import { Editor } from "./Editor";
 import { headerShortcuts } from "./keymaps";
