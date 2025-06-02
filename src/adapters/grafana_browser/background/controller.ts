@@ -135,24 +135,28 @@ export class GrafanaController implements QueryProvider {
                 // re-authenticate
                 this.cookies = await createAuthWindow(this.url);
             }
+
+            const headers = options.headers || {};
+            const existingCookie = headers["Cookie"] || "";
+            if (this.cookies) {
+                let cookieString = existingCookie;
+                if (this.cookies.sessionCookie) {
+                    // get epoch time from expires date
+                    const expiresEpoch = Math.floor(this.cookies.expiryTime.getTime() / 1000);
+                    cookieString += `;grafana_session=${this.cookies.sessionCookie};grafana_session_expiry=${expiresEpoch}`;
+                }
+                headers["Cookie"] = cookieString;
+                options.headers = headers;
+            }
         });
 
-        const headers = options.headers || {};
-        const existingCookie = headers["Cookie"] || "";
-        if (this.cookies) {
-            let cookieString = existingCookie;
-            if (this.cookies.sessionCookie) {
-                // get epoch time from expires date
-                const expiresEpoch = Math.floor(this.cookies.expiryTime.getTime() / 1000);
-                cookieString += `;grafana_session=${this.cookies.sessionCookie};grafana_session_expiry=${expiresEpoch}`;
-            }
-            headers["Cookie"] = cookieString;
-            options.headers = headers;
-        }
 
         const response = await fetch(url, options)
         if (response.status === 401) {
             console.warn("Authentication failed, trying to re-authenticate...");
+            await mutex.runExclusive(async () => {
+                this.cookies = null; // reset cookies to force re-authentication
+            });
             // retry the request once authenticated
             return this._fetchWrapper(url, options, retryAmount + 1);
         }
