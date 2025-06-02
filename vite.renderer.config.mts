@@ -14,8 +14,5 @@ export default defineConfig({
     ],
     resolve: {
         extensions: ['.js', '.ts', '.jsx', '.tsx'],
-        // alias: {
-        //     '~': path.resolve(__dirname, "./src/renderer"),
-        // }
     },
 });
