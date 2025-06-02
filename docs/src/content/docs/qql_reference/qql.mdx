@@ -3,7 +3,6 @@ title: QQL (Quick Query Language)
 description: The main query language inside `Cruncher` - it's main goal is to have a quick - easy to learn language - that's powerful enought to allow power users access to enhanced capabilities over that data.
 ---
 
-import {LocalContent} from 'cruncher';
 
 QQL is the main query language inside `Cruncher` - it's main goal is to have a quick - easy to learn language - that's powerful enought to allow power users access to enhanced capabilities over that data.
 
@@ -17,8 +16,3 @@ The query language was heavily inspired from Splunk (SPL2) and Kusto (KQL).
 
 Here you can see cruncher embedded.  
 It will return the `name` and `address` of all `developers` found in mocked logs:
-
-
-<LocalContent client:only="react" query={"developer | table name, address"}>
-    <p>Loading...</p>
-</LocalContent>
