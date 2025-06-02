@@ -1,18 +1,19 @@
-import { atom } from "jotai";
-import { ControllerIndexParam, Search } from "~lib/qql/grammar";
-import { actualEndTimeAtom, actualStartTimeAtom, compareFullDates, FullDate, isTimeNow } from "./store/dateState";
-import { store } from "./store/store";
-import { parse, PipelineItem } from "~lib/qql";
-import { asDateField, compareProcessedData, ProcessedData } from "../../lib/adapters/logTypes";
-import equal from "fast-deep-equal";
-import { availableControllerParamsAtom, dataViewModelAtom, originalDataAtom, viewSelectedForQueryAtom } from "./store/queryState";
-import { notifyError } from "./notifyError";
-import { getPipelineItems } from "~lib/pipelineEngine/root";
-import { tree } from "./indexes/timeIndex";
-import { QueryProvider } from "./common/interface";
-import merge from "merge-k-sorted-arrays";
 import { Mutex } from "async-mutex";
+import equal from "fast-deep-equal";
+import { atom } from "jotai";
+import merge from "merge-k-sorted-arrays";
+import { dateAsString, FullDate, isTimeNow } from "~lib/dateUtils";
+import { getPipelineItems } from "~lib/pipelineEngine/root";
+import { parse, PipelineItem } from "~lib/qql";
+import { ControllerIndexParam, Search } from "~lib/qql/grammar";
+import { asDateField, compareProcessedData, ProcessedData } from "../../lib/adapters/logTypes";
+import { QueryProvider } from "./common/interface";
 import { openIndexesAtom } from "./events/state";
+import { tree } from "./indexes/timeIndex";
+import { notifyError } from "./notifyError";
+import { actualEndTimeAtom, actualStartTimeAtom, compareFullDates } from "./store/dateState";
+import { availableControllerParamsAtom, dataViewModelAtom, originalDataAtom, viewSelectedForQueryAtom } from "./store/queryState";
+import { QueryState, store } from "./store/store";
 
 export type FormValues = {
     searchTerm: string;
@@ -31,6 +32,24 @@ const submitMutexAtom = atom(new Mutex());
 const abortControllerAtom = atom(new AbortController());
 
 export const lastQueryAtom = atom<QueryExecutionHistory | undefined>(undefined);
+
+export const lastExecutedQueryStateAtom = atom<QueryState | undefined>(undefined);
+
+
+export const subscribeToQueryExecuted = (callback: (state: QueryState) => void) => {
+    const unsubscribe = store.sub(lastExecutedQueryStateAtom, () => {
+        const state = store.get(lastExecutedQueryStateAtom);
+        callback({
+            searchQuery: state?.searchQuery ?? '',
+            startTime: state?.startTime,
+            endTime: state?.endTime,
+        });
+    });
+    return () => {
+        unsubscribe();
+    };
+}
+
 export const isLoadingAtom = atom(false);
 
 export const queryStartTimeAtom = atom<Date | undefined>(undefined);
@@ -47,6 +66,27 @@ const getController = () => {
         throw new Error("Controller is not set. Please call setController() before using it.");
     }
     return controller;
+}
+
+export const getShareLink = (queryState: QueryState) => {
+    const startTime = queryState.startTime;
+    const endTime = queryState.endTime;
+    const searchTerm = queryState.searchQuery;
+
+    const queryParams = [];
+    if (startTime) {
+        queryParams.push(`startTime=${dateAsString(startTime)}`);
+    }
+    if (endTime) {
+        queryParams.push(`endTime=${dateAsString(endTime)}`);
+    }
+    if (searchTerm) {
+        queryParams.push(`searchQuery=${encodeURIComponent(searchTerm)}`);
+    }
+
+    const totalQueryParams = '?' + queryParams.join('&');
+
+    return `cruncher://main${totalQueryParams}`;
 }
 
 
@@ -106,6 +146,13 @@ const doRunQuery = async (values: FormValues, isForced: boolean) => {
 
     const abortController = store.get(abortControllerAtom);
     const lastExecutedQuery = store.get(lastQueryAtom);
+    const state: QueryState = {
+        startTime: fromTime,
+        endTime: toTime,
+        searchQuery: values.searchTerm,
+    };
+
+    store.set(lastExecutedQueryStateAtom, state);
 
     try {
         const parsedTree = parse(values.searchTerm);
@@ -116,7 +163,7 @@ const doRunQuery = async (values: FormValues, isForced: boolean) => {
             store.set(queryStartTimeAtom, new Date());
             store.set(queryEndTimeAtom, undefined);
 
-            const executionQuery = {
+            const executionQuery: QueryExecutionHistory = {
                 search: parsedTree.search,
                 start: fromTime,
                 end: toTime,

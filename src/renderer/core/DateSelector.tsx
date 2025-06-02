@@ -7,7 +7,6 @@ import { useOutsideDetector } from "~components/ui/useOutsideDetector";
 import {
   compareFullDates,
   dateRangeAtom,
-  DateType,
   endFullDateAtom,
   renderedEndDateAtom,
   renderedStartDateAtom,
@@ -30,6 +29,7 @@ import { Tooltip } from "~components/ui/tooltip";
 import { Shortcut } from "~components/ui/shortcut";
 import { globalShortcuts } from "./keymaps";
 import { store } from "./store/store";
+import { DateType } from "~lib/dateUtils";
 
 export const setRangeByMinutes = (minutes: number) => {
   const now = new Date();

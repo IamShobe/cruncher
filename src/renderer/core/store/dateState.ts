@@ -2,20 +2,11 @@ import { format, isValid, parse, subMinutes } from "date-fns";
 import { atom, PrimitiveAtom } from "jotai";
 import { DateRange } from "react-day-picker";
 import { store } from "./store";
+import { DateType, FullDate, isTimeNow } from "~lib/dateUtils";
 
 export const dateFormat = "yyyy/MM/dd HH:mm:ss";
 const dateOnlyFormat = "yyyy/MM/dd";
 const dateWithoutSecondsFormat = "yyyy/MM/dd HH:mm";
-
-export enum DateType {
-    Now = "Now",
-}
-
-export type FullDate = Date | DateType;
-
-export const isTimeNow = (date: Date | DateType | undefined): date is DateType.Now => {
-    return date === DateType.Now;
-};
 
 const defaultEndDate = new Date();
 const defaultStartDate = subMinutes(defaultEndDate, 30);

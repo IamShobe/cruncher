@@ -11,7 +11,7 @@ import { queryEditorAtom } from "./Editor";
 import DataLog from "./events/DataLog";
 import Header from "./Header";
 import { globalShortcuts } from "./keymaps";
-import { setup } from "./search";
+import { getShareLink, setup, subscribeToQueryExecuted } from "./search";
 import { getCruncherRoot } from "./shadowUtils";
 import {
   dataViewModelAtom,
@@ -55,9 +55,19 @@ const MainContentInner: React.FC<MainContentProps> = ({ }) => {
   };
 
   useEffect(() => {
+    const unsub = subscribeToQueryExecuted((state) => {
+      console.log("Query state updated:", state);
+
+      console.log("shareable link:", getShareLink(state));
+    })
+    
     setup().then(() => {
       setIsInitialized(true);
     });
+
+    return () => {
+      unsub();
+    };
   }, []);
 
   useEffect(() => {

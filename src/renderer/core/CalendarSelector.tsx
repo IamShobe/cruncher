@@ -1,20 +1,19 @@
-
 import type React from "react";
-import { DateRange,
-    DayButtonProps,
-    DayPicker,
-    DayProps,
-    NavProps } from "react-day-picker";
 import {
-    dateRangeAtom,
-    isTimeNow
-} from "./store/dateState";
-  
-  import { IconButton } from "@chakra-ui/react";
+  DateRange,
+  DayButtonProps,
+  DayPicker,
+  DayProps,
+  NavProps,
+} from "react-day-picker";
+import { isTimeNow } from "~lib/dateUtils";
+import { dateRangeAtom } from "./store/dateState";
+
+import { IconButton } from "@chakra-ui/react";
 import { css } from "@emotion/react";
 import { useMemo } from "react";
 import { LuArrowLeft, LuArrowRight } from "react-icons/lu";
-  
+
 type InputTimeProps = {
   selectedRange: ReturnType<typeof dateRangeAtom.read> | undefined;
   onSelect: (range: DateRange | undefined) => void;
