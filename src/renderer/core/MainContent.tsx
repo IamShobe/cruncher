@@ -1,4 +1,4 @@
-import { Badge, Tabs } from "@chakra-ui/react";
+import { Badge, ProgressCircle, Tabs } from "@chakra-ui/react";
 import { css } from "@emotion/react";
 import styled from "@emotion/styled";
 import { Provider as JotaiProvider, useAtom, useAtomValue } from "jotai";
@@ -6,25 +6,17 @@ import { useEffect, useState } from "react";
 import { Toaster } from "react-hot-toast";
 import { LuChartArea, LuLogs, LuTable } from "react-icons/lu";
 import { Provider } from "~components/ui/provider";
-import { QueryProvider } from "./common/interface";
 import { isDateSelectorOpen } from "./DateSelector";
 import { queryEditorAtom } from "./Editor";
 import DataLog from "./events/DataLog";
 import Header from "./Header";
 import { globalShortcuts } from "./keymaps";
-import { ProgressCircle } from "@chakra-ui/react";
-import { isLoadingAtom, runQuery, setup } from "./search";
+import { setup } from "./search";
 import { getCruncherRoot } from "./shadowUtils";
-import {
-  endFullDateAtom,
-  FullDate,
-  startFullDateAtom,
-} from "./store/dateState";
 import {
   dataViewModelAtom,
   eventsAtom,
-  searchQueryAtom,
-  viewSelectedForQueryAtom,
+  viewSelectedForQueryAtom
 } from "./store/queryState";
 import { store } from "./store/store";
 import { TableView } from "./table/TableView";
@@ -41,33 +33,10 @@ const MainContainer = styled.section`
   overflow: hidden;
 `;
 
-type QueryExecuted = {
-  query: string;
-  startTime: FullDate;
-  endTime: FullDate;
-};
-
 type MainContentProps = {
-  controller: QueryProvider;
-  initialStartTime?: FullDate;
-  initialEndTime?: FullDate;
-  initialQuery?: string;
-
-  callbacks?: {
-    onQueryChange?: (query: string) => void;
-    onStartDateSelectChange?: (start: FullDate | undefined) => void;
-    onEndDateSelectChange?: (end: FullDate | undefined) => void;
-    onQueryExecuted?: (query: QueryExecuted) => void;
-  };
 };
 
-const MainContentInner: React.FC<MainContentProps> = ({
-  controller,
-  initialStartTime,
-  initialEndTime,
-  initialQuery,
-  callbacks,
-}) => {
+const MainContentInner: React.FC<MainContentProps> = ({ }) => {
   const [selectedTab, setSelectedTab] = useState<string | null>("logs");
   const events = useAtomValue(eventsAtom);
   const { table: tableView, view: viewChart } = useAtomValue(dataViewModelAtom);
@@ -86,77 +55,9 @@ const MainContentInner: React.FC<MainContentProps> = ({
   };
 
   useEffect(() => {
-    if (initialStartTime !== undefined) {
-      store.set(startFullDateAtom, initialStartTime);
-    }
-
-    if (initialEndTime !== undefined) {
-      store.set(endFullDateAtom, initialEndTime);
-    }
-
-    if (initialQuery !== undefined) {
-      store.set(searchQueryAtom, initialQuery);
-    }
-
-    const searchQueryUnsubscriber = callbacks?.onQueryChange
-      ? store.sub(searchQueryAtom, () => {
-          const currValue = store.get(searchQueryAtom);
-          callbacks.onQueryChange?.(currValue);
-        })
-      : undefined;
-    const startDateUnsubscriber = callbacks?.onStartDateSelectChange
-      ? store.sub(startFullDateAtom, () => {
-          const currValue = store.get(startFullDateAtom);
-          callbacks.onStartDateSelectChange?.(currValue);
-        })
-      : undefined;
-    const endDateUnsubscriber = callbacks?.onEndDateSelectChange
-      ? store.sub(endFullDateAtom, () => {
-          const currValue = store.get(endFullDateAtom);
-          callbacks.onEndDateSelectChange?.(currValue);
-        })
-      : undefined;
-
-    const lastExecutedQueryUnsubscriber = callbacks?.onQueryExecuted
-      ? store.sub(isLoadingAtom, () => {
-          const currStartDate = store.get(startFullDateAtom)!; // it's impossible to be undefined
-          const currEndDate = store.get(endFullDateAtom)!; // it's impossible to be undefined
-          const currQuery = store.get(searchQueryAtom);
-
-          callbacks.onQueryExecuted?.({
-            query: currQuery,
-            startTime: currStartDate,
-            endTime: currEndDate,
-          });
-        })
-      : undefined;
-
-    setup(controller).then(() => {
+    setup().then(() => {
       setIsInitialized(true);
-      if (
-        initialQuery !== undefined &&
-        initialStartTime !== undefined &&
-        initialEndTime !== undefined
-      ) {
-        // execute the query
-        runQuery(
-          controller,
-          {
-            searchTerm: store.get(searchQueryAtom),
-            fromTime: store.get(startFullDateAtom),
-            toTime: store.get(endFullDateAtom),
-          },
-          true
-        );
-      }
     });
-
-    return () => {
-      searchQueryUnsubscriber?.();
-      startDateUnsubscriber?.();
-      endDateUnsubscriber?.();
-      lastExecutedQueryUnsubscriber?.();
-    };
   }, []);
 
   useEffect(() => {
@@ -199,10 +100,12 @@ const MainContentInner: React.FC<MainContentProps> = ({
 
   if (!isInitialized) {
     return (
-      <MainContainer style={{
-        justifyContent: "center",
-        alignItems: "center",
-      }}>
+      <MainContainer
+        style={{
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
         <ProgressCircle.Root value={null} size="lg">
           <ProgressCircle.Circle>
             <ProgressCircle.Track />
@@ -223,7 +126,7 @@ const MainContentInner: React.FC<MainContentProps> = ({
           duration: 10000,
         }}
       />
-      <Header controller={controller} />
+      <Header />
       <Tabs.Root
         lazyMount
         unmountOnExit

@@ -70,11 +70,10 @@ const LoaderHolder = styled.div`
 `;
 
 type HeaderProps = {
-  controller: QueryProvider;
 };
 
 
-const Header: React.FC<HeaderProps> = ({ controller }) => {
+const Header: React.FC<HeaderProps> = ({ }) => {
   const isLoading = useAtomValue(isLoadingAtom);
 
   const [searchValue, setSearchValue] = useAtom(searchQueryAtom);
@@ -97,7 +96,7 @@ const Header: React.FC<HeaderProps> = ({ controller }) => {
   const onSubmit =
     (isForced: boolean): SubmitHandler<FormValues> =>
     async (values) => {
-      await runQuery(controller, values, isForced);
+      await runQuery(values, isForced);
     };
 
   const onHeaderKeyDown = (e: React.KeyboardEvent) => {

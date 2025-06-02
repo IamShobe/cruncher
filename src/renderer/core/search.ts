@@ -37,7 +37,21 @@ export const queryStartTimeAtom = atom<Date | undefined>(undefined);
 export const queryEndTimeAtom = atom<Date | undefined>(undefined);
 export const isQuerySuccessAtom = atom(true);
 
-export const setup = async (controller: QueryProvider) => {
+let controller: QueryProvider | undefined;
+export const setController = (newController: QueryProvider) => {
+    controller = newController;
+}
+
+const getController = () => {
+    if (controller === undefined) {
+        throw new Error("Controller is not set. Please call setController() before using it.");
+    }
+    return controller;
+}
+
+
+export const setup = async () => {
+    const controller = getController();
     await controller?.waitForReady?.();
     // this can be done async to the loading of the app - no need to block
     controller.getControllerParams().then((params) => {
@@ -50,7 +64,7 @@ export const abortRunningQuery = (reason: string) => {
     abortController.abort(reason);
 }
 
-export const runQuery = async (controller: QueryProvider, values: FormValues, isForced: boolean) => {
+export const runQuery = async (values: FormValues, isForced: boolean) => {
     const abortController = store.get(abortControllerAtom);
     const isLoading = store.get(isLoadingAtom);
     if (isLoading) {
@@ -63,11 +77,12 @@ export const runQuery = async (controller: QueryProvider, values: FormValues, is
 
     const submitMutex = store.get(submitMutexAtom);
     await submitMutex.runExclusive(async () => {
-        await doRunQuery(controller, values, isForced);
+        await doRunQuery(values, isForced);
     });
 }
 
-const doRunQuery = async (controller: QueryProvider, values: FormValues, isForced: boolean) => {
+const doRunQuery = async (values: FormValues, isForced: boolean) => {
+    const controller = getController();
     if (values.fromTime === undefined) {
         // TODO: return error
         return;

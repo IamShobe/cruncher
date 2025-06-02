@@ -41,7 +41,8 @@ export const SyncResponsesSchema = z.discriminatedUnion("type", [SyncResponseOut
 
 
 export type ResponseHandler = {
-    sendMessage: (message: any) => void;
+    waitUntilReady: () => Promise<void>;
+    sendMessage: (message: any) => Promise<void>;
 }
 
 export type SyncRequestHandler<T extends string> = {

@@ -2,6 +2,7 @@
 import { WebSocketServer } from "ws";
 import SuperJSON from 'superjson';
 import { GenericMessageSchema, ResponseHandler, SyncErrorOut, SyncRequestIn, SyncRequestInSchema, SyncResponseOut } from "./types";
+import { atLeastOneConnectionSignal, createSignal } from "~lib/utils";
 
 export type Consumer = {
     type: string;
@@ -76,7 +77,19 @@ export const getServer = () => {
 
         const consumers: Consumer[] = [];
 
+        const connectionsSignal = atLeastOneConnectionSignal();
+
         wss.on('connection', (ws) => {
+            // new connection established
+            console.log('New client connected');
+            connectionsSignal.increment();
+
+            ws.on('close', () => {
+                console.log('Client disconnected');
+                // Optionally handle client disconnection
+                connectionsSignal.decrement();
+            });
+
             ws.on('message', (message) => {
                 // Here you can handle incoming messages
                 try {
@@ -97,8 +110,10 @@ export const getServer = () => {
         })
 
 
-        const sendMessage = (message: any) => {
+        const sendMessage = async (message: any) => {
             const serializedMessage = SuperJSON.stringify(message);
+            // wait for at least one connection to be established
+            await connectionsSignal.isReady()
             wss.clients.forEach(client => {
                 if (client.readyState === WebSocket.OPEN) {
                     client.send(serializedMessage);
@@ -135,6 +150,7 @@ export const getServer = () => {
             resolve({
                 server: wss,
                 port: port,
+                waitUntilReady: connectionsSignal.isReady,
                 addConsumer: addConsumer,
                 removeConsumer: removeConsumer,
                 sendMessage: sendMessage,

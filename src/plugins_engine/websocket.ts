@@ -4,7 +4,7 @@ import { getAsyncRequestHandler, getSyncRequestHandler } from "~lib/websocket/se
 import { SerializeableParams } from "./types";
 import { MessageSender } from "./controller";
 import { ResponseHandler } from "~lib/websocket/types";
-import { QueryBatchDone, QueryJobUpdated } from "./protocol_out";
+import { QueryBatchDone, QueryJobUpdated, UrlNavigation } from "./protocol_out";
 import { measureTime } from "~lib/utils";
 
 export const getRoutes = async (messageSender: MessageSender) => {
@@ -60,5 +60,14 @@ export const getMessageSender = (responder: ResponseHandler): MessageSender => {
             }
             responder.sendMessage(message);
         },
+        urlNavigate: (url: string) => {
+            const message: UrlNavigation = {
+                type: "url_navigation",
+                payload: {
+                    url: url,
+                },
+            };
+            responder.sendMessage(message);
+        }
     }
 }

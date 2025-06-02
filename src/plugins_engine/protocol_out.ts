@@ -24,3 +24,12 @@ export const ReceivedMessageSchema = z.discriminatedUnion("type", [
     QueryJobUpdatedSchema,
 ]);
 export type ReceivedMessage = z.infer<typeof ReceivedMessageSchema>;
+
+
+export const UrlNavigationSchema = z.object({
+    type: z.literal("url_navigation"),
+    payload: z.object({
+        url: z.string(),
+    }),
+});
+export type UrlNavigation = z.infer<typeof UrlNavigationSchema>;

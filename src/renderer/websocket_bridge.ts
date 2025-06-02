@@ -1,8 +1,13 @@
 import { QueryProvider } from "~core/common/interface";
-import { getWebsocketConnection, invokeSyncRequest as originalSyncInvoke, invokeAsyncRequest as originalAsyncInvoke, WebsocketClientWrapper } from "~lib/websocket/client";
+import { getWebsocketConnection, invokeSyncRequest as originalSyncInvoke, invokeAsyncRequest as originalAsyncInvoke } from "~lib/websocket/client";
 import type { InvokeWebSocketHandler, AsyncInvokeWebSocketHandler } from "./websocket_messages"
 import { PluginInstance } from "src/plugins_engine/types";
-import { QueryBatchDoneSchema, QueryJobUpdatedSchema } from "src/plugins_engine/protocol_out";
+import { QueryBatchDoneSchema, QueryJobUpdatedSchema, UrlNavigationSchema } from "src/plugins_engine/protocol_out";
+import { createSignal, parseDate } from "~lib/utils";
+import { store } from "~core/store/store";
+import { endFullDateAtom, startFullDateAtom } from "~core/store/dateState";
+import { searchQueryAtom } from "~core/store/queryState";
+import { runQuery } from "~core/search";
 
 const invokeSyncRequestTyped: InvokeWebSocketHandler = (ws, method, params) => {
     return originalSyncInvoke(ws, method, params) as any;
@@ -18,14 +23,14 @@ window.invokeSyncRequestTyped = (method, params) => invokeSyncRequestTyped(ws, m
 window.invokeAsyncRequestTyped = (message, params) => invokeAsyncRequestTyped(ws, message, params); // Expose the WebSocket connection globally for debugging
 
 let ws: ReturnType<typeof getWebsocketConnection> | undefined = undefined;
-let isReady = false;
 let selectedPlugin: PluginInstance | undefined = undefined;
+
+const websocketReadySignal = createSignal();
 
 const setup = async () => {
     ws = getWebsocketConnection(`ws://localhost:${await window.electronAPI.getPort()}`);
 
     ws.onReady(async () => {
-        isReady = true;
         console.log("WebSocket connection established");
 
         const response = await invokeSyncRequestTyped(ws, "getSupportedPlugins", {})
@@ -38,24 +43,59 @@ const setup = async () => {
         }
 
         selectedPlugin = initializedPlugins[0];
-
+        websocketReadySignal.signal();
     })
+
+    ws.subscribe(
+        (message: any) => {
+            const parseResponse = UrlNavigationSchema.safeParse(message);
+            if (!parseResponse.success) {
+                return false; // Ignore messages that are not query job updates
+            }
+            return true; // Process this message
+        },
+        (message: any) => {
+            const urlNavigationMessage = UrlNavigationSchema.parse(message);
+            console.log("URL Navigation message received:", urlNavigationMessage);
+
+            const parsedUrl = new URL(urlNavigationMessage.payload.url);
+
+            const startFullDate = parsedUrl.searchParams.get("startTime");
+            const endFullDate = parsedUrl.searchParams.get("endTime");
+            const searchQuery = parsedUrl.searchParams.get("searchQuery");
+            const initialStartTime = parseDate(startFullDate);
+            const initialEndTime = parseDate(endFullDate);
+            const initialQuery = searchQuery || "";
+            console.log("Parsed URL parameters:", {
+                startFullDate: initialStartTime,
+                endFullDate: initialEndTime,
+                searchQuery: initialQuery,
+            });
+
+            if (initialStartTime) {
+                store.set(startFullDateAtom, initialStartTime);
+            }
+            if (initialEndTime) {
+                store.set(endFullDateAtom, initialEndTime);
+            }
+            store.set(searchQueryAtom, initialQuery);
+
+            runQuery(
+                {
+                    searchTerm: store.get(searchQueryAtom),
+                    fromTime: store.get(startFullDateAtom),
+                    toTime: store.get(endFullDateAtom),
+                },
+                true
+            );
+        }
+    )
 }
 setup()
 
 export const WEBSOCKET_BRIDGE: QueryProvider = {
     waitForReady: async () => {
-        return new Promise<void>((resolve) => {
-            const checkReady = () => {
-                if (isReady) {
-                    resolve();
-                } else {
-                    console.warn("WebSocket is not ready yet, retrying...");
-                    setTimeout(checkReady, 1000);
-                }
-            }
-            setTimeout(checkReady, 1000);
-        })
+        return await websocketReadySignal.wait();
     },
     getControllerParams: async () => {
         if (!selectedPlugin) {

@@ -31,6 +31,7 @@ const queryTasks: Record<string, QueryTaskState> = {};
 export type MessageSender = {
     batchDone: (jobId: string, data: ProcessedData[]) => void;
     jobUpdated: (job: QueryTask) => void;
+    urlNavigate: (url: string) => void;
 }
 
 export const controller = {

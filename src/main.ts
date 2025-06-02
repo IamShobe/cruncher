@@ -1,10 +1,11 @@
 import { app, BrowserWindow, ipcMain, dialog } from 'electron';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
-import { setupPluginsFromConfig } from './plugins_engine/controller';
+import { MessageSender, setupPluginsFromConfig } from './plugins_engine/controller';
 import { getServer, setupEngine } from './lib/websocket/server';
 import { getRoutes, getMessageSender as getWebsocketMessageSender } from './plugins_engine/websocket';
 import log from 'electron-log/main';
+import { createSignal } from '~lib/utils';
 
 // Optional, initialize the logger for any renderer process
 log.initialize();
@@ -49,11 +50,15 @@ const createWindow = () => {
   // mainWindow.webContents.openDevTools();
 };
 
+let messageSender: MessageSender | undefined = undefined;
+const messageSenderReady = createSignal();
+
 const ready = async () => {
   // get free port
   const serverContainer = await getServer();
   console.log(`Server is running on port ${serverContainer.port}`);
-  const messageSender = getWebsocketMessageSender(serverContainer);
+  messageSender = getWebsocketMessageSender(serverContainer);
+  messageSenderReady.signal();
   const routes = await getRoutes(messageSender);
   await setupEngine(serverContainer, routes);
   ipcMain.handle('getPort', async () => {
@@ -80,7 +85,13 @@ if (!gotTheLock) {
       mainWindow.focus()
     }
 
-    dialog.showErrorBox('Welcome Back', `You arrived from: ${commandLine.pop().slice(0, -1)}`)
+    messageSenderReady.wait().then(() => {
+      if (!messageSender) {
+        console.warn("Message sender is not initialized yet, cannot handle open-url event");
+        return;
+      }
+      messageSender.urlNavigate(commandLine[1]); // Assuming the URL is the second argument
+    })
   })
 
   // Create mainWindow, load the rest of the app, etc...
@@ -89,9 +100,23 @@ if (!gotTheLock) {
   })
 
   app.on('open-url', (event, url) => {
-    dialog.showErrorBox('Welcome Back', `You arrived from: ${url}`)
+    messageSenderReady.wait().then(() => {
+      if (!messageSender) {
+        console.warn("Message sender is not initialized yet, cannot handle open-url event");
+        return;
+      }
+      messageSender.urlNavigate(url); // Assuming the URL is the second argument
+    });
   })
 }
+
+// const onUrl = (url: string) => {
+//   const parsedUrl = new URL(url);
+//   const source = parsedUrl.hostname;
+//   const query = parsedUrl.searchParams.get('query');
+//   const startTime = parsedUrl.searchParams.get('startTime');
+//   const endTime = parsedUrl.searchParams.get('endTime');
+// }
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits

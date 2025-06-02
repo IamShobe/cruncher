@@ -13,6 +13,3 @@ export * from "~core/common/interface";
 export {
     MockController,
 } from "src/adapters/mocked_data/controller";
-export {
-    GrafanaController
-} from "~adapters/grafana/controller";
