@@ -8,6 +8,8 @@ import { store } from "~core/store/store";
 import { endFullDateAtom, startFullDateAtom } from "~core/store/dateState";
 import { searchQueryAtom } from "~core/store/queryState";
 import { runQuery } from "~core/search";
+import toast from "react-hot-toast";
+import { notifyError } from "~core/notifyError";
 
 const invokeSyncRequestTyped: InvokeWebSocketHandler = (ws, method, params) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -33,19 +35,23 @@ const setup = async () => {
     ws = getWebsocketConnection(`ws://localhost:${await window.electronAPI.getPort()}`);
 
     ws.onReady(async () => {
-        console.log("WebSocket connection established");
+        try {
+            console.log("WebSocket connection established");
 
-        const response = await invokeSyncRequestTyped(ws, "getSupportedPlugins", {})
-        console.log("Supported plugins:", response);
+            const response = await invokeSyncRequestTyped(ws, "getSupportedPlugins", {})
+            console.log("Supported plugins:", response);
 
-        const initializedPlugins = await invokeSyncRequestTyped(ws, "getInitializedPlugins", {});
-        if (initializedPlugins.length === 0) {
-            console.warn("No plugins initialized, initializing default plugin...");
-            return;
+            const initializedPlugins = await invokeSyncRequestTyped(ws, "getInitializedPlugins", {});
+            if (initializedPlugins.length === 0) {
+                console.warn("No plugins initialized, initializing default plugin...");
+                notifyError("No plugins initialized", new Error("No plugins initialized, please add ~/.config/cruncher/cruncher.config.yaml file"));
+                return;
+            }
+
+            selectedPlugin = initializedPlugins[0];
+        } finally {
+            websocketReadySignal.signal();
         }
-
-        selectedPlugin = initializedPlugins[0];
-        websocketReadySignal.signal();
     })
 
     const unsub = ws.subscribe(UrlNavigationSchema,
