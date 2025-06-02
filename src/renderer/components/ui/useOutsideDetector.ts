@@ -1,5 +1,4 @@
-import React from "react";
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import { getCruncherRoot } from "~core/shadowUtils";
 
 export function useOutsideDetector(onOutsideClick = () => { }) {
@@ -14,8 +13,8 @@ export function useOutsideDetector(onOutsideClick = () => { }) {
         /**
          * Alert if clicked on outside of element
          */
-        function handleClickOutside(event: any) {
-            if (ref.current && event.target && !ref.current.contains(event.target)) {
+        function handleClickOutside(event: MouseEvent) {
+            if (ref.current && event.target && !ref.current.contains(event.target as Node)) {
                 onOutsideClick();
             }
         }

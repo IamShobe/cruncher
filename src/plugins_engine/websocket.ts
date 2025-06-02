@@ -1,11 +1,10 @@
-import { get } from "node:http";
 import { ControllerIndexParam, Search } from "~lib/qql/grammar";
-import { getAsyncRequestHandler, getSyncRequestHandler } from "~lib/websocket/server";
-import { SerializeableParams } from "./types";
-import { MessageSender } from "./controller";
-import { ResponseHandler } from "~lib/websocket/types";
-import { QueryBatchDone, QueryJobUpdated, UrlNavigation } from "./protocol_out";
 import { measureTime } from "~lib/utils";
+import { getAsyncRequestHandler, getSyncRequestHandler } from "~lib/websocket/server";
+import { ResponseHandler } from "~lib/websocket/types";
+import { MessageSender } from "./controller";
+import { QueryBatchDone, QueryJobUpdated, UrlNavigation } from "./protocol_out";
+import { SerializeableParams } from "./types";
 
 export const getRoutes = async (messageSender: MessageSender) => {
     const { controller } = await import("./controller")
@@ -13,7 +12,7 @@ export const getRoutes = async (messageSender: MessageSender) => {
         getSyncRequestHandler("getSupportedPlugins", async () => {
             return controller.getSupportedPlugins();
         }),
-        getSyncRequestHandler("initializePlugin", async (params: { pluginRef: string, name: string, params: Record<string, any> }) => {
+        getSyncRequestHandler("initializePlugin", async (params: { pluginRef: string, name: string, params: Record<string, unknown> }) => {
             return controller.initializePlugin(params.pluginRef, params.name, params.params);
         }),
         getSyncRequestHandler("getInitializedPlugins", async () => {
@@ -37,7 +36,7 @@ export const getRoutes = async (messageSender: MessageSender) => {
 
 export const getMessageSender = (responder: ResponseHandler): MessageSender => {
     return {
-        batchDone: (jobId: string, data: any[]) => {
+        batchDone: (jobId: string, data: unknown[]) => {
             // chunk data items per message
             const message: QueryBatchDone = {
                 type: "query_batch_done",

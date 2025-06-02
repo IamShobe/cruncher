@@ -1,11 +1,11 @@
-import { app, BrowserWindow, ipcMain, dialog } from 'electron';
-import path from 'node:path';
-import started from 'electron-squirrel-startup';
-import { MessageSender, setupPluginsFromConfig } from './plugins_engine/controller';
-import { getServer, setupEngine } from './lib/websocket/server';
-import { getRoutes, getMessageSender as getWebsocketMessageSender } from './plugins_engine/websocket';
+import { app, BrowserWindow, ipcMain } from 'electron';
 import log from 'electron-log/main';
+import started from 'electron-squirrel-startup';
+import path from 'node:path';
 import { createSignal } from '~lib/utils';
+import { getServer, setupEngine } from './lib/websocket/server';
+import { MessageSender, setupPluginsFromConfig } from './plugins_engine/controller';
+import { getRoutes, getMessageSender as getWebsocketMessageSender } from './plugins_engine/websocket';
 
 // Optional, initialize the logger for any renderer process
 log.initialize();
@@ -78,7 +78,7 @@ const gotTheLock = app.requestSingleInstanceLock()
 if (!gotTheLock) {
   app.quit()
 } else {
-  app.on('second-instance', (event, commandLine: any[], workingDirectory) => {
+  app.on('second-instance', (_event, commandLine: string[], _workingDirectory) => {
     // Someone tried to run a second instance, we should focus our window.
     if (mainWindow) {
       if (mainWindow.isMinimized()) mainWindow.restore()

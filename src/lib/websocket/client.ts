@@ -7,10 +7,10 @@ import z from 'zod';
 
 export interface WebsocketClientWrapper {
     once: (consumer: WebsocketMessageCustomer) => void;
-    sendMessage: (message: any) => void;
+    sendMessage: (message: unknown) => void;
 }
 
-export const invokeAsyncRequest = (consumer: WebsocketClientWrapper, kind: string, payload?: any) => {
+export const invokeAsyncRequest = (consumer: WebsocketClientWrapper, kind: string, payload?: unknown) => {
     const message = {
         type: kind,
         payload: payload,
@@ -19,7 +19,7 @@ export const invokeAsyncRequest = (consumer: WebsocketClientWrapper, kind: strin
 }
 
 
-export const invokeSyncRequest = (consumer: WebsocketClientWrapper, kind: string, payload?: any) => {
+export const invokeSyncRequest = (consumer: WebsocketClientWrapper, kind: string, payload?: unknown) => {
     if (typeof kind !== 'string' || !kind.trim()) {
         throw new Error("Kind must be a non-empty string");
     }
@@ -37,8 +37,8 @@ export const invokeSyncRequest = (consumer: WebsocketClientWrapper, kind: string
     // register a promise to wait for the response
     // remove the event listener after the response is received
     // to avoid memory leaks
-    return new Promise<any>((resolve, reject) => {
-        const handleResponse = (message: any) => {
+    return new Promise<unknown>((resolve, reject) => {
+        const handleResponse = (message: unknown) => {
             const response = SyncResponsesSchema.parse(message);
             if (response.type === "sync_response") {
                 resolve(response.payload);
@@ -48,7 +48,14 @@ export const invokeSyncRequest = (consumer: WebsocketClientWrapper, kind: string
         };
         const callback = (event: MessageEvent) => handleResponse(event);
         consumer.once({
-            shouldMatch: (message: any) => SyncResponsesSchema.safeParse(message).success && message.uuid === requestId,
+            shouldMatch: (message: unknown) => {
+                const parsed = SyncResponsesSchema.safeParse(message)
+                if (!parsed.success) {
+                    return false;
+                }
+                
+                return parsed.data.uuid === requestId
+            },
             callback,
         })
     });
@@ -104,7 +111,8 @@ export const getWebsocketConnection = (url: string) => {
         }
     }
 
-    const subscribe = (shouldMatch: (message: any) => boolean, callback: (message: any) => void) => {
+    // TODO: should delete?
+    const _subscribe = (shouldMatch: (message: unknown) => boolean, callback: (message: unknown) => void) => {
         const consumer: WebsocketMessageCustomer = {
             shouldMatch: shouldMatch,
             callback: callback,
@@ -117,9 +125,9 @@ export const getWebsocketConnection = (url: string) => {
     }
 
     const subscribeMessage = <T extends z.ZodTypeAny>(schema: T, options: SubscribeOptions<T>) => {
-        const cache = new Map<string, any>();
+        const cache = new Map<string, unknown>();
         const consumer: WebsocketMessageCustomer = {
-            shouldMatch: (message: any) => {
+            shouldMatch: (message: unknown) => {
                 const payload = schema.safeParse(message)
                 if (!payload.success) {
                     return false;
@@ -148,14 +156,14 @@ export const getWebsocketConnection = (url: string) => {
     }
 
     return {
-        sendMessage: (message: any) => {
+        sendMessage: (message: unknown) => {
             const serializedMessage = SuperJSON.stringify(message);
             ws.send(serializedMessage);
         },
         subscribe: subscribeMessage,
         once: (consumer: WebsocketMessageCustomer) => {
             const originalCallback = consumer.callback;
-            consumer.callback = (message: any) => {
+            consumer.callback = (message: unknown) => {
                 try {
                     originalCallback(message);
                 }

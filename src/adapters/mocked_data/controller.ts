@@ -20,11 +20,10 @@ for (let i = 2; i <= 100000; i++) {
     ];
 
     // generate random field keys
-    const fields = {};
+    const fields: Record<string, string> = {};
 
     const randomFieldsCount = Math.floor(Math.random() * 10) + 1;
     for (let j = 0; j < randomFieldsCount; j++) {
-        // @ts-expect-error
         fields[`field${j}`] = `value${j}`;
     }
 
@@ -39,7 +38,7 @@ for (let i = 2; i <= 100000; i++) {
     });
 }
 
-const processField = (field: any): Field => {
+const processField = (field: unknown): Field => {
     if (typeof field === "number") {
         return {
             type: "number",
@@ -63,7 +62,7 @@ const processField = (field: any): Field => {
     } else if (typeof field === "object") {
         const objectFields: ObjectFields = {};
 
-        Object.entries(field).forEach(([key, value]) => {
+        Object.entries(field ?? {}).forEach(([key, value]) => {
             objectFields[key] = processField(value);
         });
 

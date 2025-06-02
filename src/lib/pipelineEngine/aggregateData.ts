@@ -86,7 +86,7 @@ export const aggregateData = (dataPoints: ProcessedData[], functions: Aggregatio
                         value: columnData.reduce((acc, value) => (acc ?? 0) + (value?.value ?? 0), 0)
                     };
                     break;
-                case "avg":
+                case "avg": {
                     if (!assertDataValuesAsNumbers(columnData)) {
                         throw new Error("Data values are not numbers");
                     }
@@ -98,6 +98,7 @@ export const aggregateData = (dataPoints: ProcessedData[], functions: Aggregatio
                         value: res / columnData.length,
                     }
                     break;
+                }
                 case "min":
                     if (!assertDataValuesAsNumbers(columnData)) {
                         throw new Error("Data values are not numbers");

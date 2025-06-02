@@ -1,8 +1,8 @@
 import z from "zod";
 
 export type WebsocketMessageCustomer = {
-    shouldMatch: (message: any) => boolean;
-    callback: (message: any) => void;
+    shouldMatch: (message: unknown) => boolean;
+    callback: (message: unknown) => void;
 }
 
 export const GenericMessageSchema = z.object({
@@ -42,7 +42,7 @@ export const SyncResponsesSchema = z.discriminatedUnion("type", [SyncResponseOut
 
 export type ResponseHandler = {
     waitUntilReady: () => Promise<void>;
-    sendMessage: (message: any) => Promise<void>;
+    sendMessage: (message: unknown) => Promise<void>;
 }
 
 export type SyncRequestHandler<T extends string> = {

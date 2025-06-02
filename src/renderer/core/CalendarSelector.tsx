@@ -1,6 +1,10 @@
 
 import type React from "react";
-import { DateRange } from "react-day-picker";
+import { DateRange,
+    DayButtonProps,
+    DayPicker,
+    DayProps,
+    NavProps } from "react-day-picker";
 import {
     dateRangeAtom,
     isTimeNow
@@ -9,12 +13,6 @@ import {
   import { IconButton } from "@chakra-ui/react";
 import { css } from "@emotion/react";
 import { useMemo } from "react";
-import {
-    DayButtonProps,
-    DayPicker,
-    DayProps,
-    NavProps,
-} from "react-day-picker";
 import { LuArrowLeft, LuArrowRight } from "react-icons/lu";
   
 type InputTimeProps = {
@@ -98,7 +96,6 @@ export function CalendarSelector({ selectedRange, onSelect }: InputTimeProps) {
               };
             }
             return (
-              // @ts-expect-error
               <IconButton
                 style={{ ...todayStyle }}
                 variant={variant}

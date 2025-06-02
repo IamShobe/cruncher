@@ -10,16 +10,18 @@ import { searchQueryAtom } from "~core/store/queryState";
 import { runQuery } from "~core/search";
 
 const invokeSyncRequestTyped: InvokeWebSocketHandler = (ws, method, params) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return originalSyncInvoke(ws, method, params) as any;
 };
 
 const invokeAsyncRequestTyped: AsyncInvokeWebSocketHandler = (ws, message, params) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return originalAsyncInvoke(ws, message, params) as any;
 };
 
-// @ts-ignore
+// @ts-expect-error - Expose the WebSocket connection globally for debugging
 window.invokeSyncRequestTyped = (method, params) => invokeSyncRequestTyped(ws, method, params); // Expose the WebSocket connection globally for debugging
-// @ts-ignore
+// @ts-expect-error - Expose the WebSocket connection globally for debugging
 window.invokeAsyncRequestTyped = (message, params) => invokeAsyncRequestTyped(ws, message, params); // Expose the WebSocket connection globally for debugging
 
 let ws: ReturnType<typeof getWebsocketConnection> | undefined = undefined;

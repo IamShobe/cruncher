@@ -56,7 +56,7 @@ export const processInArrayExpression = (inArrayExpression: InArrayExpression, c
 }
 
 export const isBooleanFunction = (functionName: string): functionName is SupportedBooleanFunction => {
-    return SUPPORTED_BOOLEAN_FUNCTIONS.includes(functionName as any);
+    return SUPPORTED_BOOLEAN_FUNCTIONS.includes(functionName as SupportedBooleanFunction);
 }
 
 export const SUPPORTED_BOOLEAN_FUNCTIONS = [

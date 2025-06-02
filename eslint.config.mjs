@@ -6,7 +6,6 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import js from "@eslint/js";
 import { FlatCompat } from "@eslint/eslintrc";
-import { importX } from "eslint-plugin-import-x";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -23,20 +22,31 @@ export default defineConfig([
         "eslint:recommended",
         "plugin:@typescript-eslint/eslint-recommended",
         "plugin:@typescript-eslint/recommended",
-        "plugin:import/recommended",
-        "plugin:import/electron",
-        "plugin:import/typescript",
-        "import-x/flat/recommended",
+        "plugin:import-x/recommended",
+        "plugin:import-x/typescript"
       )
     ),
     // only lint files in the src directory
     files: ["src/**/*.ts", "src/**/*.tsx", "src/**/*.js", "src/**/*.jsx"],
-    plugins: {
-        'import-x': importX,
+
+    settings: {
+      "import-x/resolver": {
+        typescript: true,
+      },
     },
 
     rules: {
-        'import-x/no-dynamic-require': 'warn',
+      "import-x/default": "off",
+      "import-x/no-named-as-default": "off",
+      "import-x/no-named-as-default-member": "off",
+      "@typescript-eslint/no-empty-object-type": "off",
+      "@typescript-eslint/no-explicit-any": "warn",
+      "no-useless-escape": "off",
+      "no-empty-pattern": "off",
+      "@typescript-eslint/no-unused-vars": ["warn", {
+        // allow prefix _ - otherwise unused variables are an error
+        varsIgnorePattern: "^_",
+      }],
     },
 
     languageOptions: {

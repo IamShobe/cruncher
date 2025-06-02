@@ -35,7 +35,7 @@ export type MessageSender = {
 }
 
 export const controller = {
-    initializePlugin: (pluginRef: string, name: string, params: Record<string, any>): PluginInstance => {
+    initializePlugin: (pluginRef: string, name: string, params: Record<string, unknown>): PluginInstance => {
         const plugin = supportedPlugins.find(p => p.ref === pluginRef);
         if (!plugin) {
             throw new Error(`Plugin with ref ${pluginRef} not found`);

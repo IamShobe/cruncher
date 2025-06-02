@@ -5,7 +5,10 @@ import { Suggestion } from "~components/ui/editor/AutoCompleter";
 import { Editor as EditorComponent } from "~components/ui/editor/Editor";
 import { HighlightData } from "~components/ui/editor/Highlighter";
 import { SUPPORTED_AGG_FUNCTIONS } from "~lib/pipelineEngine/aggregateData";
-import { isBooleanFunction, SUPPORTED_BOOLEAN_FUNCTIONS } from "~lib/pipelineEngine/logicalExpression";
+import {
+  isBooleanFunction,
+  SUPPORTED_BOOLEAN_FUNCTIONS,
+} from "~lib/pipelineEngine/logicalExpression";
 import { HighlightData as ParserHighlightData } from "~lib/qql/grammar";
 import { getPopperRoot } from "./shadowUtils";
 import {
@@ -21,7 +24,10 @@ export type EditorProps = {
   onChange: (value: string) => void;
 };
 
-const translateHighlightData = (value: string, parserHighlightData: ParserHighlightData): HighlightData => {
+const translateHighlightData = (
+  value: string,
+  parserHighlightData: ParserHighlightData
+): HighlightData => {
   const { startOffset, endOffset } = parserHighlightData.token;
   // get word
   const word = value.slice(startOffset, (endOffset ?? startOffset) + 1);
@@ -56,7 +62,9 @@ export const Editor = ({ value, onChange }: EditorProps) => {
       }
     );
 
-    const processedHighlightData = data.highlight.map((highlight) => translateHighlightData(value, highlight));
+    const processedHighlightData = data.highlight.map((highlight) =>
+      translateHighlightData(value, highlight)
+    );
 
     return [...processedHighlightData, ...errorHighlightData];
   }, [value, data]);
@@ -131,7 +139,7 @@ export const Editor = ({ value, onChange }: EditorProps) => {
             })
           );
           break;
-        case "paramValue":
+        case "paramValue": {
           const paramValues = availableControllerParams[suggestion.key];
           if (!paramValues) {
             continue;
@@ -146,6 +154,7 @@ export const Editor = ({ value, onChange }: EditorProps) => {
             })
           );
           break;
+        }
       }
     }
     return results;

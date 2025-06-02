@@ -66,7 +66,7 @@ const processFunction = (expression: FunctionExpression, context: Context): Fiel
             type: "boolean",
             value: processBooleanFunctionExpression(expression, context),
         }
-    } 
+    }
 
     throw new Error(`Unsupported function: ${expression.functionName}`);
 }
@@ -150,7 +150,7 @@ const processCalcExpressionTail = (left: Field, tail: CalcAction[], context: Con
 
     if (!isNumberField(result)) {
         return undefined;
-    } 
+    }
     result = processNumberCalcExpressionTail(result, tail, context);
 
     return result;
@@ -198,14 +198,14 @@ const processCalcTermTail = (left: Field, tail: CalcTermAction[], context: Conte
 
     if (!isNumberField(result)) {
         return undefined;
-    } 
+    }
     result = processNumberCalcTermTail(result, tail, context);
 
     return result;
 }
 
 const processNumberCalcTermTail = (left: NumberField, tail: CalcTermAction[], context: Context): NumberField => {
-    let result = left;
+    const result = left;
 
     for (const action of tail) {
         const right = processCalcUnit(action.right, context);
@@ -235,7 +235,7 @@ const processCalcUnit = (unit: CalculateUnit, context: Context): Field => {
     switch (unit.value.type) {
         case "calcExpression":
             return processCalcExpression(unit.value, context);
-        default:
+        default: {
             const value = processFactor(unit.value, context);
             if (!value) {
                 return value;
@@ -245,5 +245,6 @@ const processCalcUnit = (unit: CalculateUnit, context: Context): Field => {
                 type: value.type,
                 value: value.value,
             } as Field;
+        }
     }
 }

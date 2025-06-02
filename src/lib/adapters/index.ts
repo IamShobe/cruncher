@@ -20,7 +20,7 @@ type ObjectParam = {
 }
 type ArrayParam = {
     type: "array";
-    defaultValue?: any[];
+    defaultValue?: unknown[];
 }
 type StringParam = {
     type: "string";
@@ -52,7 +52,7 @@ export type Param = {
 )
 
 export type FactoryParams = {
-    params: Record<string, any>;
+    params: Record<string, unknown>;
 }
 
 export interface Adapter {

@@ -266,7 +266,7 @@ const MiniButtons = () => {
     }
 
     return tableView.dataPoints.map((row) => {
-      const result: Record<string, any> = {};
+      const result: Record<string, unknown> = {};
       for (const key in row.object) {
         result[key] = row.object[key]?.value;
       }
@@ -278,6 +278,7 @@ const MiniButtons = () => {
   const getCSVValue = () => {
     const data = dataAsArray();
 
+    // @ts-expect-error - generateCsv expects a config object
     return generateCsv(csvConfig)(data) as unknown as string;
   };
 

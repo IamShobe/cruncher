@@ -311,7 +311,7 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(({ valu
 
 
 const lastIndexOfRegex = (word: string, regex: RegExp): number => {
-  var match = word.search(regex);
+  const match = word.search(regex);
   if (match === -1) return -1;
   
   const nextWord = word.slice(match + 1);

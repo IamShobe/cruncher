@@ -51,7 +51,7 @@ const matchCommand = (pattern: RegExp): CustomPatternMatcherFunc => (text, offse
     return null;
   }
 
-  let lastMatchedToken = matchedTokens[matchedTokens.length - 1];
+  const lastMatchedToken = matchedTokens[matchedTokens.length - 1];
   if (!lastMatchedToken) {
     return null;
   }

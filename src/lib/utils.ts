@@ -13,15 +13,15 @@ export function product<T>(elements: T[][]): T[][] {
 		throw new TypeError();
 	}
 
-	var end = elements.length - 1,
-		result = [];
+	const end = elements.length - 1
+	const result = [];
 
 	function addTo(curr: T[], start: number) {
-		var first = elements[start],
-			last = (start === end);
+		const first = elements[start]
+		const last = (start === end);
 
-		for (var i = 0; i < first.length; ++i) {
-			var copy = curr.slice();
+		for (let i = 0; i < first.length; ++i) {
+			const copy = curr.slice();
 			copy.push(first[i]);
 
 			if (last) {

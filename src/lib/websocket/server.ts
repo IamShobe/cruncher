@@ -1,18 +1,18 @@
 
-import { WebSocketServer } from "ws";
 import SuperJSON from 'superjson';
+import { WebSocketServer } from "ws";
+import { atLeastOneConnectionSignal } from "~lib/utils";
 import { GenericMessageSchema, ResponseHandler, SyncErrorOut, SyncRequestIn, SyncRequestInSchema, SyncResponseOut } from "./types";
-import { atLeastOneConnectionSignal, createSignal } from "~lib/utils";
 
 export type Consumer = {
     type: string;
-    callback: (message: any) => void;
+    callback: (message: unknown) => void;
 }
 
 export type UnsubscribeFunction = () => void;
 
 export type EngineServer = ResponseHandler & {
-    onMessage: (callback: (message: any) => void) => UnsubscribeFunction;
+    onMessage: (callback: (message: unknown) => void) => UnsubscribeFunction;
 }
 
 export const getSyncRequestHandler = <T extends string, P extends object, R extends object>(kind: T, callback: (params: P) => Promise<R>) => {
@@ -51,13 +51,13 @@ export const getSyncRequestHandler = <T extends string, P extends object, R exte
     } as const;
 }
 
-export const getAsyncRequestHandler = (kind: string, callback: (params: any) => Promise<any>) => {
+export const getAsyncRequestHandler = <P extends object>(kind: string, callback: (params: P) => Promise<void>) => {
     return {
         type: "async_request_handler",
         kind,
         _originalCallback: callback,
-        callback: (request: any) => {
-            callback(request).then((result) => { }).catch((error) => { });
+        callback: (request: unknown) => {
+            callback(request as P).then(() => { }).catch(() => { });
         },
     } as const;
 }
@@ -110,7 +110,7 @@ export const getServer = () => {
         })
 
 
-        const sendMessage = async (message: any) => {
+        const sendMessage = async (message: unknown) => {
             const serializedMessage = SuperJSON.stringify(message);
             // wait for at least one connection to be established
             await connectionsSignal.isReady()
@@ -154,7 +154,7 @@ export const getServer = () => {
                 addConsumer: addConsumer,
                 removeConsumer: removeConsumer,
                 sendMessage: sendMessage,
-                onMessage: (callback: (message: any) => void) => {
+                onMessage: (callback: (message: unknown) => void) => {
                     const consumer: Consumer = {
                         type: 'message',
                         callback: callback,

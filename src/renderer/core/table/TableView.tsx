@@ -91,7 +91,7 @@ export const TableView: React.FC<TableViewProps> = ({
           ))}
         </Table.Row>
       )}
-      itemContent={(index, _dataPoint) => (
+      itemContent={(index) => (
         <>
           {preparedData.resultsDataPoints[index].map((value, i) => (
             <Table.Cell

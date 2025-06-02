@@ -1,10 +1,10 @@
+import { Mutex } from 'async-mutex';
+import { QueryOptions, QueryProvider } from "~lib/adapters";
 import { asNumberField, Field, ObjectFields, ProcessedData } from "~lib/adapters/logTypes";
+import { ControllerIndexParam, Search } from "~lib/qql/grammar";
+import { createAuthWindow } from "./auth";
 import { buildQuery, LIMIT } from "./query";
 import { Frame, GrafanaLabelFilter } from "./types";
-import { ControllerIndexParam, Search } from "~lib/qql/grammar";
-import { QueryOptions, QueryProvider } from "~lib/adapters";
-import { createAuthWindow } from "./auth";
-import { Mutex, Semaphore, withTimeout } from 'async-mutex';
 
 // request mutex to prevent multiple requests at the same time
 const mutex = new Mutex();
