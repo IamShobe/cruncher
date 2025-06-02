@@ -1,0 +1,29 @@
+name: Publish Electron App
+on:
+  push:
+    # tags:
+    #   - 'v*.*.*' # Trigger on version tags like v1.0.0
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build and publish Electron app
+        run: pnpm run publish
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Add other environment variables as needed for your publisher (e.g., S3, DigitalOcean, etc.)

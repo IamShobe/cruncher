@@ -2,10 +2,13 @@ import { app, BrowserWindow, ipcMain } from 'electron';
 import log from 'electron-log/main';
 import started from 'electron-squirrel-startup';
 import path from 'node:path';
+import { updateElectronApp } from 'update-electron-app';
 import { createSignal } from '~lib/utils';
 import { getServer, setupEngine } from './lib/websocket/server';
 import { MessageSender, setupPluginsFromConfig } from './plugins_engine/controller';
 import { getRoutes, getMessageSender as getWebsocketMessageSender } from './plugins_engine/websocket';
+
+updateElectronApp();
 
 // Optional, initialize the logger for any renderer process
 log.initialize();
