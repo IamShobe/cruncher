@@ -37,7 +37,6 @@
     "noFallthroughCasesInSwitch": true
   },
   "include": [
-    "src/renderer",
-    "lib",
+    "src/renderer"
   ]
 }
