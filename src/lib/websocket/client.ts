@@ -2,6 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 import SuperJSON from 'superjson';
 import { GenericMessageSchema, SyncRequestIn, SyncResponsesSchema, WebsocketMessageCustomer } from "./types";
 import { measureTime } from '~lib/utils';
+import z from 'zod';
 
 
 export interface WebsocketClientWrapper {
@@ -54,6 +55,10 @@ export const invokeSyncRequest = (consumer: WebsocketClientWrapper, kind: string
 }
 
 
+export type SubscribeOptions<T extends z.ZodTypeAny> = {
+    predicate?: (message: z.infer<T>) => boolean;
+    callback: (message: z.infer<T>) => void;
+}
 
 export const getWebsocketConnection = (url: string) => {
     const ws = new WebSocket(url);
@@ -62,23 +67,25 @@ export const getWebsocketConnection = (url: string) => {
 
     ws.addEventListener('message', (event) => {
         try {
-            const parsedMessage = measureTime("WebSocket message parsing", () => {
+            const parsedRawMessage = measureTime("WebSocket message parsing", () => {
                 return SuperJSON.parse(event.data);
             });
-            if (!parsedMessage) {
+            if (!parsedRawMessage) {
                 console.warn('Received empty or invalid message:', event.data);
                 return;
             }
 
             // Check if the message is GenericMessageSchema compliant
-            GenericMessageSchema.parse(parsedMessage);
+            GenericMessageSchema.parse(parsedRawMessage);
 
-            // Notify all consumers about the received message
-            consumers.forEach(consumer => {
-                if (consumer.shouldMatch(parsedMessage)) {
-                    consumer.callback(parsedMessage);
-                }
-            });
+            measureTime("WebSocket message processing", () => {
+                // Notify all consumers about the received message
+                consumers.forEach(consumer => {
+                    if (consumer.shouldMatch(parsedRawMessage)) {
+                        consumer.callback(parsedRawMessage);
+                    }
+                });
+            })
         } catch (error) {
             console.error('Error parsing message:', error);
         }
@@ -109,12 +116,43 @@ export const getWebsocketConnection = (url: string) => {
         };
     }
 
+    const subscribeMessage = <T extends z.ZodTypeAny>(schema: T, options: SubscribeOptions<T>) => {
+        const cache = new Map<string, any>();
+        const consumer: WebsocketMessageCustomer = {
+            shouldMatch: (message: any) => {
+                const payload = schema.safeParse(message)
+                if (!payload.success) {
+                    return false;
+                }
+
+                const predicate = options.predicate ?? (() => true);
+
+                const matches = predicate(payload.data);
+                if (!matches) {
+                    return false;
+                }
+
+                cache.set("payload", payload.data);
+                return true;
+            },
+            callback: () => {
+                const parsedMessage = cache.get("payload") as z.infer<T>;
+                options.callback(parsedMessage);
+            },
+        };
+        addConsumer(consumer);
+
+        return () => {
+            removeConsumer(consumer);
+        };
+    }
+
     return {
         sendMessage: (message: any) => {
             const serializedMessage = SuperJSON.stringify(message);
             ws.send(serializedMessage);
         },
-        subscribe: subscribe,
+        subscribe: subscribeMessage,
         once: (consumer: WebsocketMessageCustomer) => {
             const originalCallback = consumer.callback;
             consumer.callback = (message: any) => {

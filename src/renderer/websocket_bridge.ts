@@ -46,50 +46,43 @@ const setup = async () => {
         websocketReadySignal.signal();
     })
 
-    const unsub = ws.subscribe(
-        (message: any) => {
-            const parseResponse = UrlNavigationSchema.safeParse(message);
-            if (!parseResponse.success) {
-                return false; // Ignore messages that are not query job updates
+    const unsub = ws.subscribe(UrlNavigationSchema,
+        {
+            callback: (urlNavigationMessage) => {
+                console.log("URL Navigation message received:", urlNavigationMessage);
+
+                const parsedUrl = new URL(urlNavigationMessage.payload.url);
+
+                const startFullDate = parsedUrl.searchParams.get("startTime");
+                const endFullDate = parsedUrl.searchParams.get("endTime");
+                const searchQuery = parsedUrl.searchParams.get("searchQuery");
+                const initialStartTime = parseDate(startFullDate);
+                const initialEndTime = parseDate(endFullDate);
+                const initialQuery = searchQuery || "";
+                console.log("Parsed URL parameters:", {
+                    startFullDate: initialStartTime,
+                    endFullDate: initialEndTime,
+                    searchQuery: initialQuery,
+                });
+
+                if (initialStartTime) {
+                    store.set(startFullDateAtom, initialStartTime);
+                }
+                if (initialEndTime) {
+                    store.set(endFullDateAtom, initialEndTime);
+                }
+                store.set(searchQueryAtom, initialQuery);
+
+                runQuery(
+                    {
+                        searchTerm: store.get(searchQueryAtom),
+                        fromTime: store.get(startFullDateAtom),
+                        toTime: store.get(endFullDateAtom),
+                    },
+                    true
+                );
             }
-            return true; // Process this message
-        },
-        (message: any) => {
-            const urlNavigationMessage = UrlNavigationSchema.parse(message);
-            console.log("URL Navigation message received:", urlNavigationMessage);
-
-            const parsedUrl = new URL(urlNavigationMessage.payload.url);
-
-            const startFullDate = parsedUrl.searchParams.get("startTime");
-            const endFullDate = parsedUrl.searchParams.get("endTime");
-            const searchQuery = parsedUrl.searchParams.get("searchQuery");
-            const initialStartTime = parseDate(startFullDate);
-            const initialEndTime = parseDate(endFullDate);
-            const initialQuery = searchQuery || "";
-            console.log("Parsed URL parameters:", {
-                startFullDate: initialStartTime,
-                endFullDate: initialEndTime,
-                searchQuery: initialQuery,
-            });
-
-            if (initialStartTime) {
-                store.set(startFullDateAtom, initialStartTime);
-            }
-            if (initialEndTime) {
-                store.set(endFullDateAtom, initialEndTime);
-            }
-            store.set(searchQueryAtom, initialQuery);
-
-            runQuery(
-                {
-                    searchTerm: store.get(searchQueryAtom),
-                    fromTime: store.get(startFullDateAtom),
-                    toTime: store.get(endFullDateAtom),
-                },
-                true
-            );
-        }
-    )
+        })
 
     ws.onClose(() => {
         console.warn("WebSocket connection closed. Reconnecting...");
@@ -139,21 +132,12 @@ export const WEBSOCKET_BRIDGE: QueryProvider = {
         });
         console.log("Query job started:", job);
 
-        const unsubscribeBatchHandler = ws.subscribe(
-            (message: any) => {
-                const parseResponse = QueryBatchDoneSchema.safeParse(message);
-                if (!parseResponse.success) {
-                    return false; // Ignore messages that are not query batch done
+        const unsubscribeBatchHandler = ws.subscribe(QueryBatchDoneSchema,
+            {
+                predicate: (batchMessage) => batchMessage.payload.jobId === job.id,
+                callback: (batchMessage) => {
+                    queryOptions.onBatchDone(batchMessage.payload.data);
                 }
-                if (parseResponse.data.payload.jobId !== job.id) {
-                    return false; // Ignore messages for other jobs
-                }
-
-                return true;
-            },
-            (message: any) => {
-                const batchMessage = QueryBatchDoneSchema.parse(message);
-                queryOptions.onBatchDone(batchMessage.payload.data);
             }
         )
 
@@ -174,31 +158,22 @@ export const WEBSOCKET_BRIDGE: QueryProvider = {
                 throw new Error("WebSocket connection is not established. Please wait for the WebSocket to be ready.");
             }
 
-            const unsubscribeJobUpdateHandler = ws.subscribe(
-                (message: any) => {
-                    const parseResponse = QueryJobUpdatedSchema.safeParse(message);
-                    if (!parseResponse.success) {
-                        return false; // Ignore messages that are not query batch done
+            const unsubscribeJobUpdateHandler = ws.subscribe(QueryJobUpdatedSchema,
+                {
+                    predicate: (jobUpdateMessage) => jobUpdateMessage.payload.jobId === job.id,
+                    callback: (jobUpdateMessage) => {
+                        const jobUpdate = jobUpdateMessage.payload;
+                        if (jobUpdate.status === "completed") {
+                            console.log(`Job ${jobUpdate.jobId} completed`);
+                            resolve();
+                        } else {
+                            console.log(`Job ${jobUpdate.jobId} updated: ${jobUpdate.status}`);
+                            // You can handle other statuses if needed
+                            reject(new Error(`Query job ${jobUpdate.jobId} failed with status: ${jobUpdate.status}`));
+                        }
+                        unsubscribeBatchHandler();
+                        unsubscribeJobUpdateHandler();
                     }
-                    if (parseResponse.data.payload.jobId !== job.id) {
-                        return false; // Ignore messages for other jobs
-                    }
-
-                    return true;
-                },
-                (message: any) => {
-                    const jobUpdateMessage = QueryJobUpdatedSchema.parse(message);
-                    const jobUpdate = jobUpdateMessage.payload;
-                    if (jobUpdate.status === "completed") {
-                        console.log(`Job ${jobUpdate.jobId} completed`);
-                        resolve();
-                    } else {
-                        console.log(`Job ${jobUpdate.jobId} updated: ${jobUpdate.status}`);
-                        // You can handle other statuses if needed
-                        reject(new Error(`Query job ${jobUpdate.jobId} failed with status: ${jobUpdate.status}`));
-                    }
-                    unsubscribeBatchHandler();
-                    unsubscribeJobUpdateHandler();
                 }
             );
         });

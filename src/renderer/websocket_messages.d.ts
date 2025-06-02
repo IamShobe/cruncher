@@ -1,7 +1,6 @@
 import { getRoutes } from "src/plugins_engine/websocket";
 type Routes = ReturnType<typeof getRoutes>;
-type UnwrapPromise<T> = T extends Promise<infer R> ? R : T;
-export type WebSocketBridge = UnwrapPromise<Routes>[number];
+export type WebSocketBridge = Awaited<Routes>[number];
 
 export type WebSocketBridgeSyncRequest = Extract<WebSocketBridge, { type: "sync_request_handler" }>;
 export type WebSocketBridgeAsyncRequest = Extract<WebSocketBridge, { type: "async_request_handler" }>;
