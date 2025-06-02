@@ -4,6 +4,11 @@ import { Frame, GrafanaLabelFilter } from "./types";
 import { ControllerIndexParam, Search } from "~lib/qql/grammar";
 import { QueryOptions, QueryProvider } from "~lib/adapters";
 import { createAuthWindow } from "./auth";
+import { Mutex, Semaphore, withTimeout } from 'async-mutex';
+
+// request mutex to prevent multiple requests at the same time
+const mutex = new Mutex();
+
 
 const processField = (field: unknown): Field => {
     if (typeof field === "number") {
@@ -117,10 +122,20 @@ export class GrafanaController implements QueryProvider {
         private filterExtensions?: string[],
     ) { }
 
-    private _fetchWrapper = async (url: string, options: RequestInitModified = {}, retryAmount: number = 0): ReturnType<typeof fetch> => {    
+    private _fetchWrapper = async (url: string, options: RequestInitModified = {}, retryAmount: number = 0): ReturnType<typeof fetch> => {
         if (retryAmount > 2) {
             throw new Error("Failed to authenticate after multiple attempts");
         }
+
+        await mutex.runExclusive(async () => {
+            // check if we dont have cookies or they are expired
+            if (!this.cookies || this.cookies.expiryTime < new Date()) {
+                console.warn("Session expired, re-authenticating...");
+
+                // re-authenticate
+                this.cookies = await createAuthWindow(this.url);
+            }
+        });
 
         const headers = options.headers || {};
         const existingCookie = headers["Cookie"] || "";
@@ -135,18 +150,14 @@ export class GrafanaController implements QueryProvider {
             options.headers = headers;
         }
 
-
-        const response = await fetch(url, options);
-        // check if response is 401
+        const response = await fetch(url, options)
         if (response.status === 401) {
-            // try to authenticate
-            this.cookies =  await createAuthWindow(this.url);
-
+            console.warn("Authentication failed, trying to re-authenticate...");
             // retry the request once authenticated
             return this._fetchWrapper(url, options, retryAmount + 1);
         }
 
-        return response
+        return response;
     }
 
     private _doQuery = async (controllerParams: ControllerIndexParam[], searchTerm: Search, options: QueryOptions) => {
@@ -232,6 +243,6 @@ export class GrafanaController implements QueryProvider {
     }
 
     getControllerParams(): Promise<Record<string, string[]>> {
-        return this._getControllerParams(); 
+        return this._getControllerParams();
     }
 }

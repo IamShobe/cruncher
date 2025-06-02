@@ -46,7 +46,7 @@ const setup = async () => {
         websocketReadySignal.signal();
     })
 
-    ws.subscribe(
+    const unsub = ws.subscribe(
         (message: any) => {
             const parseResponse = UrlNavigationSchema.safeParse(message);
             if (!parseResponse.success) {
@@ -90,6 +90,15 @@ const setup = async () => {
             );
         }
     )
+
+    ws.onClose(() => {
+        console.warn("WebSocket connection closed. Reconnecting...");
+        ws = undefined;
+        selectedPlugin = undefined;
+        websocketReadySignal.reset();
+        unsub(); // Unsubscribe from the previous subscription
+        setup(); // Reinitialize the WebSocket connection
+    })
 }
 setup()
 
@@ -98,6 +107,9 @@ export const WEBSOCKET_BRIDGE: QueryProvider = {
         return await websocketReadySignal.wait();
     },
     getControllerParams: async () => {
+        await websocketReadySignal.wait({
+            timeout: 5000, // Wait for up to 5 seconds for the WebSocket to be ready
+        });
         if (!selectedPlugin) {
             throw new Error("No plugin selected. Please ensure that at least one plugin is initialized.");
         }
@@ -105,6 +117,9 @@ export const WEBSOCKET_BRIDGE: QueryProvider = {
         return await invokeSyncRequestTyped(ws, "getControllerParams", { instanceId: selectedPlugin.id });
     },
     query: async (params, searchTerm, queryOptions) => {
+        await websocketReadySignal.wait({
+            timeout: 5000, // Wait for up to 5 seconds for the WebSocket to be ready
+        });
         if (!ws) {
             throw new Error("WebSocket connection is not established. Please wait for the WebSocket to be ready.");
         }

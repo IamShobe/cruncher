@@ -50,11 +50,26 @@ export const createSignal = () => {
 		});
 	}
 
+	const wait = (opts: {timeout?: number} = {}) => {
+		if (opts.timeout) {
+			return new Promise<void>((res, rej) => {
+				const timer = setTimeout(() => {
+					rej(new Error("Signal wait timed out"));
+				}, opts.timeout);
+				promise.then(() => {
+					clearTimeout(timer);
+					res();
+				});
+			});
+		}
+		return promise;
+	}
+
 	reset();  // Initialize the promise
 
 	return {
 		reset: reset,  // Reset the signal to a new promise
-		wait: () => promise,  // Await this to wait for the signal
+		wait: wait,  // Await this to wait for the signal
 		signal: () => resolve(),  // Call this to resolve the signal
 	};
 }

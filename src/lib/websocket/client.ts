@@ -132,5 +132,8 @@ export const getWebsocketConnection = (url: string) => {
         onReady: (callback: () => void) => {
             ws.addEventListener('open', callback);
         },
+        onClose: (callback: () => void) => {
+            ws.addEventListener('close', callback);
+        },
     };
 }
