@@ -35,7 +35,8 @@ const adapter: Adapter = {
         if (!grafanaUrl || !uid) {
             throw new Error("Grafana URL and UID are required parameters.");
         }
-        return new GrafanaController(grafanaUrl, uid, filter, querySuffix);
+
+        return new GrafanaController(grafanaUrl as string, uid as string, filter as any, querySuffix as any);
     },
 }
 

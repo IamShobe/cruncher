@@ -39,6 +39,10 @@ for (let i = 2; i <= 100000; i++) {
 }
 
 const processField = (field: unknown): Field => {
+    if (field === null || field === undefined) {
+        return null;
+    }
+
     if (typeof field === "number") {
         return {
             type: "number",
@@ -70,20 +74,22 @@ const processField = (field: unknown): Field => {
             type: "object",
             value: objectFields,
         };
-    }
+    } else if (typeof field === "string") {
+        // try to parse as number
+        if (/^\d+(?:\.\d+)?$/.test(field)) {
+            return {
+                type: "number",
+                value: parseFloat(field),
+            };
+        }
 
-    // try to parse as number
-    if (/^\d+(?:\.\d+)?$/.test(field)) {
         return {
-            type: "number",
-            value: parseFloat(field),
+            type: "string",
+            value: field,
         };
     }
 
-    return {
-        type: "string",
-        value: field,
-    };
+    throw new Error(`Unsupported field type: ${typeof field}`);
 }
 
 type SearchCallback = (item: string) => boolean;
@@ -94,7 +100,7 @@ const buildSearchAndCallback = (leftCallback: SearchCallback, search: SearchAND)
         if (!leftRes) {
             return false;
         }
-        
+
         const rightRes = buildSearchCallback(search.right)(item);
 
         return rightRes;
@@ -107,7 +113,7 @@ const buildSearchOrCallback = (leftCallback: SearchCallback, search: SearchOR) =
         if (leftRes) {
             return true;
         }
-        
+
         const rightRes = buildSearchCallback(search.right)(item);
 
         return rightRes;
@@ -153,7 +159,7 @@ const buildSearchCallback = (searchTerm: Search) => {
     }
 
     return rightCallback;
-} 
+}
 
 // Used for testing purposes
 export const MockController = {
@@ -161,7 +167,7 @@ export const MockController = {
         if (contollerParams.length > 0) {
             throw new Error("Controller params not supported");
         }
-        
+
         const searchCallback = buildSearchCallback(searchTerm);
         return new Promise((resolve, reject) => {
             // filter using the search term
