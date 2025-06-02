@@ -1,5 +1,5 @@
 import { ControllerIndexParam, Search } from "~lib/qql/grammar";
-import { ProcessedData } from "../../../lib/adapters/logTypes";
+import { ProcessedData } from "~lib/adapters/logTypes";
 
 export type QueryOptions = {
     fromTime: Date,
