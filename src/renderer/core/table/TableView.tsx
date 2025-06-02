@@ -55,7 +55,6 @@ export const TableView: React.FC<TableViewProps> = ({
       data={dataPoints}
       components={{
         Scroller: React.forwardRef((props, ref) => (
-          // @ts-expect-error - ref issue..
           <Table.ScrollArea ref={ref} {...props} />
         )),
         Table: (props) => (

@@ -46,7 +46,7 @@ export const invokeSyncRequest = (consumer: WebsocketClientWrapper, kind: string
                 reject(new Error(response.payload.error));
             }
         };
-        const callback = (event: MessageEvent) => handleResponse(event);
+        const callback = (event: unknown) => handleResponse(event);
         consumer.once({
             shouldMatch: (message: unknown) => {
                 const parsed = SyncResponsesSchema.safeParse(message)
