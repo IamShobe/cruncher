@@ -8,7 +8,7 @@ import { SearcherWrapper } from "./SearcherWrapper";
 import { useControllerInitializer } from "./search";
 import { Box, ProgressCircle } from "@chakra-ui/react";
 import { useApplicationStore } from "./store/store";
-import { WebsocketProvider } from "./websocket_bridge";
+import { ApplicationProvider } from "./websocket_bridge";
 import { Shortcuts } from "./Shortcuts";
 import { globalShortcuts, useShortcuts } from "./keymaps";
 
@@ -75,13 +75,13 @@ const MainContentInner = () => {
 
 const MainContent = () => {
   return (
-    <WebsocketProvider>
+    <ApplicationProvider>
       <Provider>
         <JotaiProvider>
           <MainContentInner />
         </JotaiProvider>
       </Provider>
-    </WebsocketProvider>
+    </ApplicationProvider>
   );
 };
 

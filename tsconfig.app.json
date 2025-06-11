@@ -38,5 +38,5 @@
   },
   "include": [
     "src/renderer/**/*"
-  ]
+, "src/lib/stream_messages.d.ts"  ]
 }

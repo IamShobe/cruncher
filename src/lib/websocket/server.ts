@@ -1,7 +1,7 @@
 
 import { WebSocketServer } from "ws";
 import { atLeastOneConnectionSignal } from "~lib/utils";
-import { GenericMessageSchema, ResponseHandler, SyncErrorOut, SyncRequestIn, SyncRequestInSchema, SyncResponseOut } from "./types";
+import { GenericMessageSchema, ResponseHandler, SyncErrorOut, SyncRequestIn, SyncRequestInSchema, SyncResponseOut,  } from "~lib/networkTypes";
 import {pack, unpack} from 'msgpackr';
 
 export type Consumer = {

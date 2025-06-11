@@ -9,7 +9,6 @@ import { dateAsString, DateType, FullDate, isTimeNow } from "~lib/dateUtils";
 import { getPipelineItems } from "~lib/pipelineEngine/root";
 import { parse, PipelineItem } from "~lib/qql";
 import { ControllerIndexParam, Search } from "~lib/qql/grammar";
-import { SubscribeOptions } from "~lib/websocket/client";
 import { asDateField, compareProcessedData, ProcessedData } from "../../lib/adapters/logTypes";
 import { QueryProvider } from "./common/interface";
 import { openIndexesAtom } from "./events/state";
@@ -17,6 +16,7 @@ import { notifyError, notifySuccess } from "./notifyError";
 import { actualEndTimeAtom, actualStartTimeAtom, compareFullDates, endFullDateAtom, startFullDateAtom } from "./store/dateState";
 import { dataViewModelAtom, indexAtom, originalDataAtom, searchQueryAtom, useQuerySpecificStoreInternal, viewSelectedForQueryAtom } from "./store/queryState";
 import { QueryState, useApplicationStore } from "./store/store";
+import { SubscribeOptions } from "~lib/network";
 
 export type FormValues = {
     searchTerm: string;
@@ -89,7 +89,7 @@ export const useControllerInitializer = () => {
     const setControllerParams = useApplicationStore((state) => state.setControllerParams);
     useAsync(async () => {
         console.log("waiting for controller to be ready...");
-        await controller.waitForReady?.();
+        await controller.waitForReady();
         setIsInitialized(true);
         const params = await controller.getControllerParams();
         setControllerParams(params);

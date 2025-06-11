@@ -4,7 +4,6 @@ import styled from "@emotion/styled";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useEffect, useState } from "react";
 import { LuChartArea, LuLogs, LuTable } from "react-icons/lu";
-import { FullDate } from "~lib/dateUtils";
 import { isDateSelectorOpenAtom } from "./DateSelector";
 import { queryEditorAtom } from "./Editor";
 import DataLog from "./events/DataLog";

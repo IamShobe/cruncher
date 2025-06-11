@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import { supportedPlugins } from "./supported_plugins"
-import { PluginInstance, QueryTask, SerializeableParams } from "./types";
+import { PluginInstance, QueryTask, SerializeableParams, SupportedPlugin } from "./types";
 import { QueryProvider } from "~lib/adapters";
 import fs from "node:fs";
 import YAML from 'yaml'
@@ -60,7 +60,7 @@ export const controller = {
         });
         return pluginInstance;
     },
-    getSupportedPlugins: () => {
+    getSupportedPlugins: (): SupportedPlugin[] => {
         return supportedPlugins.map((plugin) => {
             return {
                 ref: plugin.ref,

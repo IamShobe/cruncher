@@ -1,7 +1,7 @@
 import { ControllerIndexParam, Search } from "~lib/qql/grammar";
 import { measureTime } from "~lib/utils";
 import { getAsyncRequestHandler, getSyncRequestHandler } from "~lib/websocket/server";
-import { ResponseHandler } from "~lib/websocket/types";
+import { ResponseHandler } from "~lib/networkTypes";
 import { MessageSender } from "./controller";
 import { QueryBatchDone, QueryJobUpdated, UrlNavigation } from "./protocol_out";
 import { SerializeableParams } from "./types";
