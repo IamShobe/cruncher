@@ -1,17 +1,32 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useAsync } from "react-use";
-import {
-  QueryBatchDoneSchema,
-  QueryJobUpdatedSchema,
-} from "src/plugins_engine/protocol_out";
 import z from "zod";
-import { QueryProvider } from "~core/common/interface";
 import { notifyError } from "~core/notifyError";
 import { StreamConnection, SubscribeOptions } from "~lib/network";
 import { createSignal } from "~lib/utils";
 import { WebsocketStreamConnection } from "~lib/websocket/client";
 import { ControllerProviderContext } from "./search";
 import { StreamQueryProviderBuilder } from "./StreamQueryProviderBuilder";
+import { QueryOptions, QueryProvider } from "./common/interface";
+import { ControllerIndexParam, Search } from "~lib/qql/grammar";
+
+class DefaultQueryProvider implements QueryProvider {
+  waitForReady(): Promise<void> {
+    return Promise.resolve();
+  }
+  getControllerParams(): Promise<Record<string, string[]>> {
+    throw new Error("No query provider available - please configure ~/.config/cruncher/cruncher.config.yaml");
+  }
+  query(
+    params: ControllerIndexParam[],
+    searchTerm: Search,
+    queryOptions: QueryOptions
+  ): Promise<void> {
+    throw new Error("No query provider available - please configure ~/.config/cruncher/cruncher.config.yaml");
+  }
+}
+
+const DEFAULT_QUERY_PROVIDER = new DefaultQueryProvider();
 
 export const ApplicationProvider: React.FC<{
   children: React.ReactNode;
@@ -22,7 +37,8 @@ export const ApplicationProvider: React.FC<{
   }, []);
 
   const [streamConnection, setStreamConnection] = useState<StreamConnection>();
-  const [queryProviderBuilder, setQueryProviderBuilder] = useState<StreamQueryProviderBuilder>();
+  const [queryProviderBuilder, setQueryProviderBuilder] =
+    useState<StreamQueryProviderBuilder>();
 
   useEffect(() => {
     if (getPort.loading || !getPort.value) {
@@ -113,7 +129,7 @@ export const ApplicationProvider: React.FC<{
   return (
     <ControllerProviderContext.Provider
       value={{
-        provider: queryProvider,
+        provider: queryProviderBuilder?.initializedControllers?.[0]?.provider ?? DEFAULT_QUERY_PROVIDER,
         subscribeToMessages: subscribeToMessages,
       }}
     >

@@ -285,6 +285,7 @@ export const runQueryForStore = async (controller: QueryProvider, store: ReturnT
                     console.log("using cached data");
                     const originalData = store.get(originalDataAtom);
                     startProcessingData(originalData, parsedTree.pipeline, fromTime, toTime);
+                    notifySuccess("Pipeline re-evaluated successfully");
                 } else {
                     // new search initiated - we can reset
                     resetBeforeNewBackendQuery();
@@ -316,6 +317,7 @@ export const runQueryForStore = async (controller: QueryProvider, store: ReturnT
                         });
 
                         store.set(isQuerySuccessAtom, true);
+                        notifySuccess("Query executed successfully");
                     } catch (error) {
                         store.set(isQuerySuccessAtom, false);
                         console.log(error);
@@ -327,7 +329,6 @@ export const runQueryForStore = async (controller: QueryProvider, store: ReturnT
                         throw error;
                     }
                 }
-                notifySuccess("Query executed successfully");
             } finally {
                 store.set(isLoadingAtom, false);
                 store.set(queryEndTimeAtom, new Date());

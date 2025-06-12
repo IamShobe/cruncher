@@ -8,7 +8,7 @@ import { SearcherWrapper } from "./SearcherWrapper";
 import { useControllerInitializer } from "./search";
 import { Box, ProgressCircle } from "@chakra-ui/react";
 import { useApplicationStore } from "./store/store";
-import { ApplicationProvider } from "./websocket_bridge";
+import { ApplicationProvider } from "./ApplicationProvider";
 import { Shortcuts } from "./Shortcuts";
 import { globalShortcuts, useShortcuts } from "./keymaps";
 

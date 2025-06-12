@@ -4,7 +4,7 @@ import { createRoot } from "react-dom/client";
 import MainContent from "~core/MainContent";
 
 import "./index.css";
-import "./core/websocket_bridge";
+import "./core/ApplicationProvider";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
