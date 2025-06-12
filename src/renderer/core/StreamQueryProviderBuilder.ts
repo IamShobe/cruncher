@@ -1,8 +1,9 @@
 import { QueryBatchDoneSchema, QueryJobUpdatedSchema } from "src/plugins_engine/protocol_out";
-import { PluginInstance, SupportedPlugin } from "src/plugins_engine/types";
+import { PluginInstance } from "src/plugins_engine/types";
 import { StreamConnection, UnsubscribeFunction } from "~lib/network";
 import { ControllerIndexParam, Search } from "~lib/qql/grammar";
 import { QueryOptions, QueryProvider } from "./common/interface";
+import { useApplicationStore } from "./store/store";
 
 type QueryProviderHolder = {
     instance: PluginInstance;
@@ -10,17 +11,20 @@ type QueryProviderHolder = {
 }
 
 export class StreamQueryProviderBuilder {
-    private supportedPlugins: SupportedPlugin[] = [];
-    public initializedControllers: QueryProviderHolder[] = [];
-
+    public initializedControllers: Record<string, QueryProviderHolder> = {};
 
     constructor(private connection: StreamConnection) {
     }
 
     initialize = async () => {
-        this.initializedControllers = [];
-        this.supportedPlugins = await this.listPlugins();
+        const state = useApplicationStore.getState();
+        state.setIsInitialized(false);
+        state.setSupportedPlugins(await this.listPlugins());
+        state.setInitializedInstances(await this.listInitializedPlugins());
+        // state.setIsInitialized(true);
+
         const initializedPlugins = await this.listInitializedPlugins();
+        state.setInitializedInstances(initializedPlugins);
         for (const pluginInstance of initializedPlugins) {
             this.createProvider(pluginInstance);
         }
@@ -34,12 +38,13 @@ export class StreamQueryProviderBuilder {
         return await this.connection.invoke("getInitializedPlugins", {});
     }
 
-    createProvider(plugin: PluginInstance): Promise<QueryProvider> {
+    createProvider(plugin: PluginInstance): QueryProviderHolder {
         // Here you would create and return an instance of a QueryProvider
         // based on the plugin. This is a placeholder implementation.
         const provider = new PluginInstanceQueryProvider(plugin, this.connection);
-        this.initializedControllers.push({ instance: plugin, provider });
-        return Promise.resolve(provider);
+        const holder = { instance: plugin, provider };
+        this.initializedControllers[plugin.id] = holder;
+        return holder;
     }
 }
 

@@ -1,8 +1,9 @@
-import { atom, createStore } from 'jotai'
-import { searchQueryAtom } from './queryState';
-import { endFullDateAtom, startFullDateAtom } from './dateState';
+import { atom } from 'jotai';
+import { create } from 'zustand';
 import { FullDate } from '~lib/dateUtils';
-import { create } from 'zustand'
+import { endFullDateAtom, startFullDateAtom } from './dateState';
+import { searchQueryAtom } from './queryState';
+import { PluginInstance, SupportedPlugin } from 'src/plugins_engine/types';
 
 export type QueryState = {
     searchQuery: string;
@@ -22,14 +23,18 @@ export const queryStateAtom = atom<QueryState>((get) => {
     };
 });
 
-export const store: ReturnType<typeof createStore> = createStore();
-
 export type ApplicationStore = {
     isInitialized: boolean;
     setIsInitialized: (isInitialized: boolean) => void;
 
     controllerParams: Record<string, string[]>;
     setControllerParams: (params: Record<string, string[]>) => void;
+
+    supportedPlugins: SupportedPlugin[];
+    setSupportedPlugins: (plugins: SupportedPlugin[]) => void;
+
+    initializedInstances: PluginInstance[];
+    setInitializedInstances: (instances: PluginInstance[]) => void;
 }
 
 export const useApplicationStore = create<ApplicationStore>((set) => ({
@@ -38,4 +43,10 @@ export const useApplicationStore = create<ApplicationStore>((set) => ({
 
     controllerParams: {},
     setControllerParams: (params: Record<string, string[]>) => set({ controllerParams: params }),
+
+    supportedPlugins: [],
+    setSupportedPlugins: (plugins: SupportedPlugin[]) => set({ supportedPlugins: plugins }),
+
+    initializedInstances: [],
+    setInitializedInstances: (instances: PluginInstance[]) => set({ initializedInstances: instances }),
 }));

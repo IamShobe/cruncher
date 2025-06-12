@@ -9,7 +9,7 @@ import { Tooltip } from "~components/ui/tooltip";
 import { parseDate } from "~lib/dateUtils";
 import { Searcher } from "./Searcher";
 import { searcherGlobalShortcuts, useShortcuts } from "./keymaps";
-import { runQueryForStore, useController, useMessageEvent } from "./search";
+import { runQueryForStore, useMessageEvent, useQueryProvider } from "./search";
 import { endFullDateAtom, startFullDateAtom } from "./store/dateState";
 import { QuerySpecificContext, searchQueryAtom } from "./store/queryState";
 
@@ -96,7 +96,7 @@ export const useTabs = () => {
 export const SearcherWrapper = () => {
   // TODO: Implement tab selection logic
   const { tabs, addTab, removeTab, selectedTab, setSelectedTab } = useTabs();
-  const controller = useController();
+  const controller = useQueryProvider();
 
   useMessageEvent(UrlNavigationSchema, {
     callback: async (urlNavigationMessage) => {

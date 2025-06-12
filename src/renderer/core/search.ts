@@ -17,6 +17,8 @@ import { actualEndTimeAtom, actualStartTimeAtom, compareFullDates, endFullDateAt
 import { dataViewModelAtom, indexAtom, originalDataAtom, searchQueryAtom, useQuerySpecificStoreInternal, viewSelectedForQueryAtom } from "./store/queryState";
 import { QueryState, useApplicationStore } from "./store/store";
 import { SubscribeOptions } from "~lib/network";
+import { StreamQueryProviderBuilder } from "./StreamQueryProviderBuilder";
+import { DEFAULT_QUERY_PROVIDER } from "./DefaultQueryProvider";
 
 export type FormValues = {
     searchTerm: string;
@@ -45,7 +47,7 @@ export const queryEndTimeAtom = atom<Date | undefined>(undefined);
 export const isQuerySuccessAtom = atom(true);
 
 export type ControllerProviderContextType = {
-    provider: QueryProvider | undefined;
+    builder: StreamQueryProviderBuilder | undefined;
     subscribeToMessages: <T extends z.ZodTypeAny>(schema: T, options: SubscribeOptions<T>) => () => void;
 }
 export const ControllerProviderContext = React.createContext<ControllerProviderContextType | undefined>(undefined);
@@ -55,11 +57,14 @@ export const useQueryProvider = () => {
     if (context === undefined) {
         throw new Error("useQueryProvider must be used within a ControllerProvider");
     }
-    if (context.provider === undefined) {
-        throw new Error("Query provider is not set. Please ensure the provider is initialized.");
+    if (context.builder === undefined) {
+        throw new Error("Builder is not set. Please ensure the provider is initialized.");
     }
 
-    return context.provider;
+    // TODO: this needs to be selectable!
+    const instanceId = useApplicationStore((state) => state.initializedInstances?.[0]?.id);
+
+    return context.builder?.initializedControllers[instanceId]?.provider ?? DEFAULT_QUERY_PROVIDER;
 }
 
 export const useMessageEvent = <T extends z.ZodTypeAny>(schema: T, options: SubscribeOptions<T>) => {
@@ -79,12 +84,8 @@ export const useMessageEvent = <T extends z.ZodTypeAny>(schema: T, options: Subs
     }, [context, schema, options]);
 }
 
-export const useController = () => {
-    return useQueryProvider();
-}
-
 export const useControllerInitializer = () => {
-    const controller = useController();
+    const controller = useQueryProvider();
     const setIsInitialized = useApplicationStore((state) => state.setIsInitialized);
     const setControllerParams = useApplicationStore((state) => state.setControllerParams);
     useAsync(async () => {
@@ -187,7 +188,7 @@ export const getShareLink = (queryState: QueryState) => {
 // }
 
 export const useRunQuery = () => {
-    const controller = useController();
+    const controller = useQueryProvider();
     const store = useQuerySpecificStoreInternal();
 
     return React.useCallback((isForced: boolean) => {

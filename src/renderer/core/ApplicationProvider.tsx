@@ -7,26 +7,7 @@ import { createSignal } from "~lib/utils";
 import { WebsocketStreamConnection } from "~lib/websocket/client";
 import { ControllerProviderContext } from "./search";
 import { StreamQueryProviderBuilder } from "./StreamQueryProviderBuilder";
-import { QueryOptions, QueryProvider } from "./common/interface";
-import { ControllerIndexParam, Search } from "~lib/qql/grammar";
 
-class DefaultQueryProvider implements QueryProvider {
-  waitForReady(): Promise<void> {
-    return Promise.resolve();
-  }
-  getControllerParams(): Promise<Record<string, string[]>> {
-    throw new Error("No query provider available - please configure ~/.config/cruncher/cruncher.config.yaml");
-  }
-  query(
-    params: ControllerIndexParam[],
-    searchTerm: Search,
-    queryOptions: QueryOptions
-  ): Promise<void> {
-    throw new Error("No query provider available - please configure ~/.config/cruncher/cruncher.config.yaml");
-  }
-}
-
-const DEFAULT_QUERY_PROVIDER = new DefaultQueryProvider();
 
 export const ApplicationProvider: React.FC<{
   children: React.ReactNode;
@@ -72,7 +53,7 @@ export const ApplicationProvider: React.FC<{
         console.log("Stream server connection established");
         await queryProviderBuilder.initialize();
 
-        if (queryProviderBuilder.initializedControllers.length === 0) {
+        if (Object.values(queryProviderBuilder.initializedControllers).length === 0) {
           console.warn(
             "No plugins initialized, initializing default plugin..."
           );
@@ -129,7 +110,7 @@ export const ApplicationProvider: React.FC<{
   return (
     <ControllerProviderContext.Provider
       value={{
-        provider: queryProviderBuilder?.initializedControllers?.[0]?.provider ?? DEFAULT_QUERY_PROVIDER,
+        builder: queryProviderBuilder,
         subscribeToMessages: subscribeToMessages,
       }}
     >
