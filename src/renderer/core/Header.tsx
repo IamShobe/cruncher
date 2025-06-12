@@ -9,7 +9,10 @@ import {
   Float,
   IconButton,
   MenuSeparator,
+  Select,
+  Spinner,
   Stack,
+  createListCollection,
 } from "@chakra-ui/react";
 import { css } from "@emotion/react";
 import { generateCsv, mkConfig } from "export-to-csv";
@@ -53,6 +56,7 @@ import {
 } from "./search";
 import { endFullDateAtom, startFullDateAtom } from "./store/dateState";
 import { dataViewModelAtom, searchQueryAtom } from "./store/queryState";
+import { useApplicationStore } from "./store/store";
 import { Timer } from "./Timer";
 
 const StyledHeader = styled.form`
@@ -160,20 +164,22 @@ const Header: React.FC<HeaderProps> = ({}) => {
         onSubmit={handleSubmit(onSubmit(false))}
         onKeyDown={onHeaderKeyDown}
       >
-        <QueryContainer>
-          <div
-            css={css`
-              flex: 1;
-            `}
-          >
-            <Editor value={searchValue} onChange={setSearchValue} />
-          </div>
-          <Timer
-            startTime={queryStartTime}
-            endTime={queryEndTime}
-            isLoading={isLoading}
-          />
-        </QueryContainer>
+        <Stack direction="column" gap={2} flex={1}>
+          <QueryContainer>
+            <div
+              css={css`
+                flex: 1;
+              `}
+            >
+              <Editor value={searchValue} onChange={setSearchValue} />
+            </div>
+            <Timer
+              startTime={queryStartTime}
+              endTime={queryEndTime}
+              isLoading={isLoading}
+            />
+          </QueryContainer>
+        </Stack>
         <SearchBarButtons
           isLoading={isLoading}
           onForceSubmit={() => handleSubmit(onSubmit(true))()}
@@ -207,81 +213,89 @@ const SearchBarButtons: React.FC<SearchBarButtonsProps> = ({
     <ButtonsHolder>
       <Stack gap={3}>
         <DateSelector />
-        <Stack gap={3} direction="row">
-          <Box position="relative">
-            <Tooltip
-              content={
-                <span>
-                  Process Pipeline {!isRelativeTimeSelected && "Only"}{" "}
-                  <Shortcut keys={headerShortcuts.getAlias("re-evaluate")} />
-                </span>
-              }
-              showArrow
-              positioning={{
-                placement: "bottom",
-              }}
-            >
-              <IconButton
-                aria-label="Re-evalutate"
-                type="submit"
-                disabled={isLoading}
-              >
-                <LuSigma />
-              </IconButton>
-            </Tooltip>
-            {isRelativeTimeSelected && (
-              <Tooltip
-                content={
-                  <span>
-                    Relative time is selected, full refresh is required!
-                  </span>
-                }
-                showArrow
-                contentProps={{ css: { "--tooltip-bg": "tomato" } }}
-              >
-                <Float placement="top-end">
-                  <Circle size="3" bg="red" color="white"></Circle>
-                </Float>
-              </Tooltip>
-            )}
-          </Box>
-          {isLoading ? (
-            <Tooltip
-              content={<span>Terminate Search</span>}
-              showArrow
-              positioning={{
-                placement: "bottom",
-              }}
-            >
-              <IconButton
-                aria-label="Terminate database"
-                onClick={() => onTerminateSearch()}
-              >
-                <LuSearchX />
-              </IconButton>
-            </Tooltip>
-          ) : (
-            <Tooltip
-              content={
-                <span>
-                  Search <Shortcut keys={headerShortcuts.getAlias("search")} />
-                </span>
-              }
-              showArrow
-              positioning={{
-                placement: "bottom",
-              }}
-            >
-              <IconButton
-                aria-label="Search database"
-                onClick={() => onForceSubmit()}
-              >
-                <LuSearch />
-              </IconButton>
-            </Tooltip>
-          )}
+        <Stack direction="row">
+          <Stack>
+            <Stack gap={3} direction="row">
+              <Box position="relative">
+                <Tooltip
+                  content={
+                    <span>
+                      Process Pipeline {!isRelativeTimeSelected && "Only"}{" "}
+                      <Shortcut
+                        keys={headerShortcuts.getAlias("re-evaluate")}
+                      />
+                    </span>
+                  }
+                  showArrow
+                  positioning={{
+                    placement: "bottom",
+                  }}
+                >
+                  <IconButton
+                    aria-label="Re-evalutate"
+                    type="submit"
+                    disabled={isLoading}
+                  >
+                    <LuSigma />
+                  </IconButton>
+                </Tooltip>
+                {isRelativeTimeSelected && (
+                  <Tooltip
+                    content={
+                      <span>
+                        Relative time is selected, full refresh is required!
+                      </span>
+                    }
+                    showArrow
+                    contentProps={{ css: { "--tooltip-bg": "tomato" } }}
+                  >
+                    <Float placement="top-end">
+                      <Circle size="3" bg="red" color="white"></Circle>
+                    </Float>
+                  </Tooltip>
+                )}
+              </Box>
+              {isLoading ? (
+                <Tooltip
+                  content={<span>Terminate Search</span>}
+                  showArrow
+                  positioning={{
+                    placement: "bottom",
+                  }}
+                >
+                  <IconButton
+                    aria-label="Terminate database"
+                    onClick={() => onTerminateSearch()}
+                  >
+                    <LuSearchX />
+                  </IconButton>
+                </Tooltip>
+              ) : (
+                <Tooltip
+                  content={
+                    <span>
+                      Search{" "}
+                      <Shortcut keys={headerShortcuts.getAlias("search")} />
+                    </span>
+                  }
+                  showArrow
+                  positioning={{
+                    placement: "bottom",
+                  }}
+                >
+                  <IconButton
+                    aria-label="Search database"
+                    onClick={() => onForceSubmit()}
+                  >
+                    <LuSearch />
+                  </IconButton>
+                </Tooltip>
+              )}
+            </Stack>
+            <MiniButtons />
+          </Stack>
+          <ProviderSelector />
         </Stack>
-        <MiniButtons />
       </Stack>
     </ButtonsHolder>
   );
@@ -367,7 +381,13 @@ const MiniButtons = () => {
             showArrow
             positioning={{ placement: "bottom" }}
           >
-            <IconButton aria-label="Export" size="2xs" variant="surface" as={"div"} disabled={isDisabled}>
+            <IconButton
+              aria-label="Export"
+              size="2xs"
+              variant="surface"
+              as={"div"}
+              disabled={isDisabled}
+            >
               <CiExport />
             </IconButton>
           </Tooltip>
@@ -413,6 +433,73 @@ const MiniButtons = () => {
       </Tooltip>
       <SettingsDrawer />
     </Stack>
+  );
+};
+
+const ProviderSelector = () => {
+  const selectedInstanceId = useApplicationStore(
+    (state) => state.selectedInstanceId
+  );
+  const setSelectedInstanceId = useApplicationStore(
+    (state) => state.setSelectedInstanceId
+  );
+  const initializedInstances = useApplicationStore(
+    (state) => state.initializedInstances
+  );
+  const supportedPlugins = useApplicationStore(
+    (state) => state.supportedPlugins
+  );
+  const isSelectionLoading = useApplicationStore(
+    (state) => state.isSelectionLoading
+  );
+
+  const instances = useMemo(() => {
+    return createListCollection({
+      items: initializedInstances.map((instance) => {
+        const plugin = supportedPlugins.find(
+          (p) => p.ref === instance.pluginRef
+        );
+
+        return {
+          value: instance.id,
+          label: instance.name + (plugin ? ` (${plugin.name})` : ""),
+        };
+      }),
+    });
+  }, [initializedInstances, supportedPlugins]);
+  return (
+    <Select.Root
+      size="xs"
+      collection={instances}
+      value={selectedInstanceId ? [selectedInstanceId] : []}
+      onValueChange={(value) => setSelectedInstanceId(value.items[0].value)}
+      disabled={isSelectionLoading}
+    >
+      <Select.HiddenSelect />
+      <Select.Control>
+        <Select.Trigger>
+          <Select.ValueText />
+        </Select.Trigger>
+        <Select.IndicatorGroup>
+          {isSelectionLoading && (
+            <Spinner size="xs" borderWidth="1.5px" color="fg.muted" />
+          )}
+          <Select.Indicator />
+          {/* <Select.ClearTrigger /> */}
+        </Select.IndicatorGroup>
+      </Select.Control>
+
+      <Select.Positioner>
+        <Select.Content>
+          {instances.items.map((instance) => (
+            <Select.Item item={instance} key={instance.value}>
+              {instance.label}
+              <Select.ItemIndicator />
+            </Select.Item>
+          ))}
+        </Select.Content>
+      </Select.Positioner>
+    </Select.Root>
   );
 };
 

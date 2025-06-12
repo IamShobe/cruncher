@@ -1,35 +1,13 @@
 import { QueryBatchDoneSchema, QueryJobUpdatedSchema } from "src/plugins_engine/protocol_out";
 import { PluginInstance } from "src/plugins_engine/types";
-import { StreamConnection, UnsubscribeFunction } from "~lib/network";
+import z from "zod";
+import { StreamConnection, SubscribeOptions, UnsubscribeFunction } from "~lib/network";
 import { ControllerIndexParam, Search } from "~lib/qql/grammar";
-import { QueryOptions, QueryProvider } from "./common/interface";
-import { useApplicationStore } from "./store/store";
+import { QueryOptions, QueryProvider } from "../common/interface";
 
-type QueryProviderHolder = {
-    instance: PluginInstance;
-    provider: QueryProvider;
-}
 
-export class StreamQueryProviderBuilder {
-    public initializedControllers: Record<string, QueryProviderHolder> = {};
-
-    constructor(private connection: StreamConnection) {
-    }
-
-    initialize = async () => {
-        const state = useApplicationStore.getState();
-        state.setIsInitialized(false);
-        state.setSupportedPlugins(await this.listPlugins());
-        state.setInitializedInstances(await this.listInitializedPlugins());
-        // state.setIsInitialized(true);
-
-        const initializedPlugins = await this.listInitializedPlugins();
-        state.setInitializedInstances(initializedPlugins);
-        for (const pluginInstance of initializedPlugins) {
-            this.createProvider(pluginInstance);
-        }
-    }
-
+export class ApiController {
+    constructor(private connection: StreamConnection) {}
     listPlugins = async () => {
         return await this.connection.invoke("getSupportedPlugins", {});
     }
@@ -38,13 +16,19 @@ export class StreamQueryProviderBuilder {
         return await this.connection.invoke("getInitializedPlugins", {});
     }
 
-    createProvider(plugin: PluginInstance): QueryProviderHolder {
-        // Here you would create and return an instance of a QueryProvider
-        // based on the plugin. This is a placeholder implementation.
-        const provider = new PluginInstanceQueryProvider(plugin, this.connection);
-        const holder = { instance: plugin, provider };
-        this.initializedControllers[plugin.id] = holder;
-        return holder;
+    subscribeToMessages = <T extends z.ZodTypeAny>(
+        schema: T,
+        options: SubscribeOptions<T>,
+    ) => {
+        const unsub = this.connection.subscribe(schema, options);
+
+        return () => {
+            unsub(); // Unsubscribe from the WebSocket messages
+        };
+    };
+
+    public createProvider(plugin: PluginInstance): QueryProvider {
+        return new PluginInstanceQueryProvider(plugin, this.connection);
     }
 }
 

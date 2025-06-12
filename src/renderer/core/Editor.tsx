@@ -15,7 +15,7 @@ import {
   availableColumnsAtom,
   queryDataAtom,
 } from "./store/queryState";
-import { useApplicationStore } from "./store/store";
+import { useControllerParams } from "./store/store";
 
 export const queryEditorAtom = atom<HTMLTextAreaElement | null>(null);
 
@@ -47,7 +47,7 @@ export const Editor = ({ value, onChange }: EditorProps) => {
   const availableColumns = useAtomValue(availableColumnsAtom);
   const data = useAtomValue(queryDataAtom);
   const setQueryEditor = useSetAtom(queryEditorAtom);
-  const controllerParams = useApplicationStore((state) => state.controllerParams);
+  const controllerParams = useControllerParams();
 
   // Get the controller params from the context
   const highlightData = useMemo<HighlightData[]>(() => {
