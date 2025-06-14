@@ -56,3 +56,7 @@ export const parse = (input: string) => {
 
 export type ParsedQuery = ReturnType<typeof parse>;
 export type PipelineItem = ParsedQuery["pipeline"][number];
+
+export type PipelineItemType = PipelineItem["type"];
+
+export type NarrowedPipelineItem<T extends PipelineItemType> = Extract<PipelineItem, { type: T }>;

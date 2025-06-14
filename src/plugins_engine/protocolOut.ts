@@ -4,7 +4,7 @@ export const QueryBatchDoneSchema = z.object({
     type: z.literal("query_batch_done"),
     payload: z.object({
         jobId: z.string(),
-        data: z.array(z.any()), // Adjust the type as needed for your data structure
+        data: z.any(), // Adjust the type as needed for your data structure
     }),
 });
 export type QueryBatchDone = z.infer<typeof QueryBatchDoneSchema>;

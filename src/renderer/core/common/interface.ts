@@ -1,16 +1,25 @@
-import { ControllerIndexParam, Search } from "~lib/qql/grammar";
-import { ProcessedData } from "~lib/adapters/logTypes";
+import { QueryTask, TaskRef } from "src/engineV2/engine";
+import { DisplayResults } from "~lib/displayTypes";
 
 export type QueryOptions = {
     fromTime: Date,
     toTime: Date,
     cancelToken: AbortSignal
     limit: number,
-    onBatchDone: (data: ProcessedData[]) => void
+    isForced: boolean,
+    onBatchDone: (data: DisplayResults) => void
+}
+
+export type AwaitableTask = {
+    job: QueryTask;
+    promise: Promise<void>;
 }
 
 export interface QueryProvider {
     waitForReady(): Promise<void>;
     getControllerParams(): Promise<Record<string, string[]>>;
-    query(params: ControllerIndexParam[], searchTerm: Search, queryOptions: QueryOptions): Promise<void>;
+    query(searchTerm: string, queryOptions: QueryOptions): Promise<AwaitableTask>;
+    getLogs(): Promise<DisplayResults>;
+    getClosestDateEvent(taskId: TaskRef, refDate: number): Promise<number | null>;
+    releaseResources(taskId: TaskRef): Promise<void>;
 }

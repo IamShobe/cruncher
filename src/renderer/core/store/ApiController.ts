@@ -1,15 +1,19 @@
+import { InstanceRef, PluginInstance, QueryTask, TaskRef } from "src/engineV2/engine";
 import { QueryBatchDoneSchema, QueryJobUpdatedSchema } from "src/plugins_engine/protocolOut";
-import { PluginInstance } from "src/plugins_engine/types";
 import z from "zod";
+import { DisplayResults } from "~lib/displayTypes";
 import { StreamConnection, SubscribeOptions, UnsubscribeFunction } from "~lib/network";
-import { ControllerIndexParam, Search } from "~lib/qql/grammar";
 import { QueryOptions, QueryProvider } from "../common/interface";
 
 
 export class ApiController {
-    constructor(private connection: StreamConnection) {}
+    constructor(private connection: StreamConnection) { }
     reload = async () => {
         return await this.connection.invoke("reloadConfig", {});
+    }
+
+    resetQueries = async () => {
+        return await this.connection.invoke("resetQueries", {});
     }
 
     listPlugins = async () => {
@@ -42,6 +46,8 @@ export class ApiController {
 
 
 class PluginInstanceQueryProvider implements QueryProvider {
+    private executedJob: QueryTask | null = null;
+
     constructor(private pluginInstance: PluginInstance, private connection: StreamConnection) { }
 
     async waitForReady(): Promise<void> {
@@ -50,64 +56,115 @@ class PluginInstanceQueryProvider implements QueryProvider {
     }
 
     async getControllerParams(): Promise<Record<string, string[]>> {
-        return await this.connection.invoke("getControllerParams", { instanceId: this.pluginInstance.id });
+        return await this.connection.invoke("getControllerParams", { instanceRef: this.pluginInstance.name });
     }
 
-    async query(params: ControllerIndexParam[], searchTerm: Search, queryOptions: QueryOptions): Promise<void> {
-        const job = await this.connection.invoke("runQuery", {
-            instanceId: this.pluginInstance.id,
-            controllerParams: params,
-            searchTerm,
-            queryOptions: {
-                fromTime: queryOptions.fromTime,
-                toTime: queryOptions.toTime,
-                limit: queryOptions.limit,
-            },
-        });
-        console.log("Query job started:", job);
+    async getLogs(): Promise<DisplayResults> {
+        if (!this.executedJob) {
+            return {
+                events: {
+                    data: [],
+                    type: "events",
+                },
+                table: undefined,
+                view: undefined,
+            };
+        }
 
-        // TODO: potential miss of job updates if the job is completed before the subscription is set up
+        return await this.connection.invoke("getLogs", { jobId: this.executedJob.id });
+    }
+
+    async getClosestDateEvent(taskId: TaskRef, refDate: number): Promise<number | null> {
+        if (!this.executedJob) {
+            console.warn("No executed job to get closest date event from");
+            return null;
+        }
+
+        const results = await this.connection.invoke("getClosestDateEvent", {
+            jobId: taskId,
+            refDate: refDate,
+        });
+
+        if (results === null) {
+            console.warn("No closest date event found");
+            return null;
+        }
+
+        return results.closest;
+    }
+
+    async releaseResources(taskId: TaskRef): Promise<void> {
+        this.connection.invoke("releaseTaskResources", {
+            jobId: taskId,
+        });
+    }
+
+    async query(searchTerm: string, queryOptions: QueryOptions) {
+        // setup cancel token
+        const cancelToken = queryOptions.cancelToken;
+        let unsubscribeJobDoneHandler!: UnsubscribeFunction;
+        cancelToken.addEventListener("abort", async () => {
+            if (!this.executedJob) {
+                console.warn("No job to cancel");
+                return;
+            }
+
+            console.log(`Query job ${this.executedJob.id} cancelled`);
+            await this.connection.invoke("cancelQuery", {
+                taskId: this.executedJob.id,
+            });
+            this.executedJob = null; // Clear the executed job after cancellation
+            unsubscribeJobDoneHandler?.();
+        });
+
         const unsubscribeBatchHandler = this.connection.subscribe(QueryBatchDoneSchema, {
-            predicate: (batchMessage) => batchMessage.payload.jobId === job.id,
+            predicate: (batchMessage) => batchMessage.payload.jobId === this.executedJob?.id,
             callback: (batchMessage) => {
                 queryOptions.onBatchDone(batchMessage.payload.data);
             },
         });
 
-        // setup cancel token
-        const cancelToken = queryOptions.cancelToken;
-        let unsubscribeJobDoneHandler!: UnsubscribeFunction;
-        cancelToken.addEventListener("abort", async () => {
-            console.log(`Query job ${job.id} cancelled`);
-            await this.connection.invoke("cancelQuery", {
-                taskId: job.id,
-            });
-            unsubscribeJobDoneHandler?.();
+        const job = await this.connection.invoke("runQueryV2", {
+            instanceRef: this.pluginInstance.name as InstanceRef,
+            searchTerm,
+            queryOptions: {
+                fromTime: queryOptions.fromTime,
+                toTime: queryOptions.toTime,
+                limit: queryOptions.limit,
+                isForced: queryOptions.isForced || false, // Default to false if not provided
+            },
         });
-
-        return new Promise((resolve, reject) => {
-            unsubscribeJobDoneHandler = this.connection.subscribe(QueryJobUpdatedSchema, {
-                predicate: (jobUpdateMessage) => jobUpdateMessage.payload.jobId === job.id,
-                callback: (jobUpdateMessage) => {
-                    const jobUpdate = jobUpdateMessage.payload;
-                    if (jobUpdate.status === "completed") {
-                        console.log(`Job ${jobUpdate.jobId} completed`);
-                        resolve();
-                    } else {
-                        console.log(
-                            `Job ${jobUpdate.jobId} updated: ${jobUpdate.status}`
-                        );
-                        // You can handle other statuses if needed
-                        reject(
-                            new Error(
-                                `Query job ${jobUpdate.jobId} failed with status: ${jobUpdate.status}`
-                            )
-                        );
-                    }
-                    unsubscribeBatchHandler();
-                    unsubscribeJobDoneHandler();
-                },
-            });
-        });
+        this.executedJob = job; // Store the last executed job
+        console.log("Query job started:", job);
+        return {
+            job: job,
+            promise: new Promise<void>((resolve, reject) => {
+                unsubscribeJobDoneHandler = this.connection.subscribe(QueryJobUpdatedSchema, {
+                    predicate: (jobUpdateMessage) => jobUpdateMessage.payload.jobId === this.executedJob?.id,
+                    callback: (jobUpdateMessage) => {
+                        try {
+                            const jobUpdate = jobUpdateMessage.payload;
+                            if (jobUpdate.status === "completed") {
+                                console.log(`Job ${jobUpdate.jobId} completed`);
+                                resolve();
+                            } else {
+                                console.log(
+                                    `Job ${jobUpdate.jobId} updated: ${jobUpdate.status}`
+                                );
+                                // You can handle other statuses if needed
+                                reject(
+                                    new Error(
+                                        `Query job ${jobUpdate.jobId} failed with status: ${jobUpdate.status}`
+                                    )
+                                );
+                            }
+                        } finally {
+                            unsubscribeBatchHandler();
+                            unsubscribeJobDoneHandler();
+                        }
+                    },
+                });
+            })
+        };
     }
 }

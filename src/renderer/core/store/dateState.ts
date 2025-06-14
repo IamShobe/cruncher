@@ -105,13 +105,6 @@ export const dateRangeAtom = atom(
     }
 );
 
-export const compareFullDates = (date1: FullDate, date2: FullDate) => {
-    const date1Time = isTimeNow(date1) ? new Date() : date1;
-    const date2Time = isTimeNow(date2) ? new Date() : date2;
-
-    return Math.sign(date1Time.getTime() - date2Time.getTime());
-};
-
 const formatTime = (date: FullDate | undefined) => {
     if (!date) {
         return "";

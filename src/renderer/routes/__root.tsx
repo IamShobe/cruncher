@@ -12,6 +12,9 @@ import { globalShortcuts, useShortcuts } from "~core/keymaps";
 import { Shortcuts } from "~core/Shortcuts";
 import { SideMenu } from "~core/SideMenu";
 import { useApplicationStore } from "~core/store/appStore";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "~core/client";
 
 import "../index.css";
 
@@ -33,14 +36,17 @@ export const Route = createRootRoute({
         flex-direction: column;
       `}
     >
-      <ApplicationProvider>
-        <Provider>
-          <JotaiProvider>
-            <MainContent />
-          </JotaiProvider>
-        </Provider>
-      </ApplicationProvider>
-      <TanStackRouterDevtools position="bottom-right"/>
+      <QueryClientProvider client={queryClient}>
+        <ApplicationProvider>
+          <Provider>
+            <JotaiProvider>
+              <MainContent />
+            </JotaiProvider>
+          </Provider>
+        </ApplicationProvider>
+        <ReactQueryDevtools initialIsOpen={false} />
+      </QueryClientProvider>
+      <TanStackRouterDevtools position="bottom-right" />
     </div>
   ),
 });

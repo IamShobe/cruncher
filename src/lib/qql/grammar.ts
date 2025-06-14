@@ -1,4 +1,5 @@
 import { createToken, CustomPatternMatcherFunc, EmbeddedActionsParser, IToken, Lexer, tokenMatcher, TokenType } from "chevrotain";
+import { pipeline } from "stream";
 
 const Identifier = createToken({ name: "Identifier", pattern: /[0-9\w][0-9\w\-]*/ });
 const Integer = createToken({ name: "Integer", pattern: /0|[1-9]\d*(?!\w)/ });
@@ -8,12 +9,12 @@ const WhiteSpace = createToken({
   group: Lexer.SKIPPED,
 });
 
-const Comment = createToken({ 
-  name: "Comment", 
-  pattern: /\/\/.*/, 
-  line_breaks: false, 
+const Comment = createToken({
+  name: "Comment",
+  pattern: /\/\/.*/,
+  line_breaks: false,
   group: "singleLineComments",
- });
+});
 
 const Comma = createToken({ name: "Comma", pattern: /,/ });
 const Pipe = createToken({ name: "Pipe", pattern: /\|/ });
@@ -21,6 +22,7 @@ const DoubleQoutedString = createToken({
   name: "DoubleQoutedString",
   pattern: /"(?:[^\\"]|\\(?:[bfnrtv"\\/]|u[0-9a-fA-F]{4}))*"/,
 });
+const AtDatasource = createToken({ name: "AtDatasource", pattern: /@([a-zA-Z_][0-9a-zA-Z_-]*)/, longer_alt: Identifier, line_breaks: false });
 
 const OpenBrackets = createToken({ name: "OpenBrackets", pattern: /\(/ });
 const CloseBrackets = createToken({ name: "CloseBrackets", pattern: /\)/ });
@@ -176,7 +178,7 @@ const False = createToken({ name: "False", pattern: matchBooleanExpressionContex
 
 
 const LeftSquareBracket = createToken({ name: "LeftSquareBracket", pattern: matchBooleanExpressionContext(/^\[/), line_breaks: false });
-const RightSquareBracket = createToken({ name: "RightSquareBracket", pattern:  matchBooleanExpressionContext(/^\]/), line_breaks: false });
+const RightSquareBracket = createToken({ name: "RightSquareBracket", pattern: matchBooleanExpressionContext(/^\]/), line_breaks: false });
 
 
 // note we are placing WhiteSpace first as it is very common thus it will speed up the lexer.
@@ -185,6 +187,7 @@ const allTokens = [
   Comment,
   DoubleQoutedString,
   RegexPattern,
+  AtDatasource,
 
   // Boolean context
   GreaterThanEqual,
@@ -268,7 +271,8 @@ export type SuggetionType =
   | { type: "controllerParam" }
   | { type: "paramValue", key: string }
   | { type: "keywords", keywords: string[] }
-  | { type: "params", keywords: string[] };
+  | { type: "params", keywords: string[] }
+  | { type: "datasource" };
 
 
 export type SuggestionData = {
@@ -455,6 +459,11 @@ export type CalcAction = {
   right: CalcTerm;
 }
 
+export type Datasource = {
+  type: "datasource";
+  name: string;
+}
+
 
 export class QQLParser extends EmbeddedActionsParser {
   private highlightData: HighlightData[] = [];
@@ -577,13 +586,34 @@ export class QQLParser extends EmbeddedActionsParser {
   public query = this.RULE("query", () => {
     const controllerParams: ControllerIndexParam[] = [];
 
+    const dataSources: Datasource[] = [];
+
+    let datasourcesAutoComplete = this.addAutoCompleteType({
+      type: "datasource",
+    });
+    datasourcesAutoComplete.closeAfter1();
+
+    this.MANY1(() => {
+      const datasource = this.SUBRULE(this.datasource)
+
+      datasourcesAutoComplete = this.addAutoCompleteType({
+        type: "datasource",
+      });
+
+      datasourcesAutoComplete.closeAfter1();
+
+      dataSources.push(datasource);
+    });
+
+    datasourcesAutoComplete.close();
+
     let controllerParamsAutoComplete = this.addAutoCompleteType({
       type: "controllerParam",
     });
 
     controllerParamsAutoComplete.closeAfter1();
 
-    this.MANY1(() => {
+    this.MANY2(() => {
       const controllerParam = this.SUBRULE(this.controllerParam);
 
       controllerParamsAutoComplete = this.addAutoCompleteType({
@@ -598,19 +628,21 @@ export class QQLParser extends EmbeddedActionsParser {
     controllerParamsAutoComplete.close();
 
     const search = this.SUBRULE(this.search, { ARGS: [false] });
-    const pipeline: ReturnType<typeof this.pipelineCommand>[] = [];
+    const restOfpipeline: ReturnType<typeof this.pipelineCommand>[] = [];
 
-    this.MANY2(() => {
+    this.MANY3(() => {
       this.CONSUME(Pipe);
       const pipelineItem = this.SUBRULE(this.pipelineCommand);
-      pipeline.push(pipelineItem);
+      restOfpipeline.push(pipelineItem);
     });
 
     return {
-      controllerParams: controllerParams,
-      search: search,
-      pipeline: pipeline,
-    } as const;
+        type: "query",
+        dataSources: dataSources,
+        controllerParams: controllerParams,
+        search: search,
+        pipeline: restOfpipeline,
+      } as const;
   });
 
   private addBooleanContextSemantics() {
@@ -910,6 +942,21 @@ export class QQLParser extends EmbeddedActionsParser {
     })
 
     return arg;
+  });
+
+  private datasource = this.RULE("datasource", (): Datasource => {
+    const token = this.CONSUME(AtDatasource);
+    this.ACTION(() => {
+      this.addHighlightData("datasource", token);
+    });
+
+    // strip @ from the token
+    const datasourceName = token.image.substring(1);
+
+    return {
+      type: "datasource",
+      name: datasourceName,
+    } as const;
   });
 
   private controllerParam = this.RULE("controllerParam", (): ControllerIndexParam => {
@@ -1261,7 +1308,7 @@ export class QQLParser extends EmbeddedActionsParser {
       tail: tail,
     }
   });
-  
+
   private calculateUnit = this.RULE("calculateUnit", (): CalculateUnit => {
     const value = this.OR<CalculateUnit["value"]>([
       { ALT: () => this.SUBRULE(this.parathesisCalculateExpression) },

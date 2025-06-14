@@ -4,7 +4,6 @@ import type React from "react";
 import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
 import { DateRange } from "react-day-picker";
 import {
-  compareFullDates,
   dateRangeAtom,
   endFullDateAtom,
   renderedEndDateAtom,
@@ -25,11 +24,12 @@ import {
 } from "~components/ui/popover";
 import { Shortcut } from "~components/ui/shortcut";
 import { Tooltip } from "~components/ui/tooltip";
+import { useOutsideDetector } from "~components/ui/useOutsideDetector";
 import { CalendarSelector } from "./CalendarSelector";
 import { searcherShortcuts } from "./keymaps";
 import { useQueryActions } from "./search";
 import { useQuerySpecificStoreInternal } from "./store/queryState";
-import { useOutsideDetector } from "~components/ui/useOutsideDetector";
+import { compareFullDates } from "~lib/dateUtils";
 
 const useDateOperations = () => {
   const setStartFullDate = useSetAtom(startFullDateAtom);

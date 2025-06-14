@@ -1,8 +1,7 @@
 import { scaleLinear } from 'd3-scale';
 import { atom, createStore } from 'jotai';
 import React from 'react';
-import BTree from 'sorted-btree';
-import { asDateField, ProcessedData } from '~lib/adapters/logTypes';
+import { asDateField } from '~lib/adapters/logTypes';
 import { DisplayResults, Events } from '~lib/displayTypes';
 import { allData } from '~lib/qql';
 import { actualEndTimeAtom, actualStartTimeAtom } from './dateState';
@@ -16,8 +15,6 @@ export const queryDataAtom = atom((get) => {
 });
 
 
-export const originalDataAtom = atom<ProcessedData[]>([]);
-export const indexAtom = atom(new BTree<number, ProcessedData[]>(undefined, (a, b) => b - a));
 export const QuerySpecificContext = React.createContext<ReturnType<typeof createStore> | null>(null);
 
 export const useQuerySpecificStoreInternal = () => {

@@ -17,7 +17,8 @@ import { formatDataTimeShort } from "~lib/adapters/formatters";
 import { asDateField } from "~lib/adapters/logTypes";
 import { scrollToIndexAtom } from "./events/DataLog";
 import { rangeInViewAtom } from "./events/state";
-import { dataBucketsAtom, eventsAtom, indexAtom, scaleAtom } from "./store/queryState";
+import { lastRanJobAtom, useQueryProvider } from "./search";
+import { dataBucketsAtom, eventsAtom, scaleAtom } from "./store/queryState";
 
 export const TimeChart = () => {
   const events = useAtomValue(eventsAtom);
@@ -38,7 +39,8 @@ export const TimeChart = () => {
   const rangeInView = useAtomValue(rangeInViewAtom);
   const scale = useAtomValue(scaleAtom);
   const dataBuckets = useAtomValue(dataBucketsAtom);
-  const tree = useAtomValue(indexAtom);
+  const provider = useQueryProvider();
+  const displayedJob = useAtomValue(lastRanJobAtom);
 
   if (!scale) {
     return null;
@@ -55,13 +57,14 @@ export const TimeChart = () => {
           ref={ref}
           height={400}
           data={dataBuckets}
-          onMouseDown={(e) => {
+          onMouseDown={async (e) => {
             if (e.chartX === undefined) return;
+            if (!displayedJob) return;
 
             const timestampClicked = scale.invert(e.chartX);
             setRefAreaLeft(timestampClicked);
 
-            const clicked = tree.nextLowerKey(timestampClicked);
+            const clicked = await provider.getClosestDateEvent(displayedJob.id, timestampClicked);
             const index = data.findIndex((item) => {
               const timestamp = asDateField(item.object._time).value;
               return timestamp === clicked;

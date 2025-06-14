@@ -6,6 +6,12 @@ import tsconfigPaths from 'vite-tsconfig-paths';
 export default defineConfig({
     plugins: [
         tsconfigPaths(),
+        // {
+        //     name: "restart",
+        //     closeBundle() {
+        //         process.stdin.emit("data", "rs");
+        //     },
+        // },
     ],
     build: {
         rollupOptions: {

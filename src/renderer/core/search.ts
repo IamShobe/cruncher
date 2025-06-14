@@ -1,23 +1,23 @@
 import { Mutex } from "async-mutex";
 import equal from "fast-deep-equal";
 import { atom, createStore, useAtom, useAtomValue } from "jotai";
+import { atomWithStore } from 'jotai-zustand';
 import { loadable } from "jotai/utils";
-import merge from "merge-k-sorted-arrays";
 import React, { useEffect } from "react";
+import { QueryTask } from "src/engineV2/engine";
 import z from "zod";
-import { dateAsString, DateType, FullDate, isTimeNow } from "~lib/dateUtils";
+import { compareFullDates, dateAsString, DateType, FullDate, isTimeNow } from "~lib/dateUtils";
 import { SubscribeOptions } from "~lib/network";
-import { getPipelineItems } from "~lib/pipelineEngine/root";
-import { parse, PipelineItem } from "~lib/qql";
+import { parse } from "~lib/qql";
 import { ControllerIndexParam, Search } from "~lib/qql/grammar";
-import { asDateField, compareProcessedData, ProcessedData } from "../../lib/adapters/logTypes";
 import { DEFAULT_QUERY_PROVIDER } from "./DefaultQueryProvider";
 import { openIndexesAtom } from "./events/state";
 import { notifyError, notifySuccess } from "./notifyError";
-import { actualEndTimeAtom, actualStartTimeAtom, compareFullDates, endFullDateAtom, startFullDateAtom } from "./store/dateState";
-import { dataViewModelAtom, indexAtom, originalDataAtom, searchQueryAtom, tabNameAtom, useQuerySpecificStoreInternal, viewSelectedForQueryAtom } from "./store/queryState";
 import { ApplicationStore, appStore, useApplicationStore } from "./store/appStore";
-import { atomWithStore } from 'jotai-zustand'
+import { actualEndTimeAtom, actualStartTimeAtom, endFullDateAtom, startFullDateAtom } from "./store/dateState";
+import { dataViewModelAtom, searchQueryAtom, tabNameAtom, useQuerySpecificStoreInternal, viewSelectedForQueryAtom } from "./store/queryState";
+import { controller } from "src/plugins_engine/controller";
+import { AwaitableTask } from "./common/interface";
 
 export type QueryState = {
     searchQuery: string;
@@ -101,7 +101,7 @@ const controllerParamsAtom = atom(async (get) => {
     }
 
     const selectedInstance = initializedInstances[selectedInstanceIndex];
-    return get(appStoreAtom).datasets[selectedInstance.id]?.controllerParams ?? {};
+    return get(appStoreAtom).datasets[selectedInstance.name]?.controllerParams ?? {};
 });
 
 export const loadingControllerParamsAtom = loadable(controllerParamsAtom);
@@ -120,6 +120,7 @@ export const isLoadingAtom = atom(false);
 export const queryStartTimeAtom = atom<Date | undefined>(undefined);
 export const queryEndTimeAtom = atom<Date | undefined>(undefined);
 export const isQuerySuccessAtom = atom(true);
+export const lastRanJobAtom = atom<QueryTask | undefined>(undefined);
 
 export const useInitializedController = () => {
     const controller = useApplicationStore((state) => state.controller);
@@ -137,12 +138,12 @@ export const providerAtom = atom((get) => {
         return DEFAULT_QUERY_PROVIDER;
     }
     const providers = providersSelector(get(appStoreAtom));
-    if (!providers[selectedInstance.id]) {
-        console.warn(`No provider found for instance with id ${selectedInstance.id}. Using default provider.`);
+    if (!providers[selectedInstance.name]) {
+        console.warn(`No provider found for instance with name ${selectedInstance.name}. Using default provider.`);
         return DEFAULT_QUERY_PROVIDER;
     }
 
-    return providers[selectedInstance.id];
+    return providers[selectedInstance.name];
 });
 
 export const useQueryProvider = () => {
@@ -252,30 +253,9 @@ export const useRunQuery = () => {
 export const runQueryForStore = async (store: ReturnType<typeof createStore>, isForced: boolean) => {
     const provider = store.get(providerAtom);
     const resetBeforeNewBackendQuery = () => {
-        const tree = store.get(indexAtom);
         store.set(openIndexesAtom, []);
-        tree.clear();
         store.set(viewSelectedForQueryAtom, false);
     }
-
-    const startProcessingData = (
-        data: ProcessedData[],
-        pipeline: PipelineItem[],
-        startTime: Date,
-        endTime: Date
-    ) => {
-        try {
-            const finalData = getPipelineItems(data, pipeline, startTime, endTime);
-            store.set(dataViewModelAtom, finalData);
-        } catch (error) {
-            // check error is of type Error
-            if (!(error instanceof Error)) {
-                throw error;
-            }
-
-            notifyError("Error processing pipeline", error);
-        }
-    };
 
     const isLoading = store.get(isLoadingAtom);
     if (isLoading) {
@@ -342,54 +322,51 @@ export const runQueryForStore = async (store: ReturnType<typeof createStore>, is
                     params: parsedTree.controllerParams,
                 };
 
-                const lastExecutedQuery = store.get(lastQueryAtom);
-                if (!isForced && compareExecutions(executionQuery, lastExecutedQuery)) {
-                    console.log("using cached data");
-                    const originalData = store.get(originalDataAtom);
-                    startProcessingData(originalData, parsedTree.pipeline, fromTime, toTime);
-                    notifySuccess("Pipeline re-evaluated successfully");
-                } else {
-                    // new search initiated - we can reset
-                    resetBeforeNewBackendQuery();
-                    try {
-                        store.set(lastQueryAtom, executionQuery);
-                        let newData: ProcessedData[] = [];
-                        await provider.query(parsedTree.controllerParams, parsedTree.search, {
-                            fromTime: fromTime,
-                            toTime: toTime,
-                            cancelToken: cancelToken,
-                            limit: 100000,
-                            onBatchDone: (data) => {
-                                // get current data and merge it with the existing data - memory leak risk!!
-                                newData = merge<ProcessedData>(
-                                    [newData, data],
-                                    compareProcessedData,
-                                );
-                                const tree = store.get(indexAtom);
-                                data.forEach((data) => {
-                                    const timestamp = asDateField(data.object._time).value;
-                                    const toAppendTo = tree.get(timestamp) ?? [];
-                                    toAppendTo.push(data);
-                                    tree.set(timestamp, toAppendTo);
-                                });
+                // new search initiated - we can reset
+                resetBeforeNewBackendQuery();
+                let awaitableJob: AwaitableTask | undefined = undefined;
+                try {
+                    store.set(lastQueryAtom, executionQuery);
 
-                                store.set(originalDataAtom, newData);
-                                startProcessingData(newData, parsedTree.pipeline, fromTime, toTime);
-                            },
-                        });
-
-                        store.set(isQuerySuccessAtom, true);
-                        notifySuccess("Query executed successfully");
-                    } catch (error) {
-                        store.set(isQuerySuccessAtom, false);
-                        console.log(error);
-                        if (cancelToken.aborted) {
-                            return; // don't continue if the request was aborted
+                    const storeLastSuccessfulJob = async () => {
+                        // get old job
+                        const lastRanJob = store.get(lastRanJobAtom);
+                        // release the old job
+                        console.log("Releasing resources for last ran job: ", lastRanJob?.id);
+                        if (lastRanJob && lastRanJob.id !== awaitableJob?.job.id) {
+                            await provider.releaseResources(lastRanJob.id);
                         }
-
-                        console.error("Error executing query: ", error);
-                        throw error;
+                        store.set(lastRanJobAtom, awaitableJob?.job);
                     }
+                    awaitableJob = await provider.query(searchTerm, {
+                        fromTime: fromTime,
+                        toTime: toTime,
+                        cancelToken: cancelToken,
+                        limit: 100000,
+                        isForced: isForced,
+                        onBatchDone: async (data) => {
+                            await storeLastSuccessfulJob();
+                            store.set(dataViewModelAtom, data);
+                        },
+                    });
+                    await awaitableJob.promise;
+                    await storeLastSuccessfulJob();
+                    store.set(isQuerySuccessAtom, true);
+                    notifySuccess("Query executed successfully");
+                } catch (error) {
+                    store.set(isQuerySuccessAtom, false);
+                    console.log(error);
+                    if (awaitableJob) {
+                        console.log("Releasing resources for job: ", awaitableJob.job.id);
+                        await provider.releaseResources(awaitableJob.job.id);
+                    }
+                    if (cancelToken.aborted) {
+                        console.log("Query was aborted");
+                        return; // don't continue if the request was aborted
+                    }
+
+                    console.error("Error executing query: ", error);
+                    throw error;
                 }
             } finally {
                 store.set(isLoadingAtom, false);

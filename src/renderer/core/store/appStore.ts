@@ -1,5 +1,6 @@
+import { InstanceRef, PluginInstance } from 'src/engineV2/engine';
 import { AppGeneralSettings } from 'src/plugins_engine/controller';
-import { PluginInstance, SupportedPlugin } from 'src/plugins_engine/types';
+import { SupportedPlugin } from 'src/plugins_engine/types';
 import { useStore } from 'zustand';
 import { createStore } from 'zustand/vanilla';
 import { QueryProvider } from '~core/common/interface';
@@ -30,7 +31,7 @@ export type ApplicationStore = {
     reload: () => Promise<void>;
     initialize: (connection: StreamConnection) => void;
 
-    initializeDataset: (instanceId: string) => Promise<void>;
+    initializeDataset: (instanceRef: InstanceRef) => Promise<void>;
     initializeDatasets: () => Promise<void>;
 
     datasets: Record<string, DatasetMetadata>;
@@ -65,11 +66,11 @@ export const appStore = createStore<ApplicationStore>((set, get) => ({
         const initializedInstances = await controller.listInitializedPlugins();
         console.log('Initialized instances fetched:', initializedInstances);
         // Create providers for each initialized instance
-        const providers: Record<string, QueryProvider> = {};
-        const datasets: Record<string, DatasetMetadata> = {};
+        const providers: Record<InstanceRef, QueryProvider> = {};
+        const datasets: Record<InstanceRef, DatasetMetadata> = {};
         initializedInstances.forEach(instance => {
-            providers[instance.id] = controller.createProvider(instance);
-            datasets[instance.id] = { status: 'loading', controllerParams: {} }; // Set initial status to loading
+            providers[instance.name] = controller.createProvider(instance);
+            datasets[instance.name] = { status: 'loading', controllerParams: {} }; // Set initial status to loading
         });
         set({ providers, datasets });
         console.log('Providers created for initialized instances:', providers);
@@ -110,7 +111,7 @@ export const appStore = createStore<ApplicationStore>((set, get) => ({
             return;
         }
         for (const instance of initializedInstances) {
-            await get().initializeDataset(instance.id);
+            await get().initializeDataset(instance.name);
         }
         console.log('All datasets initialized successfully.');
     },
@@ -118,6 +119,7 @@ export const appStore = createStore<ApplicationStore>((set, get) => ({
         const controller = new ApiController(connection);
         set({ isInitialized: false, controller });
         try {
+            await controller.resetQueries();
             await get().reload();
         } catch (error) {
             console.error('Error initializing controller:', error);

@@ -55,12 +55,18 @@ export type FactoryParams = {
     params: Record<string, unknown>;
 }
 
+export type PluginRef = string & {_pr: never}; // A unique identifier for a plugin
+
 export interface Adapter {
     name: string;
-    ref: string;
+    ref: PluginRef;
     description: string;
     version: string;
 
     params: Param[];
     factory: (params: FactoryParams) => QueryProvider;
+}
+
+export function newPluginRef(ref: string): PluginRef {
+    return ref as PluginRef;
 }

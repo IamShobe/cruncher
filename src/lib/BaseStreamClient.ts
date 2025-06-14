@@ -96,7 +96,7 @@ export abstract class BaseStreamClient implements StreamConnection {
                 this.consumers.forEach(consumer => {
                     try {
                         const parsedMessage = consumer.shouldMatch(parsedRawMessage)
-                        if (parsedMessage !== null) {
+                        if (parsedMessage) {
                             consumer.callback(parsedRawMessage, parsedMessage);
                         }
                     } catch (error) {
@@ -160,7 +160,7 @@ export abstract class BaseStreamClient implements StreamConnection {
                 shouldMatch: (message: unknown) => {
                     const parsed = SyncResponsesSchema.safeParse(message)
                     if (!parsed.success) {
-                        return false;
+                        return null;
                     }
 
                     return parsed.data.uuid === requestId

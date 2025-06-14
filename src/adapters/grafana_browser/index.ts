@@ -1,8 +1,8 @@
-import { Adapter, QueryProvider } from "~lib/adapters";
+import { Adapter, newPluginRef, QueryProvider } from "~lib/adapters";
 import { GrafanaController } from "./background/controller";
 
 const adapter: Adapter = {
-    ref: 'grafana_browser',
+    ref: newPluginRef('grafana_browser'),
     name: "Grafana Browser",
     description: "Adapter for Grafana Browser",
     version: "0.1.0",

@@ -11,6 +11,14 @@ export const isTimeNow = (date: Date | DateType | undefined): date is DateType.N
     return date === DateType.Now;
 };
 
+
+export const compareFullDates = (date1: FullDate, date2: FullDate) => {
+    const date1Time = isTimeNow(date1) ? new Date() : date1;
+    const date2Time = isTimeNow(date2) ? new Date() : date2;
+
+    return Math.sign(date1Time.getTime() - date2Time.getTime());
+};
+
 /**
  * Tries to parse a value into a JavaScript Date using date-fns
  * @param {string|number|Date} input

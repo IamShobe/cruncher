@@ -105,7 +105,7 @@ const ready = async () => {
   console.log(`Server is running on port ${serverContainer.port}`);
   messageSender = getWebsocketMessageSender(serverContainer);
   messageSenderReady.signal();
-  const routes = await getRoutes(messageSender);
+  const routes = await getRoutes(messageSender, serverContainer);
   await setupEngine(serverContainer, routes);
   ipcMain.handle('getPort', async () => {
     return serverContainer.port;

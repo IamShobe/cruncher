@@ -21,6 +21,7 @@ export type SerializeableParams = {
     fromTime: Date,
     toTime: Date,
     limit: number,
+    isForced: boolean,
 }
 
 export type SupportedPlugin = {

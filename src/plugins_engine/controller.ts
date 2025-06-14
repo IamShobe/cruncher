@@ -1,12 +1,13 @@
 import { v4 as uuidv4 } from 'uuid';
 import { PluginInstance, QueryTask, SerializeableParams, SupportedPlugin } from "./types";
-import { QueryProvider } from "~lib/adapters";
+import { PluginRef, QueryProvider } from "~lib/adapters";
 import fs from "node:fs";
 import YAML from 'yaml'
 import { CruncherConfigSchema } from "src/config/types";
 import { ControllerIndexParam, Search } from "~lib/qql/grammar";
 import { ProcessedData } from "~lib/adapters/logTypes";
 import { supportedPlugins } from './supported_plugins';
+import { Engine, InstanceRef } from "src/engineV2/engine";
 
 
 const configFilePath = 'cruncher.config.yaml';
@@ -17,7 +18,7 @@ const defaultConfigFilePath = `${process.env.HOME}/.config/cruncher/${configFile
 
 const initializedPlugins: PluginInstanceContainer[] = [];
 
-type PluginInstanceContainer = {
+export type PluginInstanceContainer = {
     instance: PluginInstance;
     provider: QueryProvider;
 }
@@ -38,7 +39,7 @@ export type AppGeneralSettings = {
     configFilePath: string;
 }
 
-const appGeneralSettings: AppGeneralSettings = {
+export const appGeneralSettings: AppGeneralSettings = {
     configFilePath: defaultConfigFilePath,
 };
 
@@ -153,7 +154,7 @@ export const controller = {
     },
     reload: async () => {
         // Load plugins from the configuration file
-        setupPluginsFromConfig(appGeneralSettings);
+        // setupPluginsFromConfig(appGeneralSettings);
     },
     getAppGeneralSettings: () => {
         return appGeneralSettings;
@@ -161,7 +162,7 @@ export const controller = {
 }
 
 
-export const setupPluginsFromConfig = (appGeneralSettings: AppGeneralSettings) => {
+export const setupPluginsFromConfig = (appGeneralSettings: AppGeneralSettings, engineV2: Engine) => {
     // load default plugins from cruncher.config.yaml file
 
     // read file content
@@ -182,9 +183,10 @@ export const setupPluginsFromConfig = (appGeneralSettings: AppGeneralSettings) =
     }
 
     controller.reset();
+    engineV2.reset();
     for (const plugin of validated.data.connectors) {
         try {
-            const pluginInstance = controller.initializePlugin(plugin.type, plugin.name, plugin.params);
+            const pluginInstance = engineV2.initializePlugin(plugin.type as PluginRef, plugin.name as InstanceRef, plugin.params);
             console.log(`Plugin initialized: ${pluginInstance.name} of type ${pluginInstance.pluginRef}`);
         } catch (error) {
             console.error(`Error initializing plugin ${plugin.type}:`, error);
