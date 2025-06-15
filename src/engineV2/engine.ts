@@ -7,7 +7,7 @@ import BTree from 'sorted-btree';
 import { newBatchDoneMessage, newJobUpdatedMessage } from "src/plugins_engine/websocket";
 import { v4 as uuidv4 } from 'uuid';
 import { Adapter, Param, PluginRef, QueryProvider } from "~lib/adapters";
-import { asDateField, compareProcessedData, ProcessedData } from "~lib/adapters/logTypes";
+import { asDateField, asDisplayString, compareProcessedData, ProcessedData } from "~lib/adapters/logTypes";
 import { FullDate } from "~lib/dateUtils";
 import { DisplayResults, Events } from "~lib/displayTypes";
 import { ResponseHandler } from "~lib/networkTypes";
@@ -21,7 +21,7 @@ import { processTimeChart } from "~lib/pipelineEngine/timechart";
 import { processWhere } from "~lib/pipelineEngine/where";
 import { parse, ParsedQuery, PipelineItem } from "~lib/qql";
 import { ControllerIndexParam, Search } from "~lib/qql/grammar";
-import { createSignal, Signal } from "~lib/utils";
+import { createSignal, measureTime, Signal } from "~lib/utils";
 
 export type TaskRef = string & { _tr: never }; // A unique identifier for a plugin
 export type QueryTask = {
@@ -108,6 +108,11 @@ export type PageResponse<T> = {
     prev: number | null; // Reference to the previous page, if any
 }
 
+export type TableDataResponse = PageResponse<ProcessedData> & {
+    columns: string[]; // List of column names in the table
+    columnLengths: Record<string, number>; // Length of each column for display purposes
+}
+
 export type ClosestPoint = {
     closest: number | null
     index: number | null // Index of the closest point in the data array
@@ -131,6 +136,7 @@ export type JobBatchFinished = {
         events: {
             total: number;
             buckets: { timestamp: number, count: number }[];
+            autoCompleteKeys: string[];
         },
         table?: {
             totalRows: number;
@@ -270,6 +276,49 @@ export class Engine {
         };
     }
 
+    public getTableDataPaginated(taskId: TaskRef, offset: number, limit: number): TableDataResponse {
+        const task = this.queryTasks[taskId];
+        if (!task) {
+            throw new Error(`Query task with id ${taskId} not found`);
+        }
+
+        if (!task.displayResults.table) {
+            throw new Error(`No table data available for task ${taskId}`);
+        }
+
+        const dataPoints = task.displayResults.table.dataPoints;
+
+        const startIndex = offset;
+        const endIndex = startIndex + limit;
+        const data = dataPoints.slice(startIndex, endIndex);
+        const total = dataPoints.length;
+
+        const columnLengths = task.displayResults.table.columns.reduce((acc, col) => {
+            acc[col] = Math.min(
+                100,
+                Math.max(
+                    3,
+                    col.length, // Length of the column name
+                    ...dataPoints.map((row) => {
+                        const value = row.object[col];
+                        return asDisplayString(value).length + 3; // Length of the value in the column
+                    })
+                )
+            );
+            return acc;
+        }, {} as Record<string, number>);
+
+        return {
+            data: data,
+            columns: task.displayResults.table.columns,
+            columnLengths: columnLengths,
+            total: total,
+            limit: limit,
+            next: endIndex < total ? endIndex : null, // If there are more items, return the next index
+            prev: startIndex > 0 ? Math.max(0, startIndex - limit) : null, // If there are previous items, return the previous index
+        };
+    }
+
     public getClosestDateEvent(taskId: TaskRef, refDate: number): ClosestPoint {
         const task = this.queryTasks[taskId];
         if (!task) {
@@ -365,52 +414,64 @@ export class Engine {
                 compareProcessedData,
             );
 
-            // update the index with the total data
-            queryTaskState.index.clear();
-            totalData.forEach((data) => {
-                const timestamp = asDateField(data.object._time).value;
-                const toAppendTo = queryTaskState.index.get(timestamp) ?? [];
-                toAppendTo.push(data);
-                queryTaskState.index.set(timestamp, toAppendTo);
+            const pipelineData = this.getPipelineItems(queryTaskState, totalData, parsedTree.pipeline); 
+
+            await queryTaskState.mutex.runExclusive(async () => {
+                queryTaskState.displayResults = pipelineData;
+
+                await measureTime("batch overhead", async () => {
+                    // update the index with the total data
+                    queryTaskState.index.clear();
+                    totalData.forEach((data) => {
+                        const timestamp = asDateField(data.object._time).value;
+                        const toAppendTo = queryTaskState.index.get(timestamp) ?? [];
+                        toAppendTo.push(data);
+                        queryTaskState.index.set(timestamp, toAppendTo);
+                    });
+
+                    const scale = getScale(queryOptions.fromTime, queryOptions.toTime);
+                    const buckets = calculateBuckets(scale, totalData);
+
+                    const availableColumns = new Set<string>();
+                    queryTaskState.displayResults.events.data.forEach((dataPoint) => {
+                        for (const key in dataPoint.object) {
+                            availableColumns.add(key);
+                        }
+                    });
+
+                    await messageSender.sendMessage(
+                        newBatchDoneMessage(taskId, {
+                            scale: {
+                                from: queryOptions.fromTime.getTime(),
+                                to: queryOptions.toTime.getTime(),
+                            },
+                            views: {
+                                events: {
+                                    total: queryTaskState.displayResults.events.data.length,
+                                    buckets: buckets,
+                                    autoCompleteKeys: Array.from(availableColumns),
+                                },
+                                table: queryTaskState.displayResults.table ? {
+                                    totalRows: queryTaskState.displayResults.table.dataPoints.length,
+                                } : undefined,
+                            },
+                        } satisfies JobBatchFinished),
+                    );
+                })
             });
-
-            queryTaskState.displayResults = this.getPipelineItems(queryTaskState, totalData, parsedTree.pipeline);
-
-            const scale = getScale(queryOptions.fromTime, queryOptions.toTime);
-            const buckets = calculateBuckets(scale, totalData);
-
-            await messageSender.sendMessage(
-                newBatchDoneMessage(taskId, {
-                    scale: {
-                        from: queryOptions.fromTime.getTime(),
-                        to: queryOptions.toTime.getTime(),
-                    },
-                    views: {
-                        events: {
-                            total: queryTaskState.displayResults.events.data.length,
-                            buckets: buckets,
-                        },
-                        table: queryTaskState.displayResults.table ? {
-                            totalRows: queryTaskState.displayResults.table.dataPoints.length,
-                        } : undefined,
-                    },
-                } satisfies JobBatchFinished),
-            );
         }
 
         const onProviderBatchDone = (cacheKey: string) => async (data: ProcessedData[]): Promise<void> => {
-            await queryTaskState.mutex.runExclusive(async () => {
-                const cachedResult = await this.queryCache.getFromCacheByKey(cacheKey);
+            const cachedResult = await this.queryCache.getFromCacheByKey(cacheKey);
 
-                cachedResult.data = merge<ProcessedData>(
-                    [cachedResult.data, data],
-                    compareProcessedData,
-                );
+            cachedResult.data = merge<ProcessedData>(
+                [cachedResult.data, data],
+                compareProcessedData,
+            );
 
-                // Handle batch done - emit event to client
-                console.log(`Batch done for task ${taskId}`);
-                await onTaskDone();
-            });
+            // Handle batch done - emit event to client
+            await onTaskDone();
+            console.log(`Batch done for task ${taskId}`);
         }
 
         for (const instanceHolder of instancesToSearchOn) {
@@ -466,20 +527,24 @@ export class Engine {
             queryTaskState.subTasks.push(subTask);
         }
 
-        Promise.all(queryTaskState.subTasks.map(task => task.isReady)).then(() => {
-            // All subtasks are ready, we can mark the main task as completed
-            task.status = "completed";
+        Promise.allSettled(queryTaskState.subTasks.map(task => task.isReady)).then((statuses) => {
+            const allReady = statuses.every(status => status.status === "fulfilled");
+            if (!allReady) {
+                // get the first error that occurred
+                const error = statuses.find(status => status.status === "rejected")?.reason;
+                // If any subtask fails, we mark the main task as failed
+                task.status = "failed";
+                console.error(`Query task ${taskId} failed:`, error);
+            } else {
+                // All subtasks are ready, we can mark the main task as completed
+                task.status = "completed";
+                console.log(`Query task ${taskId} completed successfully`);
+            }
+
             onTaskDone().then(() => {
                 messageSender.sendMessage(newJobUpdatedMessage(taskId, task.status));
-                console.log(`Query task ${taskId} completed successfully`);
                 queryTaskState.finishedQuerying.signal();
             })
-        }).catch((error) => {
-            // If any subtask fails, we mark the main task as failed
-            task.status = "failed";
-            console.error(`Query task ${taskId} failed:`, error);
-            messageSender.sendMessage(newJobUpdatedMessage(taskId, task.status));
-            queryTaskState.finishedQuerying.signal();
         });
 
         return task;
@@ -570,7 +635,7 @@ export class Engine {
         console.log("[Pipeline] Start time: ", pipelineStart);
         try {
             const result = produce(allData, (draft) => {
-                const res = processPipelineV2(this.createProcessor(), allData, pipeline, context);
+                const res = processPipelineV2(this.createProcessor(), draft, pipeline, context);
                 draft.events = res.events;
                 draft.table = res.table;
                 draft.view = res.view;

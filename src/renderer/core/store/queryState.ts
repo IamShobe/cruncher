@@ -1,11 +1,9 @@
 import { scaleLinear } from 'd3-scale';
 import { atom, createStore } from 'jotai';
 import React from 'react';
-import { asDateField } from '~lib/adapters/logTypes';
+import { JobBatchFinished } from 'src/engineV2/engine';
 import { DisplayResults, Events } from '~lib/displayTypes';
 import { allData } from '~lib/qql';
-import { actualEndTimeAtom, actualStartTimeAtom } from './dateState';
-import { JobBatchFinished } from 'src/engineV2/engine';
 
 export const tabNameAtom = atom<string>("New Search");
 export const searchQueryAtom = atom(''); // search query
@@ -47,20 +45,12 @@ export const eventsAtom = atom<Events>((get) => {
 })
 
 export const availableColumnsAtom = atom((get) => {
-  const events = get(eventsAtom);
-  const data = events.data;
-  if (!data.length) {
+  const results = get(jobBatchDoneAtom);
+  if (!results) {
     return [];
   }
 
-  const columns = new Set<string>();
-  data.forEach((dataPoint) => {
-    for (const key in dataPoint.object) {
-      columns.add(key);
-    }
-  });
-
-  return Array.from(columns);
+  return results.views.events.autoCompleteKeys ?? [];
 });
 
 

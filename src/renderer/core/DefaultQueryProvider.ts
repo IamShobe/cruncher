@@ -1,6 +1,6 @@
 import { DisplayResults } from "~lib/displayTypes";
 import { AwaitableTask, QueryProvider } from "./common/interface";
-import { ClosestPoint, PageResponse } from "src/engineV2/engine";
+import { ClosestPoint, PageResponse, TableDataResponse } from "src/engineV2/engine";
 import { ProcessedData } from "~lib/adapters/logTypes";
 
 
@@ -20,6 +20,10 @@ class DefaultQueryProvider implements QueryProvider {
   }
 
   getLogsPaginated(): Promise<PageResponse<ProcessedData>> {
+    throw new Error("No query provider available - please configure ~/.config/cruncher/cruncher.config.yaml");
+  }
+
+  getTableDataPaginated(): Promise<TableDataResponse> {
     throw new Error("No query provider available - please configure ~/.config/cruncher/cruncher.config.yaml");
   }
 

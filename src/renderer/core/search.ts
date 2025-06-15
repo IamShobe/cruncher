@@ -16,7 +16,7 @@ import { openIndexesAtom } from "./events/state";
 import { notifyError, notifySuccess } from "./notifyError";
 import { ApplicationStore, appStore, useApplicationStore } from "./store/appStore";
 import { actualEndTimeAtom, actualStartTimeAtom, endFullDateAtom, startFullDateAtom } from "./store/dateState";
-import { dataViewModelAtom, jobBatchDoneAtom, lastUpdateAtom, searchQueryAtom, tabNameAtom, useQuerySpecificStoreInternal, viewSelectedForQueryAtom } from "./store/queryState";
+import { jobBatchDoneAtom, searchQueryAtom, tabNameAtom, useQuerySpecificStoreInternal, viewSelectedForQueryAtom } from "./store/queryState";
 
 export type QueryState = {
     searchQuery: string;
@@ -305,6 +305,17 @@ export const runQueryForStore = async (store: ReturnType<typeof createStore>, is
         };
 
         store.set(lastExecutedQueryStateAtom, state);
+        let awaitableJob: AwaitableTask | undefined = undefined;
+        const storeLastJob = async () => {
+            // get old job
+            const lastRanJob = store.get(lastRanJobAtom);
+            // release the old job
+            console.log("Releasing resources for last ran job: ", lastRanJob?.id);
+            if (lastRanJob && lastRanJob.id !== awaitableJob?.job.id) {
+                await provider.releaseResources(lastRanJob.id);
+            }
+            store.set(lastRanJobAtom, awaitableJob?.job);
+        }
 
         try {
             const parsedTree = parse(searchTerm);
@@ -323,20 +334,9 @@ export const runQueryForStore = async (store: ReturnType<typeof createStore>, is
 
                 // new search initiated - we can reset
                 resetBeforeNewBackendQuery();
-                let awaitableJob: AwaitableTask | undefined = undefined;
                 try {
                     store.set(lastQueryAtom, executionQuery);
 
-                    const storeLastSuccessfulJob = async () => {
-                        // get old job
-                        const lastRanJob = store.get(lastRanJobAtom);
-                        // release the old job
-                        console.log("Releasing resources for last ran job: ", lastRanJob?.id);
-                        if (lastRanJob && lastRanJob.id !== awaitableJob?.job.id) {
-                            await provider.releaseResources(lastRanJob.id);
-                        }
-                        store.set(lastRanJobAtom, awaitableJob?.job);
-                    }
                     awaitableJob = await provider.query(searchTerm, {
                         fromTime: fromTime,
                         toTime: toTime,
@@ -344,23 +344,21 @@ export const runQueryForStore = async (store: ReturnType<typeof createStore>, is
                         limit: 100000,
                         isForced: isForced,
                         onBatchDone: async (data) => {
-                            await storeLastSuccessfulJob();
-                            store.set(lastUpdateAtom, new Date());
+                            await storeLastJob();
+                            await queryClient.invalidateQueries({
+                                queryKey: ["logs", awaitableJob?.job.id],
+                            });
+                            // store.set(lastUpdateAtom, new Date());
                             store.set(jobBatchDoneAtom, data);
                             // store.set(dataViewModelAtom, data);
                         },
                     });
                     await awaitableJob.promise;
-                    await storeLastSuccessfulJob();
                     store.set(isQuerySuccessAtom, true);
                     notifySuccess("Query executed successfully");
                 } catch (error) {
                     store.set(isQuerySuccessAtom, false);
                     console.log(error);
-                    if (awaitableJob) {
-                        console.log("Releasing resources for job: ", awaitableJob.job.id);
-                        await provider.releaseResources(awaitableJob.job.id);
-                    }
                     if (cancelToken.aborted) {
                         console.log("Query was aborted");
                         return; // don't continue if the request was aborted
@@ -370,6 +368,7 @@ export const runQueryForStore = async (store: ReturnType<typeof createStore>, is
                     throw error;
                 }
             } finally {
+                await storeLastJob();
                 store.set(isLoadingAtom, false);
                 store.set(queryEndTimeAtom, new Date());
             }

@@ -16,14 +16,12 @@ import {
   useQueryExecutedEffect
 } from "./search";
 import {
-  dataViewModelAtom,
-  eventsAtom,
   jobBatchDoneAtom,
   viewSelectedForQueryAtom
 } from "./store/queryState";
-import { TableView } from "./table/TableView";
 import { TimeChart } from "./TimeChart";
 import { ViewChart } from "./view/ViewChart";
+import { TableView } from "./table/TableView";
 
 const MainContainer = styled.section`
   flex: 1;
@@ -45,7 +43,6 @@ export type SearcherProps = {};
 export const Searcher: React.FC<SearcherProps> = () => {
   const [selectedTab, setSelectedTab] = useState<string | null>("logs");
   const jobStatus = useAtomValue(jobBatchDoneAtom);
-  console.log("jobStatus", jobStatus);
   // const events = useAtomValue(eventsAtom);
   // const { table: tableView, view: viewChart } = useAtomValue(dataViewModelAtom);
 
@@ -146,12 +143,9 @@ export const Searcher: React.FC<SearcherProps> = () => {
           display={"flex"}
           flexDirection={"column"}
         >
-          {/* {hasTableView && (
-            <TableView
-              columns={tableView.columns}
-              dataPoints={tableView.dataPoints}
-            />
-          )} */}
+          {hasTableView && (
+            <TableView/>
+          )}
         </Tabs.Content>
         <Tabs.Content value="view" minH="0" flex={1} overflow={"auto"}>
           <ViewChart />

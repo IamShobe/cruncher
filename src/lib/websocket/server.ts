@@ -116,15 +116,13 @@ export const getServer = () => {
 
 
         const sendMessage = async (message: unknown) => {
-            await measureTime('sendMessage', async () => {
-                const serializedMessage = pack(message);
-                // wait for at least one connection to be established
-                await connectionsSignal.isReady()
-                wss.clients.forEach(client => {
-                    if (client.readyState === WebSocket.OPEN) {
-                        client.send(serializedMessage);
-                    }
-                });
+            const serializedMessage = pack(message);
+            // wait for at least one connection to be established
+            await connectionsSignal.isReady()
+            wss.clients.forEach(client => {
+                if (client.readyState === WebSocket.OPEN) {
+                    client.send(serializedMessage);
+                }
             });
         }
 

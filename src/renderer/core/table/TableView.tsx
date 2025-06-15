@@ -1,88 +1,96 @@
-import React, { useMemo } from "react";
-import { TableVirtuoso } from "react-virtuoso";
-import { asDisplayString, ProcessedData } from "../../../lib/adapters/logTypes";
 import { Table } from "@chakra-ui/react";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { useAtomValue } from "jotai";
+import React, { useMemo } from "react";
+import { TableComponents, TableVirtuoso } from "react-virtuoso";
+import { lastRanJobAtom, useQueryProvider } from "~core/search";
+import { asDisplayString, ProcessedData } from "../../../lib/adapters/logTypes";
 
-export type TableViewProps = {
-  columns: string[];
-  dataPoints: ProcessedData[];
-};
+export type TableViewProps = {};
 
-const prepareData = (dataPoints: ProcessedData[], columns: string[]) => {
-  const columnNameToWidth: Record<string, number> = {};
+const prepareItem = (dataPoint: ProcessedData, columns: string[]) => {
+  const object: string[] = [];
   for (const column of columns) {
-    columnNameToWidth[column] = Math.max(column.length, 3); // 3 is the minimum width of the column
+    const value = asDisplayString(dataPoint.object[column]);
+    object.push(value);
   }
-
-  const resultsDataPoints: string[][] = [];
-  for (const dataPoint of dataPoints) {
-    const object: string[] = [];
-    for (const column of columns) {
-      const value = asDisplayString(dataPoint.object[column]);
-      object.push(value);
-
-      const valueLength = value.length + 2; // 2 is the padding
-
-      if (
-        !columnNameToWidth[column] ||
-        valueLength > columnNameToWidth[column]
-      ) {
-        columnNameToWidth[column] = Math.min(valueLength, 100); // 100 is the maximum width of the column
-      }
-    }
-
-    resultsDataPoints.push(object);
-  }
-
-  return {
-    resultsDataPoints,
-    columnNameToWidth,
-  };
+  return object;
 };
 
-export const TableView: React.FC<TableViewProps> = ({
-  columns,
-  dataPoints,
-}) => {
-  const preparedData = useMemo(
-    () => prepareData(dataPoints, columns),
-    [dataPoints, columns]
-  );
+export const TableView: React.FC<TableViewProps> = ({}) => {
+  const jobInfo = useAtomValue(lastRanJobAtom);
+  const provider = useQueryProvider();
+  const { data, fetchNextPage } = useInfiniteQuery({
+    enabled: !!jobInfo?.id,
+    queryKey: ["tableData", jobInfo?.id],
+    queryFn: async ({ pageParam = 0 }) => {
+      // Replace with your actual data fetching logic
+      return await provider.getTableDataPaginated(
+        jobInfo!.id,
+        pageParam,
+        1000 // Adjust the limit as needed
+      );
+    },
+    getNextPageParam: (lastPage) => lastPage.next,
+    getPreviousPageParam: (firstPage) => firstPage.prev,
+    initialPageParam: 0,
+  });
+
+  const dataPoints = useMemo(() => {
+    return data ? data.pages.flatMap((d) => d.data) : [];
+  }, [data]);
+
+  const columns = useMemo(() => {
+    return data ? data.pages[0].columns : [];
+  }, [data]);
+
+  const columnSizes = useMemo(() => {
+    return data ? data.pages[0]?.columnLengths : {};
+  }, [data]);
+
+  const components = useMemo<TableComponents<ProcessedData>>(() => {
+    return {
+      Scroller: React.forwardRef((props, ref) => (
+        // @ts-expect-error - ref issue..
+        <Table.ScrollArea ref={ref} {...props} />
+      )),
+      Table: (props) => (
+        <Table.Root
+          {...props}
+          style={{
+            ...props.style,
+            tableLayout: "fixed",
+          }}
+        />
+      ),
+      TableHead: React.forwardRef((props, ref) => (
+        // @ts-expect-error - ref issue..
+        <Table.Header ref={ref} {...props} />
+      )),
+      TableRow: (props) => <Table.Row {...props} />,
+      TableBody: React.forwardRef((props, ref) => (
+        // @ts-expect-error - ref issue..
+        <Table.Body ref={ref} {...props} />
+      )),
+    };
+  }, []);
 
   return (
     <TableVirtuoso
       style={{ flex: 1 }}
       data={dataPoints}
-      components={{
-        Scroller: React.forwardRef((props, ref) => (
-          <Table.ScrollArea ref={ref} {...props} />
-        )),
-        Table: (props) => (
-          <Table.Root
-            {...props}
-            style={{
-              ...props.style,
-              tableLayout: "fixed",
-            }}
-          />
-        ),
-        TableHead: React.forwardRef((props, ref) => (
-          // @ts-expect-error - ref issue..
-          <Table.Header ref={ref} {...props} />
-        )),
-        TableRow: (props) => <Table.Row {...props} />,
-        TableBody: React.forwardRef((props, ref) => (
-          // @ts-expect-error - ref issue..
-          <Table.Body ref={ref} {...props} />
-        )),
+      endReached={() => {
+        fetchNextPage();
       }}
+      increaseViewportBy={1500}
+      components={components}
       fixedHeaderContent={() => (
         <Table.Row>
           {columns.map((column, i) => (
             <Table.ColumnHeader
               key={i}
               style={{
-                width: `${preparedData.columnNameToWidth[column]}ch`,
+                width: `${columnSizes[column] ?? 3}ch`,
               }}
             >
               {column}
@@ -90,9 +98,9 @@ export const TableView: React.FC<TableViewProps> = ({
           ))}
         </Table.Row>
       )}
-      itemContent={(index) => (
+      itemContent={(_index, item) => (
         <>
-          {preparedData.resultsDataPoints[index].map((value, i) => (
+          {prepareItem(item, columns).map((value, i) => (
             <Table.Cell
               key={i}
               style={{
@@ -105,7 +113,6 @@ export const TableView: React.FC<TableViewProps> = ({
           ))}
         </>
       )}
-      overscan={30}
     />
   );
 

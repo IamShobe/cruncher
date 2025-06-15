@@ -1,4 +1,4 @@
-import { ClosestPoint, InstanceRef, PageResponse, PluginInstance, QueryTask, TaskRef } from "src/engineV2/engine";
+import { ClosestPoint, InstanceRef, PageResponse, PluginInstance, QueryTask, TableDataResponse, TaskRef } from "src/engineV2/engine";
 import { QueryBatchDoneSchema, QueryJobUpdatedSchema } from "src/plugins_engine/protocolOut";
 import z from "zod";
 import { DisplayResults } from "~lib/displayTypes";
@@ -74,6 +74,27 @@ class PluginInstanceQueryProvider implements QueryProvider {
         }
 
         return await this.connection.invoke("getLogs", { jobId: this.executedJob.id });
+    }
+
+    async getTableDataPaginated(taskId: TaskRef, offset: number, limit: number): Promise<TableDataResponse> {
+        if (!this.executedJob) {
+            console.warn("No executed job to get table data from");
+            return {
+                data: [],
+                total: 0,
+                limit: limit,
+                next: null,
+                prev: null,
+                columnLengths: {},
+                columns: [],
+            };
+        }
+
+        return await this.connection.invoke("getTableDataPaginated", {
+            jobId: taskId,
+            offset: offset,
+            limit: limit,
+        });
     }
 
     async getLogsPaginated(taskId: TaskRef, offset: number, limit: number): Promise<PageResponse<ProcessedData>> {

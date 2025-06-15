@@ -6,11 +6,10 @@ import { atom, useAtomValue, useSetAtom } from "jotai";
 import type React from "react";
 import { useCallback, useEffect, useRef } from "react";
 import { lastRanJobAtom, useQueryProvider } from "~core/search";
+import { asDateField } from "~lib/adapters/logTypes";
 import DataRow from "./Row";
 import { RowDetails } from "./RowDetails";
 import { rangeInViewAtom, useIsIndexOpen } from "./state";
-import { lastUpdateAtom } from "~core/store/queryState";
-import { asDateField } from "~lib/adapters/logTypes";
 
 export const scrollToIndexAtom = atom<(index: number) => void>();
 
@@ -23,13 +22,9 @@ const DataLog: React.FC<DataRowProps> = () => {
 
   const {
     data,
-    error,
     fetchNextPage,
     hasNextPage,
-    isFetching,
     isFetchingNextPage,
-    status,
-    refetch,
   } = useInfiniteQuery({
     enabled: !!job?.id,
     queryKey: ["logs", job?.id],
@@ -40,21 +35,10 @@ const DataLog: React.FC<DataRowProps> = () => {
         1000 // Adjust the limit as needed
       );
     },
-    getNextPageParam: (lastPage, pages) => lastPage.next,
-    getPreviousPageParam: (firstPage, pages) => firstPage.prev,
-    maxPages: 100,
+    getNextPageParam: (lastPage) => lastPage.next,
+    getPreviousPageParam: (firstPage) => firstPage.prev,
     initialPageParam: 0,
   });
-
-  const lastUpdated = useAtomValue(lastUpdateAtom);
-
-  useEffect(() => {
-    if (!lastUpdated) {
-      return;
-    }
-    console.log("DataLog: refetching logs due to lastUpdated change", lastUpdated); 
-    refetch();
-  }, [refetch, lastUpdated]);
 
   const setScrollToIndex = useSetAtom(scrollToIndexAtom);
 
