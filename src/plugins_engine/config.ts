@@ -1,5 +1,5 @@
 import fs from "node:fs";
-import { CruncherConfigSchema } from "src/config/types";
+import { CruncherConfigSchema } from "src/config/schema";
 import { Engine } from "src/engineV2/engine";
 import { InstanceRef, SearchProfileRef } from "src/engineV2/types";
 import YAML from 'yaml';
@@ -52,7 +52,8 @@ export const setupPluginsFromConfig = (appGeneralSettings: AppGeneralSettings, e
         }
     }
 
-    for (const [profileName, profileSpec] of Object.entries(validated.data.profiles)) {
+    const profiles = validated.data.profiles ?? {};
+    for (const [profileName, profileSpec] of Object.entries(profiles)) {
         try {
             const profileRef = profileName as SearchProfileRef;
             const profileConnectors = profileSpec.connectors.map(connector => connector as InstanceRef);
@@ -63,7 +64,7 @@ export const setupPluginsFromConfig = (appGeneralSettings: AppGeneralSettings, e
         }
     }
 
-    if (!("default" in validated.data.profiles)) {
+    if (!("default" in profiles)) {
         console.warn("No default profile found in configuration. Creating a default profile with first available connectors.");
         const defaultProfileRef = "default" as SearchProfileRef;
         const defaultConnectors = engineV2.getInitializedPlugins().map(plugin => plugin.name).slice(0, 1); // Use first available connector

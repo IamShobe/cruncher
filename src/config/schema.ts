@@ -12,7 +12,7 @@ export const ProfilesSchema = z.record(z.object({
 
 
 export const CruncherConfigSchema = z.object({
-    profiles: ProfilesSchema,
+    profiles: ProfilesSchema.optional(),
     connectors: z.array(ConnectorConfigSchema),
 });
 
