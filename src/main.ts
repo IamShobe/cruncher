@@ -3,10 +3,10 @@ import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron';
 import log from 'electron-log/main';
 import started from 'electron-squirrel-startup';
 import path from 'node:path';
+import { ResponseHandler } from '~lib/networkTypes';
 import { createSignal } from '~lib/utils';
 import { getServer, setupEngine } from './lib/websocket/server';
-import { MessageSender } from './plugins_engine/controller';
-import { getRoutes, getMessageSender as getWebsocketMessageSender } from './plugins_engine/websocket';
+import { getRoutes, newUrlNavigationMessage } from './plugins_engine/websocket';
 
 // Optional, initialize the logger for any renderer process
 log.initialize();
@@ -93,7 +93,7 @@ const createWindow = () => {
   // mainWindow.webContents.openDevTools();
 };
 
-let messageSender: MessageSender | undefined = undefined;
+let messageSender: ResponseHandler | undefined = undefined;
 const messageSenderReady = createSignal();
 function isDev() {
   return !app.getAppPath().includes('app.asar');
@@ -103,9 +103,10 @@ const ready = async () => {
   // get free port
   const serverContainer = await getServer();
   console.log(`Server is running on port ${serverContainer.port}`);
-  messageSender = getWebsocketMessageSender(serverContainer);
+  // messageSender = getWebsocketMessageSender(serverContainer);
+  messageSender = serverContainer;
   messageSenderReady.signal();
-  const routes = await getRoutes(messageSender, serverContainer);
+  const routes = await getRoutes(serverContainer);
   await setupEngine(serverContainer, routes);
   ipcMain.handle('getPort', async () => {
     return serverContainer.port;
@@ -142,7 +143,7 @@ if (!gotTheLock) {
         console.warn("Message sender is not initialized yet, cannot handle open-url event");
         return;
       }
-      messageSender.urlNavigate(commandLine[1]); // Assuming the URL is the second argument
+      messageSender.sendMessage(newUrlNavigationMessage(commandLine[1])); // Assuming the URL is the second argument
     })
   })
 
@@ -157,7 +158,8 @@ if (!gotTheLock) {
         console.warn("Message sender is not initialized yet, cannot handle open-url event");
         return;
       }
-      messageSender.urlNavigate(url); // Assuming the URL is the second argument
+
+      messageSender.sendMessage(newUrlNavigationMessage(url)); // Assuming the URL is the second argument
     });
   })
 }

@@ -1,8 +1,8 @@
 
 import { WebSocketServer } from "ws";
-import { atLeastOneConnectionSignal } from "~lib/utils";
-import { GenericMessageSchema, ResponseHandler, SyncErrorOut, SyncRequestIn, SyncRequestInSchema, SyncResponseOut,  } from "~lib/networkTypes";
-import {pack, unpack} from 'msgpackr';
+import { atLeastOneConnectionSignal, measureTime } from "~lib/utils";
+import { GenericMessageSchema, ResponseHandler, SyncErrorOut, SyncRequestIn, SyncRequestInSchema, SyncResponseOut, } from "~lib/networkTypes";
+import { pack, unpack } from 'msgpackr';
 
 export type Consumer = {
     type: string;
@@ -116,13 +116,15 @@ export const getServer = () => {
 
 
         const sendMessage = async (message: unknown) => {
-            const serializedMessage = pack(message);
-            // wait for at least one connection to be established
-            await connectionsSignal.isReady()
-            wss.clients.forEach(client => {
-                if (client.readyState === WebSocket.OPEN) {
-                    client.send(serializedMessage);
-                }
+            await measureTime('sendMessage', async () => {
+                const serializedMessage = pack(message);
+                // wait for at least one connection to be established
+                await connectionsSignal.isReady()
+                wss.clients.forEach(client => {
+                    if (client.readyState === WebSocket.OPEN) {
+                        client.send(serializedMessage);
+                    }
+                });
             });
         }
 

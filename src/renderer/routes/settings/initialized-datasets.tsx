@@ -2,7 +2,7 @@ import { Button, Card, DataList, Heading, Stack } from "@chakra-ui/react";
 import { css } from "@emotion/react";
 import { createFileRoute } from '@tanstack/react-router';
 import { useMemo } from "react";
-import { PluginInstance } from "src/plugins_engine/types";
+import { PluginInstance } from "src/engineV2/engine";
 import { ProgressBar, ProgressRoot } from "~components/ui/progress";
 import { useInitializedInstances } from "~core/search";
 import { useApplicationStore } from "~core/store/appStore";

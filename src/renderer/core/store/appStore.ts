@@ -1,6 +1,5 @@
-import { InstanceRef, PluginInstance } from 'src/engineV2/engine';
+import { InstanceRef, PluginInstance, SerializableAdapter } from 'src/engineV2/engine';
 import { AppGeneralSettings } from 'src/plugins_engine/controller';
-import { SupportedPlugin } from 'src/plugins_engine/types';
 import { useStore } from 'zustand';
 import { createStore } from 'zustand/vanilla';
 import { QueryProvider } from '~core/common/interface';
@@ -38,9 +37,9 @@ export type ApplicationStore = {
     setDatasetMetadata: (instanceId: string, metadata: DatasetMetadata) => void;
 
     providers: Record<string, QueryProvider>;
-    supportedPlugins: SupportedPlugin[];
+    supportedPlugins: SerializableAdapter[];
     initializedInstances: PluginInstance[];
-    setSupportedPlugins: (plugins: SupportedPlugin[]) => void;
+    setSupportedPlugins: (plugins: SerializableAdapter[]) => void;
     setInitializedInstances: (instances: PluginInstance[]) => void;
 }
 
@@ -142,7 +141,7 @@ export const appStore = createStore<ApplicationStore>((set, get) => ({
     providers: {},
 
     supportedPlugins: [],
-    setSupportedPlugins: (plugins: SupportedPlugin[]) => set({ supportedPlugins: plugins }),
+    setSupportedPlugins: (plugins: SerializableAdapter[]) => set({ supportedPlugins: plugins }),
 
     initializedInstances: [],
     setInitializedInstances: (instances: PluginInstance[]) => set({ initializedInstances: instances }),

@@ -10,14 +10,13 @@ import { compareFullDates, dateAsString, DateType, FullDate, isTimeNow } from "~
 import { SubscribeOptions } from "~lib/network";
 import { parse } from "~lib/qql";
 import { ControllerIndexParam, Search } from "~lib/qql/grammar";
+import { AwaitableTask } from "./common/interface";
 import { DEFAULT_QUERY_PROVIDER } from "./DefaultQueryProvider";
 import { openIndexesAtom } from "./events/state";
 import { notifyError, notifySuccess } from "./notifyError";
 import { ApplicationStore, appStore, useApplicationStore } from "./store/appStore";
 import { actualEndTimeAtom, actualStartTimeAtom, endFullDateAtom, startFullDateAtom } from "./store/dateState";
 import { dataViewModelAtom, searchQueryAtom, tabNameAtom, useQuerySpecificStoreInternal, viewSelectedForQueryAtom } from "./store/queryState";
-import { controller } from "src/plugins_engine/controller";
-import { AwaitableTask } from "./common/interface";
 
 export type QueryState = {
     searchQuery: string;

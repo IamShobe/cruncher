@@ -1,14 +1,13 @@
 import { Mutex } from "async-mutex";
-import equal from "fast-deep-equal";
 import { produce } from "immer";
 import merge from "merge-k-sorted-arrays";
+import hash from "object-hash";
 import BTree from 'sorted-btree';
-import { SerializeableParams } from "src/plugins_engine/types";
 import { newBatchDoneMessage, newJobUpdatedMessage } from "src/plugins_engine/websocket";
 import { v4 as uuidv4 } from 'uuid';
 import { Adapter, Param, PluginRef, QueryProvider } from "~lib/adapters";
 import { asDateField, compareProcessedData, ProcessedData } from "~lib/adapters/logTypes";
-import { compareFullDates, FullDate } from "~lib/dateUtils";
+import { FullDate } from "~lib/dateUtils";
 import { DisplayResults, Events } from "~lib/displayTypes";
 import { ResponseHandler } from "~lib/networkTypes";
 import { processEval } from "~lib/pipelineEngine/eval";
@@ -22,7 +21,6 @@ import { processWhere } from "~lib/pipelineEngine/where";
 import { parse, ParsedQuery, PipelineItem } from "~lib/qql";
 import { ControllerIndexParam, Search } from "~lib/qql/grammar";
 import { createSignal, Signal } from "~lib/utils";
-import hash from "object-hash";
 
 export type TaskRef = string & { _tr: never }; // A unique identifier for a plugin
 export type QueryTask = {
@@ -80,6 +78,15 @@ export type SerializableAdapter = {
     version: string;
     params: Param[];
 }
+
+// MUST BE SERIALIZABLE
+export type SerializeableParams = {
+    fromTime: Date,
+    toTime: Date,
+    limit: number,
+    isForced: boolean,
+}
+
 
 export type PluginInstanceContainer = {
     instance: PluginInstance;
@@ -311,7 +318,7 @@ export class Engine {
             });
 
             queryTaskState.displayResults = this.getPipelineItems(queryTaskState, totalData, parsedTree.pipeline);
-            messageSender.sendMessage(
+            await messageSender.sendMessage(
                 newBatchDoneMessage(taskId, queryTaskState.displayResults),
             );
         }
@@ -636,36 +643,3 @@ class QueryCacheHolder {
         });
     }
 }
-
-
-
-const compareExecutions = (
-    exec1: QueryExecutionHistory,
-    exec2: QueryExecutionHistory | undefined
-) => {
-    if (exec2 === undefined) {
-        return false;
-    }
-
-    if (exec1.instanceRef !== exec2.instanceRef) {
-        return false;
-    }
-
-    if (!equal(exec1.params, exec2.params)) {
-        return false;
-    }
-
-    if (!equal(exec1.search, exec2.search)) {
-        return false;
-    }
-
-    if (compareFullDates(exec1.start, exec2.start) !== 0) {
-        return false;
-    }
-
-    if (compareFullDates(exec1.end, exec2.end) !== 0) {
-        return false;
-    }
-
-    return true;
-};

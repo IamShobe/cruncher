@@ -1,13 +1,8 @@
-import { v4 as uuidv4 } from 'uuid';
-import { PluginInstance, QueryTask, SerializeableParams, SupportedPlugin } from "./types";
-import { PluginRef, QueryProvider } from "~lib/adapters";
 import fs from "node:fs";
-import YAML from 'yaml'
 import { CruncherConfigSchema } from "src/config/types";
-import { ControllerIndexParam, Search } from "~lib/qql/grammar";
-import { ProcessedData } from "~lib/adapters/logTypes";
-import { supportedPlugins } from './supported_plugins';
 import { Engine, InstanceRef } from "src/engineV2/engine";
+import YAML from 'yaml';
+import { PluginRef } from "~lib/adapters";
 
 
 const configFilePath = 'cruncher.config.yaml';
@@ -16,24 +11,6 @@ const configFilePath = 'cruncher.config.yaml';
 
 const defaultConfigFilePath = `${process.env.HOME}/.config/cruncher/${configFilePath}`;
 
-const initializedPlugins: PluginInstanceContainer[] = [];
-
-export type PluginInstanceContainer = {
-    instance: PluginInstance;
-    provider: QueryProvider;
-}
-
-type QueryTaskState = QueryTask & {
-    abortController: AbortController;
-}
-
-const queryTasks: Record<string, QueryTaskState> = {};
-
-export type MessageSender = {
-    batchDone: (jobId: string, data: ProcessedData[]) => void;
-    jobUpdated: (job: QueryTask) => void;
-    urlNavigate: (url: string) => void;
-}
 
 export type AppGeneralSettings = {
     configFilePath: string;
@@ -42,124 +19,6 @@ export type AppGeneralSettings = {
 export const appGeneralSettings: AppGeneralSettings = {
     configFilePath: defaultConfigFilePath,
 };
-
-export const controller = {
-    reset() {
-        initializedPlugins.length = 0; // Clear the initialized plugins
-    },
-    initializePlugin: (pluginRef: string, name: string, params: Record<string, unknown>): PluginInstance => {
-        const plugin = supportedPlugins.find(p => p.ref === pluginRef);
-        if (!plugin) {
-            throw new Error(`Plugin with ref ${pluginRef} not found`);
-        }
-
-        const instance = plugin.factory({params});
-        if (!instance) {
-            throw new Error(`Failed to create instance for plugin ${pluginRef}`);
-        }
-
-        const pluginInstance: PluginInstance = {
-            id: uuidv4(),
-            name: name,
-            description: plugin.description,
-            pluginRef: plugin.ref,
-        };
-
-
-        initializedPlugins.push({
-            instance: pluginInstance,
-            provider: instance,
-        });
-        return pluginInstance;
-    },
-    getSupportedPlugins: (): SupportedPlugin[] => {
-        return supportedPlugins.map((plugin) => {
-            return {
-                ref: plugin.ref,
-                name: plugin.name,
-                description: plugin.description,
-                version: plugin.version,
-                params: plugin.params,
-            };
-        });
-    },
-    runQuery: (messageSender: MessageSender, instanceId: string, params: ControllerIndexParam[], searchTerm: Search, queryOptions: SerializeableParams): QueryTask => {
-        const pluginContainer = initializedPlugins.find(p => p.instance.id === instanceId);
-        if (!pluginContainer) {
-            throw new Error(`Plugin instance with id ${instanceId} not found`);
-        }
-
-        const { provider } = pluginContainer;
-
-        const taskId = uuidv4();
-        const task: QueryTask = {
-            id: taskId,
-            instanceId: instanceId,
-            status: "running",
-            createdAt: new Date(),
-        };
-
-        const queryTaskState = {
-            ...task,
-            abortController: new AbortController(),
-        }
-        queryTasks[taskId] = queryTaskState;
-
-        // Start the query
-        provider.query(params, searchTerm, {
-            fromTime: queryOptions.fromTime,
-            toTime: queryOptions.toTime,
-            limit: queryOptions.limit,
-            cancelToken: queryTaskState.abortController.signal,
-            onBatchDone: (data) => {
-                // Handle batch done - emit event to client
-                console.log(`Batch done for task ${taskId}`);
-                messageSender.batchDone(taskId, data);
-            }
-        }).then(() => {
-            task.status = "completed";
-            console.log(`Query completed for task ${taskId}`);
-            messageSender.jobUpdated(task);
-        }).catch((error) => {
-            task.status = "failed";
-            console.error(`Query failed for task ${taskId}:`, error);
-            messageSender.jobUpdated(task);
-        });
-
-        return task;
-    },
-    cancelQuery: (messageSender: MessageSender, taskId: string) => {
-        const task = queryTasks[taskId];
-        if (!task) {
-            throw new Error(`Query task with id ${taskId} not found`);
-        }
-        task.abortController.abort(); // This will cancel the ongoing query
-        task.status = "canceled"; // or you can set it to "cancelled" if you prefer
-        console.log(`Query task ${taskId} cancelled`);
-        messageSender.jobUpdated(task); // Notify the client about the cancellation
-    },
-    getControllerParams: async (instanceId: string) => {
-        const pluginContainer = initializedPlugins.find(p => p.instance.id === instanceId);
-        if (!pluginContainer) {
-            throw new Error(`Plugin instance with id ${instanceId} not found`);
-        }
-
-        const { provider } = pluginContainer;
-        return await provider.getControllerParams();
-    },
-    getInitializedPlugins: () => {
-        return initializedPlugins.map((plugin) => {
-            return plugin.instance;
-        });
-    },
-    reload: async () => {
-        // Load plugins from the configuration file
-        // setupPluginsFromConfig(appGeneralSettings);
-    },
-    getAppGeneralSettings: () => {
-        return appGeneralSettings;
-    },
-}
 
 
 export const setupPluginsFromConfig = (appGeneralSettings: AppGeneralSettings, engineV2: Engine) => {
@@ -182,7 +41,6 @@ export const setupPluginsFromConfig = (appGeneralSettings: AppGeneralSettings, e
         return;
     }
 
-    controller.reset();
     engineV2.reset();
     for (const plugin of validated.data.connectors) {
         try {

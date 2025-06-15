@@ -1,17 +1,13 @@
-import { ControllerIndexParam, Search } from "~lib/qql/grammar";
-import { measureTime } from "~lib/utils";
-import { getAsyncRequestHandler, getSyncRequestHandler } from "~lib/websocket/server";
+import { Engine, InstanceRef, QueryTask, SerializeableParams, TaskRef } from "src/engineV2/engine";
 import { ResponseHandler } from "~lib/networkTypes";
-import { appGeneralSettings, MessageSender, setupPluginsFromConfig } from "./controller";
-import { QueryBatchDone, QueryJobUpdated, UrlNavigation } from "./protocolOut";
-import { QueryTask, SerializeableParams } from "./types";
-import { Engine, InstanceRef, SearchProfileRef, TaskRef } from "src/engineV2/engine";
+import { getAsyncRequestHandler, getSyncRequestHandler } from "~lib/websocket/server";
 import * as grafana from '../adapters/grafana_browser';
 import * as local from '../adapters/mocked_data';
+import { appGeneralSettings, setupPluginsFromConfig } from "./controller";
+import { QueryBatchDone, QueryJobUpdated, UrlNavigation } from "./protocolOut";
 
-export const getRoutes = async (messageSender: MessageSender, messageSender2: ResponseHandler) => {
-    const { controller } = await import("./controller")
-    const engineV2 = new Engine(messageSender2);
+export const getRoutes = async (messageSender: ResponseHandler) => {
+    const engineV2 = new Engine(messageSender);
 
     engineV2.registerPlugin(grafana.adapter);
     engineV2.registerPlugin(local.adapter);
@@ -34,9 +30,6 @@ export const getRoutes = async (messageSender: MessageSender, messageSender2: Re
         getSyncRequestHandler("getControllerParams", async (params: { instanceRef: InstanceRef }) => {
             // return controller.getControllerParams(params.instanceId);
             return await engineV2.getControllerParams(params.instanceRef);
-        }),
-        getSyncRequestHandler("runQuery", async (params: { instanceId: string, controllerParams: ControllerIndexParam[], searchTerm: Search, queryOptions: SerializeableParams }) => {
-            return controller.runQuery(messageSender, params.instanceId, params.controllerParams, params.searchTerm, params.queryOptions);
         }),
         getSyncRequestHandler("cancelQuery", async (params: { taskId: TaskRef }) => {
             engineV2.cancelQuery(params.taskId);
@@ -67,7 +60,7 @@ export const getRoutes = async (messageSender: MessageSender, messageSender2: Re
             return { success: true };
         }),
         getSyncRequestHandler("getGeneralSettings", async () => {
-            return controller.getAppGeneralSettings();
+            return appGeneralSettings;
         }),
     ] as const;
 }
@@ -99,41 +92,4 @@ export const newUrlNavigationMessage = (url: string): UrlNavigation => {
             url: url,
         },
     };
-}
-
-export const getMessageSender = (responder: ResponseHandler): MessageSender => {
-    return {
-        batchDone: (jobId: string, data: unknown[]) => {
-            // chunk data items per message
-            const message: QueryBatchDone = {
-                type: "query_batch_done",
-                payload: {
-                    jobId: jobId,
-                    data: data,
-                },
-            }
-            measureTime("WebSocket Batch send", () => {
-                responder.sendMessage(message);
-            })
-        },
-        jobUpdated: (job) => {
-            const message: QueryJobUpdated = {
-                type: "query_job_updated",
-                payload: {
-                    jobId: job.id,
-                    status: job.status,
-                },
-            }
-            responder.sendMessage(message);
-        },
-        urlNavigate: (url: string) => {
-            const message: UrlNavigation = {
-                type: "url_navigation",
-                payload: {
-                    url: url,
-                },
-            };
-            responder.sendMessage(message);
-        }
-    }
 }
