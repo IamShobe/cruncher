@@ -99,6 +99,7 @@
     "fast-deep-equal": "^3.1.3",
     "immer": "^10.1.1",
     "jotai": "^2.10.3",
+    "jotai-effect": "^2.0.4",
     "jotai-zustand": "^0.6.0",
     "lodash-es": "^4.17.21",
     "merge-k-sorted-arrays": "^2.1.0",

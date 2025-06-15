@@ -86,6 +86,9 @@ importers:
       jotai:
         specifier: ^2.10.3
         version: 2.12.5(@types/react@18.3.23)(react@18.3.1)
+      jotai-effect:
+        specifier: ^2.0.4
+        version: 2.0.4(jotai@2.12.5(@types/react@18.3.23)(react@18.3.1))
       jotai-zustand:
         specifier: ^0.6.0
         version: 0.6.0(jotai@2.12.5(@types/react@18.3.23)(react@18.3.1))
@@ -3501,6 +3504,12 @@ packages:
   jiti@2.4.2:
     resolution: {integrity: sha512-rg9zJN+G4n2nfJl5MW3BMygZX56zKPNVEYYqq7adpmMh4Jn2QNEwhvQlFy6jPVdcod7txZtKHWnyZiA3a0zP7A==}
     hasBin: true
+
+  jotai-effect@2.0.4:
+    resolution: {integrity: sha512-V2ARMu1JvRCie43X6SwCXPpecMR+cRI7JuSoOz/6uziOEQJnziJFRzvWHoWple+DvWdARHcFMjlIp+BEDsUoVQ==}
+    engines: {node: '>=12.20.0'}
+    peerDependencies:
+      jotai: '>=2.12.1'
 
   jotai-zustand@0.6.0:
     resolution: {integrity: sha512-82LVFVZZXWsqpcfvDf4Yk6Gaq2RFezU0USfAA3O9WrxqflZNGlh0BkpUGzzYpdmDuDJIcYU7Rr1582UgI4DAiw==}
@@ -9353,6 +9362,10 @@ snapshots:
     optional: true
 
   jiti@2.4.2: {}
+
+  jotai-effect@2.0.4(jotai@2.12.5(@types/react@18.3.23)(react@18.3.1)):
+    dependencies:
+      jotai: 2.12.5(@types/react@18.3.23)(react@18.3.1)
 
   jotai-zustand@0.6.0(jotai@2.12.5(@types/react@18.3.23)(react@18.3.1)):
     dependencies:

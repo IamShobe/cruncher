@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 
 import { Card } from "@chakra-ui/react";
 import { useAtomValue } from "jotai";
+import { isNil } from "lodash-es";
 import {
   Bar,
   BarChart,
@@ -14,16 +15,12 @@ import {
   YAxis,
 } from "recharts";
 import { formatDataTimeShort } from "~lib/adapters/formatters";
-import { asDateField } from "~lib/adapters/logTypes";
 import { scrollToIndexAtom } from "./events/DataLog";
 import { rangeInViewAtom } from "./events/state";
 import { lastRanJobAtom, useQueryProvider } from "./search";
-import { dataBucketsAtom, eventsAtom, scaleAtom } from "./store/queryState";
+import { dataBucketsAtom, scaleAtom } from "./store/queryState";
 
 export const TimeChart = () => {
-  const events = useAtomValue(eventsAtom);
-  const data = events.data;
-
   const scrollToIndex = useAtomValue(scrollToIndexAtom);
 
   const ref = useRef(null);
@@ -64,13 +61,12 @@ export const TimeChart = () => {
             const timestampClicked = scale.invert(e.chartX);
             setRefAreaLeft(timestampClicked);
 
-            const clicked = await provider.getClosestDateEvent(displayedJob.id, timestampClicked);
-            const index = data.findIndex((item) => {
-              const timestamp = asDateField(item.object._time).value;
-              return timestamp === clicked;
-            });
-            if (index === -1) return;
-            scrollToIndex?.(index);
+            const clicked = await provider.getClosestDateEvent(
+              displayedJob.id,
+              timestampClicked
+            );
+            if (isNil(clicked?.index)) return;
+            scrollToIndex?.(clicked.index);
           }}
           onMouseMove={(e) => {
             if (!refAreaLeft) return;
@@ -105,8 +101,8 @@ export const TimeChart = () => {
           />
           <ReferenceArea
             yAxisId="1"
-            x1={asDateField(data[rangeInView.start]?.object._time).value}
-            x2={asDateField(data[rangeInView.end]?.object._time).value}
+            x1={rangeInView.start}
+            x2={rangeInView.end}
             fill="rgb(255, 255, 255)"
             stroke="#3c55a7"
             strokeWidth={2}

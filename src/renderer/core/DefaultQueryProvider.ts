@@ -1,5 +1,7 @@
 import { DisplayResults } from "~lib/displayTypes";
 import { AwaitableTask, QueryProvider } from "./common/interface";
+import { ClosestPoint, PageResponse } from "src/engineV2/engine";
+import { ProcessedData } from "~lib/adapters/logTypes";
 
 
 class DefaultQueryProvider implements QueryProvider {
@@ -16,7 +18,12 @@ class DefaultQueryProvider implements QueryProvider {
   getLogs(): Promise<DisplayResults> {
     throw new Error("No query provider available - please configure ~/.config/cruncher/cruncher.config.yaml");
   }
-  getClosestDateEvent(): Promise<number | null> {
+
+  getLogsPaginated(): Promise<PageResponse<ProcessedData>> {
+    throw new Error("No query provider available - please configure ~/.config/cruncher/cruncher.config.yaml");
+  }
+
+  getClosestDateEvent(): Promise<ClosestPoint | null> {
     throw new Error("No query provider available - please configure ~/.config/cruncher/cruncher.config.yaml");
   }
 

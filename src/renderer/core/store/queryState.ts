@@ -5,6 +5,7 @@ import { asDateField } from '~lib/adapters/logTypes';
 import { DisplayResults, Events } from '~lib/displayTypes';
 import { allData } from '~lib/qql';
 import { actualEndTimeAtom, actualStartTimeAtom } from './dateState';
+import { JobBatchFinished } from 'src/engineV2/engine';
 
 export const tabNameAtom = atom<string>("New Search");
 export const searchQueryAtom = atom(''); // search query
@@ -26,6 +27,8 @@ export const useQuerySpecificStoreInternal = () => {
   return store;
 }
 
+export const lastUpdateAtom = atom<Date | null>(null);
+
 export const dataViewModelAtom = atom<DisplayResults>(
   {
     events: {
@@ -36,6 +39,8 @@ export const dataViewModelAtom = atom<DisplayResults>(
     view: undefined,
   },
 );
+
+export const jobBatchDoneAtom = atom<JobBatchFinished | undefined>(undefined);
 
 export const eventsAtom = atom<Events>((get) => {
   return get(dataViewModelAtom).events;
@@ -60,51 +65,27 @@ export const availableColumnsAtom = atom((get) => {
 
 
 export const scaleAtom = atom((get) => {
-  const selectedStartTime = get(actualStartTimeAtom);
-  const selectedEndTime = get(actualEndTimeAtom);
+  const results = get(jobBatchDoneAtom);
+  const selectedStartTime = results?.scale.from;
+  const selectedEndTime = results?.scale.to;
 
   if (!selectedStartTime || !selectedEndTime) {
     return;
   }
 
   return scaleLinear().domain([
-    selectedStartTime.getTime(),
-    selectedEndTime.getTime(),
+    selectedStartTime,
+    selectedEndTime,
   ]);
 });
 
 export const dataBucketsAtom = atom((get) => {
-  const scale = get(scaleAtom);
-  if (!scale) {
+  const results = get(jobBatchDoneAtom);
+  if (!results) {
     return [];
   }
 
-
-  const buckets: Record<number, number> = {};
-  const ticks = scale.ticks(100);
-
-  const data = get(eventsAtom).data;
-
-  data.forEach((object) => {
-    // round timestamp to the nearest tick
-    const timestamp = ticks.reduce((prev, curr) => {
-      const thisTimestamp = asDateField(object.object._time).value;
-
-      return Math.abs(curr - thisTimestamp) < Math.abs(prev - thisTimestamp)
-        ? curr
-        : prev;
-    });
-    if (!buckets[timestamp]) {
-      buckets[timestamp] = 0;
-    }
-
-    buckets[timestamp] += 1;
-  });
-
-  return Object.entries(buckets).map(([timestamp, count]) => ({
-    timestamp: parseInt(timestamp),
-    count,
-  }));
+  return results.views.events.buckets;
 });
 
 

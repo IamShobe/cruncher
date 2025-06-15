@@ -1,22 +1,22 @@
 import { Mutex } from "async-mutex";
-import equal from "fast-deep-equal";
 import { atom, createStore, useAtom, useAtomValue } from "jotai";
 import { atomWithStore } from 'jotai-zustand';
 import { loadable } from "jotai/utils";
 import React, { useEffect } from "react";
 import { QueryTask } from "src/engineV2/engine";
 import z from "zod";
-import { compareFullDates, dateAsString, DateType, FullDate, isTimeNow } from "~lib/dateUtils";
+import { dateAsString, DateType, FullDate, isTimeNow } from "~lib/dateUtils";
 import { SubscribeOptions } from "~lib/network";
 import { parse } from "~lib/qql";
 import { ControllerIndexParam, Search } from "~lib/qql/grammar";
+import { queryClient } from "./client";
 import { AwaitableTask } from "./common/interface";
 import { DEFAULT_QUERY_PROVIDER } from "./DefaultQueryProvider";
 import { openIndexesAtom } from "./events/state";
 import { notifyError, notifySuccess } from "./notifyError";
 import { ApplicationStore, appStore, useApplicationStore } from "./store/appStore";
 import { actualEndTimeAtom, actualStartTimeAtom, endFullDateAtom, startFullDateAtom } from "./store/dateState";
-import { dataViewModelAtom, searchQueryAtom, tabNameAtom, useQuerySpecificStoreInternal, viewSelectedForQueryAtom } from "./store/queryState";
+import { dataViewModelAtom, jobBatchDoneAtom, lastUpdateAtom, searchQueryAtom, tabNameAtom, useQuerySpecificStoreInternal, viewSelectedForQueryAtom } from "./store/queryState";
 
 export type QueryState = {
     searchQuery: string;
@@ -345,7 +345,9 @@ export const runQueryForStore = async (store: ReturnType<typeof createStore>, is
                         isForced: isForced,
                         onBatchDone: async (data) => {
                             await storeLastSuccessfulJob();
-                            store.set(dataViewModelAtom, data);
+                            store.set(lastUpdateAtom, new Date());
+                            store.set(jobBatchDoneAtom, data);
+                            // store.set(dataViewModelAtom, data);
                         },
                     });
                     await awaitableJob.promise;
@@ -381,31 +383,3 @@ export const runQueryForStore = async (store: ReturnType<typeof createStore>, is
         }
     });
 }
-
-
-const compareExecutions = (
-    exec1: QueryExecutionHistory,
-    exec2: QueryExecutionHistory | undefined
-) => {
-    if (exec2 === undefined) {
-        return false;
-    }
-
-    if (!equal(exec1.params, exec2.params)) {
-        return false;
-    }
-
-    if (!equal(exec1.search, exec2.search)) {
-        return false;
-    }
-
-    if (compareFullDates(exec1.start, exec2.start) !== 0) {
-        return false;
-    }
-
-    if (compareFullDates(exec1.end, exec2.end) !== 0) {
-        return false;
-    }
-
-    return true;
-};

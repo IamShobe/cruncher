@@ -1,4 +1,5 @@
 import { Mutex } from "async-mutex";
+import { ScaleLinear, scaleLinear } from "d3-scale";
 import { produce } from "immer";
 import merge from "merge-k-sorted-arrays";
 import hash from "object-hash";
@@ -99,12 +100,17 @@ export type MessageSender = {
     urlNavigate: (url: string) => void;
 }
 
-export type PageResponse<T, R> = {
+export type PageResponse<T> = {
     data: T[];
     total: number;
     limit: number;
-    next: R | null; // Reference to the next page, if any
-    prev: R | null; // Reference to the previous page, if any
+    next: number | null; // Reference to the next page, if any
+    prev: number | null; // Reference to the previous page, if any
+}
+
+export type ClosestPoint = {
+    closest: number | null
+    index: number | null // Index of the closest point in the data array
 }
 
 export type SubTaskRef = string & { _: never }; // A unique identifier for a subtask
@@ -114,6 +120,22 @@ export type SubTask = {
     instanceRef: InstanceRef;
     cacheKey: string;
     isReady: Promise<void>;
+}
+
+export type JobBatchFinished = {
+    scale: {
+        from: number;
+        to: number;
+    }
+    views: {
+        events: {
+            total: number;
+            buckets: { timestamp: number, count: number }[];
+        },
+        table?: {
+            totalRows: number;
+        }
+    }
 }
 
 export class Engine {
@@ -228,7 +250,27 @@ export class Engine {
         return task.displayResults
     }
 
-    public getClosestDateEvent(taskId: TaskRef, refDate: number): { closest: number | null } {
+    public getLogsPaginated(taskId: TaskRef, offset: number, limit: number): PageResponse<ProcessedData> {
+        const task = this.queryTasks[taskId];
+        if (!task) {
+            throw new Error(`Query task with id ${taskId} not found`);
+        }
+
+        const startIndex = offset;
+        const endIndex = startIndex + limit;
+        const data = task.displayResults.events.data.slice(startIndex, endIndex);
+        const total = task.displayResults.events.data.length;
+
+        return {
+            data: data,
+            total: total,
+            limit: limit,
+            next: endIndex < total ? endIndex : null, // If there are more items, return the next index
+            prev: startIndex > 0 ? Math.max(0, startIndex - limit) : null, // If there are previous items, return the previous index
+        };
+    }
+
+    public getClosestDateEvent(taskId: TaskRef, refDate: number): ClosestPoint {
         const task = this.queryTasks[taskId];
         if (!task) {
             throw new Error(`Query task with id ${taskId} not found`);
@@ -237,18 +279,33 @@ export class Engine {
         const lower = task.index.nextLowerKey(refDate) ?? null;
         const upper = task.index.nextHigherKey(refDate) ?? null;
 
+        const lowerIndex = task.displayResults.events.data.findIndex((item) => {
+            const timestamp = asDateField(item.object._time).value;
+            return timestamp === lower;
+        });
+        const upperIndex = task.displayResults.events.data.findIndex((item) => {
+            const timestamp = asDateField(item.object._time).value;
+            return timestamp === upper;
+        });
+
+
         // return the closest event based on the refDate
         if (lower === null && upper === null) {
-            return { closest: null }; // No events found
+            return { closest: null, index: null }; // No events found
         }
         if (lower === null) {
-            return { closest: upper }; // Only upper found
+            return { closest: upper, index: upperIndex }; // Only upper found
         }
         if (upper === null) {
-            return { closest: lower }; // Only lower found
+            return { closest: lower, index: lowerIndex }; // Only lower found
         }
-        // Both lower and upper found, return the closest one
-        return { closest: (Math.abs(refDate - lower) < Math.abs(upper - refDate) ? lower : upper) };
+
+        if ((Math.abs(refDate - lower) < Math.abs(upper - refDate))) {
+            // If lower is closer to refDate
+            return { closest: lower, index: lowerIndex };
+        }
+
+        return { closest: upper, index: upperIndex }; // If upper is closer to refDate
     }
 
     public async runQuery(instanceRef: InstanceRef, searchTerm: string, queryOptions: SerializeableParams) {
@@ -318,8 +375,26 @@ export class Engine {
             });
 
             queryTaskState.displayResults = this.getPipelineItems(queryTaskState, totalData, parsedTree.pipeline);
+
+            const scale = getScale(queryOptions.fromTime, queryOptions.toTime);
+            const buckets = calculateBuckets(scale, totalData);
+
             await messageSender.sendMessage(
-                newBatchDoneMessage(taskId, queryTaskState.displayResults),
+                newBatchDoneMessage(taskId, {
+                    scale: {
+                        from: queryOptions.fromTime.getTime(),
+                        to: queryOptions.toTime.getTime(),
+                    },
+                    views: {
+                        events: {
+                            total: queryTaskState.displayResults.events.data.length,
+                            buckets: buckets,
+                        },
+                        table: queryTaskState.displayResults.table ? {
+                            totalRows: queryTaskState.displayResults.table.dataPoints.length,
+                        } : undefined,
+                    },
+                } satisfies JobBatchFinished),
             );
         }
 
@@ -642,4 +717,46 @@ class QueryCacheHolder {
             }
         });
     }
+}
+
+const getScale = (selectedStartTime: Date, selectedEndTime: Date) => {
+    if (!selectedStartTime || !selectedEndTime) {
+        return;
+    }
+
+    return scaleLinear().domain([
+        selectedStartTime.getTime(),
+        selectedEndTime.getTime(),
+    ]);
+}
+
+
+const calculateBuckets = (scale: ScaleLinear<number, number, unknown> | undefined, data: ProcessedData[]) => {
+    if (!scale) {
+        return [];
+    }
+
+    const buckets: Record<number, number> = {};
+    const ticks = scale.ticks(100);
+
+    data.forEach((object) => {
+        // round timestamp to the nearest tick
+        const timestamp = ticks.reduce((prev, curr) => {
+            const thisTimestamp = asDateField(object.object._time).value;
+
+            return Math.abs(curr - thisTimestamp) < Math.abs(prev - thisTimestamp)
+                ? curr
+                : prev;
+        });
+        if (!buckets[timestamp]) {
+            buckets[timestamp] = 0;
+        }
+
+        buckets[timestamp] += 1;
+    });
+
+    return Object.entries(buckets).map(([timestamp, count]) => ({
+        timestamp: parseInt(timestamp),
+        count,
+    }));
 }

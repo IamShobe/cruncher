@@ -1,9 +1,11 @@
-import { InstanceRef, PluginInstance, QueryTask, TaskRef } from "src/engineV2/engine";
+import { ClosestPoint, InstanceRef, PageResponse, PluginInstance, QueryTask, TaskRef } from "src/engineV2/engine";
 import { QueryBatchDoneSchema, QueryJobUpdatedSchema } from "src/plugins_engine/protocolOut";
 import z from "zod";
 import { DisplayResults } from "~lib/displayTypes";
 import { StreamConnection, SubscribeOptions, UnsubscribeFunction } from "~lib/network";
 import { QueryOptions, QueryProvider } from "../common/interface";
+import { ProcessedData } from "~lib/adapters/logTypes";
+import { queryClient } from "~core/client";
 
 
 export class ApiController {
@@ -74,7 +76,28 @@ class PluginInstanceQueryProvider implements QueryProvider {
         return await this.connection.invoke("getLogs", { jobId: this.executedJob.id });
     }
 
-    async getClosestDateEvent(taskId: TaskRef, refDate: number): Promise<number | null> {
+    async getLogsPaginated(taskId: TaskRef, offset: number, limit: number): Promise<PageResponse<ProcessedData>> {
+        if (!this.executedJob) {
+            console.warn("No executed job to get logs from");
+            return {
+                data: [],
+                total: 0,
+                limit: limit,
+                next: null,
+                prev: null,
+            };
+        }
+
+        const results = await this.connection.invoke("getLogsPaginated", {
+            jobId: taskId,
+            offset: offset,
+            limit: limit,
+        });
+
+        return results;
+    }
+
+    async getClosestDateEvent(taskId: TaskRef, refDate: number): Promise<ClosestPoint | null> {
         if (!this.executedJob) {
             console.warn("No executed job to get closest date event from");
             return null;
@@ -90,10 +113,13 @@ class PluginInstanceQueryProvider implements QueryProvider {
             return null;
         }
 
-        return results.closest;
+        return results;
     }
 
     async releaseResources(taskId: TaskRef): Promise<void> {
+        queryClient.removeQueries({
+            queryKey: ["logs", taskId],
+        })
         this.connection.invoke("releaseTaskResources", {
             jobId: taskId,
         });

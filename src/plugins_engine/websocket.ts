@@ -38,6 +38,9 @@ export const getRoutes = async (messageSender: ResponseHandler) => {
         getSyncRequestHandler("getLogs", async (params: { jobId: TaskRef }) => {
             return engineV2.getLogs(params.jobId);
         }),
+        getSyncRequestHandler("getLogsPaginated", async (params: { jobId: TaskRef, offset: number, limit: number }) => {
+            return engineV2.getLogsPaginated(params.jobId, params.offset, params.limit);
+        }),
         getSyncRequestHandler("getClosestDateEvent", async (params: { jobId: TaskRef, refDate: number }) => {
             return engineV2.getClosestDateEvent(params.jobId, params.refDate);
         }),

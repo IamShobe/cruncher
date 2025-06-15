@@ -18,6 +18,7 @@ import {
 import {
   dataViewModelAtom,
   eventsAtom,
+  jobBatchDoneAtom,
   viewSelectedForQueryAtom
 } from "./store/queryState";
 import { TableView } from "./table/TableView";
@@ -43,8 +44,15 @@ export type SearcherProps = {};
 
 export const Searcher: React.FC<SearcherProps> = () => {
   const [selectedTab, setSelectedTab] = useState<string | null>("logs");
-  const events = useAtomValue(eventsAtom);
-  const { table: tableView, view: viewChart } = useAtomValue(dataViewModelAtom);
+  const jobStatus = useAtomValue(jobBatchDoneAtom);
+  console.log("jobStatus", jobStatus);
+  // const events = useAtomValue(eventsAtom);
+  // const { table: tableView, view: viewChart } = useAtomValue(dataViewModelAtom);
+
+  const hasTableView = jobStatus?.views.table !== undefined;
+  const tableTotalRows = jobStatus?.views.table?.totalRows ?? 0;
+  const eventsTotal = jobStatus?.views.events.total ?? 0;
+  const hasViewChart = false;
 
   const editor = useAtomValue(queryEditorAtom);
 
@@ -68,12 +76,12 @@ export const Searcher: React.FC<SearcherProps> = () => {
     }
 
     // otherwise, select the tab based on the data available
-    if (tableView === undefined) {
+    if (jobStatus?.views.table === undefined) {
       setSelectedTab("logs");
     } else {
       setSelectedTab("table");
     }
-  }, [tableView, viewSelectedForQuery]);
+  }, [jobStatus, viewSelectedForQuery]);
 
   useShortcuts(searcherShortcuts, (shortcut) => {
     switch (shortcut) {
@@ -111,15 +119,13 @@ export const Searcher: React.FC<SearcherProps> = () => {
         <Tabs.List zIndex={10}>
           <Tabs.Trigger value="logs">
             <LuLogs /> Logs{" "}
-            {events.data.length > 0 && <Badge>{events.data.length}</Badge>}
+            {eventsTotal > 0 && <Badge>{eventsTotal}</Badge>}
           </Tabs.Trigger>
-          <Tabs.Trigger value="table" disabled={tableView === undefined}>
+          <Tabs.Trigger value="table" disabled={!hasTableView}>
             <LuTable /> Table{" "}
-            {tableView && tableView.dataPoints.length > 0 && (
-              <Badge>{tableView.dataPoints.length}</Badge>
-            )}
+            {tableTotalRows > 0 && <Badge>{tableTotalRows}</Badge>}
           </Tabs.Trigger>
-          <Tabs.Trigger value="view" disabled={viewChart === undefined}>
+          <Tabs.Trigger value="view" disabled={!hasViewChart}>
             <LuChartArea /> View
           </Tabs.Trigger>
         </Tabs.List>
@@ -140,12 +146,12 @@ export const Searcher: React.FC<SearcherProps> = () => {
           display={"flex"}
           flexDirection={"column"}
         >
-          {tableView !== undefined && (
+          {/* {hasTableView && (
             <TableView
               columns={tableView.columns}
               dataPoints={tableView.dataPoints}
             />
-          )}
+          )} */}
         </Tabs.Content>
         <Tabs.Content value="view" minH="0" flex={1} overflow={"auto"}>
           <ViewChart />

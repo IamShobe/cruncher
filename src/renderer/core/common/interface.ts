@@ -1,4 +1,5 @@
-import { QueryTask, TaskRef } from "src/engineV2/engine";
+import { ClosestPoint, JobBatchFinished, PageResponse, QueryTask, TaskRef } from "src/engineV2/engine";
+import { ProcessedData } from "~lib/adapters/logTypes";
 import { DisplayResults } from "~lib/displayTypes";
 
 export type QueryOptions = {
@@ -7,7 +8,7 @@ export type QueryOptions = {
     cancelToken: AbortSignal
     limit: number,
     isForced: boolean,
-    onBatchDone: (data: DisplayResults) => void
+    onBatchDone: (data: JobBatchFinished) => void
 }
 
 export type AwaitableTask = {
@@ -20,6 +21,7 @@ export interface QueryProvider {
     getControllerParams(): Promise<Record<string, string[]>>;
     query(searchTerm: string, queryOptions: QueryOptions): Promise<AwaitableTask>;
     getLogs(): Promise<DisplayResults>;
-    getClosestDateEvent(taskId: TaskRef, refDate: number): Promise<number | null>;
+    getLogsPaginated(taskId: TaskRef, offset: number, limit: number): Promise<PageResponse<ProcessedData>>;
+    getClosestDateEvent(taskId: TaskRef, refDate: number): Promise<ClosestPoint | null>;
     releaseResources(taskId: TaskRef): Promise<void>;
 }
