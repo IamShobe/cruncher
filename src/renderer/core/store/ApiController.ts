@@ -78,6 +78,21 @@ class PluginInstanceQueryProvider extends DefaultQueryProvider {
         return await this.connection.invoke("getLogs", { jobId: this.executedJob.id });
     }
 
+    async getViewData(taskId: TaskRef): Promise<NonNullable<DisplayResults["view"]>> {
+        if (!this.executedJob) {
+            console.warn("No executed job to get view data from");
+            return {
+                type: "view",
+                data: [],
+                XAxis: "",
+                YAxis: [],
+                allBuckets: [],
+            };
+        }
+        
+        return await this.connection.invoke("getViewData", { jobId: taskId });
+    }
+
     async getTableDataPaginated(taskId: TaskRef, offset: number, limit: number): Promise<TableDataResponse> {
         if (!this.executedJob) {
             console.warn("No executed job to get table data from");
@@ -87,8 +102,6 @@ class PluginInstanceQueryProvider extends DefaultQueryProvider {
                 limit: limit,
                 next: null,
                 prev: null,
-                columnLengths: {},
-                columns: [],
             };
         }
 
@@ -155,6 +168,9 @@ class PluginInstanceQueryProvider extends DefaultQueryProvider {
         });
         await queryClient.removeQueries({
             queryKey: ["tableData", taskId],
+        });
+        await queryClient.removeQueries({
+            queryKey: ["viewData", taskId],
         });
         this.connection.invoke("releaseTaskResources", {
             jobId: taskId,

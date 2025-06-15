@@ -16,7 +16,7 @@ import { openIndexesAtom } from "./events/state";
 import { notifyError, notifySuccess } from "./notifyError";
 import { ApplicationStore, appStore, useApplicationStore } from "./store/appStore";
 import { actualEndTimeAtom, actualStartTimeAtom, endFullDateAtom, startFullDateAtom } from "./store/dateState";
-import { jobBatchDoneAtom, searchQueryAtom, tabNameAtom, useQuerySpecificStoreInternal, viewSelectedForQueryAtom } from "./store/queryState";
+import { jobMetadataAtom, searchQueryAtom, tabNameAtom, useQuerySpecificStoreInternal, viewSelectedForQueryAtom } from "./store/queryState";
 
 export type QueryState = {
     searchQuery: string;
@@ -351,8 +351,11 @@ export const runQueryForStore = async (store: ReturnType<typeof createStore>, is
                             await queryClient.invalidateQueries({
                                 queryKey: ["tableData", awaitableJob?.job.id],
                             });
+                            await queryClient.invalidateQueries({
+                                queryKey: ["viewData", awaitableJob?.job.id],
+                            });
                             // store.set(lastUpdateAtom, new Date());
-                            store.set(jobBatchDoneAtom, data);
+                            store.set(jobMetadataAtom, data);
                             // store.set(dataViewModelAtom, data);
                         },
                     });

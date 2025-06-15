@@ -1,4 +1,5 @@
 import { Card } from "@chakra-ui/react";
+import { useQuery } from "@tanstack/react-query";
 import { scaleLinear } from "d3-scale";
 import { useAtomValue } from "jotai";
 import { useMemo, useState } from "react";
@@ -12,11 +13,11 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { Bucket } from "~lib/displayTypes";
+import { lastRanJobAtom, useQueryProvider } from "~core/search";
+import { actualEndTimeAtom, actualStartTimeAtom } from "~core/store/dateState";
 import { formatDataTimeShort } from "~lib/adapters/formatters";
 import { toJsonObject } from "~lib/adapters/logTypes";
-import { actualEndTimeAtom, actualStartTimeAtom } from "~core/store/dateState";
-import { dataViewModelAtom } from "~core/store/queryState";
+import { Bucket } from "~lib/displayTypes";
 
 const LIMIT = 10000;
 
@@ -26,7 +27,16 @@ export const ViewChart = ({}: ViewChartProps) => {
   const selectedStartTime = useAtomValue(actualStartTimeAtom);
   const selectedEndTime = useAtomValue(actualEndTimeAtom);
 
-  const { view } = useAtomValue(dataViewModelAtom);
+  const jobInfo = useAtomValue(lastRanJobAtom);
+  const provider = useQueryProvider();
+
+  const {data: view} = useQuery({
+    enabled: !!jobInfo?.id,
+    queryKey: ["viewData", jobInfo?.id],
+    queryFn: async () => {
+      return await provider.getViewData(jobInfo!.id)
+    },
+  });
 
   const scale = useMemo(() => {
     if (!selectedStartTime || !selectedEndTime) {

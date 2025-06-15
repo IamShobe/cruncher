@@ -172,25 +172,9 @@ export class Engine {
         const data = dataPoints.slice(startIndex, endIndex);
         const total = dataPoints.length;
 
-        const columnLengths = task.displayResults.table.columns.reduce((acc, col) => {
-            acc[col] = Math.min(
-                100,
-                Math.max(
-                    3,
-                    col.length, // Length of the column name
-                    ...dataPoints.map((row) => {
-                        const value = row.object[col];
-                        return asDisplayString(value).length + 3; // Length of the value in the column
-                    })
-                )
-            );
-            return acc;
-        }, {} as Record<string, number>);
 
         return {
             data: data,
-            columns: task.displayResults.table.columns,
-            columnLengths: columnLengths,
             total: total,
             limit: limit,
             next: endIndex < total ? endIndex : null, // If there are more items, return the next index
@@ -318,6 +302,7 @@ export class Engine {
                         }
                     });
 
+
                     await messageSender.sendMessage(
                         newBatchDoneMessage(taskId, {
                             scale: {
@@ -332,6 +317,10 @@ export class Engine {
                                 },
                                 table: queryTaskState.displayResults.table ? {
                                     totalRows: queryTaskState.displayResults.table.dataPoints.length,
+                                    columns: queryTaskState.displayResults.table.columns,
+                                    columnLengths: getTableColumnLengths(queryTaskState.displayResults.table.columns, queryTaskState.displayResults.table.dataPoints),
+                                } : undefined,
+                                view: queryTaskState.displayResults.view ? {
                                 } : undefined,
                             },
                         } satisfies JobBatchFinished),
@@ -427,6 +416,19 @@ export class Engine {
         });
 
         return task;
+    }
+
+    public async getViewData(taskId: TaskRef): Promise<NonNullable<DisplayResults["view"]>> {
+        const taskState = this.queryTasks[taskId];
+        if (!taskState) {
+            throw new Error(`Query task with id ${taskId} not found`);
+        }
+
+        if (!taskState.displayResults.view) {
+            throw new Error(`No view data available for task ${taskId}`);
+        }
+
+        return taskState.displayResults.view;
     }
 
     public async exportTableResults(taskId: TaskRef, format: "csv" | "json"): Promise<ExportResults> {
@@ -583,3 +585,20 @@ const dataAsArray = (processedData: ProcessedData[]) => {
         return result;
     });
 };
+
+const getTableColumnLengths = (columns: string[], data: ProcessedData[]) => {
+    return columns.reduce((acc, col) => {
+        acc[col] = Math.min(
+            100,
+            Math.max(
+                3,
+                col.length, // Length of the column name
+                ...data.map((row) => {
+                    const value = row.object[col];
+                    return asDisplayString(value).length + 3; // Length of the value in the column
+                })
+            )
+        );
+        return acc;
+    }, {} as Record<string, number>);
+}

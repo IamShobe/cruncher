@@ -87,10 +87,7 @@ export type PageResponse<T> = {
     prev: number | null; // Reference to the previous page, if any
 }
 
-export type TableDataResponse = PageResponse<ProcessedData> & {
-    columns: string[]; // List of column names in the table
-    columnLengths: Record<string, number>; // Length of each column for display purposes
-}
+export type TableDataResponse = PageResponse<ProcessedData>;
 
 export type ClosestPoint = {
     closest: number | null
@@ -119,6 +116,11 @@ export type JobBatchFinished = {
         },
         table?: {
             totalRows: number;
+            columns: string[];
+            columnLengths: Record<string, number>;
+        },
+        view?: {
+
         }
     }
 }

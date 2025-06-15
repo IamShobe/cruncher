@@ -5,6 +5,7 @@ import React, { useMemo } from "react";
 import { TableComponents, TableVirtuoso } from "react-virtuoso";
 import { lastRanJobAtom, useQueryProvider } from "~core/search";
 import { asDisplayString, ProcessedData } from "../../../lib/adapters/logTypes";
+import { jobMetadataAtom } from "~core/store/queryState";
 
 export type TableViewProps = {};
 
@@ -19,6 +20,7 @@ const prepareItem = (dataPoint: ProcessedData, columns: string[]) => {
 
 export const TableView: React.FC<TableViewProps> = ({}) => {
   const jobInfo = useAtomValue(lastRanJobAtom);
+  const jobMetadata = useAtomValue(jobMetadataAtom);
   const provider = useQueryProvider();
   const { data, fetchNextPage } = useInfiniteQuery({
     enabled: !!jobInfo?.id,
@@ -40,13 +42,8 @@ export const TableView: React.FC<TableViewProps> = ({}) => {
     return data ? data.pages.flatMap((d) => d.data) : [];
   }, [data]);
 
-  const columns = useMemo(() => {
-    return data ? data.pages[0].columns : [];
-  }, [data]);
-
-  const columnSizes = useMemo(() => {
-    return data ? data.pages[0]?.columnLengths : {};
-  }, [data]);
+  const columns = jobMetadata?.views.table?.columns ?? [];
+  const columnSizes = jobMetadata?.views.table?.columnLengths ?? {};
 
   const components = useMemo<TableComponents<ProcessedData>>(() => {
     return {

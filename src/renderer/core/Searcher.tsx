@@ -16,7 +16,7 @@ import {
   useQueryExecutedEffect
 } from "./search";
 import {
-  jobBatchDoneAtom,
+  jobMetadataAtom,
   viewSelectedForQueryAtom
 } from "./store/queryState";
 import { TimeChart } from "./TimeChart";
@@ -42,12 +42,12 @@ export type SearcherProps = {};
 
 export const Searcher: React.FC<SearcherProps> = () => {
   const [selectedTab, setSelectedTab] = useState<string | null>("logs");
-  const jobStatus = useAtomValue(jobBatchDoneAtom);
+  const jobStatus = useAtomValue(jobMetadataAtom);
 
   const hasTableView = jobStatus?.views.table !== undefined;
   const tableTotalRows = jobStatus?.views.table?.totalRows ?? 0;
   const eventsTotal = jobStatus?.views.events.total ?? 0;
-  const hasViewChart = false;
+  const hasViewChart = jobStatus?.views.view !== undefined;
 
   const editor = useAtomValue(queryEditorAtom);
 

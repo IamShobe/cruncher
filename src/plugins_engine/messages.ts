@@ -1,11 +1,11 @@
 import { Engine } from "src/engineV2/engine";
+import { InstanceRef, QueryTask, SerializeableParams, TaskRef } from "src/engineV2/types";
 import { ResponseHandler } from "~lib/networkTypes";
 import { getAsyncRequestHandler, getSyncRequestHandler } from "~lib/websocket/server";
 import * as grafana from '../adapters/grafana_browser';
 import * as local from '../adapters/mocked_data';
 import { appGeneralSettings, setupPluginsFromConfig } from "./controller";
 import { QueryBatchDone, QueryJobUpdated, UrlNavigation } from "./protocolOut";
-import { InstanceRef, QueryTask, SerializeableParams, TaskRef } from "src/engineV2/types";
 
 export const getRoutes = async (messageSender: ResponseHandler) => {
     const engineV2 = new Engine(messageSender);
@@ -71,6 +71,9 @@ export const getRoutes = async (messageSender: ResponseHandler) => {
         }),
         getSyncRequestHandler("exportTableResults", async (params: { jobId: TaskRef, format: "csv" | "json" }) => {
             return engineV2.exportTableResults(params.jobId, params.format);
+        }),
+        getSyncRequestHandler("getViewData", async (params: { jobId: TaskRef }) => {
+            return engineV2.getViewData(params.jobId);
         }),
     ] as const;
 }

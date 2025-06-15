@@ -2,7 +2,7 @@ import { scaleLinear } from 'd3-scale';
 import { atom, createStore } from 'jotai';
 import React from 'react';
 import { JobBatchFinished } from 'src/engineV2/types';
-import { DisplayResults, Events } from '~lib/displayTypes';
+import { DisplayResults } from '~lib/displayTypes';
 import { allData } from '~lib/qql';
 
 export const tabNameAtom = atom<string>("New Search");
@@ -27,21 +27,10 @@ export const useQuerySpecificStoreInternal = () => {
 
 export const lastUpdateAtom = atom<Date | null>(null);
 
-export const dataViewModelAtom = atom<DisplayResults>(
-  {
-    events: {
-      type: "events",
-      data: [],
-    },
-    table: undefined,
-    view: undefined,
-  },
-);
-
-export const jobBatchDoneAtom = atom<JobBatchFinished | undefined>(undefined);
+export const jobMetadataAtom = atom<JobBatchFinished | undefined>(undefined);
 
 export const availableColumnsAtom = atom((get) => {
-  const results = get(jobBatchDoneAtom);
+  const results = get(jobMetadataAtom);
   if (!results) {
     return [];
   }
@@ -51,7 +40,7 @@ export const availableColumnsAtom = atom((get) => {
 
 
 export const scaleAtom = atom((get) => {
-  const results = get(jobBatchDoneAtom);
+  const results = get(jobMetadataAtom);
   const selectedStartTime = results?.scale.from;
   const selectedEndTime = results?.scale.to;
 
@@ -66,7 +55,7 @@ export const scaleAtom = atom((get) => {
 });
 
 export const dataBucketsAtom = atom((get) => {
-  const results = get(jobBatchDoneAtom);
+  const results = get(jobMetadataAtom);
   if (!results) {
     return [];
   }

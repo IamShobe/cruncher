@@ -60,7 +60,7 @@ import {
 import { useApplicationStore } from "./store/appStore";
 import { endFullDateAtom, startFullDateAtom } from "./store/dateState";
 import {
-  jobBatchDoneAtom,
+  jobMetadataAtom,
   searchQueryAtom
 } from "./store/queryState";
 import { Timer } from "./Timer";
@@ -322,7 +322,7 @@ const downloadFile = (filename: string, data: string, mimeType: string) => {
 const MiniButtons = () => {
   const provider = useQueryProvider();
   const task = useAtomValue(lastRanJobAtom);
-  const batchCompleteStatus = useAtomValue(jobBatchDoneAtom);
+  const batchCompleteStatus = useAtomValue(jobMetadataAtom);
   const isDisabled = batchCompleteStatus?.views.table === undefined;
 
   const { copyCurrentShareLink } = useQueryActions();

@@ -43,6 +43,10 @@ export class DefaultQueryProvider {
   exportTableResults(taskId: TaskRef, format: "csv" | "json"): Promise<ExportResults> {
     return this._defaultImplementation();
   }
+
+  getViewData(taskId: TaskRef): Promise<NonNullable<DisplayResults["view"]>> {
+    return this._defaultImplementation();
+  }
 }
 
 export const DEFAULT_QUERY_PROVIDER = new DefaultQueryProvider();
