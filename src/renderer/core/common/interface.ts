@@ -1,4 +1,4 @@
-import { JobBatchFinished, QueryTask } from "src/engineV2/engine";
+import { JobBatchFinished, QueryTask } from "src/engineV2/types";
 
 export type QueryOptions = {
     fromTime: Date,

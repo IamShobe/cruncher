@@ -1,4 +1,4 @@
-import { getRoutes } from "src/plugins_engine/websocket";
+import { getRoutes } from "src/plugins_engine/messages";
 type Routes = ReturnType<typeof getRoutes>;
 export type StreamBridge = Awaited<Routes>[number];
 

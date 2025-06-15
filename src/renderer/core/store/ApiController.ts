@@ -1,4 +1,4 @@
-import { ClosestPoint, InstanceRef, PageResponse, PluginInstance, QueryTask, TableDataResponse, TaskRef } from "src/engineV2/engine";
+import { ClosestPoint, InstanceRef, PageResponse, PluginInstance, QueryTask, TableDataResponse, TaskRef } from "src/engineV2/types";
 import { QueryBatchDoneSchema, QueryJobUpdatedSchema } from "src/plugins_engine/protocolOut";
 import z from "zod";
 import { queryClient } from "~core/client";

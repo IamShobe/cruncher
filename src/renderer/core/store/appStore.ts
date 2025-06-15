@@ -1,4 +1,4 @@
-import { InstanceRef, PluginInstance, SerializableAdapter } from 'src/engineV2/engine';
+import { InstanceRef, PluginInstance, SerializableAdapter } from 'src/engineV2/types';
 import { AppGeneralSettings } from 'src/plugins_engine/controller';
 import { useStore } from 'zustand';
 import { createStore } from 'zustand/vanilla';

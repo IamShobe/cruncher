@@ -1,10 +1,11 @@
-import { Engine, InstanceRef, QueryTask, SerializeableParams, TaskRef } from "src/engineV2/engine";
+import { Engine } from "src/engineV2/engine";
 import { ResponseHandler } from "~lib/networkTypes";
 import { getAsyncRequestHandler, getSyncRequestHandler } from "~lib/websocket/server";
 import * as grafana from '../adapters/grafana_browser';
 import * as local from '../adapters/mocked_data';
 import { appGeneralSettings, setupPluginsFromConfig } from "./controller";
 import { QueryBatchDone, QueryJobUpdated, UrlNavigation } from "./protocolOut";
+import { InstanceRef, QueryTask, SerializeableParams, TaskRef } from "src/engineV2/types";
 
 export const getRoutes = async (messageSender: ResponseHandler) => {
     const engineV2 = new Engine(messageSender);

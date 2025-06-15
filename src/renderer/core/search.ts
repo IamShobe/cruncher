@@ -3,7 +3,7 @@ import { atom, createStore, useAtom, useAtomValue } from "jotai";
 import { atomWithStore } from 'jotai-zustand';
 import { loadable } from "jotai/utils";
 import React, { useEffect } from "react";
-import { QueryTask } from "src/engineV2/engine";
+import { QueryTask } from "src/engineV2/types";
 import z from "zod";
 import { dateAsString, DateType, FullDate, isTimeNow } from "~lib/dateUtils";
 import { SubscribeOptions } from "~lib/network";
