@@ -2,7 +2,6 @@ import { scaleLinear } from 'd3-scale';
 import { atom, createStore } from 'jotai';
 import React from 'react';
 import { JobBatchFinished } from 'src/engineV2/types';
-import { DisplayResults } from '~lib/displayTypes';
 import { allData } from '~lib/qql';
 
 export const tabNameAtom = atom<string>("New Search");

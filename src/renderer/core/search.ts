@@ -9,11 +9,11 @@ import { dateAsString, DateType, FullDate, isTimeNow } from "~lib/dateUtils";
 import { SubscribeOptions } from "~lib/network";
 import { parse } from "~lib/qql";
 import { ControllerIndexParam, Search } from "~lib/qql/grammar";
-import { queryClient } from "./client";
-import { AwaitableTask } from "./common/interface";
 import { DEFAULT_QUERY_PROVIDER } from "./common/DefaultQueryProvider";
+import { AwaitableTask } from "./common/interface";
 import { openIndexesAtom } from "./events/state";
 import { notifyError, notifySuccess } from "./notifyError";
+import { invalidateJobQueries } from "./api";
 import { ApplicationStore, appStore, useApplicationStore } from "./store/appStore";
 import { actualEndTimeAtom, actualStartTimeAtom, endFullDateAtom, startFullDateAtom } from "./store/dateState";
 import { jobMetadataAtom, searchQueryAtom, tabNameAtom, useQuerySpecificStoreInternal, viewSelectedForQueryAtom } from "./store/queryState";
@@ -345,15 +345,7 @@ export const runQueryForStore = async (store: ReturnType<typeof createStore>, is
                         isForced: isForced,
                         onBatchDone: async (data) => {
                             await storeLastJob();
-                            await queryClient.invalidateQueries({
-                                queryKey: ["logs", awaitableJob?.job.id],
-                            });
-                            await queryClient.invalidateQueries({
-                                queryKey: ["tableData", awaitableJob?.job.id],
-                            });
-                            await queryClient.invalidateQueries({
-                                queryKey: ["viewData", awaitableJob?.job.id],
-                            });
+                            await invalidateJobQueries(awaitableJob?.job.id);
                             // store.set(lastUpdateAtom, new Date());
                             store.set(jobMetadataAtom, data);
                             // store.set(dataViewModelAtom, data);

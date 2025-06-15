@@ -1,12 +1,12 @@
 import { ClosestPoint, ExportResults, InstanceRef, PageResponse, PluginInstance, QueryTask, TableDataResponse, TaskRef } from "src/engineV2/types";
 import { QueryBatchDoneSchema, QueryJobUpdatedSchema } from "src/plugins_engine/protocolOut";
 import z from "zod";
-import { queryClient } from "~core/client";
 import { ProcessedData } from "~lib/adapters/logTypes";
 import { DisplayResults } from "~lib/displayTypes";
 import { StreamConnection, SubscribeOptions, UnsubscribeFunction } from "~lib/network";
-import { DefaultQueryProvider } from "../common/DefaultQueryProvider";
-import { QueryOptions } from "../common/interface";
+import { DefaultQueryProvider } from "./common/DefaultQueryProvider";
+import { QueryOptions } from "./common/interface";
+import { removeJobQueries } from "./api";
 
 
 export class ApiController {
@@ -52,7 +52,7 @@ class PluginInstanceQueryProvider extends DefaultQueryProvider {
 
     constructor(private pluginInstance: PluginInstance, private connection: StreamConnection) {
         super();
-     }
+    }
 
     async waitForReady(): Promise<void> {
         // Implement logic to wait for the provider to be ready
@@ -89,7 +89,7 @@ class PluginInstanceQueryProvider extends DefaultQueryProvider {
                 allBuckets: [],
             };
         }
-        
+
         return await this.connection.invoke("getViewData", { jobId: taskId });
     }
 
@@ -163,15 +163,7 @@ class PluginInstanceQueryProvider extends DefaultQueryProvider {
     }
 
     async releaseResources(taskId: TaskRef): Promise<void> {
-        await queryClient.removeQueries({
-            queryKey: ["logs", taskId],
-        });
-        await queryClient.removeQueries({
-            queryKey: ["tableData", taskId],
-        });
-        await queryClient.removeQueries({
-            queryKey: ["viewData", taskId],
-        });
+        await removeJobQueries(taskId);
         this.connection.invoke("releaseTaskResources", {
             jobId: taskId,
         });

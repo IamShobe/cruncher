@@ -1,11 +1,10 @@
 import { Table } from "@chakra-ui/react";
-import { useInfiniteQuery } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
 import React, { useMemo } from "react";
 import { TableComponents, TableVirtuoso } from "react-virtuoso";
-import { lastRanJobAtom, useQueryProvider } from "~core/search";
-import { asDisplayString, ProcessedData } from "../../../lib/adapters/logTypes";
+import { useTableDataInfiniteQuery } from "~core/api";
 import { jobMetadataAtom } from "~core/store/queryState";
+import { asDisplayString, ProcessedData } from "../../../lib/adapters/logTypes";
 
 export type TableViewProps = {};
 
@@ -19,29 +18,13 @@ const prepareItem = (dataPoint: ProcessedData, columns: string[]) => {
 };
 
 export const TableView: React.FC<TableViewProps> = ({}) => {
-  const jobInfo = useAtomValue(lastRanJobAtom);
-  const jobMetadata = useAtomValue(jobMetadataAtom);
-  const provider = useQueryProvider();
-  const { data, fetchNextPage } = useInfiniteQuery({
-    enabled: !!jobInfo?.id,
-    queryKey: ["tableData", jobInfo?.id],
-    queryFn: async ({ pageParam = 0 }) => {
-      // Replace with your actual data fetching logic
-      return await provider.getTableDataPaginated(
-        jobInfo!.id,
-        pageParam,
-        10000 // Adjust the limit as needed
-      );
-    },
-    getNextPageParam: (lastPage) => lastPage.next,
-    getPreviousPageParam: (firstPage) => firstPage.prev,
-    initialPageParam: 0,
-  });
-
+  const { data, fetchNextPage } = useTableDataInfiniteQuery();
+  
   const dataPoints = useMemo(() => {
     return data ? data.pages.flatMap((d) => d.data) : [];
   }, [data]);
-
+  
+  const jobMetadata = useAtomValue(jobMetadataAtom);
   const columns = jobMetadata?.views.table?.columns ?? [];
   const columnSizes = jobMetadata?.views.table?.columnLengths ?? {};
 

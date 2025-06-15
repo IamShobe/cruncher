@@ -1,11 +1,10 @@
 import { css } from "@emotion/react";
-import { useInfiniteQuery } from "@tanstack/react-query";
 import type { Range } from "@tanstack/react-virtual";
 import { defaultRangeExtractor, useVirtualizer } from "@tanstack/react-virtual";
-import { atom, useAtomValue, useSetAtom } from "jotai";
+import { atom, useSetAtom } from "jotai";
 import type React from "react";
 import { useCallback, useEffect, useRef } from "react";
-import { lastRanJobAtom, useQueryProvider } from "~core/search";
+import { useLogsInfiniteQuery } from "~core/api";
 import { asDateField } from "~lib/adapters/logTypes";
 import DataRow from "./Row";
 import { RowDetails } from "./RowDetails";
@@ -16,28 +15,12 @@ export const scrollToIndexAtom = atom<(index: number) => void>();
 type DataRowProps = {};
 
 const DataLog: React.FC<DataRowProps> = () => {
-  const queryProvider = useQueryProvider();
-  const job = useAtomValue(lastRanJobAtom);
-
   const {
     data,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useInfiniteQuery({
-    enabled: !!job?.id,
-    queryKey: ["logs", job?.id],
-    queryFn: async ({ pageParam = 0 }) => {
-      return await queryProvider.getLogsPaginated(
-        job!.id,
-        pageParam,
-        10000 // Adjust the limit as needed
-      );
-    },
-    getNextPageParam: (lastPage) => lastPage.next,
-    getPreviousPageParam: (firstPage) => firstPage.prev,
-    initialPageParam: 0,
-  });
+  } = useLogsInfiniteQuery();
 
   const setScrollToIndex = useSetAtom(scrollToIndexAtom);
 

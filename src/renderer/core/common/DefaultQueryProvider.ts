@@ -1,7 +1,7 @@
+import { ClosestPoint, ExportResults, PageResponse, TableDataResponse, TaskRef } from "src/engineV2/types";
 import { ProcessedData } from "~lib/adapters/logTypes";
 import { DisplayResults } from "~lib/displayTypes";
 import { AwaitableTask, QueryOptions } from "./interface";
-import { ClosestPoint, ExportResults, PageResponse, TableDataResponse, TaskRef } from "src/engineV2/types";
 
 
 export class DefaultQueryProvider {

@@ -3,10 +3,9 @@ import { AppGeneralSettings } from 'src/plugins_engine/controller';
 import { useStore } from 'zustand';
 import { createStore } from 'zustand/vanilla';
 import { notifyError } from '~core/notifyError';
-import { ApiController } from '~core/store/ApiController';
+import { ApiController } from '~core/ApiController';
 import { StreamConnection } from '~lib/network';
 import { DefaultQueryProvider } from '../common/DefaultQueryProvider';
-
 
 
 type ControllerParams = Record<string, string[]>;
@@ -28,7 +27,7 @@ export type ApplicationStore = {
     generalSettings: AppGeneralSettings;
     isInitialized: boolean;
     reload: () => Promise<void>;
-    initialize: (connection: StreamConnection) => void;
+    initialize: (controller: ApiController) => void;
 
     initializeDataset: (instanceRef: InstanceRef) => Promise<void>;
     initializeDatasets: () => Promise<void>;
@@ -114,8 +113,7 @@ export const appStore = createStore<ApplicationStore>((set, get) => ({
         }
         console.log('All datasets initialized successfully.');
     },
-    initialize: async (connection: StreamConnection) => {
-        const controller = new ApiController(connection);
+    initialize: async (controller: ApiController) => {
         set({ isInitialized: false, controller });
         try {
             await controller.resetQueries();
