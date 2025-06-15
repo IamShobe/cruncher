@@ -2,7 +2,7 @@ import { Mutex } from "async-mutex";
 import { produce } from "immer";
 import merge from "merge-k-sorted-arrays";
 import BTree from 'sorted-btree';
-import { newBatchDoneMessage, newJobUpdatedMessage } from "src/plugins_engine/messages";
+import { newBatchDoneMessage, newJobUpdatedMessage } from "src/plugins_engine/router";
 import { v4 as uuidv4 } from 'uuid';
 import { Adapter, PluginRef } from "~lib/adapters";
 import { asDateField, asDisplayString, compareProcessedData, ProcessedData } from "~lib/adapters/logTypes";
@@ -28,7 +28,7 @@ export class Engine {
     private initializedPlugins: PluginInstanceContainer[] = [];
     private queryTasks: Record<TaskRef, QueryTaskState> = {};
     private searchProfiles: Record<SearchProfileRef, SearchProfile> = {};
-    private defaultSearchProfile: SearchProfileRef = "default" as SearchProfileRef;
+    private readonly defaultSearchProfile: SearchProfileRef = "default" as SearchProfileRef;
 
     private queryCache: QueryCacheHolder = new QueryCacheHolder();
 
@@ -70,8 +70,13 @@ export class Engine {
         return this.initializedPlugins.map(p => p.instance);
     }
 
+    public getSearchProfiles() {
+        return Object.values(this.searchProfiles);
+    }
+
     public reset(): void {
         this.initializedPlugins = [];
+        this.searchProfiles = {};
     }
 
     public initializePlugin(pluginRef: PluginRef, name: InstanceRef, params: Record<string, unknown>): PluginInstance {
@@ -220,12 +225,11 @@ export class Engine {
         return { closest: upper, index: upperIndex }; // If upper is closer to refDate
     }
 
-    public async runQuery(instanceRef: InstanceRef, searchTerm: string, queryOptions: SerializeableParams) {
-        // TODO: Implement search profile handling
-        // const profile = this.searchProfiles[searchProfileRef];
-        // if (!profile) {
-        //     throw new Error(`Search profile with name ${searchProfileRef} not found`);
-        // }
+    public async runQuery(searchProfileRef: SearchProfileRef, searchTerm: string, queryOptions: SerializeableParams) {
+        const profile = this.searchProfiles[searchProfileRef];
+        if (!profile) {
+            throw new Error(`Search profile with name ${searchProfileRef} not found`);
+        }
 
         const taskId = uuidv4() as TaskRef;
         const task: QueryTask = {
@@ -261,7 +265,7 @@ export class Engine {
         // parse the search term into params
         const parsedTree = parse(searchTerm);
 
-        const instancesToSearchOn = this._getInstancesToQueryOn(instanceRef, parsedTree);
+        const instancesToSearchOn = this._getInstancesToQueryOn(searchProfileRef, parsedTree);
         if (instancesToSearchOn.length === 0) {
             throw new Error(`No instances found for search term: ${searchTerm}`);
         }
@@ -285,7 +289,7 @@ export class Engine {
                 await measureTime("batch overhead", async () => {
                     // update the index with the total data
                     queryTaskState.index.clear();
-                    totalData.forEach((data) => {
+                    pipelineData.events.data.forEach((data) => {
                         const timestamp = asDateField(data.object._time).value;
                         const toAppendTo = queryTaskState.index.get(timestamp) ?? [];
                         toAppendTo.push(data);
@@ -293,7 +297,7 @@ export class Engine {
                     });
 
                     const scale = getScale(queryOptions.fromTime, queryOptions.toTime);
-                    const buckets = calculateBuckets(scale, totalData);
+                    const buckets = calculateBuckets(scale, pipelineData.events.data);
 
                     const availableColumns = new Set<string>();
                     queryTaskState.displayResults.events.data.forEach((dataPoint) => {
@@ -329,8 +333,15 @@ export class Engine {
             });
         }
 
-        const onProviderBatchDone = (cacheKey: string) => async (data: ProcessedData[]): Promise<void> => {
+        const onProviderBatchDone = (cacheKey: string, provider: InstanceRef) => async (data: ProcessedData[]): Promise<void> => {
             const cachedResult = await this.queryCache.getFromCacheByKey(cacheKey);
+
+            data.forEach((item) => {
+                item.object._source = {
+                    type: "string",
+                    value: provider,
+                }
+            });
 
             cachedResult.data = merge<ProcessedData>(
                 [cachedResult.data, data],
@@ -367,7 +378,7 @@ export class Engine {
                             toTime: queryOptions.toTime,
                             limit: queryOptions.limit,
                             cancelToken: queryTaskState.abortController.signal,
-                            onBatchDone: onProviderBatchDone(record.key),
+                            onBatchDone: onProviderBatchDone(record.key, instanceHolder.instance.name),
                         }).then(async () => {
                             record.status = "completed";
                             console.log(`Query subtask completed for task ${taskId}`);
@@ -489,26 +500,16 @@ export class Engine {
         console.log(`Resources released for query task ${taskId}`);
     }
 
-    private _getInstancesToQueryOn(instanceRef: InstanceRef, parsedTree: ParsedQuery): PluginInstanceContainer[] {
+    private _getInstancesToQueryOn(searchProfileRef: SearchProfileRef, parsedTree: ParsedQuery): PluginInstanceContainer[] {
+        const selectedProfile = this.searchProfiles[searchProfileRef];
         let instancesToSearchOn: PluginInstanceContainer[] = [];
         if (parsedTree.dataSources.length === 0) {
-            // If no data sources are specified, use all instances in the default search profile
-            // TODO: Implement search profile handling
-            // const defaultProfile = this.searchProfiles[this.defaultSearchProfile];
-            // if (!defaultProfile) {
-            //     throw new Error(`Default search profile ${this.defaultSearchProfile} not found`);
-            // }
-            // instancesToSearchOn = this.initializedPlugins.filter(p => defaultProfile.instances.includes(p.instance.name));
-            const instance = this.initializedPlugins.find(p => p.instance.name === instanceRef);
-            if (!instance) {
-                throw new Error(`Plugin instance with name ${instanceRef} not found`);
-            }
-
-            instancesToSearchOn = [instance];
+            // If no data sources are specified, use all instances in the selected search profile
+            instancesToSearchOn = this.initializedPlugins.filter(p => selectedProfile.instances.includes(p.instance.name));
         } else {
-            // If data sources are specified, filter instances based on the search term
+            // If data sources are specified, filter instances based on the data sources
             const dataSources = parsedTree.dataSources.map(ds => ds.name);
-            instancesToSearchOn = this.initializedPlugins.filter(p => dataSources.includes(p.instance.name));
+            instancesToSearchOn = this.initializedPlugins.filter(p => dataSources.includes(p.instance.name) && selectedProfile.instances.includes(p.instance.name));
         }
 
         return instancesToSearchOn;

@@ -1,12 +1,11 @@
-import { ClosestPoint, ExportResults, InstanceRef, PageResponse, PluginInstance, QueryTask, TableDataResponse, TaskRef } from "src/engineV2/types";
+import { ClosestPoint, ExportResults, InstanceRef, PageResponse, QueryTask, SearchProfileRef, TableDataResponse, TaskRef } from "src/engineV2/types";
 import { QueryBatchDoneSchema, QueryJobUpdatedSchema } from "src/plugins_engine/protocolOut";
 import z from "zod";
 import { ProcessedData } from "~lib/adapters/logTypes";
 import { DisplayResults } from "~lib/displayTypes";
 import { StreamConnection, SubscribeOptions, UnsubscribeFunction } from "~lib/network";
-import { DefaultQueryProvider } from "./common/DefaultQueryProvider";
-import { QueryOptions } from "./common/interface";
 import { removeJobQueries } from "./api";
+import { QueryOptions } from "./common/interface";
 
 
 export class ApiController {
@@ -27,9 +26,17 @@ export class ApiController {
         return await this.connection.invoke("getInitializedPlugins", {});
     }
 
+    listInitializedSearchProfiles = async () => {
+        return await this.connection.invoke("getSearchProfiles", {});
+    };
+
     getGeneralSettings = async () => {
         return await this.connection.invoke("getGeneralSettings", {});
     };
+
+    getControllerParams = async (pluginInstanceRef: InstanceRef): Promise<Record<string, string[]>> => {
+        return await this.connection.invoke("getControllerParams", { instanceRef: pluginInstanceRef });
+    }
 
     subscribeToMessages = <T extends z.ZodTypeAny>(
         schema: T,
@@ -42,69 +49,15 @@ export class ApiController {
         };
     };
 
-    public createProvider(plugin: PluginInstance): DefaultQueryProvider {
-        return new PluginInstanceQueryProvider(plugin, this.connection);
-    }
-}
-
-class PluginInstanceQueryProvider extends DefaultQueryProvider {
-    private executedJob: QueryTask | null = null;
-
-    constructor(private pluginInstance: PluginInstance, private connection: StreamConnection) {
-        super();
-    }
-
-    async waitForReady(): Promise<void> {
-        // Implement logic to wait for the provider to be ready
-        return Promise.resolve()
-    }
-
-    async getControllerParams(): Promise<Record<string, string[]>> {
-        return await this.connection.invoke("getControllerParams", { instanceRef: this.pluginInstance.name });
-    }
-
-    async getLogs(): Promise<DisplayResults> {
-        if (!this.executedJob) {
-            return {
-                events: {
-                    data: [],
-                    type: "events",
-                },
-                table: undefined,
-                view: undefined,
-            };
-        }
-
-        return await this.connection.invoke("getLogs", { jobId: this.executedJob.id });
+    async getLogs(taskId: TaskRef): Promise<DisplayResults> {
+        return await this.connection.invoke("getLogs", { jobId: taskId });
     }
 
     async getViewData(taskId: TaskRef): Promise<NonNullable<DisplayResults["view"]>> {
-        if (!this.executedJob) {
-            console.warn("No executed job to get view data from");
-            return {
-                type: "view",
-                data: [],
-                XAxis: "",
-                YAxis: [],
-                allBuckets: [],
-            };
-        }
-
         return await this.connection.invoke("getViewData", { jobId: taskId });
     }
 
     async getTableDataPaginated(taskId: TaskRef, offset: number, limit: number): Promise<TableDataResponse> {
-        if (!this.executedJob) {
-            console.warn("No executed job to get table data from");
-            return {
-                data: [],
-                total: 0,
-                limit: limit,
-                next: null,
-                prev: null,
-            };
-        }
-
         return await this.connection.invoke("getTableDataPaginated", {
             jobId: taskId,
             offset: offset,
@@ -113,17 +66,6 @@ class PluginInstanceQueryProvider extends DefaultQueryProvider {
     }
 
     async getLogsPaginated(taskId: TaskRef, offset: number, limit: number): Promise<PageResponse<ProcessedData>> {
-        if (!this.executedJob) {
-            console.warn("No executed job to get logs from");
-            return {
-                data: [],
-                total: 0,
-                limit: limit,
-                next: null,
-                prev: null,
-            };
-        }
-
         const results = await this.connection.invoke("getLogsPaginated", {
             jobId: taskId,
             offset: offset,
@@ -134,11 +76,6 @@ class PluginInstanceQueryProvider extends DefaultQueryProvider {
     }
 
     async getClosestDateEvent(taskId: TaskRef, refDate: number): Promise<ClosestPoint | null> {
-        if (!this.executedJob) {
-            console.warn("No executed job to get closest date event from");
-            return null;
-        }
-
         const results = await this.connection.invoke("getClosestDateEvent", {
             jobId: taskId,
             refDate: refDate,
@@ -169,33 +106,34 @@ class PluginInstanceQueryProvider extends DefaultQueryProvider {
         });
     }
 
-    async query(searchTerm: string, queryOptions: QueryOptions) {
+    async query(searchProfileRef: SearchProfileRef, searchTerm: string, queryOptions: QueryOptions) {
         // setup cancel token
         const cancelToken = queryOptions.cancelToken;
         let unsubscribeJobDoneHandler!: UnsubscribeFunction;
+        let executedJob: QueryTask | null = null;
         cancelToken.addEventListener("abort", async () => {
-            if (!this.executedJob) {
+            if (!executedJob) {
                 console.warn("No job to cancel");
                 return;
             }
 
-            console.log(`Query job ${this.executedJob.id} cancelled`);
+            console.log(`Query job ${executedJob.id} cancelled`);
             await this.connection.invoke("cancelQuery", {
-                taskId: this.executedJob.id,
+                taskId: executedJob.id,
             });
-            this.executedJob = null; // Clear the executed job after cancellation
+            executedJob = null; // Clear the executed job after cancellation
             unsubscribeJobDoneHandler?.();
         });
 
         const unsubscribeBatchHandler = this.connection.subscribe(QueryBatchDoneSchema, {
-            predicate: (batchMessage) => batchMessage.payload.jobId === this.executedJob?.id,
+            predicate: (batchMessage) => batchMessage.payload.jobId === executedJob?.id,
             callback: (batchMessage) => {
                 queryOptions.onBatchDone(batchMessage.payload.data);
             },
         });
 
-        const job = await this.connection.invoke("runQueryV2", {
-            instanceRef: this.pluginInstance.name as InstanceRef,
+        executedJob = await this.connection.invoke("runQueryV2", {
+            searchProfileRef: searchProfileRef,
             searchTerm,
             queryOptions: {
                 fromTime: queryOptions.fromTime,
@@ -204,13 +142,12 @@ class PluginInstanceQueryProvider extends DefaultQueryProvider {
                 isForced: queryOptions.isForced || false, // Default to false if not provided
             },
         });
-        this.executedJob = job; // Store the last executed job
-        console.log("Query job started:", job);
+        console.log("Query job started:", executedJob);
         return {
-            job: job,
+            job: executedJob,
             promise: new Promise<void>((resolve, reject) => {
                 unsubscribeJobDoneHandler = this.connection.subscribe(QueryJobUpdatedSchema, {
-                    predicate: (jobUpdateMessage) => jobUpdateMessage.payload.jobId === this.executedJob?.id,
+                    predicate: (jobUpdateMessage) => jobUpdateMessage.payload.jobId === executedJob?.id,
                     callback: (jobUpdateMessage) => {
                         try {
                             const jobUpdate = jobUpdateMessage.payload;

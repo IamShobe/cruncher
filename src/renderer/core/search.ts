@@ -9,11 +9,10 @@ import { dateAsString, DateType, FullDate, isTimeNow } from "~lib/dateUtils";
 import { SubscribeOptions } from "~lib/network";
 import { parse } from "~lib/qql";
 import { ControllerIndexParam, Search } from "~lib/qql/grammar";
-import { DEFAULT_QUERY_PROVIDER } from "./common/DefaultQueryProvider";
+import { invalidateJobQueries } from "./api";
 import { AwaitableTask } from "./common/interface";
 import { openIndexesAtom } from "./events/state";
 import { notifyError, notifySuccess } from "./notifyError";
-import { invalidateJobQueries } from "./api";
 import { ApplicationStore, appStore, useApplicationStore } from "./store/appStore";
 import { actualEndTimeAtom, actualStartTimeAtom, endFullDateAtom, startFullDateAtom } from "./store/dateState";
 import { jobMetadataAtom, searchQueryAtom, tabNameAtom, useQuerySpecificStoreInternal, viewSelectedForQueryAtom } from "./store/queryState";
@@ -31,7 +30,7 @@ export const queryStateAtom = atom<QueryState>((get) => {
     const searchQuery = get(searchQueryAtom);
     const startTime = get(startFullDateAtom);
     const endTime = get(endFullDateAtom);
-    const selectedProfile = get(selectedInstanceAtom);
+    const selectedProfile = get(selectedSearchProfileAtom);
     const tabName = get(tabNameAtom);
 
     return {
@@ -59,9 +58,9 @@ export type QueryExecutionHistory = {
 const submitMutexAtom = atom(new Mutex());
 const abortControllerAtom = atom(new AbortController());
 
-const initializedInstancesSelector = (state: ApplicationStore) => state.initializedInstances;
-const providersSelector = (state: ApplicationStore) => state.providers;
-const supportedPluginsSelector = (state: ApplicationStore) => state.supportedPlugins;
+export const initializedInstancesSelector = (state: ApplicationStore) => state.initializedInstances;
+export const supportedPluginsSelector = (state: ApplicationStore) => state.supportedPlugins;
+export const searchProfilesSelector = (state: ApplicationStore) => state.searchProfiles;
 
 export const useInitializedInstances = () => {
     return useApplicationStore(initializedInstancesSelector);
@@ -71,30 +70,30 @@ export const useAvailablePlugins = () => {
     return useApplicationStore(supportedPluginsSelector);
 }
 
-export const selectedInstanceIndexAtom = atom<number>(0);
+export const selectedSearchProfileIndexAtom = atom<number>(0);
 
-export const useSelectedInstance = () => {
-    const selectedIndex = useAtomValue(selectedInstanceIndexAtom);
-    const initializedInstances = useApplicationStore((state) => state.initializedInstances);
-    return initializedInstances[selectedIndex];
+export const useSelectedSearchProfile = () => {
+    const selectedIndex = useAtomValue(selectedSearchProfileIndexAtom);
+    const searchProfiles = useApplicationStore(searchProfilesSelector);
+    return searchProfiles[selectedIndex];
 }
 
 export const appStoreAtom = atomWithStore(appStore);
 
-export const selectedInstanceAtom = atom((get) => {
-    const initializedInstances = initializedInstancesSelector(get(appStoreAtom));
-    const selectedInstanceIndex = get(selectedInstanceIndexAtom);
-    if (selectedInstanceIndex === -1 || selectedInstanceIndex >= initializedInstances.length) {
+export const selectedSearchProfileAtom = atom((get) => {
+    const searchProfiles = searchProfilesSelector(get(appStoreAtom));
+    const selectedProfileIndex = get(selectedSearchProfileIndexAtom);
+    if (selectedProfileIndex === -1 || selectedProfileIndex >= searchProfiles.length) {
         return undefined;
     }
 
-    return initializedInstances[selectedInstanceIndex];
+    return searchProfiles[selectedProfileIndex];
 })
 
 
 const controllerParamsAtom = atom(async (get) => {
     const initializedInstances = initializedInstancesSelector(get(appStoreAtom));
-    const selectedInstanceIndex = get(selectedInstanceIndexAtom);
+    const selectedInstanceIndex = get(selectedSearchProfileIndexAtom);
     if (selectedInstanceIndex === -1 || selectedInstanceIndex >= initializedInstances.length) {
         return {};
     }
@@ -131,23 +130,6 @@ export const useInitializedController = () => {
     return controller;
 }
 
-export const providerAtom = atom((get) => {
-    const selectedInstance = get(selectedInstanceAtom);
-    if (!selectedInstance) {
-        return DEFAULT_QUERY_PROVIDER;
-    }
-    const providers = providersSelector(get(appStoreAtom));
-    if (!providers[selectedInstance.name]) {
-        console.warn(`No provider found for instance with name ${selectedInstance.name}. Using default provider.`);
-        return DEFAULT_QUERY_PROVIDER;
-    }
-
-    return providers[selectedInstance.name];
-});
-
-export const useQueryProvider = () => {
-    return useAtomValue(providerAtom);
-}
 
 export const useMessageEvent = <T extends z.ZodTypeAny>(schema: T, options: SubscribeOptions<T>) => {
     const controller = useInitializedController();
@@ -250,7 +232,7 @@ export const useRunQuery = () => {
 }
 
 export const runQueryForStore = async (store: ReturnType<typeof createStore>, isForced: boolean) => {
-    const provider = store.get(providerAtom);
+    const controller = store.get(appStoreAtom).controller;
     const resetBeforeNewBackendQuery = () => {
         store.set(openIndexesAtom, []);
         store.set(viewSelectedForQueryAtom, false);
@@ -270,7 +252,7 @@ export const runQueryForStore = async (store: ReturnType<typeof createStore>, is
         const startFullDate = store.get(startFullDateAtom);
         const endFullDate = store.get(endFullDateAtom);
         const searchTerm = store.get(searchQueryAtom);
-        const selectedProfile = store.get(selectedInstanceAtom);
+        const selectedProfile = store.get(selectedSearchProfileAtom);
         if (!selectedProfile) {
             // TODO: return error
             return;
@@ -312,7 +294,7 @@ export const runQueryForStore = async (store: ReturnType<typeof createStore>, is
             // release the old job
             console.log("Releasing resources for last ran job: ", lastRanJob?.id);
             if (lastRanJob && lastRanJob.id !== awaitableJob?.job.id) {
-                await provider.releaseResources(lastRanJob.id);
+                await controller.releaseResources(lastRanJob.id);
             }
             store.set(lastRanJobAtom, awaitableJob?.job);
         }
@@ -337,7 +319,7 @@ export const runQueryForStore = async (store: ReturnType<typeof createStore>, is
                 try {
                     store.set(lastQueryAtom, executionQuery);
 
-                    awaitableJob = await provider.query(searchTerm, {
+                    awaitableJob = await controller.query(selectedProfile.name, searchTerm, {
                         fromTime: fromTime,
                         toTime: toTime,
                         cancelToken: cancelToken,

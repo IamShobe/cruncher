@@ -56,11 +56,15 @@ export const RowDetails = ({
         background-color: rgb(24, 24, 24);
       `}
     >
-      {Object.entries(row.object).map(([key, value]) => {
+      {Object.entries(row.object).sort(sortByKey).map(([key, value]) => {
         return <RowDetail key={key} rowKey={key} rowValue={value} />;
       })}
     </div>
   );
+};
+
+const sortByKey = (a: [string, Field], b: [string, Field]) => {
+  return a[0].localeCompare(b[0]);
 };
 
 const getRowIcon = (row: Field) => {

@@ -1,4 +1,4 @@
-import { getRoutes } from "src/plugins_engine/messages";
+import { getRoutes } from "src/plugins_engine/router";
 type Routes = ReturnType<typeof getRoutes>;
 export type StreamBridge = Awaited<Routes>[number];
 

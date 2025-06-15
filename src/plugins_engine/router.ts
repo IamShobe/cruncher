@@ -1,21 +1,30 @@
 import { Engine } from "src/engineV2/engine";
-import { InstanceRef, QueryTask, SerializeableParams, TaskRef } from "src/engineV2/types";
+import { InstanceRef, QueryTask, SearchProfileRef, SerializeableParams, TaskRef } from "src/engineV2/types";
 import { ResponseHandler } from "~lib/networkTypes";
 import { getAsyncRequestHandler, getSyncRequestHandler } from "~lib/websocket/server";
 import * as grafana from '../adapters/grafana_browser';
 import * as local from '../adapters/mocked_data';
-import { appGeneralSettings, setupPluginsFromConfig } from "./controller";
+import { appGeneralSettings, setupPluginsFromConfig } from "./config";
 import { QueryBatchDone, QueryJobUpdated, UrlNavigation } from "./protocolOut";
 
 export const getRoutes = async (messageSender: ResponseHandler) => {
     const engineV2 = new Engine(messageSender);
 
+    // TODO: dynamically load supported plugins
     engineV2.registerPlugin(grafana.adapter);
     engineV2.registerPlugin(local.adapter);
 
     // Initialize the plugins
 
     return [
+        getSyncRequestHandler("reloadConfig", async () => {
+            setupPluginsFromConfig(appGeneralSettings, engineV2);
+            return { success: true };
+        }),
+        getSyncRequestHandler("resetQueries", async () => {
+            engineV2.resetQueries();
+            return { success: true };
+        }),
         getSyncRequestHandler("getSupportedPlugins", async () => {
             return engineV2.getSupportedPlugins();
         }),
@@ -25,8 +34,11 @@ export const getRoutes = async (messageSender: ResponseHandler) => {
         getSyncRequestHandler("getInitializedPlugins", async () => {
             return engineV2.getInitializedPlugins();
         }),
-        getSyncRequestHandler("runQueryV2", async (params: { instanceRef: InstanceRef, searchTerm: string, queryOptions: SerializeableParams }) => {
-            return await engineV2.runQuery(params.instanceRef, params.searchTerm, params.queryOptions);
+        getSyncRequestHandler("getSearchProfiles", async () => {
+            return engineV2.getSearchProfiles();
+        }),
+        getSyncRequestHandler("runQueryV2", async (params: { searchProfileRef: SearchProfileRef, searchTerm: string, queryOptions: SerializeableParams }) => {
+            return await engineV2.runQuery(params.searchProfileRef, params.searchTerm, params.queryOptions);
         }),
         getSyncRequestHandler("getControllerParams", async (params: { instanceRef: InstanceRef }) => {
             // return controller.getControllerParams(params.instanceId);
@@ -54,17 +66,9 @@ export const getRoutes = async (messageSender: ResponseHandler) => {
             return { success: true };
         }),
 
-        getSyncRequestHandler("resetQueries", async () => {
-            engineV2.resetQueries();
-            return { success: true };
-        }),
     
         getAsyncRequestHandler("ping", async (params: { name: string }) => {
             console.log(`Hello, ${params.name}!`);
-        }),
-        getSyncRequestHandler("reloadConfig", async () => {
-            setupPluginsFromConfig(appGeneralSettings, engineV2);
-            return { success: true };
         }),
         getSyncRequestHandler("getGeneralSettings", async () => {
             return appGeneralSettings;

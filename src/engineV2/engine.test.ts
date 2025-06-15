@@ -1,8 +1,9 @@
-import { expect, test } from "vitest";
-import { Engine, InstanceRef, SearchProfileRef } from "./engine";
-import { ResponseHandler } from "~lib/networkTypes";
-import * as mockedData from "~adapters/mocked_data";
 import { sub } from "date-fns";
+import { expect, test } from "vitest";
+import * as mockedData from "~adapters/mocked_data";
+import { ResponseHandler } from "~lib/networkTypes";
+import { Engine } from "./engine";
+import { InstanceRef, SearchProfileRef } from "./types";
 
 
 test("engine register plugin", () => {
@@ -86,9 +87,10 @@ test("engine query", async () => {
 
     const pluginToInitialize = plugins[0];
     const pluginInstance = engine.initializePlugin(pluginToInitialize.ref, "newInstance" as InstanceRef, {});
-    const profile = engine.initializeSearchProfile("default" as SearchProfileRef, [pluginInstance.name]);
+    const searchProfile = "default" as SearchProfileRef;
+    const profile = engine.initializeSearchProfile(searchProfile, [pluginInstance.name]);
 
-    const task = await engine.runQuery(pluginInstance.name, "", { // empty search term to match all data
+    const task = await engine.runQuery(profile.name, "", { // empty search term to match all data
         fromTime: sub(new Date(), { days: 1 }),
         toTime: new Date(),
         limit: 100000,

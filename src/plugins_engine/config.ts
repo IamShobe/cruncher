@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import { CruncherConfigSchema } from "src/config/types";
 import { Engine } from "src/engineV2/engine";
-import { InstanceRef } from "src/engineV2/types";
+import { InstanceRef, SearchProfileRef } from "src/engineV2/types";
 import YAML from 'yaml';
 import { PluginRef } from "~lib/adapters";
 
@@ -50,5 +50,24 @@ export const setupPluginsFromConfig = (appGeneralSettings: AppGeneralSettings, e
         } catch (error) {
             console.error(`Error initializing plugin ${plugin.type}:`, error);
         }
+    }
+
+    for (const [profileName, profileSpec] of Object.entries(validated.data.profiles)) {
+        try {
+            const profileRef = profileName as SearchProfileRef;
+            const profileConnectors = profileSpec.connectors.map(connector => connector as InstanceRef);
+            engineV2.initializeSearchProfile(profileRef, profileConnectors);
+            console.log(`Profile initialized: ${profileRef} with connectors ${profileConnectors.join(', ')}`);
+        } catch (error) {
+            console.error(`Error initializing profile ${profileName}:`, error);
+        }
+    }
+
+    if (!("default" in validated.data.profiles)) {
+        console.warn("No default profile found in configuration. Creating a default profile with first available connectors.");
+        const defaultProfileRef = "default" as SearchProfileRef;
+        const defaultConnectors = engineV2.getInitializedPlugins().map(plugin => plugin.name).slice(0, 1); // Use first available connector
+        engineV2.initializeSearchProfile(defaultProfileRef, defaultConnectors);
+        console.log(`Default profile created: ${defaultProfileRef} with connectors ${defaultConnectors.join(', ')}`);
     }
 }

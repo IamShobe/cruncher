@@ -6,7 +6,7 @@ import path from 'node:path';
 import { ResponseHandler } from '~lib/networkTypes';
 import { createSignal } from '~lib/utils';
 import { getServer, setupEngine } from './lib/websocket/server';
-import { getRoutes, newUrlNavigationMessage } from './plugins_engine/messages';
+import { getRoutes, newUrlNavigationMessage } from './plugins_engine/router';
 
 // Optional, initialize the logger for any renderer process
 log.initialize();

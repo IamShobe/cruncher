@@ -43,6 +43,8 @@ export type QueryExecutionHistory = {
 
 export type InstanceRef = string & { _ir: never }; // A unique identifier for a plugin instance
 export type SearchProfileRef = string & { _spr: never }; // A unique identifier for a search profile
+
+// MUST BE SERIALIZABLE
 export type SearchProfile = {
     name: SearchProfileRef;
     instances: InstanceRef[];

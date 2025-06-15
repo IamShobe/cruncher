@@ -51,19 +51,19 @@ import {
   lastRanJobAtom,
   queryEndTimeAtom,
   queryStartTimeAtom,
-  selectedInstanceIndexAtom,
+  searchProfilesSelector,
+  selectedSearchProfileIndexAtom,
+  useInitializedController,
   useQueryActions,
-  useQueryProvider,
   useRunQuery,
-  useSelectedInstance,
+  useSelectedSearchProfile,
 } from "./search";
-import { useApplicationStore } from "./store/appStore";
+import { ApplicationStore, useApplicationStore } from "./store/appStore";
 import { endFullDateAtom, startFullDateAtom } from "./store/dateState";
-import {
-  jobMetadataAtom,
-  searchQueryAtom
-} from "./store/queryState";
+import { jobMetadataAtom, searchQueryAtom } from "./store/queryState";
 import { Timer } from "./Timer";
+import { SearchProfileRef } from "src/engineV2/types";
+import type { ValueChangeDetails } from "node_modules/@chakra-ui/react/dist/types/components/select/namespace";
 
 const StyledHeader = styled.form`
   display: flex;
@@ -320,7 +320,7 @@ const downloadFile = (filename: string, data: string, mimeType: string) => {
 };
 
 const MiniButtons = () => {
-  const provider = useQueryProvider();
+  const controller = useInitializedController();
   const task = useAtomValue(lastRanJobAtom);
   const batchCompleteStatus = useAtomValue(jobMetadataAtom);
   const isDisabled = batchCompleteStatus?.views.table === undefined;
@@ -332,7 +332,7 @@ const MiniButtons = () => {
       throw new Error("No task available for export");
     }
 
-    return await provider.exportTableResults(task.id, format);
+    return await controller.exportTableResults(task.id, format);
   };
 
   const downloadCsv = async () => {
@@ -423,56 +423,70 @@ const MiniButtons = () => {
   );
 };
 
+const createSearchProfileIsLoadingSelector = (
+  profileRef: SearchProfileRef
+): ((state: ApplicationStore) => boolean) => {
+  return (state: ApplicationStore) => {
+    const profile = state.searchProfiles.find(
+      (profile) => profile.name === profileRef
+    );
+    if (!profile) {
+      return true;
+    }
+
+    return profile.instances.some((instance) => {
+      return state.datasets[instance]?.status === "loading";
+    });
+  };
+};
+
 const ProviderSelector = () => {
-  const setSelectedInstanceIndex = useSetAtom(selectedInstanceIndexAtom);
-  const selectedInstance = useSelectedInstance();
+  const setSearchProfileIndex = useSetAtom(selectedSearchProfileIndexAtom);
+  const selectedSearchProfile = useSelectedSearchProfile();
   const isSelectedLoading = useApplicationStore(
-    (state) => state.datasets[selectedInstance.name]?.status === "loading"
+    createSearchProfileIsLoadingSelector(selectedSearchProfile?.name)
   );
 
-  const initializedInstances = useApplicationStore(
-    (state) => state.initializedInstances
-  );
-  const supportedPlugins = useApplicationStore(
-    (state) => state.supportedPlugins
-  );
+  const initializedSearchProfiles = useApplicationStore(searchProfilesSelector);
+  const initializeProfileDatasets = useApplicationStore((state) => state.initializeProfileDatasets);
 
   const instances = useMemo(() => {
     return createListCollection({
-      items: initializedInstances.map((instance) => {
-        const plugin = supportedPlugins.find(
-          (p) => p.ref === instance.pluginRef
-        );
-
+      items: initializedSearchProfiles.map((profile) => {
         return {
-          value: instance.name,
-          label: instance.name + (plugin ? ` (${plugin.name})` : ""),
+          value: profile.name,
+          label: profile.name,
         };
       }),
     });
-  }, [initializedInstances, supportedPlugins]);
+  }, [initializedSearchProfiles]);
+
+  const onSelect = (details: ValueChangeDetails) => {
+    if (details.items.length === 0) {
+      setSearchProfileIndex(0);
+      return;
+    }
+
+    const index = instances.items.findIndex(
+      (item) => item.value === details.items[0].value
+    );
+    if (index === -1) {
+      throw new Error(
+        `Selected instance with value ${details.items[0].value} not found in instances list.`
+      );
+    }
+
+    setSearchProfileIndex(index);
+    const selectedProfile = initializedSearchProfiles[index];
+    initializeProfileDatasets(selectedProfile.name); 
+  };
+
   return (
     <Select.Root
       size="xs"
       collection={instances}
-      value={selectedInstance ? [selectedInstance.name] : []}
-      onValueChange={(value) => {
-        if (value.items.length === 0) {
-          setSelectedInstanceIndex(0);
-          return;
-        }
-
-        const index = instances.items.findIndex(
-          (item) => item.value === value.items[0].value
-        );
-        if (index === -1) {
-          throw new Error(
-            `Selected instance with value ${value.items[0].value} not found in instances list.`
-          );
-        }
-
-        setSelectedInstanceIndex(index);
-      }}
+      value={selectedSearchProfile ? [selectedSearchProfile.name] : []}
+      onValueChange={onSelect}
     >
       <Select.HiddenSelect />
       <Select.Control>
@@ -501,12 +515,12 @@ const ProviderSelector = () => {
 
 const InstanceSelectItem: React.FC<{
   item: {
-    value: string;
+    value: SearchProfileRef;
     label: string;
   };
 }> = ({ item }) => {
   const isLoading = useApplicationStore(
-    (state) => state.datasets[item.value]?.status === "loading"
+    createSearchProfileIsLoadingSelector(item.value)
   );
 
   return (

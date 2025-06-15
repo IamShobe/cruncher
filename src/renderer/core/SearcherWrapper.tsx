@@ -15,9 +15,8 @@ import { notifyError } from "./notifyError";
 import {
   appStoreAtom,
   lastRanJobAtom,
-  providerAtom,
   runQueryForStore,
-  selectedInstanceIndexAtom,
+  selectedSearchProfileIndexAtom,
   useMessageEvent
 } from "./search";
 import { appStore } from "./store/appStore";
@@ -93,13 +92,13 @@ export const useTabs = () => {
       return;
     }
     const deletedTab = tabs[originalTabIndex];
-    const provider = deletedTab.store.get(providerAtom);
+    const controller = deletedTab.store.get(appStoreAtom).controller;
     const lastRanJob = deletedTab.store.get(lastRanJobAtom);
     console.log(
       `Removing tab with key ${key}, last ran job was ${lastRanJob?.id}`
     );
     if (lastRanJob) {
-      provider.releaseResources(lastRanJob.id);
+      controller.releaseResources(lastRanJob.id);
     }
 
     const newTabs = tabs.filter((tab) => tab.key !== key);
@@ -188,7 +187,7 @@ export const SearcherWrapper = () => {
         }
 
         querySpecificStore.set(
-          selectedInstanceIndexAtom,
+          selectedSearchProfileIndexAtom,
           selectedInstanceIndex
         );
       }

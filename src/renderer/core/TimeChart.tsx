@@ -17,7 +17,7 @@ import {
 import { formatDataTimeShort } from "~lib/adapters/formatters";
 import { scrollToIndexAtom } from "./events/DataLog";
 import { rangeInViewAtom } from "./events/state";
-import { lastRanJobAtom, useQueryProvider } from "./search";
+import { lastRanJobAtom, useInitializedController } from "./search";
 import { dataBucketsAtom, scaleAtom } from "./store/queryState";
 
 export const TimeChart = () => {
@@ -36,7 +36,7 @@ export const TimeChart = () => {
   const rangeInView = useAtomValue(rangeInViewAtom);
   const scale = useAtomValue(scaleAtom);
   const dataBuckets = useAtomValue(dataBucketsAtom);
-  const provider = useQueryProvider();
+  const controller = useInitializedController();
   const displayedJob = useAtomValue(lastRanJobAtom);
 
   if (!scale) {
@@ -61,7 +61,7 @@ export const TimeChart = () => {
             const timestampClicked = scale.invert(e.chartX);
             setRefAreaLeft(timestampClicked);
 
-            const clicked = await provider.getClosestDateEvent(
+            const clicked = await controller.getClosestDateEvent(
               displayedJob.id,
               timestampClicked
             );

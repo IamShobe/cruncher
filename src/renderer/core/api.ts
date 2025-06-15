@@ -2,7 +2,7 @@ import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
 import { TaskRef } from "src/engineV2/types";
 import { queryClient } from "~core/client";
-import { lastRanJobAtom, useQueryProvider } from "~core/search";
+import { lastRanJobAtom, useInitializedController } from "~core/search";
 
 
 export const invalidateJobQueries = async (jobId: TaskRef | undefined) => {
@@ -40,14 +40,14 @@ export const removeJobQueries = async (jobId: TaskRef | undefined) => {
 }
 
 export const useLogsInfiniteQuery = () => {
-    const queryProvider = useQueryProvider();
+    const controller = useInitializedController();
     const job = useAtomValue(lastRanJobAtom);
 
     return useInfiniteQuery({
         enabled: !!job?.id,
         queryKey: ["logs", job?.id],
         queryFn: async ({ pageParam = 0 }) => {
-            return await queryProvider.getLogsPaginated(
+            return await controller.getLogsPaginated(
                 job!.id,
                 pageParam,
                 10000 // Adjust the limit as needed
@@ -60,14 +60,14 @@ export const useLogsInfiniteQuery = () => {
 };
 
 export const useTableDataInfiniteQuery = () => {
-    const provider = useQueryProvider();
+    const controller = useInitializedController();
     const jobInfo = useAtomValue(lastRanJobAtom);
     return useInfiniteQuery({
         enabled: !!jobInfo?.id,
         queryKey: ["tableData", jobInfo?.id],
         queryFn: async ({ pageParam = 0 }) => {
             // Replace with your actual data fetching logic
-            return await provider.getTableDataPaginated(
+            return await controller.getTableDataPaginated(
                 jobInfo!.id,
                 pageParam,
                 10000 // Adjust the limit as needed
@@ -81,14 +81,14 @@ export const useTableDataInfiniteQuery = () => {
 
 
 export const useViewDataQuery = () => {
-    const provider = useQueryProvider();
+    const controller = useInitializedController();
     const jobInfo = useAtomValue(lastRanJobAtom);
 
     return useQuery({
         enabled: !!jobInfo?.id,
         queryKey: ["viewData", jobInfo?.id],
         queryFn: async () => {
-            return await provider.getViewData(jobInfo!.id)
+            return await controller.getViewData(jobInfo!.id)
         },
     });
 }
