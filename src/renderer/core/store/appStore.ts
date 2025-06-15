@@ -2,10 +2,10 @@ import { InstanceRef, PluginInstance, SerializableAdapter } from 'src/engineV2/e
 import { AppGeneralSettings } from 'src/plugins_engine/controller';
 import { useStore } from 'zustand';
 import { createStore } from 'zustand/vanilla';
-import { QueryProvider } from '~core/common/interface';
 import { notifyError } from '~core/notifyError';
 import { ApiController } from '~core/store/ApiController';
 import { StreamConnection } from '~lib/network';
+import { DefaultQueryProvider } from '../common/DefaultQueryProvider';
 
 
 
@@ -36,7 +36,7 @@ export type ApplicationStore = {
     datasets: Record<string, DatasetMetadata>;
     setDatasetMetadata: (instanceId: string, metadata: DatasetMetadata) => void;
 
-    providers: Record<string, QueryProvider>;
+    providers: Record<string, DefaultQueryProvider>;
     supportedPlugins: SerializableAdapter[];
     initializedInstances: PluginInstance[];
     setSupportedPlugins: (plugins: SerializableAdapter[]) => void;
@@ -65,7 +65,7 @@ export const appStore = createStore<ApplicationStore>((set, get) => ({
         const initializedInstances = await controller.listInitializedPlugins();
         console.log('Initialized instances fetched:', initializedInstances);
         // Create providers for each initialized instance
-        const providers: Record<InstanceRef, QueryProvider> = {};
+        const providers: Record<InstanceRef, DefaultQueryProvider> = {};
         const datasets: Record<InstanceRef, DatasetMetadata> = {};
         initializedInstances.forEach(instance => {
             providers[instance.name] = controller.createProvider(instance);

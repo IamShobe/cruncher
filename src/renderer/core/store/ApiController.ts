@@ -1,11 +1,12 @@
 import { ClosestPoint, InstanceRef, PageResponse, PluginInstance, QueryTask, TableDataResponse, TaskRef } from "src/engineV2/engine";
 import { QueryBatchDoneSchema, QueryJobUpdatedSchema } from "src/plugins_engine/protocolOut";
 import z from "zod";
+import { queryClient } from "~core/client";
+import { ProcessedData } from "~lib/adapters/logTypes";
 import { DisplayResults } from "~lib/displayTypes";
 import { StreamConnection, SubscribeOptions, UnsubscribeFunction } from "~lib/network";
-import { QueryOptions, QueryProvider } from "../common/interface";
-import { ProcessedData } from "~lib/adapters/logTypes";
-import { queryClient } from "~core/client";
+import { DefaultQueryProvider } from "../common/DefaultQueryProvider";
+import { QueryOptions } from "../common/interface";
 
 
 export class ApiController {
@@ -41,16 +42,17 @@ export class ApiController {
         };
     };
 
-    public createProvider(plugin: PluginInstance): QueryProvider {
+    public createProvider(plugin: PluginInstance): DefaultQueryProvider {
         return new PluginInstanceQueryProvider(plugin, this.connection);
     }
 }
 
-
-class PluginInstanceQueryProvider implements QueryProvider {
+class PluginInstanceQueryProvider extends DefaultQueryProvider {
     private executedJob: QueryTask | null = null;
 
-    constructor(private pluginInstance: PluginInstance, private connection: StreamConnection) { }
+    constructor(private pluginInstance: PluginInstance, private connection: StreamConnection) {
+        super();
+     }
 
     async waitForReady(): Promise<void> {
         // Implement logic to wait for the provider to be ready

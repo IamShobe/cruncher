@@ -11,7 +11,7 @@ import { parse } from "~lib/qql";
 import { ControllerIndexParam, Search } from "~lib/qql/grammar";
 import { queryClient } from "./client";
 import { AwaitableTask } from "./common/interface";
-import { DEFAULT_QUERY_PROVIDER } from "./DefaultQueryProvider";
+import { DEFAULT_QUERY_PROVIDER } from "./common/DefaultQueryProvider";
 import { openIndexesAtom } from "./events/state";
 import { notifyError, notifySuccess } from "./notifyError";
 import { ApplicationStore, appStore, useApplicationStore } from "./store/appStore";
