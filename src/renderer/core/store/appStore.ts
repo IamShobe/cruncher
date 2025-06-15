@@ -2,9 +2,8 @@ import { InstanceRef, PluginInstance, SerializableAdapter } from 'src/engineV2/t
 import { AppGeneralSettings } from 'src/plugins_engine/controller';
 import { useStore } from 'zustand';
 import { createStore } from 'zustand/vanilla';
-import { notifyError } from '~core/notifyError';
 import { ApiController } from '~core/ApiController';
-import { StreamConnection } from '~lib/network';
+import { notifyError } from '~core/notifyError';
 import { DefaultQueryProvider } from '../common/DefaultQueryProvider';
 
 
