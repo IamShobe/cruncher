@@ -348,6 +348,9 @@ export const runQueryForStore = async (store: ReturnType<typeof createStore>, is
                             await queryClient.invalidateQueries({
                                 queryKey: ["logs", awaitableJob?.job.id],
                             });
+                            await queryClient.invalidateQueries({
+                                queryKey: ["tableData", awaitableJob?.job.id],
+                            });
                             // store.set(lastUpdateAtom, new Date());
                             store.set(jobBatchDoneAtom, data);
                             // store.set(dataViewModelAtom, data);

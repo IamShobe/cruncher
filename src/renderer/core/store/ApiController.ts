@@ -138,9 +138,12 @@ class PluginInstanceQueryProvider implements QueryProvider {
     }
 
     async releaseResources(taskId: TaskRef): Promise<void> {
-        queryClient.removeQueries({
+        await queryClient.removeQueries({
             queryKey: ["logs", taskId],
-        })
+        });
+        await queryClient.removeQueries({
+            queryKey: ["tableData", taskId],
+        });
         this.connection.invoke("releaseTaskResources", {
             jobId: taskId,
         });
