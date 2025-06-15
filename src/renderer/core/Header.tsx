@@ -442,7 +442,7 @@ const ProviderSelector = () => {
   const setSelectedInstanceIndex = useSetAtom(selectedInstanceIndexAtom);
   const selectedInstance = useSelectedInstance();
   const isSelectedLoading = useApplicationStore(
-    (state) => state.datasets[selectedInstance.id]?.status === "loading"
+    (state) => state.datasets[selectedInstance.name]?.status === "loading"
   );
 
   const initializedInstances = useApplicationStore(
@@ -460,7 +460,7 @@ const ProviderSelector = () => {
         );
 
         return {
-          value: instance.id,
+          value: instance.name,
           label: instance.name + (plugin ? ` (${plugin.name})` : ""),
         };
       }),
@@ -470,7 +470,7 @@ const ProviderSelector = () => {
     <Select.Root
       size="xs"
       collection={instances}
-      value={selectedInstance ? [selectedInstance.id] : []}
+      value={selectedInstance ? [selectedInstance.name] : []}
       onValueChange={(value) => {
         if (value.items.length === 0) {
           setSelectedInstanceIndex(0);

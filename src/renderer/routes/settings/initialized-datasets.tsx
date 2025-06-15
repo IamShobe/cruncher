@@ -30,7 +30,7 @@ function InitializedDatasetsSection() {
         `}
       >
         {initializedPlugins.map((instance) => (
-          <InitializedDataset key={instance.id} instance={instance} />
+          <InitializedDataset key={instance.name} instance={instance} />
         ))}
       </div>
     </Stack>
@@ -41,7 +41,7 @@ const InitializedDataset: React.FC<{
   instance: PluginInstance;
 }> = ({ instance }) => {
   const datasetMetadata = useApplicationStore(
-    (state) => state.datasets[instance.id]
+    (state) => state.datasets[instance.name]
   );
   const loadedCount = Object.keys(
     datasetMetadata?.controllerParams || {}
