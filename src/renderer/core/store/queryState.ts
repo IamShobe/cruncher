@@ -40,10 +40,6 @@ export const dataViewModelAtom = atom<DisplayResults>(
 
 export const jobBatchDoneAtom = atom<JobBatchFinished | undefined>(undefined);
 
-export const eventsAtom = atom<Events>((get) => {
-  return get(dataViewModelAtom).events;
-})
-
 export const availableColumnsAtom = atom((get) => {
   const results = get(jobBatchDoneAtom);
   if (!results) {

@@ -43,8 +43,6 @@ export type SearcherProps = {};
 export const Searcher: React.FC<SearcherProps> = () => {
   const [selectedTab, setSelectedTab] = useState<string | null>("logs");
   const jobStatus = useAtomValue(jobBatchDoneAtom);
-  // const events = useAtomValue(eventsAtom);
-  // const { table: tableView, view: viewChart } = useAtomValue(dataViewModelAtom);
 
   const hasTableView = jobStatus?.views.table !== undefined;
   const tableTotalRows = jobStatus?.views.table?.totalRows ?? 0;

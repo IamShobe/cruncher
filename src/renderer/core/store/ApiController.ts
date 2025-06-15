@@ -1,4 +1,4 @@
-import { ClosestPoint, InstanceRef, PageResponse, PluginInstance, QueryTask, TableDataResponse, TaskRef } from "src/engineV2/types";
+import { ClosestPoint, ExportResults, InstanceRef, PageResponse, PluginInstance, QueryTask, TableDataResponse, TaskRef } from "src/engineV2/types";
 import { QueryBatchDoneSchema, QueryJobUpdatedSchema } from "src/plugins_engine/protocolOut";
 import z from "zod";
 import { queryClient } from "~core/client";
@@ -137,6 +137,16 @@ class PluginInstanceQueryProvider extends DefaultQueryProvider {
         }
 
         return results;
+    }
+
+    async exportTableResults(
+        taskId: TaskRef,
+        format: "csv" | "json",
+    ): Promise<ExportResults> {
+        return await this.connection.invoke("exportTableResults", {
+            jobId: taskId,
+            format: format,
+        });
     }
 
     async releaseResources(taskId: TaskRef): Promise<void> {

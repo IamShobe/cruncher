@@ -28,7 +28,7 @@ export const TableView: React.FC<TableViewProps> = ({}) => {
       return await provider.getTableDataPaginated(
         jobInfo!.id,
         pageParam,
-        1000 // Adjust the limit as needed
+        10000 // Adjust the limit as needed
       );
     },
     getNextPageParam: (lastPage) => lastPage.next,

@@ -1,7 +1,7 @@
 import { ProcessedData } from "~lib/adapters/logTypes";
 import { DisplayResults } from "~lib/displayTypes";
 import { AwaitableTask, QueryOptions } from "./interface";
-import { ClosestPoint, PageResponse, TableDataResponse, TaskRef } from "src/engineV2/types";
+import { ClosestPoint, ExportResults, PageResponse, TableDataResponse, TaskRef } from "src/engineV2/types";
 
 
 export class DefaultQueryProvider {
@@ -37,6 +37,10 @@ export class DefaultQueryProvider {
   }
 
   releaseResources(taskId: TaskRef): Promise<void> {
+    return this._defaultImplementation();
+  }
+
+  exportTableResults(taskId: TaskRef, format: "csv" | "json"): Promise<ExportResults> {
     return this._defaultImplementation();
   }
 }

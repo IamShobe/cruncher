@@ -16,7 +16,6 @@ export const scrollToIndexAtom = atom<(index: number) => void>();
 type DataRowProps = {};
 
 const DataLog: React.FC<DataRowProps> = () => {
-  // const events = useAtomValue(eventsAtom);
   const queryProvider = useQueryProvider();
   const job = useAtomValue(lastRanJobAtom);
 
@@ -32,7 +31,7 @@ const DataLog: React.FC<DataRowProps> = () => {
       return await queryProvider.getLogsPaginated(
         job!.id,
         pageParam,
-        1000 // Adjust the limit as needed
+        10000 // Adjust the limit as needed
       );
     },
     getNextPageParam: (lastPage) => lastPage.next,

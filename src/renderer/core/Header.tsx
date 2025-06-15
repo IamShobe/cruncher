@@ -15,7 +15,6 @@ import {
   createListCollection,
 } from "@chakra-ui/react";
 import { css } from "@emotion/react";
-import { generateCsv, mkConfig } from "export-to-csv";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useMemo } from "react";
 import { CiExport } from "react-icons/ci";
@@ -49,16 +48,21 @@ import {
   FormValues,
   isLoadingAtom,
   isQuerySuccessAtom,
+  lastRanJobAtom,
   queryEndTimeAtom,
   queryStartTimeAtom,
   selectedInstanceIndexAtom,
   useQueryActions,
+  useQueryProvider,
   useRunQuery,
   useSelectedInstance,
 } from "./search";
 import { useApplicationStore } from "./store/appStore";
 import { endFullDateAtom, startFullDateAtom } from "./store/dateState";
-import { dataViewModelAtom, searchQueryAtom } from "./store/queryState";
+import {
+  jobBatchDoneAtom,
+  searchQueryAtom
+} from "./store/queryState";
 import { Timer } from "./Timer";
 
 const StyledHeader = styled.form`
@@ -303,8 +307,6 @@ const SearchBarButtons: React.FC<SearchBarButtonsProps> = ({
   );
 };
 
-const csvConfig = mkConfig({ useKeysAsHeaders: true });
-
 const downloadFile = (filename: string, data: string, mimeType: string) => {
   const blob = new Blob([data], { type: mimeType });
   const url = URL.createObjectURL(blob);
@@ -318,60 +320,43 @@ const downloadFile = (filename: string, data: string, mimeType: string) => {
 };
 
 const MiniButtons = () => {
-  const { table: tableView } = useAtomValue(dataViewModelAtom);
+  const provider = useQueryProvider();
+  const task = useAtomValue(lastRanJobAtom);
+  const batchCompleteStatus = useAtomValue(jobBatchDoneAtom);
+  const isDisabled = batchCompleteStatus?.views.table === undefined;
 
   const { copyCurrentShareLink } = useQueryActions();
 
-  const isDisabled = tableView === undefined;
-
-  const dataAsArray = () => {
-    if (tableView === undefined) {
-      throw new Error("Table view is undefined");
+  const exportData = async (format: "csv" | "json") => {
+    if (!task) {
+      throw new Error("No task available for export");
     }
 
-    return tableView.dataPoints.map((row) => {
-      const result: Record<string, unknown> = {};
-      for (const key in row.object) {
-        result[key] = row.object[key]?.value;
-      }
-
-      return result;
-    });
+    return await provider.exportTableResults(task.id, format);
   };
 
-  const getCSVValue = () => {
-    const data = dataAsArray();
-
-    // @ts-expect-error - generateCsv expects a config object
-    return generateCsv(csvConfig)(data) as unknown as string;
-  };
-
-  const downloadCsv = () => {
-    const csvValue = getCSVValue();
+  const downloadCsv = async () => {
+    const csvValue = await exportData("csv");
     const filename = `data-export-${new Date().toISOString()}.csv`;
-    downloadFile(filename, csvValue, "text/csv");
+    downloadFile(filename, csvValue.payload, csvValue.contentType);
   };
 
-  const copyCsv = () => {
-    const csvValue = getCSVValue();
-    navigator.clipboard.writeText(csvValue);
+  const copyCsv = async () => {
+    const csvValue = await exportData("csv");
+    navigator.clipboard.writeText(csvValue.payload);
     notifySuccess("CSV copied to clipboard");
   };
 
-  const getJson = () => {
-    const data = dataAsArray();
-
-    return JSON.stringify(data);
-  };
-
-  const copyJson = () => {
-    navigator.clipboard.writeText(getJson());
+  const copyJson = async () => {
+    const jsonValue = await exportData("json");
+    navigator.clipboard.writeText(jsonValue.payload);
     notifySuccess("JSON copied to clipboard");
   };
 
-  const downloadJson = () => {
+  const downloadJson = async () => {
+    const jsonValue = await exportData("json");
     const filename = `data-export-${new Date().toISOString()}.json`;
-    downloadFile(filename, getJson(), "application/json");
+    downloadFile(filename, jsonValue.payload, jsonValue.contentType);
   };
 
   return (

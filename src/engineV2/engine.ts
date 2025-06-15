@@ -19,8 +19,9 @@ import { processWhere } from "~lib/pipelineEngine/where";
 import { parse, ParsedQuery, PipelineItem } from "~lib/qql";
 import { createSignal, measureTime } from "~lib/utils";
 import { CacheRecord, QueryCacheHolder } from "./cache";
-import { ClosestPoint, InstanceRef, JobBatchFinished, PageResponse, PluginInstance, PluginInstanceContainer, QueryExecutionHistory, QueryTask, QueryTaskState, SearchProfile, SearchProfileRef, SerializableAdapter, SerializeableParams, SubTask, SubTaskRef, TableDataResponse, TaskRef } from "./types";
+import { ClosestPoint, ExportResults, InstanceRef, JobBatchFinished, PageResponse, PluginInstance, PluginInstanceContainer, QueryExecutionHistory, QueryTask, QueryTaskState, SearchProfile, SearchProfileRef, SerializableAdapter, SerializeableParams, SubTask, SubTaskRef, TableDataResponse, TaskRef } from "./types";
 import { calculateBuckets, getScale } from "./utils";
+import { generateCsv, mkConfig } from "export-to-csv";
 
 export class Engine {
     private supportedPlugins: Adapter[] = [];
@@ -292,7 +293,7 @@ export class Engine {
                 compareProcessedData,
             );
 
-            const pipelineData = this.getPipelineItems(queryTaskState, totalData, parsedTree.pipeline); 
+            const pipelineData = this.getPipelineItems(queryTaskState, totalData, parsedTree.pipeline);
 
             await queryTaskState.mutex.runExclusive(async () => {
                 queryTaskState.displayResults = pipelineData;
@@ -428,6 +429,37 @@ export class Engine {
         return task;
     }
 
+    public async exportTableResults(taskId: TaskRef, format: "csv" | "json"): Promise<ExportResults> {
+        const taskState = this.queryTasks[taskId];
+        if (!taskState) {
+            throw new Error(`Query task with id ${taskId} not found`);
+        }
+
+        if (!taskState.displayResults.table) {
+            throw new Error(`No table data available for task ${taskId}`);
+        }
+
+        const tableData = taskState.displayResults.table.dataPoints;
+        const preparedData = dataAsArray(tableData)
+
+        let payload: string;
+        if (format === "csv") {
+            // @ts-expect-error - generateCsv expects a config object
+            payload = generateCsv(csvConfig)(preparedData) as unknown as string;
+        } else if (format === "json") {
+            // Convert to JSON format
+            payload = JSON.stringify(preparedData);
+        } else {
+            throw new Error(`Unsupported format: ${format}`);
+        }
+
+        return {
+            payload: payload,
+            fileName: `query_results_${taskId}.${format}`,
+            contentType: format === "csv" ? "text/csv" : "application/json",
+        }
+    }
+
     public async resetQueries() {
         for (const taskId of this.executedJobs) {
             await this.releaseTaskResources(taskId);
@@ -538,3 +570,16 @@ export class Engine {
         this.messageSender.sendMessage(newJobUpdatedMessage(taskId, taskState.task.status)); // Notify the client about the cancellation
     }
 }
+
+const csvConfig = mkConfig({ useKeysAsHeaders: true });
+
+const dataAsArray = (processedData: ProcessedData[]) => {
+    return processedData.map((row) => {
+        const result: Record<string, unknown> = {};
+        for (const key in row.object) {
+            result[key] = row.object[key]?.value;
+        }
+
+        return result;
+    });
+};

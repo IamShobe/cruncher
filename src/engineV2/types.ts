@@ -123,3 +123,8 @@ export type JobBatchFinished = {
     }
 }
 
+export type ExportResults = {
+    payload: string; // The exported data in a string format (e.g., CSV, JSON)
+    fileName: string; // The name of the file to be downloaded
+    contentType: string; // The type of the file (e.g., "text/csv", "application/json")
+}

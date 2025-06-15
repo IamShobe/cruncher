@@ -69,6 +69,9 @@ export const getRoutes = async (messageSender: ResponseHandler) => {
         getSyncRequestHandler("getGeneralSettings", async () => {
             return appGeneralSettings;
         }),
+        getSyncRequestHandler("exportTableResults", async (params: { jobId: TaskRef, format: "csv" | "json" }) => {
+            return engineV2.exportTableResults(params.jobId, params.format);
+        }),
     ] as const;
 }
 
