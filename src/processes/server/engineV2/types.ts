@@ -1,5 +1,6 @@
 import { Mutex } from "async-mutex";
 import BTree from 'sorted-btree';
+import { JsonSchema7Type } from "zod-to-json-schema";
 import { Param, PluginRef, QueryProvider } from "~lib/adapters";
 import { ProcessedData } from "~lib/adapters/logTypes";
 import { FullDate } from "~lib/dateUtils";
@@ -64,7 +65,7 @@ export type SerializableAdapter = {
     name: string;
     description: string;
     version: string;
-    params: Param[];
+    params: JsonSchema7Type;
 }
 
 // MUST BE SERIALIZABLE

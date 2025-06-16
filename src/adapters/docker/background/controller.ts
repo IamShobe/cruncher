@@ -1,5 +1,6 @@
 import { QueryOptions, QueryProvider } from "~lib/adapters";
 import {
+  asStringField,
   compareProcessedData,
   Field,
   ObjectFields,
@@ -15,6 +16,7 @@ import {
 } from "~lib/qql/grammar";
 import { spawn } from "child_process";
 import { strip } from "ansicolor";
+import { DockerLogPatterns, DockerParams } from "..";
 
 const DEFAULT_DOCKER_HOST = "unix:///var/run/docker.sock";
 
@@ -29,47 +31,32 @@ const parseJsonMessage = (message: string): Record<string, unknown> | null => {
 
 const intelligentParse = (
   message: string,
-  logPatterns: LogPattern[] = []
-): Record<string, unknown> => {
+  containerName: string,
+  logPatterns: DockerLogPatterns = []
+): { parsed: Record<string, unknown>; selectedMessageFieldName: string } => {
   const parsed: Record<string, unknown> = {};
-
   const jsonParsed = parseJsonMessage(message);
   if (jsonParsed) {
     Object.assign(parsed, jsonParsed);
   }
 
-  // logPatterns.forEach((pattern) => {
-  //   try {
-  //     const match = pattern.regex.exec(message);
-  //     if (match) {
-  //       // Add pattern name as a field to identify which pattern matched
-  //       parsed[`matched_pattern`] = pattern.name;
+  let selectedMessageFieldName = "message";
+  logPatterns.forEach((logPattern) => {
+    if (
+      (logPattern.applyToAll || logPattern.applyTo.includes(containerName)) &&
+      !logPattern.exclude.includes(containerName)
+    ) {
+      const match = new RegExp(logPattern.pattern).exec(message);
+      if (match) {
+        Object.assign(parsed, match.groups);
+        selectedMessageFieldName = logPattern.messageFieldName ?? "message";
+      } else {
+        console.warn(`Log pattern '${logPattern.name}' failed:`, match);
+      }
+    }
+  });
 
-  //       // Extract named groups from the regex
-  //       if (match.groups) {
-  //         Object.entries(match.groups).forEach(([key, value]) => {
-  //           if (value !== undefined) {
-  //             parsed[key] = value;
-  //           }
-  //         });
-  //       }
-
-  //       // If no named groups, add numbered groups with pattern name prefix
-  //       if (!match.groups && match.length > 1) {
-  //         for (let i = 1; i < match.length; i++) {
-  //           if (match[i] !== undefined) {
-  //             parsed[`${pattern.name}_group_${i}`] = match[i];
-  //           }
-  //         }
-  //       }
-  //     }
-  //   } catch (error) {
-  //     // Silently continue if pattern fails - don't break log processing
-  //     console.warn(`Log pattern '${pattern.name}' failed:`, error);
-  //   }
-  // });
-
-  return parsed;
+  return { parsed, selectedMessageFieldName };
 };
 
 const processField = (field: unknown): Field => {
@@ -216,6 +203,7 @@ interface DockerLogEntry {
   containerImage: string;
   containerStatus: string;
   parsedFields: Record<string, unknown>;
+  selectedMessageFieldName: string;
 }
 
 export type LogPattern = {
@@ -224,17 +212,13 @@ export type LogPattern = {
 };
 
 export class DockerController implements QueryProvider {
-  constructor(
-    private dockerHost: string,
-    private containerFilter: string,
-    private logPatterns: LogPattern[]
-  ) {}
+  constructor(private params: DockerParams) {}
 
   private async getContainers(): Promise<DockerContainer[]> {
     return new Promise((resolve, reject) => {
       const args = ["ps", "-a", "--format", "json"];
-      if (this.dockerHost !== DEFAULT_DOCKER_HOST) {
-        args.unshift("-H", this.dockerHost);
+      if (this.params.dockerHost !== DEFAULT_DOCKER_HOST) {
+        args.unshift("-H", this.params.dockerHost);
       }
 
       const dockerProcess = spawn("docker", args);
@@ -305,8 +289,8 @@ export class DockerController implements QueryProvider {
 
       const args = ["logs"];
 
-      if (this.dockerHost !== DEFAULT_DOCKER_HOST) {
-        args.unshift("-H", this.dockerHost);
+      if (this.params.dockerHost !== DEFAULT_DOCKER_HOST) {
+        args.unshift("-H", this.params.dockerHost);
       }
 
       // Add timestamp and stream options
@@ -342,7 +326,15 @@ export class DockerController implements QueryProvider {
 
             // Apply search filter
             if (searchCallback(message)) {
-              const parsedFields = intelligentParse(message, this.logPatterns);
+              const { parsed, selectedMessageFieldName } = intelligentParse(
+                message,
+                container.name,
+                this.params.logPatterns
+              );
+
+              const finalMessageFieldName =
+                this.params.containerOverride?.[container.name]
+                  ?.messageFieldName ?? selectedMessageFieldName;
 
               logs.push({
                 timestamp,
@@ -351,7 +343,8 @@ export class DockerController implements QueryProvider {
                 containerId: container.id,
                 containerImage: container.image,
                 containerStatus: container.status,
-                parsedFields,
+                parsedFields: parsed,
+                selectedMessageFieldName: finalMessageFieldName,
               });
             }
           }
@@ -414,11 +407,11 @@ export class DockerController implements QueryProvider {
       const containers = await this.getContainers();
 
       // Filter containers based on containerFilter if provided
-      const filteredContainers = this.containerFilter
+      const filteredContainers = this.params.containerFilter
         ? containers.filter(
             (container) =>
-              container.name.includes(this.containerFilter) ||
-              container.id.includes(this.containerFilter)
+              container.name.includes(this.params.containerFilter ?? "") ||
+              container.id.includes(this.params.containerFilter ?? "")
           )
         : containers;
 
@@ -442,17 +435,6 @@ export class DockerController implements QueryProvider {
         options.onBatchDone([]);
         return;
       }
-
-      // Get logs from all containers in parallel
-      const logPromises = finalContainers.map((container) =>
-        this.getContainerLogs(
-          container,
-          options.fromTime,
-          options.toTime,
-          searchCallback,
-          options.cancelToken
-        )
-      );
 
       const allLogs = await Promise.all(
         finalContainers.map((container) =>
@@ -528,30 +510,36 @@ export class DockerController implements QueryProvider {
           fields[key] = processField(value);
         });
 
-        return {
-          object: {
-            _time: {
-              type: "date",
-              value: log.timestamp.getTime(),
-            },
-            _sortBy: {
-              type: "number",
-              value: log.timestamp.getTime(),
-            },
-            _raw: {
-              type: "string",
-              value: log.message,
-            },
-            container: processField(log.container),
-            containerId: processField(log.containerId),
-            image: processField(log.containerImage),
-            status: processField(log.containerStatus),
-            message: processField(log.message),
-            ...fields,
-          } satisfies ObjectFields,
-          message: log.message,
+        const object: ObjectFields = {
+          _time: {
+            type: "date",
+            value: log.timestamp.getTime(),
+          },
+          _sortBy: {
+            type: "number",
+            value: log.timestamp.getTime(),
+          },
+          _raw: {
+            type: "string",
+            value: log.message,
+          },
+          container: processField(log.container),
+          containerId: processField(log.containerId),
+          image: processField(log.containerImage),
+          status: processField(log.containerStatus),
+          message: processField(log.message),
+          ...fields,
         };
+
+        return {
+          object,
+          message: asStringField(object[log.selectedMessageFieldName]).value,
+        } satisfies ProcessedData;
       })
-      .sort((a, b) => b.object._sortBy.value - a.object._sortBy.value);
+      .sort(
+        (a, b) =>
+          (b.object._sortBy!.value as number) -
+          (a.object._sortBy!.value as number)
+      );
   }
 }
