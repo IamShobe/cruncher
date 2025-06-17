@@ -2,14 +2,12 @@ import styled from "@emotion/styled";
 import type React from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { ProgressBar, ProgressRoot } from "~components/ui/progress";
+import { Collapsible } from "@chakra-ui/react";
 
 import {
   Box,
   Circle,
-  Flex,
   Float,
-  Grid,
-  GridItem,
   IconButton,
   MenuSeparator,
   Select,
@@ -20,6 +18,7 @@ import {
 } from "@chakra-ui/react";
 import { css } from "@emotion/react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import type { ValueChangeDetails } from "node_modules/@chakra-ui/react/dist/types/components/select/namespace";
 import { useMemo } from "react";
 import { CiExport } from "react-icons/ci";
 import {
@@ -30,6 +29,7 @@ import {
   LuSearchX,
   LuSigma,
 } from "react-icons/lu";
+import { SearchProfileRef } from "src/processes/server/engineV2/types";
 import {
   MenuContent,
   MenuItem,
@@ -50,6 +50,7 @@ import {
 import { notifySuccess } from "./notifyError";
 import {
   FormValues,
+  isHeaderOpenAtom,
   isLoadingAtom,
   isQuerySuccessAtom,
   lastRanJobAtom,
@@ -66,8 +67,6 @@ import { ApplicationStore, useApplicationStore } from "./store/appStore";
 import { endFullDateAtom, startFullDateAtom } from "./store/dateState";
 import { jobMetadataAtom, searchQueryAtom } from "./store/queryState";
 import { Timer } from "./Timer";
-import { SearchProfileRef } from "src/processes/server/engineV2/types";
-import type { ValueChangeDetails } from "node_modules/@chakra-ui/react/dist/types/components/select/namespace";
 
 const StyledHeader = styled.form`
   display: flex;
@@ -106,6 +105,7 @@ const Header: React.FC<HeaderProps> = () => {
   const [searchValue, setSearchValue] = useAtom(searchQueryAtom);
   const selectedStartTime = useAtomValue(startFullDateAtom);
   const selectedEndTime = useAtomValue(endFullDateAtom);
+  const isHeaderOpen = useAtomValue(isHeaderOpenAtom);
 
   // query execution props
   const isQuerySuccess = useAtomValue(isQuerySuccessAtom);
@@ -170,34 +170,38 @@ const Header: React.FC<HeaderProps> = () => {
           <ProgressBar borderRadius={0} />
         </ProgressRoot>
       </LoaderHolder>
-      <StyledHeader
-        onSubmit={handleSubmit(onSubmit(false))}
-        onKeyDown={onHeaderKeyDown}
-      >
-        <Stack direction="column" gap={3} flex={1}>
-          <SearchBarButtons
-            isLoading={isLoading}
-            onForceSubmit={() => handleSubmit(onSubmit(true))()}
-            onTerminateSearch={() =>
-              abortRunningQuery("Search terminated by user")
-            }
-          />
-          <QueryContainer>
-            <div
-              css={css`
-                flex: 1;
-              `}
-            >
-              <Editor value={searchValue} onChange={setSearchValue} />
-            </div>
-            <Timer
-              startTime={queryStartTime}
-              endTime={queryEndTime}
-              isLoading={isLoading}
-            />
-          </QueryContainer>
-        </Stack>
-      </StyledHeader>
+      <Collapsible.Root open={isHeaderOpen}>
+        <Collapsible.Content>
+          <StyledHeader
+            onSubmit={handleSubmit(onSubmit(false))}
+            onKeyDown={onHeaderKeyDown}
+          >
+            <Stack direction="column" gap={3} flex={1}>
+              <SearchBarButtons
+                isLoading={isLoading}
+                onForceSubmit={() => handleSubmit(onSubmit(true))()}
+                onTerminateSearch={() =>
+                  abortRunningQuery("Search terminated by user")
+                }
+              />
+              <QueryContainer>
+                <div
+                  css={css`
+                    flex: 1;
+                  `}
+                >
+                  <Editor value={searchValue} onChange={setSearchValue} />
+                </div>
+                <Timer
+                  startTime={queryStartTime}
+                  endTime={queryEndTime}
+                  isLoading={isLoading}
+                />
+              </QueryContainer>
+            </Stack>
+          </StyledHeader>
+        </Collapsible.Content>
+      </Collapsible.Root>
     </>
   );
 };

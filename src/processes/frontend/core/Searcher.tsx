@@ -1,19 +1,32 @@
-import { Badge, Tabs } from "@chakra-ui/react";
+import { Badge, IconButton, Tabs } from "@chakra-ui/react";
 import { css } from "@emotion/react";
 import styled from "@emotion/styled";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useEffect, useState } from "react";
-import { LuChartArea, LuLogs, LuTable } from "react-icons/lu";
+import {
+  LuChartArea,
+  LuLogs,
+  LuPanelTopClose,
+  LuPanelTopOpen,
+  LuTable,
+} from "react-icons/lu";
 import { isDateSelectorOpenAtom } from "./DateSelector";
 import { queryEditorAtom } from "./Editor";
 import DataLog from "./events/DataLog";
 import Header from "./Header";
 import { searcherShortcuts, useShortcuts } from "./keymaps";
-import { QueryState, useQueryActions, useQueryExecutedEffect } from "./search";
+import {
+  isHeaderOpenAtom,
+  QueryState,
+  useQueryActions,
+  useQueryExecutedEffect,
+} from "./search";
 import { jobMetadataAtom, viewSelectedForQueryAtom } from "./store/queryState";
 import { TableView } from "./table/TableView";
 import { TimeChart } from "./TimeChart";
 import { ViewChart } from "./view/ViewChart";
+import { Tooltip } from "~components/ui/tooltip";
+import { Shortcut } from "~components/ui/shortcut";
 
 const MainContainer = styled.section`
   flex: 1;
@@ -42,6 +55,8 @@ export const Searcher: React.FC<SearcherProps> = () => {
   const queryActions = useQueryActions();
   const setDateSelectorIsOpen = useSetAtom(isDateSelectorOpenAtom);
 
+  const [isHeaderOpen, setIsHeaderOpen] = useAtom(isHeaderOpenAtom);
+
   const [viewSelectedForQuery, setViewSelectedForQuery] = useAtom(
     viewSelectedForQueryAtom
   );
@@ -66,6 +81,10 @@ export const Searcher: React.FC<SearcherProps> = () => {
     }
   }, [jobStatus, viewSelectedForQuery]);
 
+  const toggleHeader = () => {
+    setIsHeaderOpen((prev) => !prev);
+  };
+
   useShortcuts(searcherShortcuts, (shortcut) => {
     switch (shortcut) {
       case "select-time":
@@ -80,6 +99,9 @@ export const Searcher: React.FC<SearcherProps> = () => {
         break;
       case "toggle-until-now":
         queryActions.toggleUntilNow();
+        break;
+      case "toggle-header":
+        toggleHeader();
         break;
     }
   });
@@ -99,7 +121,7 @@ export const Searcher: React.FC<SearcherProps> = () => {
         `}
         onValueChange={(e) => selectTab(e.value)}
       >
-        <Tabs.List zIndex={10}>
+        <Tabs.List zIndex={10} alignItems="center">
           <Tabs.Trigger value="logs">
             <LuLogs /> Logs {eventsTotal > 0 && <Badge>{eventsTotal}</Badge>}
           </Tabs.Trigger>
@@ -110,6 +132,27 @@ export const Searcher: React.FC<SearcherProps> = () => {
           <Tabs.Trigger value="view" disabled={!hasViewChart}>
             <LuChartArea /> View
           </Tabs.Trigger>
+
+          <Tooltip
+            content={<span>
+              Toggle header{" "}
+              <Shortcut keys={searcherShortcuts.getAlias("toggle-header")} />
+              </span>}
+            showArrow
+            positioning={{
+              placement: "bottom",
+            }}
+          >
+            <IconButton
+              size="2xs"
+              variant="surface"
+              onClick={toggleHeader}
+              ml="auto"
+              mr={4}
+            >
+              {isHeaderOpen ? <LuPanelTopClose /> : <LuPanelTopOpen />}
+            </IconButton>
+          </Tooltip>
         </Tabs.List>
         <Tabs.Content
           value="logs"

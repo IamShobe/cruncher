@@ -102,6 +102,10 @@ export const searcherShortcuts = new ShortcutHolder({
     Mac: "Meta + N",
     Windows: "Ctrl + N",
   },
+  "toggle-header": {
+    Mac: "Meta + H",
+    Windows: "Control + H",
+  }
 });
 
 export const searcherGlobalShortcuts = new ShortcutHolder({
