@@ -38,7 +38,7 @@ const intelligentParse = (
     Object.assign(parsed, jsonParsed);
   }
 
-  let selectedMessageFieldName = "message";
+  let selectedMessageFieldName = "_raw";
   logPatterns.forEach((logPattern) => {
     if (
       (logPattern.applyToAll || logPattern.applyTo.includes(containerName)) &&
@@ -47,7 +47,7 @@ const intelligentParse = (
       const match = new RegExp(logPattern.pattern).exec(message);
       if (match) {
         Object.assign(parsed, match.groups);
-        selectedMessageFieldName = logPattern.messageFieldName ?? "message";
+        selectedMessageFieldName = logPattern.messageFieldName ?? "_raw";
       } else {
         console.warn(`Log pattern '${logPattern.name}' failed:`, match);
       }
@@ -74,6 +74,7 @@ interface DockerLogEntry {
   containerStatus: string;
   parsedFields: Record<string, unknown>;
   selectedMessageFieldName: string;
+  ansiFreeLine: string;
 }
 
 export type LogPattern = {
@@ -177,27 +178,27 @@ export class DockerController implements QueryProvider {
       const logs: DockerLogEntry[] = [];
 
       const processLogLine = (line: string) => {
-        const strippedLine = strip(line);
-        if (!strippedLine.trim()) {
-          return;
-        }
-
         const indexOfSpace = line.indexOf(" ");
         const originalMessage = line.slice(indexOfSpace + 1);
+        const timestampStr = line.slice(0, indexOfSpace).trim();
+        const strippedOriginalMessage = strip(originalMessage).trim();
+        if (!strippedOriginalMessage) {
+          return; // Skip empty lines
+        }
 
         try {
           // Docker log format: TIMESTAMP MESSAGE
-          const timestampMatch = strippedLine.match(
-            /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z)\s+(.*)$/
+          const timestampMatch = timestampStr.match(
+            /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z)$/
           );
           if (timestampMatch) {
-            const [_row, timestampStr, message] = timestampMatch;
+            const [_row, timestampStr] = timestampMatch;
             const timestamp = new Date(timestampStr);
 
             // Apply search filter
-            if (doesLogMatch(message)) {
+            if (doesLogMatch(strippedOriginalMessage)) {
               const { parsed, selectedMessageFieldName } = intelligentParse(
-                message,
+                strippedOriginalMessage,
                 container.name,
                 this.params.logPatterns
               );
@@ -215,12 +216,13 @@ export class DockerController implements QueryProvider {
                 containerStatus: container.status,
                 parsedFields: parsed,
                 selectedMessageFieldName: finalMessageFieldName,
+                ansiFreeLine: strippedOriginalMessage,
               });
             }
           }
         } catch {
           // Skip malformed log lines
-          console.warn("Failed to parse log line:", strippedLine);
+          console.warn("Failed to parse log line:", strippedOriginalMessage);
         }
       };
 
@@ -393,11 +395,11 @@ export class DockerController implements QueryProvider {
             type: "string",
             value: log.message,
           },
+          ansi_free_line: processField(log.ansiFreeLine),
           container: processField(log.container),
           containerId: processField(log.containerId),
           image: processField(log.containerImage),
           status: processField(log.containerStatus),
-          message: processField(log.message),
           ...fields,
         };
 
