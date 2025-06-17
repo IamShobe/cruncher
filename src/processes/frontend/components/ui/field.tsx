@@ -30,5 +30,5 @@ export const Field = React.forwardRef<HTMLDivElement, FieldProps>(
         )}
       </ChakraField.Root>
     );
-  },
+  }
 );

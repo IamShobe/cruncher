@@ -1,6 +1,6 @@
-import { Adapter, newPluginRef, QueryProvider } from "~lib/adapters";
-import { DockerController, LogPattern } from "./background/controller";
 import { z } from "zod";
+import { Adapter, newPluginRef, QueryProvider } from "~lib/adapters";
+import { DockerController } from "./background/controller";
 
 const paramsSchema = z.object({
   dockerHost: z.string().default("unix:///var/run/docker.sock"),

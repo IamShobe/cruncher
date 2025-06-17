@@ -15,12 +15,8 @@ export const scrollToIndexAtom = atom<(index: number) => void>();
 type DataRowProps = {};
 
 const DataLog: React.FC<DataRowProps> = () => {
-  const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useLogsInfiniteQuery();
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useLogsInfiniteQuery();
 
   const setScrollToIndex = useSetAtom(scrollToIndexAtom);
 

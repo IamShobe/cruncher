@@ -26,7 +26,7 @@ export const ViewChart = ({}: ViewChartProps) => {
   const selectedStartTime = useAtomValue(actualStartTimeAtom);
   const selectedEndTime = useAtomValue(actualEndTimeAtom);
 
-  const {data: view} = useViewDataQuery();
+  const { data: view } = useViewDataQuery();
 
   const scale = useMemo(() => {
     if (!selectedStartTime || !selectedEndTime) {
@@ -167,9 +167,15 @@ const CustomTooltip = ({
         <Card.Body padding={2}>
           <p className="label">{formatDataTimeShort(label)}</p>
           {sortedPayload.slice(0, 10).map((item) => {
-            const isSelected = selectedAxises.length === 0 || selectedAxises.includes(item.dataKey as string);
+            const isSelected =
+              selectedAxises.length === 0 ||
+              selectedAxises.includes(item.dataKey as string);
             return (
-              <p key={item.dataKey} className="intro" style={{ opacity: isSelected ? 1 : 0.5 }}>
+              <p
+                key={item.dataKey}
+                className="intro"
+                style={{ opacity: isSelected ? 1 : 0.5 }}
+              >
                 {item.dataKey} : {item.value}
               </p>
             );

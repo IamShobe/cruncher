@@ -1,6 +1,9 @@
-html, body, #root {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica,
-    Arial, sans-serif;
+html,
+body,
+#root {
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
+    sans-serif;
   height: 100%;
   width: 100%;
   padding: 0;

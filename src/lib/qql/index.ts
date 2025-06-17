@@ -4,7 +4,7 @@ import { QQLLexer, QQLParser } from "./grammar";
 export class QQLLexingError extends Error {
   constructor(
     message: string,
-    public errors: ILexingError[],
+    public errors: ILexingError[]
   ) {
     super(message);
   }
@@ -13,7 +13,7 @@ export class QQLLexingError extends Error {
 export class QQLParserError extends Error {
   constructor(
     message: string,
-    public errors: IRecognitionException[],
+    public errors: IRecognitionException[]
   ) {
     super(message);
   }
@@ -36,7 +36,7 @@ export const allData = (input: string) => {
     suggestions: parser.getSuggestionData(),
     parserError: parser.errors,
   };
-}
+};
 
 export const parse = (input: string) => {
   const lexer = QQLLexer.tokenize(input);
@@ -59,4 +59,7 @@ export type PipelineItem = ParsedQuery["pipeline"][number];
 
 export type PipelineItemType = PipelineItem["type"];
 
-export type NarrowedPipelineItem<T extends PipelineItemType> = Extract<PipelineItem, { type: T }>;
+export type NarrowedPipelineItem<T extends PipelineItemType> = Extract<
+  PipelineItem,
+  { type: T }
+>;

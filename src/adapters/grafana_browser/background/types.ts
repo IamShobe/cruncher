@@ -32,7 +32,7 @@ export type QueryResponse = {
 };
 
 export type GrafanaLabelFilter = {
-    key: string;
-    operator: string;
-    value: string;
+  key: string;
+  operator: string;
+  value: string;
 };

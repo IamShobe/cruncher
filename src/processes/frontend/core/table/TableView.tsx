@@ -4,7 +4,10 @@ import React, { useMemo } from "react";
 import { TableComponents, TableVirtuoso } from "react-virtuoso";
 import { useTableDataInfiniteQuery } from "~core/api";
 import { jobMetadataAtom } from "~core/store/queryState";
-import { asDisplayString, ProcessedData } from "../../../../lib/adapters/logTypes";
+import {
+  asDisplayString,
+  ProcessedData,
+} from "../../../../lib/adapters/logTypes";
 
 export type TableViewProps = {};
 
@@ -19,11 +22,11 @@ const prepareItem = (dataPoint: ProcessedData, columns: string[]) => {
 
 export const TableView: React.FC<TableViewProps> = ({}) => {
   const { data, fetchNextPage } = useTableDataInfiniteQuery();
-  
+
   const dataPoints = useMemo(() => {
     return data ? data.pages.flatMap((d) => d.data) : [];
   }, [data]);
-  
+
   const jobMetadata = useAtomValue(jobMetadataAtom);
   const columns = jobMetadata?.views.table?.columns ?? [];
   const columnSizes = jobMetadata?.views.table?.columnLengths ?? {};

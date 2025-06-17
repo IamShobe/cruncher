@@ -30,7 +30,7 @@ export const InputGroup = React.forwardRef<HTMLDivElement, InputGroupProps>(
       <Group ref={ref} {...rest}>
         {startElement && (
           // @ts-expect-error - lib component
-          <InputElement pointerEvents="none" {...startElementProps}>         
+          <InputElement pointerEvents="none" {...startElementProps}>
             {startElement}
           </InputElement>
         )}
@@ -49,5 +49,5 @@ export const InputGroup = React.forwardRef<HTMLDivElement, InputGroupProps>(
         )}
       </Group>
     );
-  },
+  }
 );

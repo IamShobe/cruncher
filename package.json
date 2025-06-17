@@ -18,7 +18,8 @@
     "publish": "electron-forge publish",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
-    "test": "vitest run"
+    "test": "vitest run",
+    "format": "prettier --write src/"
   },
   "keywords": [],
   "author": {

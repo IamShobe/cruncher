@@ -1,28 +1,31 @@
-import { scaleLinear } from 'd3-scale';
-import { atom, createStore } from 'jotai';
-import React from 'react';
-import { JobBatchFinished } from 'src/processes/server/engineV2/types';
-import { allData } from '~lib/qql';
+import { scaleLinear } from "d3-scale";
+import { atom, createStore } from "jotai";
+import React from "react";
+import { JobBatchFinished } from "src/processes/server/engineV2/types";
+import { allData } from "~lib/qql";
 
 export const tabNameAtom = atom<string>("New Search");
-export const searchQueryAtom = atom(''); // search query
+export const searchQueryAtom = atom(""); // search query
 
 export const queryDataAtom = atom((get) => {
   const searchQuery = get(searchQueryAtom);
   return allData(searchQuery);
 });
 
-
-export const QuerySpecificContext = React.createContext<ReturnType<typeof createStore> | null>(null);
+export const QuerySpecificContext = React.createContext<ReturnType<
+  typeof createStore
+> | null>(null);
 
 export const useQuerySpecificStoreInternal = () => {
   const store = React.useContext(QuerySpecificContext);
   if (!store) {
-    throw new Error('useQuerySpecificStoreInternal must be used within a QuerySpecificProvider');
+    throw new Error(
+      "useQuerySpecificStoreInternal must be used within a QuerySpecificProvider"
+    );
   }
 
   return store;
-}
+};
 
 export const lastUpdateAtom = atom<Date | null>(null);
 
@@ -37,7 +40,6 @@ export const availableColumnsAtom = atom((get) => {
   return results.views.events.autoCompleteKeys ?? [];
 });
 
-
 export const scaleAtom = atom((get) => {
   const results = get(jobMetadataAtom);
   const selectedStartTime = results?.scale.from;
@@ -47,10 +49,7 @@ export const scaleAtom = atom((get) => {
     return;
   }
 
-  return scaleLinear().domain([
-    selectedStartTime,
-    selectedEndTime,
-  ]);
+  return scaleLinear().domain([selectedStartTime, selectedEndTime]);
 });
 
 export const dataBucketsAtom = atom((get) => {
@@ -62,6 +61,4 @@ export const dataBucketsAtom = atom((get) => {
   return results.views.events.buckets;
 });
 
-
 export const viewSelectedForQueryAtom = atom<boolean>(false);
-

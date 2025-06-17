@@ -19,7 +19,7 @@ import {
   runQueryForStore,
   selectedSearchProfileAtom,
   selectedSearchProfileIndexAtom,
-  useMessageEvent
+  useMessageEvent,
 } from "./search";
 import { appStore } from "./store/appStore";
 import { endFullDateAtom, startFullDateAtom } from "./store/dateState";
@@ -200,25 +200,32 @@ export const SearcherWrapper = () => {
     },
   });
 
-  const initializeProfiles = useCallback(debounceInitialize(async () => {
-    const profileNames = new Set(tabs.map(tab => {
-      const selectedSearchProfile = tab.store.get(selectedSearchProfileAtom);
-      if (!selectedSearchProfile) {
-        return;
+  const initializeProfiles = useCallback(
+    debounceInitialize(async () => {
+      const profileNames = new Set(
+        tabs.map((tab) => {
+          const selectedSearchProfile = tab.store.get(
+            selectedSearchProfileAtom
+          );
+          if (!selectedSearchProfile) {
+            return;
+          }
+
+          return selectedSearchProfile.name;
+        })
+      );
+
+      for (const profileName of profileNames) {
+        if (!profileName) {
+          continue;
+        }
+
+        // Initialize datasets for each profile
+        await appStore.getState().initializeProfileDatasets(profileName);
       }
-
-      return selectedSearchProfile.name;
-    }));
-
-    for (const profileName of profileNames) {
-      if (!profileName) {
-        continue;
-      }
-
-      // Initialize datasets for each profile
-      await appStore.getState().initializeProfileDatasets(profileName);
-    }
-  }, 200), [tabs]);
+    }, 200),
+    [tabs]
+  );
 
   useMount(() => {
     initializeProfiles();

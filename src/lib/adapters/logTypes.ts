@@ -1,17 +1,17 @@
 import { formatDataTime } from "./formatters";
 
 export type ProcessedData = {
-  object: ObjectFields
+  object: ObjectFields;
   message: string;
 };
 
 export type ObjectFields = {
   [key: string]: Field;
-}
+};
 
 export type FieldWithError = {
   errors?: string[];
-}
+};
 
 export type NumberField = {
   type: "number";
@@ -43,30 +43,21 @@ export type BooleanField = {
   value: boolean;
 } & FieldWithError;
 
-export type HashableField =
-  | NumberField
-  | StringField
-  | DateField;
+export type HashableField = NumberField | StringField | DateField;
 
-export type FieldMust =
-  | HashableField
-  | BooleanField
-  | ArrayField
-  | ObjectField
-  ;
+export type FieldMust = HashableField | BooleanField | ArrayField | ObjectField;
 
-export type Field =
-  | FieldMust
-  | undefined | null;
+export type Field = FieldMust | undefined | null;
 
-
-export const asStringFieldOrUndefined = (field: Field): StringField | undefined => {
+export const asStringFieldOrUndefined = (
+  field: Field
+): StringField | undefined => {
   if (field?.type === "string") {
     return field;
   }
 
   return undefined;
-}
+};
 
 export const asStringField = (field: Field): StringField => {
   const result = asStringFieldOrUndefined(field);
@@ -75,18 +66,21 @@ export const asStringField = (field: Field): StringField => {
       type: "string",
       value: "",
       errors: ["Invalid string"],
-    }
+    };
   }
 
   return result;
-}
+};
 
-export const asNumberFieldOrUndefined = (field: Field): NumberField | undefined => {
+export const asNumberFieldOrUndefined = (
+  field: Field
+): NumberField | undefined => {
   if (field?.type === "number") {
     return field;
   }
 
-  if (typeof field?.value === "number") { // if field value is numeric - we can cast it to number
+  if (typeof field?.value === "number") {
+    // if field value is numeric - we can cast it to number
     return {
       type: "number",
       value: field.value,
@@ -94,11 +88,11 @@ export const asNumberFieldOrUndefined = (field: Field): NumberField | undefined 
   }
 
   return undefined;
-}
+};
 
 export const isNumberField = (field: Field): field is NumberField => {
-  return field?.type === "number" || (typeof field?.value === "number");
-}
+  return field?.type === "number" || typeof field?.value === "number";
+};
 
 export const asNumberField = (field: Field): NumberField => {
   const result = asNumberFieldOrUndefined(field);
@@ -107,17 +101,16 @@ export const asNumberField = (field: Field): NumberField => {
       type: "number",
       value: NaN,
       errors: ["Invalid number"],
-    }
+    };
   }
 
   return result;
-}
+};
 
 export const asJson = (field: Field): string => {
   if (!field) {
     return "<null>";
   }
-
 
   if (field.type === "object") {
     const results: Record<string, unknown> = {};
@@ -133,7 +126,7 @@ export const asJson = (field: Field): string => {
   }
 
   return field.value.toString();
-}
+};
 
 export const asDisplayString = (field: Field): string => {
   if (!field) {
@@ -149,7 +142,7 @@ export const asDisplayString = (field: Field): string => {
   }
 
   return field.value.toString();
-}
+};
 
 export const asDateField = (field: Field): DateField => {
   if (field?.type === "date") {
@@ -167,8 +160,8 @@ export const asDateField = (field: Field): DateField => {
     type: "date",
     value: 0,
     errors: ["Invalid date"],
-  }
-}
+  };
+};
 
 export const getTimeFromProcessedData = (data: ProcessedData): number => {
   if (data.object._time) {
@@ -176,22 +169,30 @@ export const getTimeFromProcessedData = (data: ProcessedData): number => {
   }
 
   return 0;
-}
+};
 
-export const compareProcessedData = (a: ProcessedData, b: ProcessedData): number => {
+export const compareProcessedData = (
+  a: ProcessedData,
+  b: ProcessedData
+): number => {
   return getTimeFromProcessedData(b) - getTimeFromProcessedData(a);
-}
+};
 
 export const isNotDefined = (field: Field): field is null | undefined => {
   return field === undefined || field === null;
-}
+};
 
 export const isHashableField = (field: Field): field is HashableField => {
-  return field?.type === "number" || field?.type === "string" || field?.type === "date";
-}
+  return (
+    field?.type === "number" ||
+    field?.type === "string" ||
+    field?.type === "date"
+  );
+};
 
 export const toJsonObject = (data: ProcessedData) => {
-  const result: Record<string, string | number | boolean | null | undefined> = {};
+  const result: Record<string, string | number | boolean | null | undefined> =
+    {};
   for (const key in data.object) {
     if (isNotDefined(data.object[key])) {
       result[key] = data.object[key];
@@ -208,4 +209,4 @@ export const toJsonObject = (data: ProcessedData) => {
   }
 
   return result;
-}
+};

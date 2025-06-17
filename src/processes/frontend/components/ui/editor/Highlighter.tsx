@@ -81,7 +81,7 @@ const typeToStyle = (type: string) => {
 
     case "function":
       return { color: "rgb(177, 105, 177)" };
-    
+
     case "booleanFunction":
       return { color: "rgb(177, 177, 105)" };
 
@@ -90,7 +90,7 @@ const typeToStyle = (type: string) => {
 
     case "param":
       return { color: "rgb(105, 177, 177)" };
-    
+
     case "comment":
       return { color: "rgb(173, 196, 176)" };
   }
@@ -122,7 +122,10 @@ const renderChunks = (text: string, highlightData: HighlightData[]) => {
   return render.reduce((prev, curr) => [prev, curr]);
 };
 
-export const TextHighlighter = React.forwardRef<HTMLPreElement, HighlighterProps>(({ value, highlightData }, ref) => {
+export const TextHighlighter = React.forwardRef<
+  HTMLPreElement,
+  HighlighterProps
+>(({ value, highlightData }, ref) => {
   const textToRender = useMemo(() => {
     let text = value;
     if (text[text.length - 1] == "\n") {
@@ -135,5 +138,7 @@ export const TextHighlighter = React.forwardRef<HTMLPreElement, HighlighterProps
       .replace(new RegExp("<", "g"), "<"); /* Global RegExp */
   }, [value]);
 
-  return <StyledPre ref={ref}>{renderChunks(textToRender, highlightData)}</StyledPre>;
+  return (
+    <StyledPre ref={ref}>{renderChunks(textToRender, highlightData)}</StyledPre>
+  );
 });

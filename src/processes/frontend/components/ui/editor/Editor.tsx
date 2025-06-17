@@ -90,234 +90,242 @@ export type EditorProps = {
   popperRoot: Element | undefined | null;
 };
 
-export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(({ value, onChange, suggestions, popperRoot, highlightData }, ref) => {
-  const [referenceElement, setReferenceElement] =
-    React.useState<HTMLTextAreaElement | null>(null);
-  
-  const preElement = React.useRef<HTMLPreElement | null>(null);
+export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
+  ({ value, onChange, suggestions, popperRoot, highlightData }, ref) => {
+    const [referenceElement, setReferenceElement] =
+      React.useState<HTMLTextAreaElement | null>(null);
 
-  useEffect(() => {
-    if (!referenceElement || !ref) return;
+    const preElement = React.useRef<HTMLPreElement | null>(null);
 
-    referenceElement.setAttribute("spellcheck", "false");
+    useEffect(() => {
+      if (!referenceElement || !ref) return;
 
-    if (typeof ref === "function") {
-      ref(referenceElement);
-    } else {
-      ref.current = referenceElement;
-    }
-  }, [referenceElement, ref]);
+      referenceElement.setAttribute("spellcheck", "false");
 
-  const [pos, setPos] = useState<Coordinates>({
-    top: 0,
-    left: 0,
-    height: 0,
-  });
-
-  const [popperElement, setPopperElement] = useState<HTMLDivElement | null>(
-    null
-  );
-
-  const { styles, attributes } = usePopper(referenceElement, popperElement, {
-    placement: "bottom-start",
-    modifiers: [
-      { name: "offset", options: { offset: [pos.left, -100 + pos.top] } },
-    ],
-  });
-
-  const [cursorPosition, setCursorPosition] = useState(value.length);
-  const [isCompleterOpen, setIsCompleterOpen] = useState(false);
-
-  const [hoveredCompletionItem, setHoveredCompletionItem] = useState<number>(0);
-
-  const writtenWord = useMemo(() => {
-    const text = value.slice(0, cursorPosition);
-    const lastSpace = text.lastIndexOf(" ");
-    let word = text.slice(lastSpace + 1, cursorPosition);
-    // trim everything before special characters [a-zA-Z0-9_]
-    const specialCharIndex = lastIndexOfRegex(word, /[^a-zA-Z0-9_\-]/);
-    if (specialCharIndex !== -1) {
-      word = word.slice(specialCharIndex + 1);
-    }
-
-    return word;
-  }, [cursorPosition, value]);
-
-  const filteredSuggestions = useMemo(() => {
-    const results = new Set<Suggestion>();
-    for (const suggestion of suggestions) {
-      // filter suggestions based on cursor position
-      if (cursorPosition < suggestion.fromPosition) continue;
-      if (suggestion.toPosition && cursorPosition > suggestion.toPosition)
-        continue;
-
-      results.add(suggestion);
-    }
-
-    return Array.from(results).filter((suggestion) =>
-      writtenWord ? suggestion.value.startsWith(writtenWord) : true
-    );
-  }, [suggestions, cursorPosition, writtenWord]);
-
-  const acceptCompletion = () => {
-    const startPos = cursorPosition - writtenWord.length;
-    const endPos = startPos + filteredSuggestions[hoveredCompletionItem].value.length;
-    onChange(
-      value.slice(0, startPos) +
-        filteredSuggestions[hoveredCompletionItem].value +
-        value.slice(cursorPosition)
-    );
-    // set cursor position to end of the word
-    setTimeout(() => {
-      if (referenceElement) {
-        referenceElement.selectionEnd = endPos;
+      if (typeof ref === "function") {
+        ref(referenceElement);
+      } else {
+        ref.current = referenceElement;
       }
-    }, 0)
+    }, [referenceElement, ref]);
 
-    setIsCompleterOpen(false);
-  };
-
-  const advanceHoveredItem = () => {
-    setHoveredCompletionItem((prev) => {
-      if (prev === filteredSuggestions.length - 1) {
-        return 0;
-      }
-
-      return prev + 1;
+    const [pos, setPos] = useState<Coordinates>({
+      top: 0,
+      left: 0,
+      height: 0,
     });
-  };
 
-  const retreatHoveredItem = () => {
-    setHoveredCompletionItem((prev) => {
-      if (prev === 0) {
-        return filteredSuggestions.length - 1;
+    const [popperElement, setPopperElement] = useState<HTMLDivElement | null>(
+      null
+    );
+
+    const { styles, attributes } = usePopper(referenceElement, popperElement, {
+      placement: "bottom-start",
+      modifiers: [
+        { name: "offset", options: { offset: [pos.left, -100 + pos.top] } },
+      ],
+    });
+
+    const [cursorPosition, setCursorPosition] = useState(value.length);
+    const [isCompleterOpen, setIsCompleterOpen] = useState(false);
+
+    const [hoveredCompletionItem, setHoveredCompletionItem] =
+      useState<number>(0);
+
+    const writtenWord = useMemo(() => {
+      const text = value.slice(0, cursorPosition);
+      const lastSpace = text.lastIndexOf(" ");
+      let word = text.slice(lastSpace + 1, cursorPosition);
+      // trim everything before special characters [a-zA-Z0-9_]
+      const specialCharIndex = lastIndexOfRegex(word, /[^a-zA-Z0-9_\-]/);
+      if (specialCharIndex !== -1) {
+        word = word.slice(specialCharIndex + 1);
       }
 
-      return prev - 1;
-    });
-  };
+      return word;
+    }, [cursorPosition, value]);
 
-  const syncScroll = () => {
-    if (!referenceElement || !preElement.current) return;
+    const filteredSuggestions = useMemo(() => {
+      const results = new Set<Suggestion>();
+      for (const suggestion of suggestions) {
+        // filter suggestions based on cursor position
+        if (cursorPosition < suggestion.fromPosition) continue;
+        if (suggestion.toPosition && cursorPosition > suggestion.toPosition)
+          continue;
 
-    preElement.current.scrollTop = referenceElement.scrollTop;
-    preElement.current.scrollLeft = referenceElement.scrollLeft;
-  }
+        results.add(suggestion);
+      }
 
-  return (
-    <EditorWrapper>
-      <TextHighlighter value={value} highlightData={highlightData} ref={preElement}/>
-      <TextareaCustom
-        placeholder="Type your query here..."
-        value={value}
-        ref={setReferenceElement}
-        data-1p-ignore="disabled"
-        data-enable-grammarly="false"
-        style={{
-          position: "relative",
-        }}
-        onKeyDown={(e) => {
-          // TODO move it to shortcuts system
-          // if key is esc - close completer
-          if (e.key === "Escape") {
-            setIsCompleterOpen(false);
-          }
-          if (e.key === " " && e.ctrlKey) {
-            setIsCompleterOpen(true);
-          }
-          // if key is Tab - disable default behavior
-          if (e.key === "Tab") {
-            e.preventDefault();
-          }
+      return Array.from(results).filter((suggestion) =>
+        writtenWord ? suggestion.value.startsWith(writtenWord) : true
+      );
+    }, [suggestions, cursorPosition, writtenWord]);
 
-          if (isCompleterOpen && filteredSuggestions.length > 0) {
-            // if open and down arrow - move selection down
-            if (e.key === "ArrowDown") {
-              e.preventDefault();
-              advanceHoveredItem();
-            } else if (e.key === "ArrowUp") {
-              e.preventDefault();
-              retreatHoveredItem();
+    const acceptCompletion = () => {
+      const startPos = cursorPosition - writtenWord.length;
+      const endPos =
+        startPos + filteredSuggestions[hoveredCompletionItem].value.length;
+      onChange(
+        value.slice(0, startPos) +
+          filteredSuggestions[hoveredCompletionItem].value +
+          value.slice(cursorPosition)
+      );
+      // set cursor position to end of the word
+      setTimeout(() => {
+        if (referenceElement) {
+          referenceElement.selectionEnd = endPos;
+        }
+      }, 0);
+
+      setIsCompleterOpen(false);
+    };
+
+    const advanceHoveredItem = () => {
+      setHoveredCompletionItem((prev) => {
+        if (prev === filteredSuggestions.length - 1) {
+          return 0;
+        }
+
+        return prev + 1;
+      });
+    };
+
+    const retreatHoveredItem = () => {
+      setHoveredCompletionItem((prev) => {
+        if (prev === 0) {
+          return filteredSuggestions.length - 1;
+        }
+
+        return prev - 1;
+      });
+    };
+
+    const syncScroll = () => {
+      if (!referenceElement || !preElement.current) return;
+
+      preElement.current.scrollTop = referenceElement.scrollTop;
+      preElement.current.scrollLeft = referenceElement.scrollLeft;
+    };
+
+    return (
+      <EditorWrapper>
+        <TextHighlighter
+          value={value}
+          highlightData={highlightData}
+          ref={preElement}
+        />
+        <TextareaCustom
+          placeholder="Type your query here..."
+          value={value}
+          ref={setReferenceElement}
+          data-1p-ignore="disabled"
+          data-enable-grammarly="false"
+          style={{
+            position: "relative",
+          }}
+          onKeyDown={(e) => {
+            // TODO move it to shortcuts system
+            // if key is esc - close completer
+            if (e.key === "Escape") {
+              setIsCompleterOpen(false);
             }
-
-            if (e.key === "Enter") {
-              e.preventDefault();
-              acceptCompletion();
+            if (e.key === " " && e.ctrlKey) {
+              setIsCompleterOpen(true);
             }
-
-            // if key is Tab - accept completion
+            // if key is Tab - disable default behavior
             if (e.key === "Tab") {
-              acceptCompletion();
+              e.preventDefault();
             }
 
-            if (e.key === "Tab" && e.shiftKey) {
-              e.preventDefault();
-              retreatHoveredItem();
-            } else if (e.key == "Tab") {
-              e.preventDefault();
-              advanceHoveredItem();
+            if (isCompleterOpen && filteredSuggestions.length > 0) {
+              // if open and down arrow - move selection down
+              if (e.key === "ArrowDown") {
+                e.preventDefault();
+                advanceHoveredItem();
+              } else if (e.key === "ArrowUp") {
+                e.preventDefault();
+                retreatHoveredItem();
+              }
+
+              if (e.key === "Enter") {
+                e.preventDefault();
+                acceptCompletion();
+              }
+
+              // if key is Tab - accept completion
+              if (e.key === "Tab") {
+                acceptCompletion();
+              }
+
+              if (e.key === "Tab" && e.shiftKey) {
+                e.preventDefault();
+                retreatHoveredItem();
+              } else if (e.key == "Tab") {
+                e.preventDefault();
+                advanceHoveredItem();
+              }
             }
-          }
 
-          setCursorPosition(e.currentTarget.selectionStart);
-        }}
-        onInput={() => {
-          syncScroll();
-        }}
-        onScroll={() => {
-          syncScroll();
-        }}
-        onChange={(e) => {
-          if (!referenceElement) return;
+            setCursorPosition(e.currentTarget.selectionStart);
+          }}
+          onInput={() => {
+            syncScroll();
+          }}
+          onScroll={() => {
+            syncScroll();
+          }}
+          onChange={(e) => {
+            if (!referenceElement) return;
 
-          // check if char is in not \n
-          const selectionStart = e.currentTarget.selectionStart;
-          const char = e.target.value[selectionStart - 1]; // this is the char that was added
+            // check if char is in not \n
+            const selectionStart = e.currentTarget.selectionStart;
+            const char = e.target.value[selectionStart - 1]; // this is the char that was added
 
-          const isCharAdded = e.target.value.length > value.length && !["\n", " "].includes(char);
+            const isCharAdded =
+              e.target.value.length > value.length &&
+              !["\n", " "].includes(char);
 
-          onChange(e.target.value);
-          setCursorPosition(e.currentTarget.selectionStart);
-          setIsCompleterOpen(isCharAdded);
-          setHoveredCompletionItem(0);
+            onChange(e.target.value);
+            setCursorPosition(e.currentTarget.selectionStart);
+            setIsCompleterOpen(isCharAdded);
+            setHoveredCompletionItem(0);
 
-          setPos(
-            getCaretCoordinates(
-              referenceElement,
-              e.currentTarget.selectionStart
-            )
-          );
-        }}
-      />
-      {isCompleterOpen &&
-        popperRoot &&
-        createPortal(
-          <div
-            ref={setPopperElement}
-            style={styles.popper}
-            {...attributes.popper}
-          >
-            <AutoCompleter
-              suggestions={filteredSuggestions}
-              hoveredItem={hoveredCompletionItem}
-            />
-          </div>,
-          popperRoot
-        )}
-    </EditorWrapper>
-  );
-});
-
-
+            setPos(
+              getCaretCoordinates(
+                referenceElement,
+                e.currentTarget.selectionStart
+              )
+            );
+          }}
+        />
+        {isCompleterOpen &&
+          popperRoot &&
+          createPortal(
+            <div
+              ref={setPopperElement}
+              style={styles.popper}
+              {...attributes.popper}
+            >
+              <AutoCompleter
+                suggestions={filteredSuggestions}
+                hoveredItem={hoveredCompletionItem}
+              />
+            </div>,
+            popperRoot
+          )}
+      </EditorWrapper>
+    );
+  }
+);
 
 const lastIndexOfRegex = (word: string, regex: RegExp): number => {
   const match = word.search(regex);
   if (match === -1) return -1;
-  
+
   const nextWord = word.slice(match + 1);
   if (regex.test(nextWord)) {
     return match + lastIndexOfRegex(nextWord, regex) + 1;
   }
 
   return match;
-}
+};

@@ -1,15 +1,15 @@
 import { Button, Card, DataList, Heading, Stack } from "@chakra-ui/react";
 import { css } from "@emotion/react";
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { PluginInstance } from "src/processes/server/engineV2/types";
 import { ProgressBar, ProgressRoot } from "~components/ui/progress";
 import { useInitializedInstances } from "~core/search";
 import { useApplicationStore } from "~core/store/appStore";
 
-export const Route = createFileRoute('/settings/initialized-datasets')({
+export const Route = createFileRoute("/settings/initialized-datasets")({
   component: InitializedDatasetsSection,
-})
+});
 
 function InitializedDatasetsSection() {
   const initializedPlugins = useInitializedInstances();
@@ -35,7 +35,7 @@ function InitializedDatasetsSection() {
       </div>
     </Stack>
   );
-};
+}
 
 const InitializedDataset: React.FC<{
   instance: PluginInstance;

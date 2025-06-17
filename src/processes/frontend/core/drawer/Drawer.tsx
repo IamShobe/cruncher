@@ -29,8 +29,7 @@ export const SettingsDrawer = () => {
             <Drawer.Header>
               <Drawer.Title>Search Settings</Drawer.Title>
             </Drawer.Header>
-            <Drawer.Body>
-            </Drawer.Body>
+            <Drawer.Body></Drawer.Body>
             <Drawer.Footer>
               <Button variant="outline">Cancel</Button>
               <Button>Save</Button>

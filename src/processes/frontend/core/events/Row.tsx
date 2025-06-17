@@ -12,7 +12,10 @@ type DataRowProps = {
   index: number;
 };
 
-const getColorFromObject = (object: ProcessedData["object"], columnName: string) => {
+const getColorFromObject = (
+  object: ProcessedData["object"],
+  columnName: string
+) => {
   const level = object[columnName]?.value;
   if (typeof level !== "string") {
     return "rgb(44, 175, 0)";
@@ -42,7 +45,11 @@ const StyledRow = styled.div`
 const StyledGutter = styled.div<{ row: ProcessedData }>`
   width: 6px;
   border-right: 1px solid rgb(49, 54, 63);
-  background-color: ${({row}) => getColorFromObject(row.object, "level")}; // TODO: this needs to be configurable by user
+  background-color: ${({ row }) =>
+    getColorFromObject(
+      row.object,
+      "level"
+    )}; // TODO: this needs to be configurable by user
   flex-shrink: 0;
   margin-right: 0.3rem;
 `;
@@ -58,7 +65,7 @@ const DataRow: React.FC<DataRowProps> = ({ row, index }) => {
     } else {
       setOpenIndexes((prev) => prev.filter((i) => i !== index));
     }
-  }
+  };
 
   return (
     <StyledRow>
@@ -67,7 +74,7 @@ const DataRow: React.FC<DataRowProps> = ({ row, index }) => {
         style={{
           display: "flex",
           flexDirection: "column",
-          flex: 1
+          flex: 1,
         }}
       >
         <div
@@ -75,7 +82,7 @@ const DataRow: React.FC<DataRowProps> = ({ row, index }) => {
           style={{
             cursor: "pointer",
             display: "flex",
-            flexDirection: "row"
+            flexDirection: "row",
           }}
         >
           <div
@@ -87,7 +94,7 @@ const DataRow: React.FC<DataRowProps> = ({ row, index }) => {
           </div>
           <div
             style={{
-              flex: 1
+              flex: 1,
             }}
           >
             {parse(row.message).spans.map((span, spanIndex) => {

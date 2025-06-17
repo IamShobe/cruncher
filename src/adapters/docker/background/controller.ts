@@ -1,3 +1,6 @@
+import { strip } from "ansicolor";
+import { spawn } from "child_process";
+import merge from "merge-k-sorted-arrays";
 import { QueryOptions, QueryProvider } from "~lib/adapters";
 import {
   asStringField,
@@ -6,7 +9,6 @@ import {
   ObjectFields,
   ProcessedData,
 } from "~lib/adapters/logTypes";
-import merge from "merge-k-sorted-arrays";
 import {
   ControllerIndexParam,
   Search,
@@ -14,8 +16,6 @@ import {
   SearchLiteral,
   SearchOR,
 } from "~lib/qql/grammar";
-import { spawn } from "child_process";
-import { strip } from "ansicolor";
 import { DockerLogPatterns, DockerParams } from "..";
 
 const DEFAULT_DOCKER_HOST = "unix:///var/run/docker.sock";

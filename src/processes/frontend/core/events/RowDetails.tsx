@@ -13,11 +13,7 @@ import {
   MenuRoot,
   MenuTrigger,
 } from "~components/ui/menu";
-import {
-  asDisplayString,
-  Field,
-  ProcessedData,
-} from "~lib/adapters/logTypes";
+import { asDisplayString, Field, ProcessedData } from "~lib/adapters/logTypes";
 import { searchQueryAtom } from "../store/queryState";
 import { useIsIndexOpen } from "./state";
 
@@ -56,9 +52,11 @@ export const RowDetails = ({
         background-color: rgb(24, 24, 24);
       `}
     >
-      {Object.entries(row.object).sort(sortByKey).map(([key, value]) => {
-        return <RowDetail key={key} rowKey={key} rowValue={value} />;
-      })}
+      {Object.entries(row.object)
+        .sort(sortByKey)
+        .map(([key, value]) => {
+          return <RowDetail key={key} rowKey={key} rowValue={value} />;
+        })}
     </div>
   );
 };

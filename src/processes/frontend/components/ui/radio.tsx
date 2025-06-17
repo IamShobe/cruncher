@@ -19,7 +19,7 @@ export const Radio = React.forwardRef<HTMLInputElement, RadioProps>(
         )}
       </ChakraRadioGroup.Item>
     );
-  },
+  }
 );
 
 export const RadioGroup = ChakraRadioGroup.Root;

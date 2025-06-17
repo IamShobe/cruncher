@@ -1,9 +1,9 @@
 import { Field, Heading, Input, Stack } from "@chakra-ui/react";
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute } from "@tanstack/react-router";
 import { useGeneralSettings } from "~core/store/appStore";
-export const Route = createFileRoute('/settings/general')({
+export const Route = createFileRoute("/settings/general")({
   component: GeneralSettings,
-})
+});
 
 function GeneralSettings() {
   const generalSettings = useGeneralSettings();

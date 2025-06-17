@@ -9,15 +9,8 @@ import { queryEditorAtom } from "./Editor";
 import DataLog from "./events/DataLog";
 import Header from "./Header";
 import { searcherShortcuts, useShortcuts } from "./keymaps";
-import {
-  QueryState,
-  useQueryActions,
-  useQueryExecutedEffect
-} from "./search";
-import {
-  jobMetadataAtom,
-  viewSelectedForQueryAtom
-} from "./store/queryState";
+import { QueryState, useQueryActions, useQueryExecutedEffect } from "./search";
+import { jobMetadataAtom, viewSelectedForQueryAtom } from "./store/queryState";
 import { TableView } from "./table/TableView";
 import { TimeChart } from "./TimeChart";
 import { ViewChart } from "./view/ViewChart";
@@ -31,8 +24,7 @@ const MainContainer = styled.section`
   overflow: hidden;
 `;
 
-const onQueryExecuted = (_state: QueryState) => {
-};
+const onQueryExecuted = (_state: QueryState) => {};
 
 export type SearcherProps = {};
 
@@ -109,8 +101,7 @@ export const Searcher: React.FC<SearcherProps> = () => {
       >
         <Tabs.List zIndex={10}>
           <Tabs.Trigger value="logs">
-            <LuLogs /> Logs{" "}
-            {eventsTotal > 0 && <Badge>{eventsTotal}</Badge>}
+            <LuLogs /> Logs {eventsTotal > 0 && <Badge>{eventsTotal}</Badge>}
           </Tabs.Trigger>
           <Tabs.Trigger value="table" disabled={!hasTableView}>
             <LuTable /> Table{" "}
@@ -137,9 +128,7 @@ export const Searcher: React.FC<SearcherProps> = () => {
           display={"flex"}
           flexDirection={"column"}
         >
-          {hasTableView && (
-            <TableView/>
-          )}
+          {hasTableView && <TableView />}
         </Tabs.Content>
         <Tabs.Content value="view" minH="0" flex={1} overflow={"auto"}>
           <ViewChart />

@@ -1,6 +1,6 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { SearcherWrapper } from '~core/SearcherWrapper'
+import { createFileRoute } from "@tanstack/react-router";
+import { SearcherWrapper } from "~core/SearcherWrapper";
 
-export const Route = createFileRoute('/')({
+export const Route = createFileRoute("/")({
   component: SearcherWrapper,
-})
+});

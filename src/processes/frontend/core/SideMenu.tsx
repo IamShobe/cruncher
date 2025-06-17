@@ -15,7 +15,7 @@ const versionSelector = (state: ApplicationStore) => {
   const { tag, isDev } = version;
 
   return tag + (isDev ? "*" : "");
-}
+};
 
 export const SideMenu = () => {
   const version = useApplicationStore(versionSelector);

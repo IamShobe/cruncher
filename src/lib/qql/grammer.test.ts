@@ -11,13 +11,7 @@ test("parser hello world", () => {
     type: "search",
     left: {
       type: "searchLiteral",
-      tokens: [
-        "hello",
-        "world",
-        "this",
-        "is",
-        "awesome",
-      ],
+      tokens: ["hello", "world", "this", "is", "awesome"],
     },
   });
 });
@@ -32,10 +26,7 @@ test("search term with or statements", () => {
     type: "search",
     left: {
       type: "searchLiteral",
-      tokens: [
-        "hello",
-        "world",
-      ],
+      tokens: ["hello", "world"],
     },
     right: {
       type: "or",
@@ -45,15 +36,17 @@ test("search term with or statements", () => {
           type: "searchLiteral",
           tokens: ["something"],
         },
-      }
-    }
+      },
+    },
   });
 });
 
 test("search term with or and and statements complex", () => {
   const parser = new QQLParser();
 
-  const lexer = QQLLexer.tokenize("(hello world OR something) AND (another OR statement)");
+  const lexer = QQLLexer.tokenize(
+    "(hello world OR something) AND (another OR statement)"
+  );
   expect(lexer.errors).toEqual([]);
   parser.input = lexer.tokens;
 
@@ -98,7 +91,7 @@ test("search term with or and and statements complex", () => {
           },
         },
       },
-    }
+    },
   });
 });
 
@@ -108,7 +101,13 @@ test("string", () => {
   const lexer = QQLLexer.tokenize(`"hello world" token2 token3`);
   expect(lexer.errors).toEqual([]);
   parser.input = lexer.tokens;
-  expect(parser.query().search).toEqual({ type: "search", left: { type: "searchLiteral", tokens: ["hello world", "token2", "token3"] } });
+  expect(parser.query().search).toEqual({
+    type: "search",
+    left: {
+      type: "searchLiteral",
+      tokens: ["hello world", "token2", "token3"],
+    },
+  });
 });
 
 test("integer", () => {
@@ -118,9 +117,10 @@ test("integer", () => {
   expect(lexer.errors).toEqual([]);
   parser.input = lexer.tokens;
   expect(parser.query().search).toEqual({
-    type: "search", left: {
+    type: "search",
+    left: {
       type: "searchLiteral",
-      tokens: [123, "token"]
+      tokens: [123, "token"],
     },
   });
 });
@@ -135,12 +135,8 @@ test("multiple strings", () => {
     type: "search",
     left: {
       type: "searchLiteral",
-      tokens: [
-        "hello world",
-        "token2",
-        "token3 hey there",
-      ],
-    }
+      tokens: ["hello world", "token2", "token3 hey there"],
+    },
   });
 });
 
@@ -154,10 +150,7 @@ test("nested strings", () => {
     type: "search",
     left: {
       type: "searchLiteral",
-      tokens: [
-        `hello world "nested" string`,
-        "token2",
-      ],
+      tokens: [`hello world "nested" string`, "token2"],
     },
   });
 });
@@ -172,14 +165,10 @@ test("strings with newlines", () => {
     type: "search",
     left: {
       type: "searchLiteral",
-      tokens: [
-        `hello world \nsomething`,
-        "token2",
-      ],
+      tokens: [`hello world \nsomething`, "token2"],
     },
   });
 });
-
 
 test("table command", () => {
   const parser = new QQLParser();
@@ -195,19 +184,18 @@ test("table command", () => {
       type: "search",
       left: {
         type: "searchLiteral",
-        tokens: [
-          "hello",
-          "world",
-        ],
+        tokens: ["hello", "world"],
       },
     },
     pipeline: [
       {
         type: "table",
-        columns: [{
-          column: "column1",
-          alias: undefined,
-        }],
+        columns: [
+          {
+            column: "column1",
+            alias: undefined,
+          },
+        ],
       },
     ],
   });
@@ -228,19 +216,18 @@ test("table command - alias", () => {
       type: "search",
       left: {
         type: "searchLiteral",
-        tokens: [
-          "hello",
-          "world",
-        ],
+        tokens: ["hello", "world"],
       },
     },
     pipeline: [
       {
         type: "table",
-        columns: [{
-          column: "column1",
-          alias: "something",
-        }],
+        columns: [
+          {
+            column: "column1",
+            alias: "something",
+          },
+        ],
       },
     ],
   });
@@ -255,7 +242,7 @@ test("table command no columns", () => {
   parser.query();
   expect(parser.errors).length(1);
   expect(parser.errors[0].message).toEqual(
-    "Expecting: at least one column name\nbut found: ''",
+    "Expecting: at least one column name\nbut found: ''"
   );
 });
 
@@ -263,7 +250,7 @@ test("table command multiple columns", () => {
   const parser = new QQLParser();
 
   const lexer = QQLLexer.tokenize(
-    `hello world | table column1, column2, column3`,
+    `hello world | table column1, column2, column3`
   );
   expect(lexer.errors).toEqual([]);
   parser.input = lexer.tokens;
@@ -275,10 +262,7 @@ test("table command multiple columns", () => {
       type: "search",
       left: {
         type: "searchLiteral",
-        tokens: [
-          "hello",
-          "world",
-        ],
+        tokens: ["hello", "world"],
       },
     },
     pipeline: [
@@ -286,13 +270,13 @@ test("table command multiple columns", () => {
         type: "table",
         columns: [
           {
-            column: "column1"
+            column: "column1",
           },
           {
-            column: "column2"
+            column: "column2",
           },
           {
-            column: "column3"
+            column: "column3",
           },
         ],
       },
@@ -304,7 +288,7 @@ test("table command multiple columns no comma", () => {
   const parser = new QQLParser();
 
   const lexer = QQLLexer.tokenize(
-    `hello world | table column1 column2 column3`,
+    `hello world | table column1 column2 column3`
   );
   expect(lexer.errors).toEqual([]);
   parser.input = lexer.tokens;
@@ -316,10 +300,7 @@ test("table command multiple columns no comma", () => {
       type: "search",
       left: {
         type: "searchLiteral",
-        tokens: [
-          "hello",
-          "world",
-        ],
+        tokens: ["hello", "world"],
       },
     },
     pipeline: [
@@ -327,13 +308,13 @@ test("table command multiple columns no comma", () => {
         type: "table",
         columns: [
           {
-            column: "column1"
+            column: "column1",
           },
           {
-            column: "column2"
+            column: "column2",
           },
           {
-            column: "column3"
+            column: "column3",
           },
         ],
       },
@@ -352,14 +333,15 @@ test("parsing uuid as string", () => {
     dataSources: [],
     controllerParams: [],
     search: {
-      type: "search", left: {
+      type: "search",
+      left: {
         type: "searchLiteral",
         tokens: ["hello", "76e191f8-8ab6-4db7-9895-c1b6d188106c"],
       },
     },
     pipeline: [],
   });
-})
+});
 
 test("support for stats command basic", () => {
   const parser = new QQLParser();
@@ -375,10 +357,7 @@ test("support for stats command basic", () => {
       type: "search",
       left: {
         type: "searchLiteral",
-        tokens: [
-          "hello",
-          "world",
-        ],
+        tokens: ["hello", "world"],
       },
     },
     pipeline: [
@@ -388,7 +367,7 @@ test("support for stats command basic", () => {
           {
             function: "count",
             column: undefined,
-          }
+          },
         ],
         groupBy: undefined,
       },
@@ -396,11 +375,12 @@ test("support for stats command basic", () => {
   });
 });
 
-
 test("support for stats command alias", () => {
   const parser = new QQLParser();
 
-  const lexer = QQLLexer.tokenize(`hello world | stats avg(column1) as avg_column1`);
+  const lexer = QQLLexer.tokenize(
+    `hello world | stats avg(column1) as avg_column1`
+  );
   expect(lexer.errors).toEqual([]);
   parser.input = lexer.tokens;
   expect(parser.query()).toMatchObject({
@@ -411,10 +391,7 @@ test("support for stats command alias", () => {
       type: "search",
       left: {
         type: "searchLiteral",
-        tokens: [
-          "hello",
-          "world",
-        ],
+        tokens: ["hello", "world"],
       },
     },
     pipeline: [
@@ -425,14 +402,13 @@ test("support for stats command alias", () => {
             function: "avg",
             column: "column1",
             alias: "avg_column1",
-          }
+          },
         ],
         groupBy: undefined,
       },
     ],
   });
-})
-
+});
 
 test("support for stats group by", () => {
   const parser = new QQLParser();
@@ -448,10 +424,7 @@ test("support for stats group by", () => {
       type: "search",
       left: {
         type: "searchLiteral",
-        tokens: [
-          "hello",
-          "world",
-        ],
+        tokens: ["hello", "world"],
       },
     },
     pipeline: [
@@ -461,13 +434,13 @@ test("support for stats group by", () => {
           {
             function: "count",
             column: undefined,
-          }
+          },
         ],
         groupBy: ["column1"],
       },
     ],
   });
-})
+});
 
 test("support for regex command", () => {
   const parser = new QQLParser();
@@ -483,10 +456,7 @@ test("support for regex command", () => {
       type: "search",
       left: {
         type: "searchLiteral",
-        tokens: [
-          "hello",
-          "world",
-        ],
+        tokens: ["hello", "world"],
       },
     },
     pipeline: [
@@ -496,8 +466,7 @@ test("support for regex command", () => {
       },
     ],
   });
-})
-
+});
 
 test("support for regex - escaping", () => {
   const parser = new QQLParser();
@@ -513,10 +482,7 @@ test("support for regex - escaping", () => {
       type: "search",
       left: {
         type: "searchLiteral",
-        tokens: [
-          "hello",
-          "world",
-        ],
+        tokens: ["hello", "world"],
       },
     },
     pipeline: [
@@ -526,7 +492,7 @@ test("support for regex - escaping", () => {
       },
     ],
   });
-})
+});
 
 test("support for regex command with column", () => {
   const parser = new QQLParser();
@@ -542,10 +508,7 @@ test("support for regex command with column", () => {
       type: "search",
       left: {
         type: "searchLiteral",
-        tokens: [
-          "hello",
-          "world",
-        ],
+        tokens: ["hello", "world"],
       },
     },
     pipeline: [
@@ -556,7 +519,7 @@ test("support for regex command with column", () => {
       },
     ],
   });
-})
+});
 
 test("support for sort command", () => {
   const parser = new QQLParser();
@@ -572,22 +535,17 @@ test("support for sort command", () => {
       type: "search",
       left: {
         type: "searchLiteral",
-        tokens: [
-          "hello",
-          "world",
-        ],
+        tokens: ["hello", "world"],
       },
     },
     pipeline: [
       {
         type: "sort",
-        columns: [
-          { name: "column1", order: "asc" }
-        ]
+        columns: [{ name: "column1", order: "asc" }],
       },
     ],
   });
-})
+});
 
 test("support for sort desc command", () => {
   const parser = new QQLParser();
@@ -603,27 +561,24 @@ test("support for sort desc command", () => {
       type: "search",
       left: {
         type: "searchLiteral",
-        tokens: [
-          "hello",
-          "world",
-        ],
+        tokens: ["hello", "world"],
       },
     },
     pipeline: [
       {
         type: "sort",
-        columns: [
-          { name: "column1", order: "desc" }
-        ]
+        columns: [{ name: "column1", order: "desc" }],
       },
     ],
   });
-})
+});
 
 test("support for sort desc multiple", () => {
   const parser = new QQLParser();
 
-  const lexer = QQLLexer.tokenize(`hello world | sort column1 desc, column2 asc`);
+  const lexer = QQLLexer.tokenize(
+    `hello world | sort column1 desc, column2 asc`
+  );
   expect(lexer.errors).toEqual([]);
   parser.input = lexer.tokens;
   const result = parser.query();
@@ -634,10 +589,7 @@ test("support for sort desc multiple", () => {
       type: "search",
       left: {
         type: "searchLiteral",
-        tokens: [
-          "hello",
-          "world",
-        ],
+        tokens: ["hello", "world"],
       },
     },
     pipeline: [
@@ -645,8 +597,8 @@ test("support for sort desc multiple", () => {
         type: "sort",
         columns: [
           { name: "column1", order: "desc" },
-          { name: "column2", order: "asc" }
-        ]
+          { name: "column2", order: "asc" },
+        ],
       },
     ],
   });
@@ -722,7 +674,7 @@ test("support eval assignment", () => {
               },
             },
           },
-        }
+        },
       },
     ],
   });
@@ -787,7 +739,9 @@ test("support eval calculation", () => {
 test("support eval calculation with multiple operators", () => {
   const parser = new QQLParser();
 
-  const lexer = QQLLexer.tokenize(`hello world | eval column1 = column2 + 1 - 2 * 3 / 4`);
+  const lexer = QQLLexer.tokenize(
+    `hello world | eval column1 = column2 + 1 - 2 * 3 / 4`
+  );
   expect(lexer.errors).toEqual([]);
   parser.input = lexer.tokens;
   const result = parser.query();
@@ -872,7 +826,7 @@ test("support eval calculation with multiple operators", () => {
               },
             },
           ],
-        }
+        },
       },
     ],
   });
@@ -881,7 +835,9 @@ test("support eval calculation with multiple operators", () => {
 test("support eval command", () => {
   const parser = new QQLParser();
 
-  const lexer = QQLLexer.tokenize(`hello world | eval column1 = if(column2 == 1, 1, 0)`);
+  const lexer = QQLLexer.tokenize(
+    `hello world | eval column1 = if(column2 == 1, 1, 0)`
+  );
   expect(lexer.errors).toEqual([]);
   parser.input = lexer.tokens;
   const result = parser.query();
@@ -957,7 +913,9 @@ test("support eval command", () => {
 test("support timechart group by", () => {
   const parser = new QQLParser();
 
-  const lexer = QQLLexer.tokenize(`hello world | timechart count() by customer, status`);
+  const lexer = QQLLexer.tokenize(
+    `hello world | timechart count() by customer, status`
+  );
   expect(lexer.errors).toEqual([]);
   parser.input = lexer.tokens;
   const result = parser.query();
@@ -982,7 +940,7 @@ test("support timechart group by", () => {
           {
             function: "count",
             column: undefined,
-          }
+          },
         ],
         groupBy: ["customer", "status"],
       },
@@ -993,30 +951,44 @@ test("support timechart group by", () => {
 test("support controller params", () => {
   const parser = new QQLParser();
 
-  const lexer = QQLLexer.tokenize(`param1=\`abc\` param2=\`def\` third!=\`something\` hello world`);
+  const lexer = QQLLexer.tokenize(
+    `param1=\`abc\` param2=\`def\` third!=\`something\` hello world`
+  );
   expect(lexer.errors).toEqual([]);
   parser.input = lexer.tokens;
   const result = parser.query();
   expect(result).toMatchObject({
     dataSources: [],
     controllerParams: [
-      { name: "param1", value: { type: "regex", pattern: "abc" }, type: "controllerIndexParam", operator: "=" },
-      { name: "param2", value: { type: "regex", pattern: "def" }, type: "controllerIndexParam", operator: "=" },
-      { name: "third", value: { type: "regex", pattern: "something" }, type: "controllerIndexParam", operator: "!=" },
+      {
+        name: "param1",
+        value: { type: "regex", pattern: "abc" },
+        type: "controllerIndexParam",
+        operator: "=",
+      },
+      {
+        name: "param2",
+        value: { type: "regex", pattern: "def" },
+        type: "controllerIndexParam",
+        operator: "=",
+      },
+      {
+        name: "third",
+        value: { type: "regex", pattern: "something" },
+        type: "controllerIndexParam",
+        operator: "!=",
+      },
     ],
     search: {
       type: "search",
       left: {
         type: "searchLiteral",
-        tokens: [
-          "hello",
-          "world",
-        ],
+        tokens: ["hello", "world"],
       },
     },
     pipeline: [],
   });
-})
+});
 
 test("support datasource", () => {
   const parser = new QQLParser();
@@ -1026,24 +998,23 @@ test("support datasource", () => {
   parser.input = lexer.tokens;
   const result = parser.query();
   expect(result).toMatchObject({
-    dataSources: [{
-      type: "datasource",
-      name: "dev",
-    }],
+    dataSources: [
+      {
+        type: "datasource",
+        name: "dev",
+      },
+    ],
     controllerParams: [],
     search: {
       type: "search",
       left: {
         type: "searchLiteral",
-        tokens: [
-          "hello",
-          "world",
-        ],
+        tokens: ["hello", "world"],
       },
     },
     pipeline: [],
   });
-})
+});
 
 test("support multiple datasources", () => {
   const parser = new QQLParser();
@@ -1053,27 +1024,27 @@ test("support multiple datasources", () => {
   parser.input = lexer.tokens;
   const result = parser.query();
   expect(result).toMatchObject({
-    dataSources: [{
-      type: "datasource",
-      name: "dev",
-    }, {
-      type: "datasource",
-      name: "prod",
-    }],
+    dataSources: [
+      {
+        type: "datasource",
+        name: "dev",
+      },
+      {
+        type: "datasource",
+        name: "prod",
+      },
+    ],
     controllerParams: [],
     search: {
       type: "search",
       left: {
         type: "searchLiteral",
-        tokens: [
-          "hello",
-          "world",
-        ],
+        tokens: ["hello", "world"],
       },
     },
     pipeline: [],
   });
-})
+});
 
 test("support for where command function", () => {
   const parser = new QQLParser();
@@ -1089,10 +1060,7 @@ test("support for where command function", () => {
       type: "search",
       left: {
         type: "searchLiteral",
-        tokens: [
-          "hello",
-          "world",
-        ],
+        tokens: ["hello", "world"],
       },
     },
     pipeline: [
@@ -1111,14 +1079,14 @@ test("support for where command function", () => {
               ],
               functionName: "isNotNull",
               type: "functionExpression",
-            }
+            },
           },
           right: undefined,
         },
       },
     ],
   });
-})
+});
 
 test.each([
   ["&&", "andExpression"],
@@ -1126,7 +1094,9 @@ test.each([
 ])("support for where command logical operators %s", (operator, type) => {
   const parser = new QQLParser();
 
-  const lexer = QQLLexer.tokenize(`hello world | where column1 == 1 ${operator} column2 == 2`);
+  const lexer = QQLLexer.tokenize(
+    `hello world | where column1 == 1 ${operator} column2 == 2`
+  );
   expect(lexer.errors).toEqual([]);
   parser.input = lexer.tokens;
   const result = parser.query();
@@ -1137,10 +1107,7 @@ test.each([
       type: "search",
       left: {
         type: "searchLiteral",
-        tokens: [
-          "hello",
-          "world",
-        ],
+        tokens: ["hello", "world"],
       },
     },
     pipeline: [
@@ -1153,7 +1120,7 @@ test.each([
             value: {
               left: {
                 type: "columnRef",
-                columnName: "column1"
+                columnName: "column1",
               },
               operator: "==",
               right: {
@@ -1183,18 +1150,20 @@ test.each([
                 },
               },
               right: undefined,
-            }
+            },
           },
         },
       },
     ],
   });
-})
+});
 
 test("support for where command complex and", () => {
   const parser = new QQLParser();
 
-  const lexer = QQLLexer.tokenize(`hello world | where column1 == 1 && column2 == 2`);
+  const lexer = QQLLexer.tokenize(
+    `hello world | where column1 == 1 && column2 == 2`
+  );
   expect(lexer.errors).toEqual([]);
   parser.input = lexer.tokens;
   const result = parser.query();
@@ -1205,10 +1174,7 @@ test("support for where command complex and", () => {
       type: "search",
       left: {
         type: "searchLiteral",
-        tokens: [
-          "hello",
-          "world",
-        ],
+        tokens: ["hello", "world"],
       },
     },
     pipeline: [
@@ -1251,65 +1217,59 @@ test("support for where command complex and", () => {
                 },
               },
               right: undefined,
-            }
-          },
-        },
-      },
-    ],
-  });
-});
-
-
-test.each([
-  ["=="],
-  ["!="],
-  [">"],
-  ["<"],
-  [">="],
-  ["<="],
-])("test where command operators %s", (operator) => {
-  const parser = new QQLParser();
-
-  const lexer = QQLLexer.tokenize(`hello world | where column1 ${operator} 1`);
-  expect(lexer.errors).toEqual([]);
-  parser.input = lexer.tokens;
-  const result = parser.query();
-  expect(result).toMatchObject({
-    dataSources: [],
-    controllerParams: [],
-    search: {
-      type: "search",
-      left: {
-        type: "searchLiteral",
-        tokens: [
-          "hello",
-          "world",
-        ],
-      },
-    },
-    pipeline: [
-      {
-        type: "where",
-        expression: {
-          type: "logicalExpression",
-          left: {
-            type: "unitExpression",
-            value: {
-              left: {
-                type: "columnRef",
-                columnName: "column1",
-              },
-              operator: operator,
-              right: {
-                type: "number",
-                value: 1,
-              },
-              type: "comparisonExpression",
             },
           },
-          right: undefined,
         },
       },
     ],
   });
 });
+
+test.each([["=="], ["!="], [">"], ["<"], [">="], ["<="]])(
+  "test where command operators %s",
+  (operator) => {
+    const parser = new QQLParser();
+
+    const lexer = QQLLexer.tokenize(
+      `hello world | where column1 ${operator} 1`
+    );
+    expect(lexer.errors).toEqual([]);
+    parser.input = lexer.tokens;
+    const result = parser.query();
+    expect(result).toMatchObject({
+      dataSources: [],
+      controllerParams: [],
+      search: {
+        type: "search",
+        left: {
+          type: "searchLiteral",
+          tokens: ["hello", "world"],
+        },
+      },
+      pipeline: [
+        {
+          type: "where",
+          expression: {
+            type: "logicalExpression",
+            left: {
+              type: "unitExpression",
+              value: {
+                left: {
+                  type: "columnRef",
+                  columnName: "column1",
+                },
+                operator: operator,
+                right: {
+                  type: "number",
+                  value: 1,
+                },
+                type: "comparisonExpression",
+              },
+            },
+            right: undefined,
+          },
+        },
+      ],
+    });
+  }
+);
