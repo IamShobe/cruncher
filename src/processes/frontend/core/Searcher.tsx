@@ -58,7 +58,7 @@ export const Searcher: React.FC<SearcherProps> = () => {
   const [isHeaderOpen, setIsHeaderOpen] = useAtom(isHeaderOpenAtom);
 
   const [viewSelectedForQuery, setViewSelectedForQuery] = useAtom(
-    viewSelectedForQueryAtom
+    viewSelectedForQueryAtom,
   );
 
   const selectTab = (tab: string) => {
@@ -134,10 +134,12 @@ export const Searcher: React.FC<SearcherProps> = () => {
           </Tabs.Trigger>
 
           <Tooltip
-            content={<span>
-              Toggle header{" "}
-              <Shortcut keys={searcherShortcuts.getAlias("toggle-header")} />
-              </span>}
+            content={
+              <span>
+                Toggle header{" "}
+                <Shortcut keys={searcherShortcuts.getAlias("toggle-header")} />
+              </span>
+            }
             showArrow
             positioning={{
               placement: "bottom",

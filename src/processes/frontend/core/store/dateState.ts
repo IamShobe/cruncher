@@ -23,7 +23,7 @@ const getDateWithTimeFromDateB = (dateA: Date, dateB: Date) => {
     dateA.getDate(),
     dateB.getHours(),
     dateB.getMinutes(),
-    dateB.getSeconds()
+    dateB.getSeconds(),
   );
 };
 
@@ -32,7 +32,7 @@ const getDateOnly = (date: Date) => {
 };
 
 const getDatePartAtom = (
-  fullDateAtom: PrimitiveAtom<Date | DateType | undefined>
+  fullDateAtom: PrimitiveAtom<Date | DateType | undefined>,
 ) =>
   atom(
     (get) => {
@@ -62,7 +62,7 @@ const getDatePartAtom = (
       const timeToReuse = isTimeNow(existingData) ? new Date() : existingData;
 
       return set(fullDateAtom, getDateWithTimeFromDateB(update, timeToReuse));
-    }
+    },
   );
 
 export const startDateAtom = getDatePartAtom(startFullDateAtom);
@@ -96,7 +96,7 @@ export const dateRangeAtom = atom(
     if (update.to) {
       set(endDateAtom, update.to);
     }
-  }
+  },
 );
 
 const formatTime = (date: FullDate | undefined) => {
@@ -117,7 +117,7 @@ const renderedDateAtom = (dateAtom: PrimitiveAtom<FullDate | undefined>) =>
   });
 
 export const useTryToUpdateDate = (
-  dateAtom: PrimitiveAtom<FullDate | undefined>
+  dateAtom: PrimitiveAtom<FullDate | undefined>,
 ) => {
   const [fullDate, setFullDate] = useAtom(dateAtom);
 
@@ -136,7 +136,7 @@ export const useTryToUpdateDate = (
     const dateWithoutSeconds = parse(
       update,
       dateWithoutSecondsFormat,
-      fullDate ?? new Date()
+      fullDate ?? new Date(),
     );
     if (isValid(dateWithoutSeconds)) {
       setFullDate(dateWithoutSeconds);

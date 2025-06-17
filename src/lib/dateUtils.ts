@@ -7,7 +7,7 @@ export enum DateType {
 export type FullDate = Date | DateType;
 
 export const isTimeNow = (
-  date: Date | DateType | undefined
+  date: Date | DateType | undefined,
 ): date is DateType.Now => {
   return date === DateType.Now;
 };

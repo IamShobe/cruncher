@@ -71,7 +71,7 @@ const getAllObjects = (frames: Frame[]): ProcessedData[] => {
     .sort(
       (a, b) =>
         asNumberField(b.object._sortBy).value -
-        asNumberField(a.object._sortBy).value
+        asNumberField(a.object._sortBy).value,
     ); // TODO: optimize and map sorting
 };
 
@@ -90,13 +90,13 @@ export class GrafanaController implements QueryProvider {
     private url: string,
     private uid: string,
     private filter: GrafanaLabelFilter[],
-    private filterExtensions?: string[]
+    private filterExtensions?: string[],
   ) {}
 
   private _fetchWrapper = async (
     url: string,
     options: RequestInitModified = {},
-    retryAmount: number = 0
+    retryAmount: number = 0,
   ): ReturnType<typeof fetch> => {
     if (retryAmount > 2) {
       throw new Error("Failed to authenticate after multiple attempts");
@@ -111,13 +111,13 @@ export class GrafanaController implements QueryProvider {
         const response = await this.context.externalAuthProvider.getCookies(
           this.url,
           ["grafana_session", "grafana_session_expiry"],
-          checkValidCookies
+          checkValidCookies,
         );
 
         this.cookies = {
           sessionCookie: response["grafana_session"],
           expiryTime: new Date(
-            parseInt(response["grafana_session_expiry"]) * 1000
+            parseInt(response["grafana_session_expiry"]) * 1000,
           ), // Convert seconds to milliseconds
         };
       }
@@ -129,7 +129,7 @@ export class GrafanaController implements QueryProvider {
         if (this.cookies.sessionCookie) {
           // get epoch time from expires date
           const expiresEpoch = Math.floor(
-            this.cookies.expiryTime.getTime() / 1000
+            this.cookies.expiryTime.getTime() / 1000,
           );
           cookieString += `;grafana_session=${this.cookies.sessionCookie};grafana_session_expiry=${expiresEpoch}`;
         }
@@ -154,7 +154,7 @@ export class GrafanaController implements QueryProvider {
   private _doQuery = async (
     controllerParams: ControllerIndexParam[],
     searchTerm: Search,
-    options: QueryOptions
+    options: QueryOptions,
   ) => {
     const query = buildQuery(
       this.uid,
@@ -163,7 +163,7 @@ export class GrafanaController implements QueryProvider {
       searchTerm,
       options.fromTime,
       options.toTime,
-      this.filterExtensions
+      this.filterExtensions,
     );
     console.log(query);
 
@@ -179,7 +179,7 @@ export class GrafanaController implements QueryProvider {
 
     if (!response.ok) {
       throw new Error(
-        `Failed to execute query: ${response.status} ${response.statusText}`
+        `Failed to execute query: ${response.status} ${response.statusText}`,
       );
     }
 
@@ -223,14 +223,14 @@ export class GrafanaController implements QueryProvider {
   private _runAllBatches = async (
     controllerParams: ControllerIndexParam[],
     searchTerm: Search,
-    options: QueryOptions
+    options: QueryOptions,
   ) => {
     let currentLimit = options.limit;
     while (true) {
       const objects = await this._doQuery(
         controllerParams,
         searchTerm,
-        options
+        options,
       );
       console.log("batch retrieved", objects.length);
       options.onBatchDone(objects);
@@ -260,7 +260,7 @@ export class GrafanaController implements QueryProvider {
   query(
     contollerParams: ControllerIndexParam[],
     searchTerm: Search,
-    options: QueryOptions
+    options: QueryOptions,
   ): Promise<void> {
     return this._runAllBatches(contollerParams, searchTerm, options);
   }
@@ -271,7 +271,7 @@ export class GrafanaController implements QueryProvider {
 }
 
 const checkValidCookies = (
-  cookies: Record<string, string>
+  cookies: Record<string, string>,
 ): Promise<boolean> => {
   const grafanaExpiryCookie = cookies["grafana_session_expiry"];
   const grafanaSessionCookie = cookies["grafana_session"];
@@ -289,7 +289,7 @@ const checkValidCookies = (
   }
 
   console.info(
-    "Grafana expiry cookie not found or expired - prompting user to login again."
+    "Grafana expiry cookie not found or expired - prompting user to login again.",
   );
   return Promise.resolve(false);
 };

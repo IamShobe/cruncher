@@ -21,7 +21,7 @@ const searchPatternTreeBuilder: SearchTreeBuilder<SearchPattern> = {
       const leftRes = leftCallback(item);
       const rightRes = buildSearchTreeCallback(
         search.right,
-        searchPatternTreeBuilder
+        searchPatternTreeBuilder,
       )(item);
       return andStatementPattern(leftRes, rightRes);
     };
@@ -31,7 +31,7 @@ const searchPatternTreeBuilder: SearchTreeBuilder<SearchPattern> = {
       const leftRes = leftCallback(item);
       const rightRes = buildSearchTreeCallback(
         search.right,
-        searchPatternTreeBuilder
+        searchPatternTreeBuilder,
       )(item);
       return `(?:${leftRes}|${rightRes})`;
     };
@@ -66,7 +66,7 @@ const escapeBackslash = (str: string) => {
 
 const composeLabelFilter = (
   filter: GrafanaLabelFilter[],
-  controllerParams: ControllerIndexParam[]
+  controllerParams: ControllerIndexParam[],
 ) => {
   const filters: string[] = [];
   filter.forEach((f) => {
@@ -90,7 +90,7 @@ const composeLabelFilter = (
       param.value.type === "string" ? param.value.value : param.value.pattern;
 
     filters.push(
-      `${param.name}${operator}"${escapeQuotes(escapeBackslash(value))}"`
+      `${param.name}${operator}"${escapeQuotes(escapeBackslash(value))}"`,
     );
   });
 
@@ -101,7 +101,7 @@ const buildExpression = (
   baseFilter: GrafanaLabelFilter[],
   controllerParams: ControllerIndexParam[],
   search: Search,
-  filterExtensions?: string[]
+  filterExtensions?: string[],
 ) => {
   const terms = [composeLabelFilter(baseFilter, controllerParams)];
 
@@ -128,7 +128,7 @@ export const buildQuery = (
   search: Search,
   fromTime: Date,
   toTime: Date,
-  filterExtensions?: string[]
+  filterExtensions?: string[],
 ) => {
   return {
     queries: [
@@ -138,7 +138,7 @@ export const buildQuery = (
           baseFilter,
           controllerParams,
           search,
-          filterExtensions
+          filterExtensions,
         ),
         queryType: "range",
         datasource: {

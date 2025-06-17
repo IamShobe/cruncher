@@ -51,12 +51,12 @@ export const Shortcuts: FC<ShortcutsProps> = ({ open, onOpenChange }) => {
                             keys={searcherShortcuts.getAlias(
                               value as keyof ReturnType<
                                 typeof searcherShortcuts.getShortcuts
-                              >
+                              >,
                             )}
                           />
                         </Box>
                       );
-                    }
+                    },
                   )}
                 </Box>
               </Stack>

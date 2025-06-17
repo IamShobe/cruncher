@@ -20,7 +20,7 @@ export const MenuContent = React.forwardRef<HTMLDivElement, MenuContentProps>(
         </ChakraMenu.Positioner>
       </Portal>
     );
-  }
+  },
 );
 
 export const MenuArrow = React.forwardRef<

@@ -105,7 +105,7 @@ export const searcherShortcuts = new ShortcutHolder({
   "toggle-header": {
     Mac: "Meta + H",
     Windows: "Control + H",
-  }
+  },
 });
 
 export const searcherGlobalShortcuts = new ShortcutHolder({
@@ -130,15 +130,15 @@ export type ExtractShortcutType<T> =
   T extends ShortcutHolder<infer U> ? U : never;
 
 export type ShortcutHandlerOfHolder<T> = (
-  shortcut: keyof ExtractShortcutType<T>
+  shortcut: keyof ExtractShortcutType<T>,
 ) => void;
 export type ShortcutHandler<T extends ShortcutDefinitions> = (
-  shortcut: keyof T
+  shortcut: keyof T,
 ) => void;
 
 export const matchShortcut = <T extends ShortcutDefinitions>(
   event: React.KeyboardEvent | KeyboardEvent,
-  shortcuts: ShortcutHolder<T>
+  shortcuts: ShortcutHolder<T>,
 ) => {
   const availableShortcuts = shortcuts.getShortcuts();
   for (const shortcut of Object.keys(availableShortcuts)) {
@@ -154,7 +154,7 @@ export const matchShortcut = <T extends ShortcutDefinitions>(
 
 export const useShortcuts = <T extends ShortcutDefinitions>(
   shortcuts: ShortcutHolder<T>,
-  handler: ShortcutHandler<T>
+  handler: ShortcutHandler<T>,
 ) => {
   useEffect(() => {
     const onKeyDown = createShortcutsHandler(shortcuts, handler);
@@ -167,7 +167,7 @@ export const useShortcuts = <T extends ShortcutDefinitions>(
 
 export const createShortcutsHandler = <T extends ShortcutDefinitions>(
   shortcuts: ShortcutHolder<T>,
-  handler: ShortcutHandler<T>
+  handler: ShortcutHandler<T>,
 ) => {
   return (e: React.KeyboardEvent | KeyboardEvent) => {
     const matchedShortcut = matchShortcut(e, shortcuts);

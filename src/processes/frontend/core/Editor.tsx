@@ -23,7 +23,7 @@ export type EditorProps = {
 
 const translateHighlightData = (
   value: string,
-  parserHighlightData: ParserHighlightData
+  parserHighlightData: ParserHighlightData,
 ): HighlightData => {
   const { startOffset, endOffset } = parserHighlightData.token;
   // get word
@@ -65,11 +65,11 @@ export const Editor = ({ value, onChange }: EditorProps) => {
             endOffset: error.token.endOffset,
           },
         };
-      }
+      },
     );
 
     const processedHighlightData = data.highlight.map((highlight) =>
-      translateHighlightData(value, highlight)
+      translateHighlightData(value, highlight),
     );
 
     return [...processedHighlightData, ...errorHighlightData];
@@ -88,8 +88,8 @@ export const Editor = ({ value, onChange }: EditorProps) => {
                   value: keyword,
                   fromPosition: suggestion.fromPosition,
                   toPosition: suggestion.toPosition,
-                }) satisfies Suggestion
-            )
+                }) satisfies Suggestion,
+            ),
           );
           break;
         case "keywords":
@@ -101,8 +101,8 @@ export const Editor = ({ value, onChange }: EditorProps) => {
                   value: keyword,
                   fromPosition: suggestion.fromPosition,
                   toPosition: suggestion.toPosition,
-                }) satisfies Suggestion
-            )
+                }) satisfies Suggestion,
+            ),
           );
           break;
         case "column":
@@ -112,7 +112,7 @@ export const Editor = ({ value, onChange }: EditorProps) => {
               value: column,
               fromPosition: suggestion.fromPosition,
               toPosition: suggestion.toPosition,
-            })
+            }),
           );
           break;
         case "function":
@@ -122,7 +122,7 @@ export const Editor = ({ value, onChange }: EditorProps) => {
               value: func,
               fromPosition: suggestion.fromPosition,
               toPosition: suggestion.toPosition,
-            })
+            }),
           );
           break;
         case "booleanFunction":
@@ -132,7 +132,7 @@ export const Editor = ({ value, onChange }: EditorProps) => {
               value: func,
               fromPosition: suggestion.fromPosition,
               toPosition: suggestion.toPosition,
-            })
+            }),
           );
           break;
         case "controllerParam":
@@ -142,7 +142,7 @@ export const Editor = ({ value, onChange }: EditorProps) => {
               value: param,
               fromPosition: suggestion.fromPosition,
               toPosition: suggestion.toPosition,
-            })
+            }),
           );
           break;
         case "paramValue": {
@@ -157,7 +157,7 @@ export const Editor = ({ value, onChange }: EditorProps) => {
               value: value,
               fromPosition: suggestion.fromPosition,
               toPosition: suggestion.toPosition,
-            })
+            }),
           );
           break;
         }

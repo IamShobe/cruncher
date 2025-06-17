@@ -45,23 +45,23 @@ export const getRoutes = async (engineV2: Engine) => {
         return await engineV2.runQuery(
           params.searchProfileRef,
           params.searchTerm,
-          params.queryOptions
+          params.queryOptions,
         );
-      }
+      },
     ),
     getSyncRequestHandler(
       "getControllerParams",
       async (params: { instanceRef: InstanceRef }) => {
         // return controller.getControllerParams(params.instanceId);
         return await engineV2.getControllerParams(params.instanceRef);
-      }
+      },
     ),
     getSyncRequestHandler(
       "cancelQuery",
       async (params: { taskId: TaskRef }) => {
         engineV2.cancelQuery(params.taskId);
         return { success: true };
-      }
+      },
     ),
     getSyncRequestHandler("getLogs", async (params: { jobId: TaskRef }) => {
       return engineV2.getLogs(params.jobId);
@@ -72,9 +72,9 @@ export const getRoutes = async (engineV2: Engine) => {
         return engineV2.getLogsPaginated(
           params.jobId,
           params.offset,
-          params.limit
+          params.limit,
         );
-      }
+      },
     ),
     getSyncRequestHandler(
       "getTableDataPaginated",
@@ -82,15 +82,15 @@ export const getRoutes = async (engineV2: Engine) => {
         return engineV2.getTableDataPaginated(
           params.jobId,
           params.offset,
-          params.limit
+          params.limit,
         );
-      }
+      },
     ),
     getSyncRequestHandler(
       "getClosestDateEvent",
       async (params: { jobId: TaskRef; refDate: number }) => {
         return engineV2.getClosestDateEvent(params.jobId, params.refDate);
-      }
+      },
     ),
 
     getSyncRequestHandler(
@@ -98,7 +98,7 @@ export const getRoutes = async (engineV2: Engine) => {
       async (params: { jobId: TaskRef }) => {
         engineV2.releaseTaskResources(params.jobId);
         return { success: true };
-      }
+      },
     ),
 
     getAsyncRequestHandler("ping", async (params: { name: string }) => {
@@ -111,7 +111,7 @@ export const getRoutes = async (engineV2: Engine) => {
       "exportTableResults",
       async (params: { jobId: TaskRef; format: "csv" | "json" }) => {
         return engineV2.exportTableResults(params.jobId, params.format);
-      }
+      },
     ),
     getSyncRequestHandler("getViewData", async (params: { jobId: TaskRef }) => {
       return engineV2.getViewData(params.jobId);
@@ -121,7 +121,7 @@ export const getRoutes = async (engineV2: Engine) => {
 
 export const newBatchDoneMessage = (
   jobId: string,
-  data: unknown
+  data: unknown,
 ): QueryBatchDone => {
   return {
     type: "query_batch_done",
@@ -134,7 +134,7 @@ export const newBatchDoneMessage = (
 
 export const newJobUpdatedMessage = (
   jobId: string,
-  status: QueryTask["status"]
+  status: QueryTask["status"],
 ): QueryJobUpdated => {
   return {
     type: "query_job_updated",

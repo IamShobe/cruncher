@@ -18,7 +18,7 @@ export const ApplicationProvider: React.FC<{
           console.log("Initializing stream server connection...");
           const port = await window.electronAPI.getPort();
           const currentServer = new WebsocketStreamConnection(
-            `ws://localhost:${port}`
+            `ws://localhost:${port}`,
           );
           server = currentServer;
           currentServer.initialize();
@@ -43,13 +43,13 @@ export const ApplicationProvider: React.FC<{
         } catch (error) {
           console.error(
             "Failed to initialize stream server connection:",
-            error
+            error,
           );
           await new Promise((resolve) => setTimeout(resolve, 2000));
         }
       }
     }, 200), // Debounce to avoid multiple rapid calls
-    []
+    [],
   );
 
   useEffect(() => {

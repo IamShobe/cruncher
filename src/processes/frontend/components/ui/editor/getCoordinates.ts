@@ -59,18 +59,18 @@ export type Coordinates = {
 export function getCaretCoordinates(
   element: HTMLTextAreaElement,
   position: number,
-  options?: { debug: boolean }
+  options?: { debug: boolean },
 ): Coordinates {
   if (!isBrowser) {
     throw new Error(
-      "textarea-caret-position#getCaretCoordinates should only be called in a browser"
+      "textarea-caret-position#getCaretCoordinates should only be called in a browser",
     );
   }
 
   const debug = (options && options.debug) || false;
   if (debug) {
     const el = document.querySelector(
-      "#input-textarea-caret-position-mirror-div"
+      "#input-textarea-caret-position-mirror-div",
     );
     if (el) el.parentNode?.removeChild(el);
   }

@@ -20,7 +20,7 @@ export const useQuerySpecificStoreInternal = () => {
   const store = React.useContext(QuerySpecificContext);
   if (!store) {
     throw new Error(
-      "useQuerySpecificStoreInternal must be used within a QuerySpecificProvider"
+      "useQuerySpecificStoreInternal must be used within a QuerySpecificProvider",
     );
   }
 

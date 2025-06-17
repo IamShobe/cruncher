@@ -10,7 +10,7 @@ export const ProfilesSchema = z.record(
   z.string(), // Profile name
   z.object({
     connectors: z.array(z.string()), // List of connector names used in this profile
-  })
+  }),
 );
 
 export const CruncherConfigSchema = z.object({

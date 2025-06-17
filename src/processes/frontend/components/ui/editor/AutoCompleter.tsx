@@ -36,7 +36,7 @@ const getSuggestionIcon = (suggestion: Suggestion) => {
 const compareTypes = (
   suggestionA: Suggestion,
   suggestionB: Suggestion,
-  type: string
+  type: string,
 ) => {
   if (suggestionA.type === type && suggestionB.type !== type) {
     return -1;

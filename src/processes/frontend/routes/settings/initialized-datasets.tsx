@@ -41,10 +41,10 @@ const InitializedDataset: React.FC<{
   instance: PluginInstance;
 }> = ({ instance }) => {
   const datasetMetadata = useApplicationStore(
-    (state) => state.datasets[instance.name]
+    (state) => state.datasets[instance.name],
   );
   const loadedCount = Object.keys(
-    datasetMetadata?.controllerParams || {}
+    datasetMetadata?.controllerParams || {},
   ).length;
 
   const colorPalette = useMemo(() => {

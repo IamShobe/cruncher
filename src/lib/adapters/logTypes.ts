@@ -50,7 +50,7 @@ export type FieldMust = HashableField | BooleanField | ArrayField | ObjectField;
 export type Field = FieldMust | undefined | null;
 
 export const asStringFieldOrUndefined = (
-  field: Field
+  field: Field,
 ): StringField | undefined => {
   if (field?.type === "string") {
     return field;
@@ -73,7 +73,7 @@ export const asStringField = (field: Field): StringField => {
 };
 
 export const asNumberFieldOrUndefined = (
-  field: Field
+  field: Field,
 ): NumberField | undefined => {
   if (field?.type === "number") {
     return field;
@@ -173,7 +173,7 @@ export const getTimeFromProcessedData = (data: ProcessedData): number => {
 
 export const compareProcessedData = (
   a: ProcessedData,
-  b: ProcessedData
+  b: ProcessedData,
 ): number => {
   return getTimeFromProcessedData(b) - getTimeFromProcessedData(a);
 };

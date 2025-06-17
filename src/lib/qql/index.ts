@@ -4,7 +4,7 @@ import { QQLLexer, QQLParser } from "./grammar";
 export class QQLLexingError extends Error {
   constructor(
     message: string,
-    public errors: ILexingError[]
+    public errors: ILexingError[],
   ) {
     super(message);
   }
@@ -13,7 +13,7 @@ export class QQLLexingError extends Error {
 export class QQLParserError extends Error {
   constructor(
     message: string,
-    public errors: IRecognitionException[]
+    public errors: IRecognitionException[],
   ) {
     super(message);
   }

@@ -41,7 +41,7 @@ test("engine initialize plugin", () => {
   const pluginInstance = engine.initializePlugin(
     pluginToInitialize.ref,
     "newInstance" as InstanceRef,
-    {}
+    {},
   );
 
   expect(pluginInstance).toBeDefined();
@@ -68,11 +68,11 @@ test("engine initialize profile", () => {
   const pluginInstance = engine.initializePlugin(
     pluginToInitialize.ref,
     "newInstance" as InstanceRef,
-    {}
+    {},
   );
   const profile = engine.initializeSearchProfile(
     "default" as SearchProfileRef,
-    [pluginInstance.name]
+    [pluginInstance.name],
   );
 
   expect(profile).toBeDefined();
@@ -98,7 +98,7 @@ test("engine query", async () => {
   const pluginInstance = engine.initializePlugin(
     pluginToInitialize.ref,
     "newInstance" as InstanceRef,
-    {}
+    {},
   );
   const searchProfile = "default" as SearchProfileRef;
   const profile = engine.initializeSearchProfile(searchProfile, [

@@ -5,7 +5,7 @@ import { aggregateData } from "./aggregateData";
 export const processStats = (
   data: DisplayResults,
   functions: AggregationFunction[],
-  groupBy: string[] | undefined
+  groupBy: string[] | undefined,
 ): DisplayResults => {
   const { events, table } = data;
   const dataPoints = table ? table.dataPoints : events.data;

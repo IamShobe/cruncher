@@ -63,7 +63,7 @@ export const TimeChart = () => {
 
             const clicked = await controller.getClosestDateEvent(
               displayedJob.id,
-              timestampClicked
+              timestampClicked,
             );
             if (isNil(clicked?.index)) return;
             scrollToIndex?.(clicked.index);

@@ -25,7 +25,7 @@ type HighlightedText = {
 
 export const splitTextToChunks = (
   text: string,
-  highlightData: HighlightData[]
+  highlightData: HighlightData[],
 ) => {
   const result: (string | HighlightedText)[] = [];
 
@@ -112,7 +112,7 @@ const renderChunks = (text: string, highlightData: HighlightData[]) => {
           {chunk.value}
         </span>
       );
-    }
+    },
   );
 
   if (render.length === 0) {

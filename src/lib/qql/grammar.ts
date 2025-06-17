@@ -65,43 +65,43 @@ const extractLastPipeline = (matchedTokens: IToken[]) => {
 
 const matchCommand =
   (pattern: RegExp): CustomPatternMatcherFunc =>
-    (text, offset, matchedTokens, _groups) => {
-      if (matchedTokens.length < 1) {
-        return null;
-      }
+  (text, offset, matchedTokens, _groups) => {
+    if (matchedTokens.length < 1) {
+      return null;
+    }
 
-      const lastMatchedToken = matchedTokens[matchedTokens.length - 1];
-      if (!lastMatchedToken) {
-        return null;
-      }
+    const lastMatchedToken = matchedTokens[matchedTokens.length - 1];
+    if (!lastMatchedToken) {
+      return null;
+    }
 
-      if (!tokenMatcher(lastMatchedToken, Pipe)) {
-        return null;
-      }
+    if (!tokenMatcher(lastMatchedToken, Pipe)) {
+      return null;
+    }
 
-      // Note that just because we are using a custom token pattern
-      // Does not mean we cannot implement it using JavaScript Regular Expressions...
-      // get substring using offset
-      const textSubstring = text.substring(offset);
-      const execResult = pattern.exec(textSubstring);
-      return execResult;
-    };
+    // Note that just because we are using a custom token pattern
+    // Does not mean we cannot implement it using JavaScript Regular Expressions...
+    // get substring using offset
+    const textSubstring = text.substring(offset);
+    const execResult = pattern.exec(textSubstring);
+    return execResult;
+  };
 
 const matchKeywordOfSearch =
   (pattern: RegExp): CustomPatternMatcherFunc =>
-    (text, offset, matchedTokens, _groups) => {
-      const pipeline = extractLastPipeline(matchedTokens);
-      if (pipeline.length > 1) {
-        // if there is a pipeline then it's not a search
-        return null;
-      }
+  (text, offset, matchedTokens, _groups) => {
+    const pipeline = extractLastPipeline(matchedTokens);
+    if (pipeline.length > 1) {
+      // if there is a pipeline then it's not a search
+      return null;
+    }
 
-      return pattern.exec(text.substring(offset));
-    };
+    return pattern.exec(text.substring(offset));
+  };
 
 const isMatchingCommand = (
   token: TokenType | TokenType[],
-  matchedTokens: IToken[]
+  matchedTokens: IToken[],
 ) => {
   const pipeline = extractLastPipeline(matchedTokens);
   if (pipeline.length < 1) {
@@ -120,13 +120,13 @@ const isMatchingCommand = (
 
 const matchKeywordOfCommand =
   (token: TokenType | TokenType[], pattern: RegExp): CustomPatternMatcherFunc =>
-    (text, offset, matchedTokens, _groups) => {
-      if (!isMatchingCommand(token, matchedTokens)) {
-        return null;
-      }
+  (text, offset, matchedTokens, _groups) => {
+    if (!isMatchingCommand(token, matchedTokens)) {
+      return null;
+    }
 
-      return pattern.exec(text.substring(offset));
-    };
+    return pattern.exec(text.substring(offset));
+  };
 
 // Commands
 const Table = createToken({
@@ -273,13 +273,13 @@ const As = createToken({
 
 const matchBooleanExpressionContext =
   (pattern: RegExp): CustomPatternMatcherFunc =>
-    (text, offset, matchedTokens, _groups) => {
-      if (!isMatchingCommand([Where, Eval], matchedTokens)) {
-        return null;
-      }
+  (text, offset, matchedTokens, _groups) => {
+    if (!isMatchingCommand([Where, Eval], matchedTokens)) {
+      return null;
+    }
 
-      return pattern.exec(text.substring(offset));
-    };
+    return pattern.exec(text.substring(offset));
+  };
 
 const Plus = createToken({
   name: "Plus",
@@ -536,11 +536,11 @@ export type OrExpression = {
 export type UnitExpression = {
   type: "unitExpression";
   value:
-  | InArrayExpression
-  | ComparisonExpression
-  | NotExpression
-  | FunctionExpression
-  | LogicalExpression;
+    | InArrayExpression
+    | ComparisonExpression
+    | NotExpression
+    | FunctionExpression
+    | LogicalExpression;
 };
 
 export type FunctionArg = FactorType | RegexLiteral | LogicalExpression;
@@ -688,7 +688,7 @@ export class QQLParser extends EmbeddedActionsParser {
 
   private addAutoCompleteType(
     suggestionType: SuggetionType,
-    opts: { spacing?: number; disabled?: boolean } = {}
+    opts: { spacing?: number; disabled?: boolean } = {},
   ) {
     let obj: SuggestionData | undefined = undefined;
     this.ACTION(() => {
@@ -1130,7 +1130,7 @@ export class QQLParser extends EmbeddedActionsParser {
         cases: cases,
         elseCase: elseCase,
       } as const;
-    }
+    },
   );
 
   private evalCaseStatement = this.RULE(
@@ -1146,7 +1146,7 @@ export class QQLParser extends EmbeddedActionsParser {
         expression: expression,
         truethy: truethy,
       };
-    }
+    },
   );
 
   private evalFunctionArg = this.RULE(
@@ -1163,7 +1163,7 @@ export class QQLParser extends EmbeddedActionsParser {
       });
 
       return arg;
-    }
+    },
   );
 
   private datasource = this.RULE("datasource", (): Datasource => {
@@ -1205,12 +1205,12 @@ export class QQLParser extends EmbeddedActionsParser {
         DEF: [
           {
             ALT: () => {
-              const value = this.SUBRULE(this.doubleQuotedString)
+              const value = this.SUBRULE(this.doubleQuotedString);
               return {
                 type: "string",
                 value: value,
               } satisfies LiteralString;
-            }
+            },
           },
           {
             ALT: () => this.SUBRULE(this.regexLiteral),
@@ -1226,7 +1226,7 @@ export class QQLParser extends EmbeddedActionsParser {
         value: value,
         operator: operator.image,
       } as const;
-    }
+    },
   );
 
   private searchFactor = this.RULE("searchFactor", (isRequired?: boolean) => {
@@ -1256,7 +1256,7 @@ export class QQLParser extends EmbeddedActionsParser {
         type: "and",
         right: this.SUBRULE(this.search),
       };
-    }
+    },
   );
 
   private searchOrStatement = this.RULE("searchOrStatement", (): SearchOR => {
@@ -1304,7 +1304,7 @@ export class QQLParser extends EmbeddedActionsParser {
         type: "searchLiteral",
         tokens: tokens,
       };
-    }
+    },
   );
 
   private literalSearchTerm = this.RULE("literalSearchTerm", () => {
@@ -1347,7 +1347,7 @@ export class QQLParser extends EmbeddedActionsParser {
         left: parentRule,
         right: tail,
       };
-    }
+    },
   );
 
   private andExpression = this.RULE("andExpression", (): AndExpression => {
@@ -1447,7 +1447,7 @@ export class QQLParser extends EmbeddedActionsParser {
         functionName: functionName.image,
         args: args,
       } as const;
-    }
+    },
   );
 
   private functionArgs = this.RULE("functionArgs", (): FunctionArg => {
@@ -1569,7 +1569,7 @@ export class QQLParser extends EmbeddedActionsParser {
       this.CONSUME(CloseBrackets);
 
       return expression;
-    }
+    },
   );
 
   private inArrayStatement = this.RULE(
@@ -1601,7 +1601,7 @@ export class QQLParser extends EmbeddedActionsParser {
         left: left,
         right: values,
       } as const;
-    }
+    },
   );
 
   private comparisonExpression = this.RULE(
@@ -1626,7 +1626,7 @@ export class QQLParser extends EmbeddedActionsParser {
         operator: operator.image,
         right: right,
       } as const;
-    }
+    },
   );
 
   private sort = this.RULE("sort", () => {
@@ -1725,7 +1725,7 @@ export class QQLParser extends EmbeddedActionsParser {
           type: "regex",
           columnSelected: columnSelected,
           pattern: pattern,
-        }) as const
+        }) as const,
     );
   });
 
@@ -1742,7 +1742,7 @@ export class QQLParser extends EmbeddedActionsParser {
       {
         type: "column",
       },
-      { spacing: 1 }
+      { spacing: 1 },
     ); // require a space after the column name
 
     this.AT_LEAST_ONE({
@@ -1758,7 +1758,7 @@ export class QQLParser extends EmbeddedActionsParser {
             type: "keywords",
             keywords: ["as"],
           },
-          { spacing: 1 }
+          { spacing: 1 },
         ).closeAfter1();
 
         this.OPTION1(() => {
@@ -1800,14 +1800,14 @@ export class QQLParser extends EmbeddedActionsParser {
         type: "keywords",
         keywords: ["by"],
       },
-      { spacing: 1, disabled: true }
+      { spacing: 1, disabled: true },
     );
 
     let latestFunctionAutoComplete = this.addAutoCompleteType(
       {
         type: "function",
       },
-      { spacing: 1 }
+      { spacing: 1 },
     );
     latestFunctionAutoComplete.closeAfter1();
 
@@ -1826,7 +1826,7 @@ export class QQLParser extends EmbeddedActionsParser {
             type: "keywords",
             keywords: ["as"],
           },
-          { spacing: 1 }
+          { spacing: 1 },
         ).closeAfter1();
 
         this.OPTION1(() => {
@@ -1847,7 +1847,7 @@ export class QQLParser extends EmbeddedActionsParser {
           {
             type: "function",
           },
-          { spacing: 1 }
+          { spacing: 1 },
         );
         latestFunctionAutoComplete.closeAfter1();
       },
@@ -1878,7 +1878,7 @@ export class QQLParser extends EmbeddedActionsParser {
       {
         type: "column",
       },
-      { spacing: 1 }
+      { spacing: 1 },
     ); // require a space after the column name
 
     this.AT_LEAST_ONE({

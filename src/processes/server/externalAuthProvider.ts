@@ -6,7 +6,7 @@ export class ElectronExternalAuthProvider implements ExternalAuthProvider {
   getCookies(
     requestedUrl: string,
     cookies: string[],
-    validate: (cookies: Record<string, string>) => Promise<boolean>
+    validate: (cookies: Record<string, string>) => Promise<boolean>,
   ): Promise<Record<string, string>> {
     return new Promise((resolve, reject) => {
       const jobId = crypto.randomUUID();
@@ -37,8 +37,8 @@ export class ElectronExternalAuthProvider implements ExternalAuthProvider {
             reject(
               new Error(
                 "Validation failed: " +
-                  (error instanceof Error ? error.message : "Unknown error")
-              )
+                  (error instanceof Error ? error.message : "Unknown error"),
+              ),
             );
             this.port.off("message", handleResponse);
             return;
@@ -68,8 +68,8 @@ export class DefaultExternalAuthProvider implements ExternalAuthProvider {
     return new Promise((resolve, reject) => {
       reject(
         new Error(
-          "External authentication provider is not implemented in this environment."
-        )
+          "External authentication provider is not implemented in this environment.",
+        ),
       );
     });
   }

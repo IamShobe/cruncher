@@ -5,7 +5,7 @@ export type SearchTreeCallback<T> = (item: string) => T;
 export interface SearchTreeBuilder<T> {
   buildAnd(
     left: SearchTreeCallback<T>,
-    search: SearchAND
+    search: SearchAND,
   ): SearchTreeCallback<T>;
   buildOr(left: SearchTreeCallback<T>, search: SearchOR): SearchTreeCallback<T>;
   buildLiteral(searchLiteral: SearchLiteral): SearchTreeCallback<T>;
@@ -13,7 +13,7 @@ export interface SearchTreeBuilder<T> {
 
 export function buildSearchTreeCallback<T>(
   searchTerm: Search,
-  builder: SearchTreeBuilder<T>
+  builder: SearchTreeBuilder<T>,
 ): SearchTreeCallback<T> {
   const left = searchTerm.left;
   const right = searchTerm.right;
@@ -47,7 +47,7 @@ export const booleanSearchTreeBuilder: SearchTreeBuilder<boolean> = {
       if (!leftRes) return false;
       const rightRes = buildSearchTreeCallback(
         search.right,
-        booleanSearchTreeBuilder
+        booleanSearchTreeBuilder,
       )(item);
       return rightRes;
     };
@@ -58,7 +58,7 @@ export const booleanSearchTreeBuilder: SearchTreeBuilder<boolean> = {
       if (leftRes) return true;
       const rightRes = buildSearchTreeCallback(
         search.right,
-        booleanSearchTreeBuilder
+        booleanSearchTreeBuilder,
       )(item);
       return rightRes;
     };
@@ -77,7 +77,7 @@ export const booleanSearchTreeBuilder: SearchTreeBuilder<boolean> = {
 export type BooleanSearchCallback = (item: string) => boolean;
 
 export const buildDoesLogMatchCallback = (
-  searchTerm: Search
+  searchTerm: Search,
 ): BooleanSearchCallback => {
   return buildSearchTreeCallback(searchTerm, booleanSearchTreeBuilder);
 };

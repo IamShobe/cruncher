@@ -4,7 +4,7 @@ import { TableColumn } from "~lib/qql/grammar";
 
 export const processTable = (
   data: DisplayResults,
-  columns: TableColumn[]
+  columns: TableColumn[],
 ): DisplayResults => {
   const { events, table } = data;
   const dataPoints = table ? table.dataPoints : events.data;

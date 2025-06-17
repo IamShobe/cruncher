@@ -54,7 +54,7 @@ const initializeServer = async (authProvider: ExternalAuthProvider) => {
 const sendUrlNavigationMessage = (url: string) => {
   if (!messageSender) {
     console.warn(
-      "Message sender is not initialized yet, cannot handle open-url event"
+      "Message sender is not initialized yet, cannot handle open-url event",
     );
     return;
   }
@@ -72,7 +72,7 @@ if (require.main === module) {
       process.parentPort?.on("message", async (e) => {
         const [port] = e.ports;
         const serverData = await initializeServer(
-          new ElectronExternalAuthProvider(port)
+          new ElectronExternalAuthProvider(port),
         );
 
         port.on("message", (e) => {

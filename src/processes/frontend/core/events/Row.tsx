@@ -14,7 +14,7 @@ type DataRowProps = {
 
 const getColorFromObject = (
   object: ProcessedData["object"],
-  columnName: string
+  columnName: string,
 ) => {
   const level = object[columnName]?.value;
   if (typeof level !== "string") {
@@ -48,7 +48,7 @@ const StyledGutter = styled.div<{ row: ProcessedData }>`
   background-color: ${({ row }) =>
     getColorFromObject(
       row.object,
-      "level"
+      "level",
     )}; // TODO: this needs to be configurable by user
   flex-shrink: 0;
   margin-right: 0.3rem;

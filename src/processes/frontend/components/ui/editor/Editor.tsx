@@ -116,7 +116,7 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
     });
 
     const [popperElement, setPopperElement] = useState<HTMLDivElement | null>(
-      null
+      null,
     );
 
     const { styles, attributes } = usePopper(referenceElement, popperElement, {
@@ -157,7 +157,7 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
       }
 
       return Array.from(results).filter((suggestion) =>
-        writtenWord ? suggestion.value.startsWith(writtenWord) : true
+        writtenWord ? suggestion.value.startsWith(writtenWord) : true,
       );
     }, [suggestions, cursorPosition, writtenWord]);
 
@@ -168,7 +168,7 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
       onChange(
         value.slice(0, startPos) +
           filteredSuggestions[hoveredCompletionItem].value +
-          value.slice(cursorPosition)
+          value.slice(cursorPosition),
       );
       // set cursor position to end of the word
       setTimeout(() => {
@@ -293,8 +293,8 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
             setPos(
               getCaretCoordinates(
                 referenceElement,
-                e.currentTarget.selectionStart
-              )
+                e.currentTarget.selectionStart,
+              ),
             );
           }}
         />
@@ -311,11 +311,11 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
                 hoveredItem={hoveredCompletionItem}
               />
             </div>,
-            popperRoot
+            popperRoot,
           )}
       </EditorWrapper>
     );
-  }
+  },
 );
 
 const lastIndexOfRegex = (word: string, regex: RegExp): number => {

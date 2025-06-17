@@ -27,7 +27,7 @@ export const getSyncRequestHandler = <
   R extends object,
 >(
   kind: T,
-  callback: (params: P) => Promise<R>
+  callback: (params: P) => Promise<R>,
 ) => {
   return {
     type: "sync_request_handler",
@@ -69,7 +69,7 @@ export const getSyncRequestHandler = <
 
 export const getAsyncRequestHandler = <P extends object>(
   kind: string,
-  callback: (params: P) => Promise<void>
+  callback: (params: P) => Promise<void>,
 ) => {
   return {
     type: "async_request_handler",
@@ -152,7 +152,7 @@ export const getServer = () => {
     };
     const removeConsumer = (consumer: Consumer) => {
       const index = consumers.findIndex(
-        (c) => c.type === consumer.type && c.callback === consumer.callback
+        (c) => c.type === consumer.type && c.callback === consumer.callback,
       );
       if (index !== -1) {
         consumers.splice(index, 1);
@@ -210,7 +210,7 @@ type RouteType = AsyncRoute | SyncRoute;
 
 export const setupEngine = async (
   server: EngineServer,
-  routes: readonly RouteType[]
+  routes: readonly RouteType[],
 ) => {
   server.onMessage((message) => {
     try {
@@ -230,12 +230,12 @@ export const setupEngine = async (
         const asyncHandler = routes.find<AsyncRoute>(
           (handler): handler is AsyncRoute =>
             handler.type === "async_request_handler" &&
-            handler.kind === parsedMessage.type
+            handler.kind === parsedMessage.type,
         );
         if (!asyncHandler) {
           console.warn(
             "No handler found for message type:",
-            parsedMessage.type
+            parsedMessage.type,
           );
           return;
         }

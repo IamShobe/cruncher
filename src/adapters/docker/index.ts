@@ -11,7 +11,7 @@ const paramsSchema = z.object({
       z.string(),
       z.object({
         messageFieldName: z.string().optional(),
-      })
+      }),
     )
     .optional(),
   logPatterns: z
@@ -23,7 +23,7 @@ const paramsSchema = z.object({
         exclude: z.array(z.string()).default([]),
         applyToAll: z.boolean().default(false),
         messageFieldName: z.string().optional(),
-      })
+      }),
     )
     .default([]),
 });

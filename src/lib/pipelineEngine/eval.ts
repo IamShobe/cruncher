@@ -28,7 +28,7 @@ import {
 export const processEval = (
   data: DisplayResults,
   variableName: string,
-  expression: EvalFunctionArg
+  expression: EvalFunctionArg,
 ): DisplayResults => {
   const { events, table } = data;
   const dataPoints = table ? table.dataPoints : events.data;
@@ -52,7 +52,7 @@ export const processEval = (
 
 const processEvalFunctionArg = (
   expression: EvalFunctionArg,
-  context: Context
+  context: Context,
 ): Field => {
   switch (expression.type) {
     case "number":
@@ -90,7 +90,7 @@ const processEvalFunctionArg = (
 
 const processFunction = (
   expression: FunctionExpression,
-  context: Context
+  context: Context,
 ): Field => {
   if (isBooleanFunction(expression.functionName)) {
     return {
@@ -125,7 +125,7 @@ const isEvalFunction = (expression: unknown): expression is EvalFunction => {
 
 const processEvalFunctionExpression = (
   expression: EvalFunction,
-  context: Context
+  context: Context,
 ): Field => {
   switch (expression.functionName) {
     case "case":
@@ -142,7 +142,7 @@ const processEvalFunctionExpression = (
 
 const processEvalCaseFunction = (
   expression: EvalCaseFunction,
-  context: Context
+  context: Context,
 ): Field => {
   for (const currCase of expression.cases) {
     if (!processLogicalExpression(currCase.expression, context)) {
@@ -161,7 +161,7 @@ const processEvalCaseFunction = (
 
 const processEvalIfFunction = (
   expression: EvalIfFunction,
-  context: Context
+  context: Context,
 ): Field => {
   if (processLogicalExpression(expression.condition, context)) {
     return processEvalFunctionArg(expression.then, context);
@@ -176,7 +176,7 @@ const processEvalIfFunction = (
 
 const processCalcExpression = (
   expression: CalcExpression,
-  context: Context
+  context: Context,
 ): Field => {
   const left = processCalcTerm(expression.left, context);
 
@@ -190,7 +190,7 @@ const processCalcExpression = (
 const processCalcExpressionTail = (
   left: Field,
   tail: CalcAction[],
-  context: Context
+  context: Context,
 ): Field => {
   let result = left;
 
@@ -205,7 +205,7 @@ const processCalcExpressionTail = (
 const processNumberCalcExpressionTail = (
   left: NumberField,
   tail: CalcAction[],
-  context: Context
+  context: Context,
 ): NumberField => {
   const result = left;
 
@@ -214,7 +214,7 @@ const processNumberCalcExpressionTail = (
     const rightNumberField = asNumberField(right);
     if (rightNumberField.errors) {
       throw new Error(
-        `Invalid type received can't process this action: ${rightNumberField.errors.join(",")} - on action: ${JSON.stringify(action.right)}`
+        `Invalid type received can't process this action: ${rightNumberField.errors.join(",")} - on action: ${JSON.stringify(action.right)}`,
       );
     }
 
@@ -248,7 +248,7 @@ const processCalcTerm = (term: CalcTerm, context: Context): Field => {
 const processCalcTermTail = (
   left: Field,
   tail: CalcTermAction[],
-  context: Context
+  context: Context,
 ): Field => {
   let result = left;
 
@@ -263,7 +263,7 @@ const processCalcTermTail = (
 const processNumberCalcTermTail = (
   left: NumberField,
   tail: CalcTermAction[],
-  context: Context
+  context: Context,
 ): NumberField => {
   const result = left;
 
@@ -272,7 +272,7 @@ const processNumberCalcTermTail = (
     const rightNumberField = asNumberField(right);
     if (rightNumberField.errors) {
       throw new Error(
-        `Invalid type received can't process this action: ${rightNumberField.errors.join(",")} - on action: ${JSON.stringify(action.right)}`
+        `Invalid type received can't process this action: ${rightNumberField.errors.join(",")} - on action: ${JSON.stringify(action.right)}`,
       );
     }
 

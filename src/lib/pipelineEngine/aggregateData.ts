@@ -10,13 +10,13 @@ import {
 import { AggregationFunction } from "~lib/qql/grammar";
 
 const assertDataValuesAsNumbers = (
-  input: Field[]
+  input: Field[],
 ): input is (NumberField | undefined | null)[] => {
   return input.every(
     (value) =>
       value === undefined ||
       value === null ||
-      asNumberField(value).errors === undefined
+      asNumberField(value).errors === undefined,
   );
 };
 
@@ -36,7 +36,7 @@ type SupportedAggFunction = (typeof SUPPORTED_AGG_FUNCTIONS)[number];
 export const aggregateData = (
   dataPoints: ProcessedData[],
   functions: AggregationFunction[],
-  groupBy: string[] | undefined
+  groupBy: string[] | undefined,
 ) => {
   const groups: Record<string, ProcessedData[]> = {};
 
@@ -87,7 +87,7 @@ export const aggregateData = (
 
       if (
         !SUPPORTED_AGG_FUNCTIONS.includes(
-          funcDef.function as SupportedAggFunction
+          funcDef.function as SupportedAggFunction,
         )
       ) {
         throw new Error(`Function '${funcDef.function}' is not supported`);
@@ -98,7 +98,7 @@ export const aggregateData = (
       switch (func) {
         case "first":
           dataPoint.object[resultColumnName] = columnData.find(
-            (value) => value !== undefined
+            (value) => value !== undefined,
           );
           break;
 
@@ -123,7 +123,7 @@ export const aggregateData = (
             type: "number",
             value: columnData.reduce(
               (acc, value) => (acc ?? 0) + (value?.value ?? 0),
-              0
+              0,
             ),
           };
           break;
@@ -134,7 +134,7 @@ export const aggregateData = (
 
           const res = columnData.reduce(
             (acc, value) => (acc ?? 0) + (value?.value ?? 0),
-            0
+            0,
           );
 
           dataPoint.object[resultColumnName] = {
@@ -153,7 +153,7 @@ export const aggregateData = (
             value: Math.min(
               ...columnData
                 .filter((value) => value !== undefined && value !== null)
-                .map((value) => value.value)
+                .map((value) => value.value),
             ),
           };
           break;
@@ -167,7 +167,7 @@ export const aggregateData = (
             value: Math.max(
               ...columnData
                 .filter((value) => value !== undefined && value !== null)
-                .map((value) => value.value)
+                .map((value) => value.value),
             ),
           };
           break;
@@ -197,7 +197,7 @@ export const bucketData = (
   bucketName: string,
   bucketPredicate: (data: ProcessedData) => HashableField | undefined,
   functions: AggregationFunction[],
-  groupBy: string[] | undefined
+  groupBy: string[] | undefined,
 ) => {
   const buckets: Map<HashableField["value"], ProcessedData[]> = new Map();
   let bucketType: HashableField["type"] = "string";
@@ -236,7 +236,7 @@ export const bucketData = (
 
     aggregatedData.columns.forEach((column) => columns.add(column));
     aggregatedData.aggregatedColumns.forEach((column) =>
-      aggregatedColumns.add(column)
+      aggregatedColumns.add(column),
     );
   }
 

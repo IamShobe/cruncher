@@ -142,7 +142,7 @@ const Header: React.FC<HeaderProps> = () => {
           handleSubmit(onSubmit(false))();
           break;
       }
-    }
+    },
   );
 
   const loaderValue = isLoading ? null : 100;
@@ -427,7 +427,7 @@ const MiniButtons = () => {
 };
 
 const createSearchProfileIsLoadingSelector = (
-  profileRef: SearchProfileRef
+  profileRef: SearchProfileRef,
 ): ((state: ApplicationStore) => boolean) => {
   return (state: ApplicationStore) => {
     if (state.hasError || state.searchProfiles.length === 0) {
@@ -435,7 +435,7 @@ const createSearchProfileIsLoadingSelector = (
     }
 
     const profile = state.searchProfiles.find(
-      (profile) => profile.name === profileRef
+      (profile) => profile.name === profileRef,
     );
     if (!profile) {
       return true;
@@ -452,15 +452,15 @@ const ProviderSelector = () => {
   const selectedSearchProfile = useSelectedSearchProfile();
   const isSelectedLoading = useApplicationStore(
     createSearchProfileIsLoadingSelector(
-      selectedSearchProfile?.name ?? ("" as SearchProfileRef)
-    )
+      selectedSearchProfile?.name ?? ("" as SearchProfileRef),
+    ),
   );
 
   const hasError = useApplicationStore((state) => state.hasError);
 
   const initializedSearchProfiles = useApplicationStore(searchProfilesSelector);
   const initializeProfileDatasets = useApplicationStore(
-    (state) => state.initializeProfileDatasets
+    (state) => state.initializeProfileDatasets,
   );
 
   const profiles = useMemo(() => {
@@ -481,11 +481,11 @@ const ProviderSelector = () => {
     }
 
     const index = profiles.items.findIndex(
-      (item) => item.value === details.items[0].value
+      (item) => item.value === details.items[0].value,
     );
     if (index === -1) {
       throw new Error(
-        `Selected instance with value ${details.items[0].value} not found in instances list.`
+        `Selected instance with value ${details.items[0].value} not found in instances list.`,
       );
     }
 
@@ -550,7 +550,7 @@ const InstanceSelectItem: React.FC<{
   };
 }> = ({ item }) => {
   const isLoading = useApplicationStore(
-    createSearchProfileIsLoadingSelector(item.value)
+    createSearchProfileIsLoadingSelector(item.value),
   );
 
   return (

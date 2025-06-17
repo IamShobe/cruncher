@@ -4,14 +4,14 @@ import { processLogicalExpression } from "./logicalExpression";
 
 export const processWhere = (
   data: DisplayResults,
-  logicalExpression: LogicalExpression
+  logicalExpression: LogicalExpression,
 ): DisplayResults => {
   const { events, table } = data;
 
   const newEvents: Events = {
     type: "events",
     data: events.data.filter((processedData) =>
-      processLogicalExpression(logicalExpression, { data: processedData })
+      processLogicalExpression(logicalExpression, { data: processedData }),
     ),
   };
 
@@ -19,7 +19,7 @@ export const processWhere = (
     type: "table",
     columns: table.columns,
     dataPoints: table.dataPoints.filter((processedData) =>
-      processLogicalExpression(logicalExpression, { data: processedData })
+      processLogicalExpression(logicalExpression, { data: processedData }),
     ),
   };
 

@@ -48,7 +48,7 @@ export const MockController = {
   query: async (
     contollerParams: ControllerIndexParam[],
     searchTerm: Search,
-    options: QueryOptions
+    options: QueryOptions,
   ): Promise<void> => {
     if (contollerParams.length > 0) {
       throw new Error("Controller params not supported");
@@ -65,7 +65,7 @@ export const MockController = {
         return [item.name, item.address, message, ...item.tags].some(
           (field) => {
             return doesLogMatch(field);
-          }
+          },
         );
       });
 

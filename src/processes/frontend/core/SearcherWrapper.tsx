@@ -97,7 +97,7 @@ export const useTabs = () => {
     const controller = deletedTab.store.get(appStoreAtom).controller;
     const lastRanJob = deletedTab.store.get(lastRanJobAtom);
     console.log(
-      `Removing tab with key ${key}, last ran job was ${lastRanJob?.id}`
+      `Removing tab with key ${key}, last ran job was ${lastRanJob?.id}`,
     );
     if (lastRanJob) {
       controller.releaseResources(lastRanJob.id);
@@ -112,7 +112,7 @@ export const useTabs = () => {
       setSelectedTab(tabIndex);
     } else {
       const newSelectedIndex = newTabs.findIndex(
-        (tab) => tab.key === selectedTabInfo.key
+        (tab) => tab.key === selectedTabInfo.key,
       );
       setSelectedTab(newSelectedIndex);
     }
@@ -123,7 +123,7 @@ export const useTabs = () => {
     if (!tab) {
       notifyError(
         `Tab with key ${key} not found`,
-        new Error(`Tab with key ${key} not found`)
+        new Error(`Tab with key ${key} not found`),
       );
       return;
     }
@@ -178,18 +178,18 @@ export const SearcherWrapper = () => {
       if (selectedProfile) {
         const profiles = appStore.getState().searchProfiles;
         const selectedInstanceIndex = profiles.findIndex(
-          (profile) => profile.name === selectedProfile
+          (profile) => profile.name === selectedProfile,
         );
         if (selectedInstanceIndex === -1) {
           notifyError(
             `Profile \"${selectedProfile}\" not found. Please select a valid profile.`,
-            new Error(`Profile \"${selectedProfile}\" not found.`)
+            new Error(`Profile \"${selectedProfile}\" not found.`),
           );
         }
 
         querySpecificStore.set(
           selectedSearchProfileIndexAtom,
-          selectedInstanceIndex
+          selectedInstanceIndex,
         );
       }
       setSelectedTab(createdTab.index);
@@ -205,14 +205,14 @@ export const SearcherWrapper = () => {
       const profileNames = new Set(
         tabs.map((tab) => {
           const selectedSearchProfile = tab.store.get(
-            selectedSearchProfileAtom
+            selectedSearchProfileAtom,
           );
           if (!selectedSearchProfile) {
             return;
           }
 
           return selectedSearchProfile.name;
-        })
+        }),
       );
 
       for (const profileName of profileNames) {
@@ -224,7 +224,7 @@ export const SearcherWrapper = () => {
         await appStore.getState().initializeProfileDatasets(profileName);
       }
     }, 200),
-    [tabs]
+    [tabs],
   );
 
   useMount(() => {
@@ -331,7 +331,7 @@ const DisplayTab: React.FC<{
     if (!newLabel || newLabel.trim() === "") {
       notifyError(
         "Tab name cannot be empty",
-        new Error("Tab name cannot be empty")
+        new Error("Tab name cannot be empty"),
       );
       return;
     }

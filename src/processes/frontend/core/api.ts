@@ -49,7 +49,7 @@ export const useLogsInfiniteQuery = () => {
       return await controller.getLogsPaginated(
         job!.id,
         pageParam,
-        10000 // Adjust the limit as needed
+        10000, // Adjust the limit as needed
       );
     },
     getNextPageParam: (lastPage) => lastPage.next,
@@ -69,7 +69,7 @@ export const useTableDataInfiniteQuery = () => {
       return await controller.getTableDataPaginated(
         jobInfo!.id,
         pageParam,
-        10000 // Adjust the limit as needed
+        10000, // Adjust the limit as needed
       );
     },
     getNextPageParam: (lastPage) => lastPage.next,

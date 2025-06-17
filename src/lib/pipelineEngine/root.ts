@@ -14,7 +14,7 @@ export const getPipelineItems = (
   data: ProcessedData[],
   pipeline: PipelineItem[],
   startTime: Date,
-  endTime: Date
+  endTime: Date,
 ) => {
   const currentData = {
     type: "events",
@@ -43,7 +43,7 @@ export const getPipelineItems = (
     console.log("[Pipeline] End time: ", pipelineEnd);
     console.log(
       "[Pipeline] Time taken: ",
-      pipelineEnd.getTime() - pipelineStart.getTime()
+      pipelineEnd.getTime() - pipelineStart.getTime(),
     );
   }
 };
@@ -53,7 +53,7 @@ const processPipeline = (
   pipeline: PipelineItem[],
   currentIndex: number,
   startTime: Date,
-  endTime: Date
+  endTime: Date,
 ) => {
   if (currentIndex >= pipeline.length) {
     return currentData;
@@ -69,14 +69,14 @@ const processPipeline = (
       currentData = processStats(
         currentData,
         currentPipeline.columns,
-        currentPipeline.groupBy
+        currentPipeline.groupBy,
       );
       break;
     case "regex":
       currentData = processRegex(
         currentData,
         new RegExp(currentPipeline.pattern),
-        currentPipeline.columnSelected
+        currentPipeline.columnSelected,
       );
       break;
     case "sort":
@@ -92,20 +92,20 @@ const processPipeline = (
         currentPipeline.groupBy,
         startTime,
         endTime,
-        currentPipeline.params
+        currentPipeline.params,
       );
       break;
     case "eval":
       currentData = processEval(
         currentData,
         currentPipeline.variableName,
-        currentPipeline.expression
+        currentPipeline.expression,
       );
       break;
     default:
       // @ts-expect-error - this should never happen
       throw new Error(
-        `Pipeline type '${currentPipeline.type}' not implemented`
+        `Pipeline type '${currentPipeline.type}' not implemented`,
       );
   }
 
@@ -114,7 +114,7 @@ const processPipeline = (
     pipeline,
     currentIndex + 1,
     startTime,
-    endTime
+    endTime,
   );
 };
 
@@ -127,7 +127,7 @@ export type PipelineItemProcessor = {
   [key in PipelineItemType]: (
     context: PipelineContext,
     currentData: DisplayResults,
-    options: NarrowedPipelineItem<key>
+    options: NarrowedPipelineItem<key>,
   ) => DisplayResults;
 };
 
@@ -135,11 +135,11 @@ export const processPipelineV2 = (
   processor: PipelineItemProcessor,
   currentData: DisplayResults,
   pipeline: PipelineItem[],
-  context: PipelineContext
+  context: PipelineContext,
 ) => {
   const innerProcessPipeline = (
     currentData: DisplayResults,
-    currentIndex: number
+    currentIndex: number,
   ): DisplayResults => {
     if (currentIndex >= pipeline.length) {
       return currentData;
@@ -154,7 +154,7 @@ export const processPipelineV2 = (
       processor,
       context,
       currentData,
-      currentPipeline
+      currentPipeline,
     );
 
     return innerProcessPipeline(processedData, currentIndex + 1);
@@ -167,12 +167,12 @@ const processPipelineType = <T extends PipelineItemType>(
   processor: PipelineItemProcessor,
   context: PipelineContext,
   currentData: DisplayResults,
-  params: NarrowedPipelineItem<T>
+  params: NarrowedPipelineItem<T>,
 ) => {
   const processorFn = processor[params.type];
   if (!processorFn) {
     throw new Error(
-      `Processor for pipeline item type '${params.type}' not found`
+      `Processor for pipeline item type '${params.type}' not found`,
     );
   }
 

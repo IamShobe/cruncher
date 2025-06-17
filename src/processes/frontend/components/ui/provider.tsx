@@ -12,7 +12,7 @@ import datepickerStyle from "react-day-picker/style.css?inline";
 export function Provider(props: ThemeProviderProps) {
   const [shadow, setShadow] = useState<HTMLElement | null>(null);
   const [cache, setCache] = useState<ReturnType<typeof createCache> | null>(
-    null
+    null,
   );
 
   useEffect(() => {

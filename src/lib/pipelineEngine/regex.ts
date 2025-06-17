@@ -8,7 +8,7 @@ import {
 export const processRegex = (
   data: DisplayResults,
   regex: RegExp,
-  column: string | undefined
+  column: string | undefined,
 ): DisplayResults => {
   const { events, table } = data;
   const dataPoints = table ? table.dataPoints : events.data;

@@ -73,7 +73,7 @@ export const DateSelector = () => {
   }, [isOpen]);
 
   const wrapperRef = useOutsideDetector(
-    useCallback(() => setIsOpen(false), [])
+    useCallback(() => setIsOpen(false), []),
   );
 
   return (
@@ -138,7 +138,7 @@ type CalendarPopUpProps = {
 const CalendarPopUp = forwardRef(
   (
     { setIsOpen }: CalendarPopUpProps,
-    ref: React.ForwardedRef<HTMLInputElement>
+    ref: React.ForwardedRef<HTMLInputElement>,
   ) => {
     const [selectedRange, setSelectedRange] = useAtom(dateRangeAtom);
 
@@ -156,10 +156,10 @@ const CalendarPopUp = forwardRef(
     const [selectedRenderedEndDate] = useAtom(renderedEndDateAtom);
 
     const [inputRenderedStartDate, setInputRenderedStartDate] = useState(
-      selectedRenderedStartDate
+      selectedRenderedStartDate,
     );
     const [inputRenderedEndDate, setInputRenderedEndDate] = useState(
-      selectedRenderedEndDate
+      selectedRenderedEndDate,
     );
 
     const tryToUpdateStartDateFromText = useTryToUpdateDate(startFullDateAtom);
@@ -352,5 +352,5 @@ const CalendarPopUp = forwardRef(
         </Stack>
       </Stack>
     );
-  }
+  },
 );

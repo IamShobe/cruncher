@@ -85,7 +85,7 @@ const DataLog: React.FC<DataRowProps> = () => {
 
   useEffect(() => {
     setScrollToIndex(
-      () => (index: number) => rowVirtualizer.scrollToIndex(index * 2)
+      () => (index: number) => rowVirtualizer.scrollToIndex(index * 2),
     );
   }, [rowVirtualizer.scrollToIndex, setScrollToIndex]);
 

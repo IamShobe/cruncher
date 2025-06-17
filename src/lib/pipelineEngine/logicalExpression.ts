@@ -31,7 +31,7 @@ export type Context = {
 
 export const processLogicalExpression = (
   logicalExpression: LogicalExpression,
-  context: Context
+  context: Context,
 ): boolean => {
   const { left, right } = logicalExpression;
 
@@ -52,7 +52,7 @@ export const processLogicalExpression = (
 
 const processUnitExpression = (
   unitExpression: UnitExpression,
-  context: Context
+  context: Context,
 ): boolean => {
   const { value } = unitExpression;
   switch (value.type) {
@@ -65,7 +65,7 @@ const processUnitExpression = (
     case "functionExpression":
       if (!isBooleanFunction(value.functionName)) {
         throw new Error(
-          `Function \`${value.functionName}\` is not supported in this context!`
+          `Function \`${value.functionName}\` is not supported in this context!`,
         );
       }
 
@@ -80,22 +80,22 @@ const processUnitExpression = (
 
 export const processInArrayExpression = (
   inArrayExpression: InArrayExpression,
-  context: Context
+  context: Context,
 ): boolean => {
   const { left, right } = inArrayExpression;
   const leftValue = processFieldValue(context, left);
   const rightValues = right.map((r) => processFieldValue(context, r));
 
   return rightValues.some(
-    (rightValue) => leftValue?.value === rightValue?.value
+    (rightValue) => leftValue?.value === rightValue?.value,
   );
 };
 
 export const isBooleanFunction = (
-  functionName: string
+  functionName: string,
 ): functionName is SupportedBooleanFunction => {
   return SUPPORTED_BOOLEAN_FUNCTIONS.includes(
-    functionName as SupportedBooleanFunction
+    functionName as SupportedBooleanFunction,
   );
 };
 
@@ -112,7 +112,7 @@ export type SupportedBooleanFunction =
 
 export const processBooleanFunctionExpression = (
   functionExpression: FunctionExpression,
-  context: Context
+  context: Context,
 ): boolean => {
   const { functionName, args } = functionExpression;
 
@@ -138,11 +138,11 @@ export const processBooleanFunctionExpression = (
 const processSingleArgFunction = (
   args: FunctionArg[],
   context: Context,
-  func: (a: Field) => boolean
+  func: (a: Field) => boolean,
 ): boolean => {
   if (args.length !== 1) {
     throw new Error(
-      "Invalid number of arguments for function - expected exactly 1"
+      "Invalid number of arguments for function - expected exactly 1",
     );
   }
 
@@ -155,7 +155,7 @@ const processSingleArgFunction = (
 const processStringFunction = (
   args: FunctionArg[],
   context: Context,
-  func: (a: string, b: string) => boolean
+  func: (a: string, b: string) => boolean,
 ): boolean => {
   assertFunctionSignature(args, ["string|columnRef", "string|columnRef"]);
   const [left, right] = args;
@@ -182,11 +182,11 @@ function assertArgOfTypeString(arg: FunctionArg): asserts arg is LiteralString {
 
 const assertFunctionSignature = (
   args: FunctionArg[],
-  expectedArgTypes: string[]
+  expectedArgTypes: string[],
 ): void => {
   if (args.length !== expectedArgTypes.length) {
     throw new Error(
-      `Invalid number of arguments for function - expected ${expectedArgTypes.length}`
+      `Invalid number of arguments for function - expected ${expectedArgTypes.length}`,
     );
   }
 
@@ -210,7 +210,7 @@ const assertFunctionSignature = (
   }
 
   throw new Error(
-    `Invalid argument types for function - expected: (${expectedArgTypes.join(",")}), got (${got.join(",")})`
+    `Invalid argument types for function - expected: (${expectedArgTypes.join(",")}), got (${got.join(",")})`,
   );
 };
 
@@ -229,28 +229,28 @@ const matches = (args: FunctionArg[], context: Context): boolean => {
 
 const processStartsWithFunction = (
   args: FunctionArg[],
-  context: Context
+  context: Context,
 ): boolean => {
   return processStringFunction(args, context, (a, b) => a.startsWith(b));
 };
 
 const processEndsWithFunction = (
   args: FunctionArg[],
-  context: Context
+  context: Context,
 ): boolean => {
   return processStringFunction(args, context, (a, b) => a.endsWith(b));
 };
 
 const processContainsFunction = (
   args: FunctionArg[],
-  context: Context
+  context: Context,
 ): boolean => {
   return processStringFunction(args, context, (a, b) => a.includes(b));
 };
 
 const processComparisonExpression = (
   comparisonExpression: ComparisonExpression,
-  context: Context
+  context: Context,
 ): boolean => {
   const { left, right, operator } = comparisonExpression;
   const leftValue = processFieldValue(context, left);
@@ -299,11 +299,11 @@ function processFieldValue(context: Context, field: RegexLiteral): StringField;
 function processFieldValue(context: Context, field: ColumnRef): Field;
 function processFieldValue(
   context: Context,
-  field: LiteralBoolean
+  field: LiteralBoolean,
 ): BooleanField;
 function processFieldValue(
   context: Context,
-  field: LogicalExpression
+  field: LogicalExpression,
 ): BooleanField;
 function processFieldValue(context: Context, field: FunctionArg): Field;
 
@@ -354,7 +354,7 @@ export function processFactor(field: FactorType, context: Context): Field {
 
 const processNotExpression = (
   notExpression: NotExpression,
-  context: Context
+  context: Context,
 ): boolean => {
   const { expression } = notExpression;
   return !processUnitExpression(expression, context);
@@ -363,7 +363,7 @@ const processNotExpression = (
 const processAndExpression = (
   andExpression: AndExpression,
   left: boolean,
-  context: Context
+  context: Context,
 ): boolean => {
   const { right } = andExpression;
   return left && processLogicalExpression(right, context);
@@ -372,7 +372,7 @@ const processAndExpression = (
 const processOrExpression = (
   orExpression: OrExpression,
   left: boolean,
-  context: Context
+  context: Context,
 ): boolean => {
   const { right } = orExpression;
   return left || processLogicalExpression(right, context);

@@ -4,7 +4,7 @@ import { Order } from "~lib/qql/grammar";
 
 export const processSort = (
   data: DisplayResults,
-  rules: { name: string; order: Order }[]
+  rules: { name: string; order: Order }[],
 ): DisplayResults => {
   const { events, table } = data;
   const dataPoints = table ? table.dataPoints : events.data;

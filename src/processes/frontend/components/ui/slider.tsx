@@ -40,7 +40,7 @@ export const Slider = React.forwardRef<HTMLDivElement, SliderProps>(
         </ChakraSlider.Control>
       </ChakraSlider.Root>
     );
-  }
+  },
 );
 
 function SliderThumbs(props: { value?: number[] }) {
@@ -79,5 +79,5 @@ const SliderMarks = React.forwardRef<HTMLDivElement, SliderMarksProps>(
         })}
       </ChakraSlider.MarkerGroup>
     );
-  }
+  },
 );

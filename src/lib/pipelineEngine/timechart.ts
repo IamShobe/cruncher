@@ -14,7 +14,7 @@ export const processTimeChart = (
   groupBy: string[] | undefined,
   fromTime: Date,
   toTime: Date,
-  params: TimeChartParams
+  params: TimeChartParams,
 ): DisplayResults => {
   const { events, table } = data;
   const dataPoints = table ? table.dataPoints : events.data;
@@ -31,7 +31,7 @@ export const processTimeChart = (
   const startBucket = fromTime.getTime();
 
   const bucketPredicate = (
-    dataPoint: ProcessedData
+    dataPoint: ProcessedData,
   ): HashableField | undefined => {
     const time = dataPoint.object[timeCol];
     const timeCasted = asDateField(time);
@@ -53,7 +53,7 @@ export const processTimeChart = (
     timeCol,
     bucketPredicate,
     functions,
-    groupBy
+    groupBy,
   );
 
   const yAxis = new Set<string>();

@@ -45,7 +45,7 @@ test("search term with or and and statements complex", () => {
   const parser = new QQLParser();
 
   const lexer = QQLLexer.tokenize(
-    "(hello world OR something) AND (another OR statement)"
+    "(hello world OR something) AND (another OR statement)",
   );
   expect(lexer.errors).toEqual([]);
   parser.input = lexer.tokens;
@@ -242,7 +242,7 @@ test("table command no columns", () => {
   parser.query();
   expect(parser.errors).length(1);
   expect(parser.errors[0].message).toEqual(
-    "Expecting: at least one column name\nbut found: ''"
+    "Expecting: at least one column name\nbut found: ''",
   );
 });
 
@@ -250,7 +250,7 @@ test("table command multiple columns", () => {
   const parser = new QQLParser();
 
   const lexer = QQLLexer.tokenize(
-    `hello world | table column1, column2, column3`
+    `hello world | table column1, column2, column3`,
   );
   expect(lexer.errors).toEqual([]);
   parser.input = lexer.tokens;
@@ -288,7 +288,7 @@ test("table command multiple columns no comma", () => {
   const parser = new QQLParser();
 
   const lexer = QQLLexer.tokenize(
-    `hello world | table column1 column2 column3`
+    `hello world | table column1 column2 column3`,
   );
   expect(lexer.errors).toEqual([]);
   parser.input = lexer.tokens;
@@ -379,7 +379,7 @@ test("support for stats command alias", () => {
   const parser = new QQLParser();
 
   const lexer = QQLLexer.tokenize(
-    `hello world | stats avg(column1) as avg_column1`
+    `hello world | stats avg(column1) as avg_column1`,
   );
   expect(lexer.errors).toEqual([]);
   parser.input = lexer.tokens;
@@ -577,7 +577,7 @@ test("support for sort desc multiple", () => {
   const parser = new QQLParser();
 
   const lexer = QQLLexer.tokenize(
-    `hello world | sort column1 desc, column2 asc`
+    `hello world | sort column1 desc, column2 asc`,
   );
   expect(lexer.errors).toEqual([]);
   parser.input = lexer.tokens;
@@ -740,7 +740,7 @@ test("support eval calculation with multiple operators", () => {
   const parser = new QQLParser();
 
   const lexer = QQLLexer.tokenize(
-    `hello world | eval column1 = column2 + 1 - 2 * 3 / 4`
+    `hello world | eval column1 = column2 + 1 - 2 * 3 / 4`,
   );
   expect(lexer.errors).toEqual([]);
   parser.input = lexer.tokens;
@@ -836,7 +836,7 @@ test("support eval command", () => {
   const parser = new QQLParser();
 
   const lexer = QQLLexer.tokenize(
-    `hello world | eval column1 = if(column2 == 1, 1, 0)`
+    `hello world | eval column1 = if(column2 == 1, 1, 0)`,
   );
   expect(lexer.errors).toEqual([]);
   parser.input = lexer.tokens;
@@ -914,7 +914,7 @@ test("support timechart group by", () => {
   const parser = new QQLParser();
 
   const lexer = QQLLexer.tokenize(
-    `hello world | timechart count() by customer, status`
+    `hello world | timechart count() by customer, status`,
   );
   expect(lexer.errors).toEqual([]);
   parser.input = lexer.tokens;
@@ -952,7 +952,7 @@ test("support controller params", () => {
   const parser = new QQLParser();
 
   const lexer = QQLLexer.tokenize(
-    `param1=\`abc\` param2=\`def\` third!=\`something\` hello world`
+    `param1=\`abc\` param2=\`def\` third!=\`something\` hello world`,
   );
   expect(lexer.errors).toEqual([]);
   parser.input = lexer.tokens;
@@ -1095,7 +1095,7 @@ test.each([
   const parser = new QQLParser();
 
   const lexer = QQLLexer.tokenize(
-    `hello world | where column1 == 1 ${operator} column2 == 2`
+    `hello world | where column1 == 1 ${operator} column2 == 2`,
   );
   expect(lexer.errors).toEqual([]);
   parser.input = lexer.tokens;
@@ -1162,7 +1162,7 @@ test("support for where command complex and", () => {
   const parser = new QQLParser();
 
   const lexer = QQLLexer.tokenize(
-    `hello world | where column1 == 1 && column2 == 2`
+    `hello world | where column1 == 1 && column2 == 2`,
   );
   expect(lexer.errors).toEqual([]);
   parser.input = lexer.tokens;
@@ -1231,7 +1231,7 @@ test.each([["=="], ["!="], [">"], ["<"], [">="], ["<="]])(
     const parser = new QQLParser();
 
     const lexer = QQLLexer.tokenize(
-      `hello world | where column1 ${operator} 1`
+      `hello world | where column1 ${operator} 1`,
     );
     expect(lexer.errors).toEqual([]);
     parser.input = lexer.tokens;
@@ -1271,5 +1271,5 @@ test.each([["=="], ["!="], [">"], ["<"], [">="], ["<="]])(
         },
       ],
     });
-  }
+  },
 );

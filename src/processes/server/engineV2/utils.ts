@@ -14,7 +14,7 @@ export const getScale = (selectedStartTime: Date, selectedEndTime: Date) => {
 
 export const calculateBuckets = (
   scale: ScaleLinear<number, number, unknown> | undefined,
-  data: ProcessedData[]
+  data: ProcessedData[],
 ) => {
   if (!scale) {
     return [];

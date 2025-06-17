@@ -3,7 +3,7 @@ import { BrowserWindow } from "electron";
 export const createAuthWindow = async (
   url: string,
   requestedCookies: string[],
-  checkValidCookies: (cookies: Record<string, string>) => Promise<boolean>
+  checkValidCookies: (cookies: Record<string, string>) => Promise<boolean>,
 ) => {
   const authWindow = new BrowserWindow({
     width: 400,
@@ -40,7 +40,7 @@ export const createAuthWindow = async (
           }
           return acc;
         },
-        {} as Record<string, string>
+        {} as Record<string, string>,
       );
 
       const validatedCookies = await checkValidCookies(values);

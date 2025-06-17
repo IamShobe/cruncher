@@ -27,7 +27,7 @@ export class QueryCacheHolder {
   }
 
   public forceRemoveFromCache(
-    identifier: QueryExecutionHistory
+    identifier: QueryExecutionHistory,
   ): Promise<void> {
     return this.cacheMutex.runExclusive(() => {
       const key = hash(identifier);
@@ -43,13 +43,13 @@ export class QueryCacheHolder {
   public addToCache(
     identifier: QueryExecutionHistory,
     taskId: TaskRef,
-    promiseFactory: (cacheRecord: CacheRecord) => Promise<void>
+    promiseFactory: (cacheRecord: CacheRecord) => Promise<void>,
   ): Promise<CacheRecord> {
     return this.cacheMutex.runExclusive(() => {
       const key = hash(identifier);
       if (this.cache[key]) {
         throw new Error(
-          `Cache already exists for key: ${key}. Use getFromCacheByKey to retrieve it.`
+          `Cache already exists for key: ${key}. Use getFromCacheByKey to retrieve it.`,
         );
       }
 
@@ -74,7 +74,7 @@ export class QueryCacheHolder {
 
   public referenceCache(
     identifier: QueryExecutionHistory,
-    taskId: TaskRef
+    taskId: TaskRef,
   ): Promise<CacheRecord> {
     return this.cacheMutex.runExclusive(() => {
       const key = hash(identifier);

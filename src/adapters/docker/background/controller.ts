@@ -30,7 +30,7 @@ const parseJsonMessage = (message: string): Record<string, unknown> | null => {
 const intelligentParse = (
   message: string,
   containerName: string,
-  logPatterns: DockerLogPatterns = []
+  logPatterns: DockerLogPatterns = [],
 ): { parsed: Record<string, unknown>; selectedMessageFieldName: string } => {
   const parsed: Record<string, unknown> = {};
   const jsonParsed = parseJsonMessage(message);
@@ -86,7 +86,7 @@ export type LogPattern = {
 };
 
 export class DockerController implements QueryProvider {
-  constructor(private params: DockerParams) { }
+  constructor(private params: DockerParams) {}
 
   private async getContainers(): Promise<DockerContainer[]> {
     return new Promise((resolve, reject) => {
@@ -154,7 +154,7 @@ export class DockerController implements QueryProvider {
     fromTime: Date,
     toTime: Date,
     doesLogMatch: BooleanSearchCallback,
-    cancelToken: AbortSignal
+    cancelToken: AbortSignal,
   ): Promise<DockerLogEntry[]> {
     return new Promise((resolve, reject) => {
       if (cancelToken.aborted) {
@@ -163,17 +163,18 @@ export class DockerController implements QueryProvider {
       }
 
       const selectedStreams = controllerParams
-        .filter((param) => param.name === "stream").map(processStreamControllerParam);
+        .filter((param) => param.name === "stream")
+        .map(processStreamControllerParam);
 
       console.log(
-        `Selected streams for container ${container.name}: ${selectedStreams.join(", ")}`
+        `Selected streams for container ${container.name}: ${selectedStreams.join(", ")}`,
       );
 
-      let isStdoutSelected = selectedStreams.some(
-        (stream) => stream.includes("stdout")
+      let isStdoutSelected = selectedStreams.some((stream) =>
+        stream.includes("stdout"),
       );
-      let isStderrSelected = selectedStreams.some(
-        (stream) => stream.includes("stderr")
+      let isStderrSelected = selectedStreams.some((stream) =>
+        stream.includes("stderr"),
       );
 
       if (!isStdoutSelected && !isStderrSelected) {
@@ -201,7 +202,6 @@ export class DockerController implements QueryProvider {
       const dockerProcess = spawn("docker", args);
       const logs: DockerLogEntry[] = [];
 
-
       const processLogLine = (line: string, stream: Stream) => {
         const indexOfSpace = line.indexOf(" ");
         const originalMessage = line.slice(indexOfSpace + 1);
@@ -214,7 +214,7 @@ export class DockerController implements QueryProvider {
         try {
           // Docker log format: TIMESTAMP MESSAGE
           const timestampMatch = timestampStr.match(
-            /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z)$/
+            /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z)$/,
           );
           if (timestampMatch) {
             const [_row, timestampStr] = timestampMatch;
@@ -225,7 +225,7 @@ export class DockerController implements QueryProvider {
               const { parsed, selectedMessageFieldName } = intelligentParse(
                 strippedOriginalMessage,
                 container.name,
-                this.params.logPatterns
+                this.params.logPatterns,
               );
 
               const finalMessageFieldName =
@@ -258,7 +258,7 @@ export class DockerController implements QueryProvider {
         for (let i = 0; i < lines.length; i++) {
           processLogLine(lines[i], stream);
         }
-      }
+      };
 
       if (isStdoutSelected) {
         dockerProcess.stdout.setEncoding("utf8");
@@ -284,7 +284,7 @@ export class DockerController implements QueryProvider {
 
       dockerProcess.on("error", (error) => {
         reject(
-          new Error(`Failed to execute Docker logs command: ${error.message}`)
+          new Error(`Failed to execute Docker logs command: ${error.message}`),
         );
       });
 
@@ -305,7 +305,7 @@ export class DockerController implements QueryProvider {
   async query(
     controllerParams: ControllerIndexParam[],
     searchTerm: Search,
-    options: QueryOptions
+    options: QueryOptions,
   ): Promise<void> {
     try {
       const doesLogMatch = buildDoesLogMatchCallback(searchTerm);
@@ -314,23 +314,25 @@ export class DockerController implements QueryProvider {
       // Filter containers based on containerFilter if provided
       const filteredContainers = this.params.containerFilter
         ? containers.filter(
-          (container) =>
-            container.name.includes(this.params.containerFilter ?? "") ||
-            container.id.includes(this.params.containerFilter ?? "")
-        )
+            (container) =>
+              container.name.includes(this.params.containerFilter ?? "") ||
+              container.id.includes(this.params.containerFilter ?? ""),
+          )
         : containers;
 
       // Apply controller params filtering if any
-      const selectedContainers = controllerParams.filter((param) => param.name === "container").map(processContainerControllerParam);
+      const selectedContainers = controllerParams
+        .filter((param) => param.name === "container")
+        .map(processContainerControllerParam);
 
       const finalContainers = filteredContainers.filter((container) => {
         return selectedContainers.length > 0
           ? selectedContainers.some((selected) => {
-            return (
-              container.name.includes(selected) ||
-              container.id.includes(selected)
-            );
-          })
+              return (
+                container.name.includes(selected) ||
+                container.id.includes(selected)
+              );
+            })
           : true;
       });
 
@@ -347,9 +349,9 @@ export class DockerController implements QueryProvider {
             options.fromTime,
             options.toTime,
             doesLogMatch,
-            options.cancelToken
-          )
-        )
+            options.cancelToken,
+          ),
+        ),
       );
       const results = merge<ProcessedData>(allLogs, compareProcessedData);
       const limitedLogs = results.slice(0, options.limit);
@@ -400,7 +402,7 @@ export class DockerController implements QueryProvider {
     fromTime: Date,
     toTime: Date,
     doesLogMatch: BooleanSearchCallback,
-    cancelToken: AbortSignal
+    cancelToken: AbortSignal,
   ): Promise<ProcessedData[]> {
     const logs = await this.getContainerLogs(
       controllerParams,
@@ -408,7 +410,7 @@ export class DockerController implements QueryProvider {
       fromTime,
       toTime,
       doesLogMatch,
-      cancelToken
+      cancelToken,
     );
 
     return logs
@@ -449,21 +451,20 @@ export class DockerController implements QueryProvider {
       .sort(
         (a, b) =>
           (b.object._sortBy!.value as number) -
-          (a.object._sortBy!.value as number)
+          (a.object._sortBy!.value as number),
       );
   }
 }
 
-
 const processStreamControllerParam = (param: ControllerIndexParam) => {
   console.log("Processing stream controller param:", param);
-  
+
   if (param.value.type === "string") {
     return extractStreamsFromString(param.value.value);
   } else {
     return extractStreamsFromString(param.value.pattern as Stream);
   }
-}
+};
 
 const extractStreamsFromString = (streamString: string): Stream[] => {
   const streams: Stream[] = [];
@@ -476,12 +477,14 @@ const extractStreamsFromString = (streamString: string): Stream[] => {
     }
   }
   return streams;
-}
+};
 
-const processContainerControllerParam = (param: ControllerIndexParam): string => {
+const processContainerControllerParam = (
+  param: ControllerIndexParam,
+): string => {
   if (param.value.type === "string") {
     return param.value.value;
   } else {
     return param.value.pattern;
   }
-}
+};
