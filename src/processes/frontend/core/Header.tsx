@@ -6,12 +6,16 @@ import { ProgressBar, ProgressRoot } from "~components/ui/progress";
 import {
   Box,
   Circle,
+  Flex,
   Float,
+  Grid,
+  GridItem,
   IconButton,
   MenuSeparator,
   Select,
   Spinner,
   Stack,
+  Wrap,
   createListCollection,
 } from "@chakra-ui/react";
 import { css } from "@emotion/react";
@@ -69,7 +73,7 @@ const StyledHeader = styled.form`
   display: flex;
   gap: 0.4rem;
   flex-direction: row;
-  padding: 0.3rem;
+  padding: 1rem 1rem 0.3rem 1rem;
 
   // add media
   @media (max-width: 768px) {
@@ -170,7 +174,14 @@ const Header: React.FC<HeaderProps> = () => {
         onSubmit={handleSubmit(onSubmit(false))}
         onKeyDown={onHeaderKeyDown}
       >
-        <Stack direction="column" gap={2} flex={1}>
+        <Stack direction="column" gap={3} flex={1}>
+          <SearchBarButtons
+            isLoading={isLoading}
+            onForceSubmit={() => handleSubmit(onSubmit(true))()}
+            onTerminateSearch={() =>
+              abortRunningQuery("Search terminated by user")
+            }
+          />
           <QueryContainer>
             <div
               css={css`
@@ -186,13 +197,6 @@ const Header: React.FC<HeaderProps> = () => {
             />
           </QueryContainer>
         </Stack>
-        <SearchBarButtons
-          isLoading={isLoading}
-          onForceSubmit={() => handleSubmit(onSubmit(true))()}
-          onTerminateSearch={() =>
-            abortRunningQuery("Search terminated by user")
-          }
-        />
       </StyledHeader>
     </>
   );
@@ -217,92 +221,87 @@ const SearchBarButtons: React.FC<SearchBarButtonsProps> = ({
 
   return (
     <ButtonsHolder>
-      <Stack gap={3}>
-        <DateSelector />
-        <Stack direction="row">
-          <Stack>
-            <Stack gap={3} direction="row">
-              <Box position="relative">
-                <Tooltip
-                  content={
-                    <span>
-                      Process Pipeline {!isRelativeTimeSelected && "Only"}{" "}
-                      <Shortcut
-                        keys={headerShortcuts.getAlias("re-evaluate")}
-                      />
-                    </span>
-                  }
-                  showArrow
-                  positioning={{
-                    placement: "bottom",
-                  }}
-                >
-                  <IconButton
-                    aria-label="Re-evalutate"
-                    type="submit"
-                    disabled={isLoading}
-                  >
-                    <LuSigma />
-                  </IconButton>
-                </Tooltip>
-                {isRelativeTimeSelected && (
-                  <Tooltip
-                    content={
-                      <span>
-                        Relative time is selected, full refresh is required!
-                      </span>
-                    }
-                    showArrow
-                    contentProps={{ css: { "--tooltip-bg": "tomato" } }}
-                  >
-                    <Float placement="top-end">
-                      <Circle size="3" bg="red" color="white"></Circle>
-                    </Float>
-                  </Tooltip>
-                )}
-              </Box>
-              {isLoading ? (
-                <Tooltip
-                  content={<span>Terminate Search</span>}
-                  showArrow
-                  positioning={{
-                    placement: "bottom",
-                  }}
-                >
-                  <IconButton
-                    aria-label="Terminate database"
-                    onClick={() => onTerminateSearch()}
-                  >
-                    <LuSearchX />
-                  </IconButton>
-                </Tooltip>
-              ) : (
-                <Tooltip
-                  content={
-                    <span>
-                      Search{" "}
-                      <Shortcut keys={headerShortcuts.getAlias("search")} />
-                    </span>
-                  }
-                  showArrow
-                  positioning={{
-                    placement: "bottom",
-                  }}
-                >
-                  <IconButton
-                    aria-label="Search database"
-                    onClick={() => onForceSubmit()}
-                  >
-                    <LuSearch />
-                  </IconButton>
-                </Tooltip>
-              )}
-            </Stack>
-            <MiniButtons />
-          </Stack>
-          <ProviderSelector />
+      <Wrap gap={2} alignItems="center" flex={1}>
+        <Stack direction="row" gap={2} alignItems="center">
+          {isLoading ? (
+            <Tooltip
+              content={<span>Terminate Search</span>}
+              showArrow
+              positioning={{
+                placement: "bottom",
+              }}
+            >
+              <IconButton
+                aria-label="Terminate database"
+                onClick={() => onTerminateSearch()}
+              >
+                <LuSearchX />
+              </IconButton>
+            </Tooltip>
+          ) : (
+            <Tooltip
+              content={
+                <span>
+                  Search <Shortcut keys={headerShortcuts.getAlias("search")} />
+                </span>
+              }
+              showArrow
+              positioning={{
+                placement: "bottom",
+              }}
+            >
+              <IconButton
+                aria-label="Search database"
+                onClick={() => onForceSubmit()}
+              >
+                <LuSearch />
+              </IconButton>
+            </Tooltip>
+          )}
+          <Box position="relative">
+            <Tooltip
+              content={
+                <span>
+                  Process Pipeline {!isRelativeTimeSelected && "Only"}{" "}
+                  <Shortcut keys={headerShortcuts.getAlias("re-evaluate")} />
+                </span>
+              }
+              showArrow
+              positioning={{
+                placement: "bottom",
+              }}
+            >
+              <IconButton
+                aria-label="Re-evalutate"
+                type="submit"
+                disabled={isLoading}
+              >
+                <LuSigma />
+              </IconButton>
+            </Tooltip>
+            {isRelativeTimeSelected && (
+              <Tooltip
+                content={
+                  <span>
+                    Relative time is selected, full refresh is required!
+                  </span>
+                }
+                showArrow
+                contentProps={{ css: { "--tooltip-bg": "tomato" } }}
+              >
+                <Float placement="top-end">
+                  <Circle size="3" bg="red" color="white"></Circle>
+                </Float>
+              </Tooltip>
+            )}
+          </Box>
         </Stack>
-      </Stack>
+        <DateSelector />
+        <MiniButtons />
+        <Box ml="auto">
+          <ProviderSelector />
+        </Box>
+      </Wrap>
     </ButtonsHolder>
   );
 };
@@ -360,7 +359,7 @@ const MiniButtons = () => {
   };
 
   return (
-    <Stack gap={3} direction="row">
+    <Stack gap={3} direction="row" alignItems="center" p={1.5}>
       <MenuRoot lazyMount unmountOnExit>
         <MenuTrigger disabled={isDisabled}>
           <Tooltip
@@ -488,6 +487,8 @@ const ProviderSelector = () => {
   return (
     <Select.Root
       size="xs"
+      minW={"200px"}
+      maxW={"300px"}
       collection={profiles}
       value={selectedSearchProfile ? [selectedSearchProfile.name] : []}
       onValueChange={onSelect}
