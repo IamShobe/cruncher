@@ -3,8 +3,6 @@ title: eval
 description: The eval command in QQL allows you to create or modify fields by evaluating expressions for each record.
 ---
 
-import { Badge } from '@astrojs/starlight/components';
-
 The `eval` command creates or modifies fields by evaluating expressions for each record.
 
 ## Syntax
@@ -15,14 +13,52 @@ eval newField = expression
 
 - `newField = expression`: Assigns the result of the expression to a new or existing field.
 
+## Supported Functions and Expressions
+
+You can use arithmetic, logical, and conditional expressions, as well as functions, in `eval` assignments. Common supported functions include:
+
+- Mathematical: `+`, `-`, `*`, `/`
+- String: `lower(str)`, `upper(str)`, `length(str)`
+- Number: `abs(x)`, `round(x)`, `ceil(x)`, `floor(x)`
+- Boolean: `contains(str, substr)`, `startsWith(str, prefix)`, `endsWith(str, suffix)`, `match(str, regex)`, `isNull(x)`, `isNotNull(x)`
+- Conditional: `if(condition, then, else)`, `case((cond1, val1), ..., elseVal)`
+
+> Only functions supported by your Cruncher deployment are available. See the main documentation for a full list.
+
 ## Usage
 
 - Use `eval` to compute new values, transform fields, or perform calculations.
+- You can assign multiple fields by chaining multiple `eval` commands in your pipeline.
+- Use conditional logic to create new fields based on complex criteria.
 
-## Example
+## Examples
 
 ```
 eval duration_sec = duration / 1000
 ```
-
 This creates a `duration_sec` field.
+
+```
+eval is_error = (status == "error")
+```
+This creates a boolean field `is_error` that is true if `status` is `error`.
+
+```
+eval user_lower = lower(user)
+```
+This creates a new field `user_lower` with the lowercase value of `user`.
+
+```
+eval error_type = if(status == "error", "critical", "normal")
+```
+This creates a new field `error_type` based on the value of `status`.
+
+```
+eval match_found = match(message, "^Error:.*")
+```
+This creates a boolean field `match_found` that is true if `message` matches the regex pattern.
+
+```
+eval group = case(status == "error", "A", status == "warn", "B", "C")
+```
+This creates a new field `group` with value "A" if `status` is `error`, "B" if `status` is `warn`, and "C" otherwise.

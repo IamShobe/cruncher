@@ -1,4 +1,6 @@
 import {
+  asNumberField,
+  asStringField,
   BooleanField,
   Field,
   isNotDefined,
@@ -91,6 +93,84 @@ export const processInArrayExpression = (
   );
 };
 
+export const isStringFunction = (
+  functionName: string,
+): functionName is SupportedStringFunction => {
+  return SUPPORTED_STRING_FUNCTIONS.includes(
+    functionName as SupportedStringFunction,
+  );
+};
+
+export const SUPPORTED_STRING_FUNCTIONS = [
+  "lower",
+  "upper",
+  "trim",
+  "length",
+] as const;
+
+export type SupportedStringFunction =
+  (typeof SUPPORTED_STRING_FUNCTIONS)[number];
+
+
+export const processStringFunctionExpression = (
+  functionExpression: FunctionExpression,
+  context: Context,
+): string => {
+  const { functionName, args } = functionExpression;
+
+  switch (functionName) {
+    case "lower":
+      return processSingleArgFunction(args, context, (a) => asStringField(a).value.toLowerCase());
+    case "upper":
+      return processSingleArgFunction(args, context, (a) => asStringField(a).value.toUpperCase());
+    case "trim":
+      return processSingleArgFunction(args, context, (a) => asStringField(a).value.trim());
+    default:
+      throw new Error(`Function \`${functionName}\` is not supported!`);
+  }
+};
+
+export const SUPPORTED_NUMBER_FUNCTIONS = [
+  "abs",
+  "round",
+  "ceil",
+  "floor",
+  "length",
+] as const;
+
+export type SupportedNumberFunction =
+  (typeof SUPPORTED_NUMBER_FUNCTIONS)[number];
+
+export const isNumberFunction = (
+  functionName: string,
+): functionName is SupportedNumberFunction => {
+  return SUPPORTED_NUMBER_FUNCTIONS.includes(
+    functionName as SupportedNumberFunction,
+  )
+}
+
+
+export const processNumberFunctionExpression = (
+  functionExpression: FunctionExpression,
+  context: Context,
+): number => {
+  const { functionName, args } = functionExpression;
+  switch (functionName as SupportedNumberFunction) {
+    case "abs":
+      return processSingleArgFunction(args, context, (a) => Math.abs(asNumberField(a).value));
+    case "round":
+      return processSingleArgFunction(args, context, (a) => Math.round(asNumberField(a).value));
+    case "ceil":
+      return processSingleArgFunction(args, context, (a) => Math.ceil(asNumberField(a).value));
+    case "floor":
+      return processSingleArgFunction(args, context, (a) => Math.floor(asNumberField(a).value));
+    case "length":
+      return processSingleArgFunction(args, context, (a) => asStringField(a).value.length);
+    default:
+      throw new Error(`Function \`${functionName}\` is not supported!`);
+  }
+};
+
 export const isBooleanFunction = (
   functionName: string,
 ): functionName is SupportedBooleanFunction => {
@@ -135,11 +215,11 @@ export const processBooleanFunctionExpression = (
   }
 };
 
-const processSingleArgFunction = (
+const processSingleArgFunction = <T>(
   args: FunctionArg[],
   context: Context,
-  func: (a: Field) => boolean,
-): boolean => {
+  func: (a: Field) => T,
+): T => {
   if (args.length !== 1) {
     throw new Error(
       "Invalid number of arguments for function - expected exactly 1",
@@ -321,9 +401,36 @@ function processFieldValue(context: Context, field: FunctionArg): Field {
         value: processLogicalExpression(field, context),
       };
 
+    case "functionExpression":
+      return processFunctionExpression(field, context);
+
     default:
       return processFactor(field, context);
   }
+}
+
+export function processFunctionExpression(
+  expression: FunctionExpression,
+  context: Context,
+): Field {
+  if (isStringFunction(expression.functionName)) {
+    return {
+      type: "string",
+      value: processStringFunctionExpression(expression, context),
+    };
+  } else if (isBooleanFunction(expression.functionName)) {
+    return {
+      type: "boolean",
+      value: processBooleanFunctionExpression(expression, context),
+    };
+  } else if (isNumberFunction(expression.functionName)) {
+    return {
+      type: "number",
+      value: processNumberFunctionExpression(expression, context),
+    };
+  }
+
+  throw new Error(`Unsupported function: ${expression.functionName}`);
 }
 
 export function processFactor(field: FactorType, context: Context): Field {
