@@ -25,7 +25,33 @@ export default defineConfig({
         },
         {
           label: "QQL Reference",
-          autogenerate: { directory: "qql-reference" },
+          items: [
+            {
+              label: "QQL (Quick Query Language)",
+              link: "/qql-reference/01-qql",
+            },
+            {
+              label: "Query",
+              link: "/qql-reference/02-query",
+            },
+            {
+              label: "Data Types",
+              link: "/qql-reference/03-data-types",
+            },
+            {
+              label: "Logical Expressions",
+              link: "/qql-reference/04-logical-expressions",
+            },
+            {
+              label: "Commands",
+              autogenerate: { directory: "qql-reference/commands" },
+            },
+            {
+              label: "Functions",
+              autogenerate: { directory: "qql-reference/functions" },
+            },
+          ],
+          // autogenerate: { directory: "qql-reference" },
         },
         {
           label: "Adapters",
