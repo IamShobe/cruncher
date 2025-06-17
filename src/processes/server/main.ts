@@ -6,6 +6,7 @@ import log from 'electron-log/main';
 import { Engine } from './engineV2/engine';
 import * as grafana from '../../adapters/grafana_browser';
 import * as local from '../../adapters/mocked_data';
+import * as docker from '../../adapters/docker';
 import { IPCMessage } from './types';
 import { ExternalAuthProvider } from '~lib/adapters';
 import { DefaultExternalAuthProvider, ElectronExternalAuthProvider } from './externalAuthProvider';
@@ -33,6 +34,7 @@ const initializeServer = async (authProvider: ExternalAuthProvider) => {
     // TODO: dynamically load supported plugins
     engineV2.registerPlugin(grafana.adapter);
     engineV2.registerPlugin(local.adapter);
+    engineV2.registerPlugin(docker.adapter);
 
     const routes = await getRoutes(engineV2);
     await setupEngine(serverContainer, routes);

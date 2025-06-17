@@ -43,6 +43,7 @@ const StyledGutter = styled.div<{ row: ProcessedData }>`
   width: 6px;
   border-right: 1px solid rgb(49, 54, 63);
   background-color: ${({row}) => getColorFromObject(row.object, "level")}; // TODO: this needs to be configurable by user
+  flex-shrink: 0;
   margin-right: 0.3rem;
 `;
 

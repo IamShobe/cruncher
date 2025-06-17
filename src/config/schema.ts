@@ -15,4 +15,3 @@ export const CruncherConfigSchema = z.object({
     profiles: ProfilesSchema.optional(),
     connectors: z.array(ConnectorConfigSchema),
 });
-

@@ -22,6 +22,7 @@ import { CacheRecord, QueryCacheHolder } from "./cache";
 import { ClosestPoint, ExportResults, InstanceRef, JobBatchFinished, PageResponse, PluginInstance, PluginInstanceContainer, QueryExecutionHistory, QueryTask, QueryTaskState, SearchProfile, SearchProfileRef, SerializableAdapter, SerializeableParams, SubTask, SubTaskRef, TableDataResponse, TaskRef } from "./types";
 import { calculateBuckets, getScale } from "./utils";
 import { generateCsv, mkConfig } from "export-to-csv";
+import { zodToJsonSchema } from "zod-to-json-schema";
 
 export class Engine {
     private supportedPlugins: Adapter[] = [];
@@ -51,7 +52,7 @@ export class Engine {
                 name: plugin.name,
                 description: plugin.description,
                 version: plugin.version,
-                params: plugin.params,
+                params: zodToJsonSchema(plugin.params, "Params"),
             };
         });
     }
