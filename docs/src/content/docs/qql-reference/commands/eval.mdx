@@ -1,0 +1,28 @@
+---
+title: eval
+description: The eval command in QQL allows you to create or modify fields by evaluating expressions for each record.
+---
+
+import { Badge } from '@astrojs/starlight/components';
+
+The `eval` command creates or modifies fields by evaluating expressions for each record.
+
+## Syntax
+
+```
+eval newField = expression
+```
+
+- `newField = expression`: Assigns the result of the expression to a new or existing field.
+
+## Usage
+
+- Use `eval` to compute new values, transform fields, or perform calculations.
+
+## Example
+
+```
+eval duration_sec = duration / 1000
+```
+
+This creates a `duration_sec` field.

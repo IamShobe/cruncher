@@ -208,7 +208,7 @@ export class ApiController {
                   // You can handle other statuses if needed
                   reject(
                     new Error(
-                      `Query job ${jobUpdate.jobId} failed with status: ${jobUpdate.status}`,
+                      `Query job ${jobUpdate.jobId} failed with status: ${jobUpdate.status}\nError: ${jobUpdate.error || "Unknown error"}`,
                     ),
                   );
                 }

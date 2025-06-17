@@ -1,4 +1,31 @@
 ---
 title: table
-description: How to use the table command in QQL.
+description: Displays the results of the pipeline as a table, allowing you to select and order specific fields.
 ---
+
+import { Badge } from '@astrojs/starlight/components';
+
+<Badge text="table" />
+
+The `table` command displays the results of the pipeline as a table, allowing you to select and order specific fields.
+
+## Syntax
+
+```
+table field1, field2, ...
+```
+
+- `field1, field2, ...`: The fields to display as columns in the output table, in the specified order.
+
+## Usage
+
+- Use `table` at the end of a pipeline to control which fields are shown and their order.
+- If not specified, all fields may be shown in default order.
+
+## Example
+
+```
+... | table timestamp, message, level
+```
+
+This displays the `timestamp`, `message`, and `level` fields as columns in the output table.

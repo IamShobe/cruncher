@@ -1,0 +1,31 @@
+---
+title: sort
+description: Sorts records by one or more fields in ascending or descending order.
+---
+
+import { Badge } from '@astrojs/starlight/components';
+
+The `sort` command orders records by one or more fields, in ascending or descending order.
+
+## Syntax
+
+```
+sort FIELD_NAME [asc|desc], ...
+```
+
+- `FIELD_NAME`: The fields to sort by.
+- `asc`: Sort in ascending order (default).
+- `desc`: Sort in descending order.
+
+## Usage
+
+- Use `sort` to control the order of results in the output table or view.
+- Multiple fields can be specified for multi-level sorting.
+
+## Example
+
+```
+sort -timestamp, user
+```
+
+This sorts results by `timestamp` descending, then by `user` ascending`.

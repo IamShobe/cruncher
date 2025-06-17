@@ -1,4 +1,30 @@
 ---
 title: regex
-description: How to use the regex command in QQL.
+description: Extract values from a field using a regular expression and create new fields from the captured groups.
 ---
+
+import { Badge } from '@astrojs/starlight/components';
+
+The `regex` command extracts values from a field using a regular expression and creates new fields from the captured groups.
+
+## Syntax
+
+```
+regex [field="<FIELD_NAME>"] `<PATTERN>`
+```
+
+- `FIELD_NAME`: The field to apply the regex to. If not specified, defaults to `_raw`.
+- `PATTERN`: The regular expression pattern, using named capture groups.
+
+## Usage
+
+- Use `regex` to parse and extract structured data from text fields.
+- Named capture groups become new fields in the output.
+
+## Example
+
+```
+regex field="message" `(?<user>\\w+) logged in from (?<ip>\\d+\\.\\d+\\.\\d+\\.\\d+)`
+```
+
+This extracts `user` and `ip` from the `message` field.

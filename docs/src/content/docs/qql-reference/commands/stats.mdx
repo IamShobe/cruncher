@@ -1,4 +1,32 @@
 ---
 title: stats
-description: How to use the stats command in QQL.
+description: Perform aggregations over your data using the stats command in QQL.
 ---
+
+import { Badge } from '@astrojs/starlight/components';
+
+<Badge text="table" />
+
+The `stats` command performs aggregations (such as count, sum, avg, min, max) over your data, optionally grouped by one or more fields.
+
+## Syntax
+
+```
+stats [agg1(field1) as alias1, ...] [by groupField1, groupField2, ...]
+```
+
+- `agg(field) as alias`: Aggregation function (e.g., `count`, `sum`, `avg`, `min`, `max`) applied to a field, optionally renamed with `as`.
+- `by groupField1, ...`: (Optional) Group results by one or more fields.
+
+## Usage
+
+- Use `stats` to summarize data, such as counting events or calculating averages.
+- Multiple aggregations and groupings are supported.
+
+## Example
+
+```
+stats count() as total, avg(duration) as avg_duration by user
+```
+
+This counts all records and calculates the average `duration` for each `user`.
