@@ -7,7 +7,6 @@ import {
   tokenMatcher,
   TokenType,
 } from "chevrotain";
-import { pipeline } from "stream";
 
 const Identifier = createToken({
   name: "Identifier",

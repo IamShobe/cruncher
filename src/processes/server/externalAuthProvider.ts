@@ -64,11 +64,7 @@ export class ElectronExternalAuthProvider implements ExternalAuthProvider {
 }
 
 export class DefaultExternalAuthProvider implements ExternalAuthProvider {
-  getCookies(
-    requestedUrl: string,
-    cookies: string[],
-    validate: (cookies: Record<string, string>) => Promise<boolean>
-  ): Promise<Record<string, string>> {
+  getCookies(): Promise<Record<string, string>> {
     return new Promise((resolve, reject) => {
       reject(
         new Error(
