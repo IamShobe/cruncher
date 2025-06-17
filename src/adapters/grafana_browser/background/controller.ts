@@ -2,9 +2,9 @@ import { Mutex } from "async-mutex";
 import { AdapterContext, QueryOptions, QueryProvider } from "~lib/adapters";
 import {
   asNumberField,
-  Field,
   ObjectFields,
   ProcessedData,
+  processField,
 } from "~lib/adapters/logTypes";
 import { ControllerIndexParam, Search } from "~lib/qql/grammar";
 import { buildQuery, LIMIT } from "./query";
@@ -12,41 +12,6 @@ import { Frame, GrafanaLabelFilter } from "./types";
 
 // request mutex to prevent multiple requests at the same time
 const mutex = new Mutex();
-
-const processField = (field: unknown): Field => {
-  if (typeof field === "number") {
-    return {
-      type: "number",
-      value: field,
-    };
-  } else if (field instanceof Date) {
-    return {
-      type: "date",
-      value: field.getTime(),
-    };
-  }
-
-  // check if field is a string
-  if (typeof field !== "string") {
-    return {
-      type: "string",
-      value: JSON.stringify(field),
-    };
-  }
-
-  // try to parse as number
-  if (/^\d+(?:\.\d+)?$/.test(field)) {
-    return {
-      type: "number",
-      value: parseFloat(field),
-    };
-  }
-
-  return {
-    type: "string",
-    value: field,
-  };
-};
 
 const getAllObjects = (frames: Frame[]): ProcessedData[] => {
   const objects = frames.map((frame) => frame.data.values[0]).flat();

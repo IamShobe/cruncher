@@ -1,17 +1,12 @@
 import { QueryOptions, QueryProvider } from "~lib/adapters";
 import {
   asNumberField,
-  Field,
   ObjectFields,
   ProcessedData,
+  processField,
 } from "~lib/adapters/logTypes";
-import {
-  ControllerIndexParam,
-  Search,
-  SearchAND,
-  SearchLiteral,
-  SearchOR,
-} from "~lib/qql/grammar";
+import { ControllerIndexParam, Search } from "~lib/qql/grammar";
+import { buildDoesLogMatchCallback } from "~lib/qql/searchTree";
 
 const tagsOptions = ["nice", "developer", "collector"];
 const data = [
@@ -48,136 +43,6 @@ for (let i = 2; i <= 100000; i++) {
   });
 }
 
-const processField = (field: unknown): Field => {
-  if (field === null || field === undefined) {
-    return null;
-  }
-
-  if (typeof field === "number") {
-    return {
-      type: "number",
-      value: field,
-    };
-  } else if (field instanceof Date) {
-    return {
-      type: "date",
-      value: field.getTime(),
-    };
-  } else if (typeof field === "boolean") {
-    return {
-      type: "boolean",
-      value: field,
-    };
-  } else if (Array.isArray(field)) {
-    return {
-      type: "array",
-      value: field.map((item) => processField(item)),
-    };
-  } else if (typeof field === "object") {
-    const objectFields: ObjectFields = {};
-
-    Object.entries(field ?? {}).forEach(([key, value]) => {
-      objectFields[key] = processField(value);
-    });
-
-    return {
-      type: "object",
-      value: objectFields,
-    };
-  } else if (typeof field === "string") {
-    // try to parse as number
-    if (/^\d+(?:\.\d+)?$/.test(field)) {
-      return {
-        type: "number",
-        value: parseFloat(field),
-      };
-    }
-
-    return {
-      type: "string",
-      value: field,
-    };
-  }
-
-  throw new Error(`Unsupported field type: ${typeof field}`);
-};
-
-type SearchCallback = (item: string) => boolean;
-
-const buildSearchAndCallback = (
-  leftCallback: SearchCallback,
-  search: SearchAND
-) => {
-  return (item: string) => {
-    const leftRes = leftCallback(item);
-    if (!leftRes) {
-      return false;
-    }
-
-    const rightRes = buildSearchCallback(search.right)(item);
-
-    return rightRes;
-  };
-};
-
-const buildSearchOrCallback = (
-  leftCallback: SearchCallback,
-  search: SearchOR
-) => {
-  return (item: string) => {
-    const leftRes = leftCallback(item);
-    if (leftRes) {
-      return true;
-    }
-
-    const rightRes = buildSearchCallback(search.right)(item);
-
-    return rightRes;
-  };
-};
-
-const buildSearchLiteralCallback = (searchLiteral: SearchLiteral) => {
-  if (searchLiteral.tokens.length === 0) {
-    return () => true;
-  }
-
-  return (searchTerm: string) =>
-    searchLiteral.tokens.every((token) => {
-      return searchTerm.includes(String(token));
-    });
-};
-
-const buildSearchCallback = (searchTerm: Search) => {
-  const left = searchTerm.left;
-  const right = searchTerm.right;
-
-  let leftCallback: SearchCallback;
-  switch (left.type) {
-    case "search":
-      leftCallback = buildSearchCallback(left);
-      break;
-    case "searchLiteral":
-      leftCallback = buildSearchLiteralCallback(left);
-      break;
-  }
-
-  if (!right) {
-    return leftCallback;
-  }
-
-  let rightCallback: SearchCallback;
-  switch (right.type) {
-    case "and":
-      rightCallback = buildSearchAndCallback(leftCallback, right);
-      break;
-    case "or":
-      rightCallback = buildSearchOrCallback(leftCallback, right);
-      break;
-  }
-
-  return rightCallback;
-};
-
 // Used for testing purposes
 export const MockController = {
   query: async (
@@ -189,7 +54,7 @@ export const MockController = {
       throw new Error("Controller params not supported");
     }
 
-    const searchCallback = buildSearchCallback(searchTerm);
+    const doesLogMatch = buildDoesLogMatchCallback(searchTerm);
     return new Promise((resolve, reject) => {
       // filter using the search term
       const itemToMessage = (item: (typeof data)[number]) => {
@@ -199,7 +64,7 @@ export const MockController = {
         const message = itemToMessage(item);
         return [item.name, item.address, message, ...item.tags].some(
           (field) => {
-            return searchCallback(field);
+            return doesLogMatch(field);
           }
         );
       });

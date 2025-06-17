@@ -210,3 +210,57 @@ export const toJsonObject = (data: ProcessedData) => {
 
   return result;
 };
+
+export const processField = (field: unknown): Field => {
+  if (field === null || field === undefined) {
+    return null;
+  }
+
+  if (typeof field === "number") {
+    return {
+      type: "number",
+      value: field,
+    } satisfies NumberField;
+  } else if (field instanceof Date) {
+    return {
+      type: "date",
+      value: field.getTime(),
+    } satisfies DateField;
+  } else if (typeof field === "boolean") {
+    return {
+      type: "boolean",
+      value: field,
+    } satisfies BooleanField;
+  } else if (Array.isArray(field)) {
+    return {
+      type: "array",
+      value: field.map((item) => processField(item)),
+    } satisfies ArrayField;
+  } else if (typeof field === "object") {
+    const objectFields: ObjectFields = {};
+
+    Object.entries(field ?? {}).forEach(([key, value]) => {
+      objectFields[key] = processField(value);
+    });
+
+    return {
+      type: "object",
+      value: objectFields,
+    } satisfies ObjectField;
+  } else if (typeof field === "string") {
+    // try to parse as number
+    if (/^\d+(?:\.\d+)?$/.test(field)) {
+      return {
+        type: "number",
+        value: parseFloat(field),
+      } satisfies NumberField;
+    }
+
+    return {
+      type: "string",
+      value: field,
+    } satisfies StringField;
+  }
+
+  throw new Error(`Unsupported field type: ${typeof field}`);
+};

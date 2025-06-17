@@ -5,17 +5,15 @@ import { QueryOptions, QueryProvider } from "~lib/adapters";
 import {
   asStringField,
   compareProcessedData,
-  Field,
   ObjectFields,
   ProcessedData,
+  processField,
 } from "~lib/adapters/logTypes";
+import { ControllerIndexParam, Search } from "~lib/qql/grammar";
 import {
-  ControllerIndexParam,
-  Search,
-  SearchAND,
-  SearchLiteral,
-  SearchOR,
-} from "~lib/qql/grammar";
+  BooleanSearchCallback,
+  buildDoesLogMatchCallback,
+} from "~lib/qql/searchTree";
 import { DockerLogPatterns, DockerParams } from "..";
 
 const DEFAULT_DOCKER_HOST = "unix:///var/run/docker.sock";
@@ -57,134 +55,6 @@ const intelligentParse = (
   });
 
   return { parsed, selectedMessageFieldName };
-};
-
-const processField = (field: unknown): Field => {
-  if (field === null || field === undefined) {
-    return null;
-  }
-
-  if (typeof field === "number") {
-    return {
-      type: "number",
-      value: field,
-    };
-  } else if (field instanceof Date) {
-    return {
-      type: "date",
-      value: field.getTime(),
-    };
-  } else if (typeof field === "boolean") {
-    return {
-      type: "boolean",
-      value: field,
-    };
-  } else if (Array.isArray(field)) {
-    return {
-      type: "array",
-      value: field.map((item) => processField(item)),
-    };
-  } else if (typeof field === "object") {
-    const objectFields: ObjectFields = {};
-
-    Object.entries(field ?? {}).forEach(([key, value]) => {
-      objectFields[key] = processField(value);
-    });
-
-    return {
-      type: "object",
-      value: objectFields,
-    };
-  } else if (typeof field === "string") {
-    // try to parse as number
-    if (/^\d+(?:\.\d+)?$/.test(field)) {
-      return {
-        type: "number",
-        value: parseFloat(field),
-      };
-    }
-
-    return {
-      type: "string",
-      value: field,
-    };
-  }
-
-  throw new Error(`Unsupported field type: ${typeof field}`);
-};
-
-type SearchCallback = (item: string) => boolean;
-
-const buildSearchAndCallback = (
-  leftCallback: SearchCallback,
-  search: SearchAND
-) => {
-  return (item: string) => {
-    const leftRes = leftCallback(item);
-    if (!leftRes) {
-      return false;
-    }
-
-    const rightRes = buildSearchCallback(search.right)(item);
-    return rightRes;
-  };
-};
-
-const buildSearchOrCallback = (
-  leftCallback: SearchCallback,
-  search: SearchOR
-) => {
-  return (item: string) => {
-    const leftRes = leftCallback(item);
-    if (leftRes) {
-      return true;
-    }
-
-    const rightRes = buildSearchCallback(search.right)(item);
-    return rightRes;
-  };
-};
-
-const buildSearchLiteralCallback = (searchLiteral: SearchLiteral) => {
-  if (searchLiteral.tokens.length === 0) {
-    return () => true;
-  }
-
-  return (searchTerm: string) =>
-    searchLiteral.tokens.every((token) => {
-      return searchTerm.toLowerCase().includes(String(token).toLowerCase());
-    });
-};
-
-const buildSearchCallback = (searchTerm: Search): SearchCallback => {
-  const left = searchTerm.left;
-  const right = searchTerm.right;
-
-  let leftCallback: SearchCallback;
-  switch (left.type) {
-    case "search":
-      leftCallback = buildSearchCallback(left);
-      break;
-    case "searchLiteral":
-      leftCallback = buildSearchLiteralCallback(left);
-      break;
-  }
-
-  if (!right) {
-    return leftCallback;
-  }
-
-  let rightCallback: SearchCallback;
-  switch (right.type) {
-    case "and":
-      rightCallback = buildSearchAndCallback(leftCallback, right);
-      break;
-    case "or":
-      rightCallback = buildSearchOrCallback(leftCallback, right);
-      break;
-  }
-
-  return rightCallback;
 };
 
 interface DockerContainer {
@@ -256,7 +126,7 @@ export class DockerController implements QueryProvider {
                 status: container.Status,
                 created: container.CreatedAt,
               });
-            } catch (_e) {
+            } catch {
               // Skip malformed JSON lines
               console.warn("Failed to parse container JSON:", line);
             }
@@ -278,7 +148,7 @@ export class DockerController implements QueryProvider {
     container: DockerContainer,
     fromTime: Date,
     toTime: Date,
-    searchCallback: SearchCallback,
+    doesLogMatch: BooleanSearchCallback,
     cancelToken: AbortSignal
   ): Promise<DockerLogEntry[]> {
     return new Promise((resolve, reject) => {
@@ -325,7 +195,7 @@ export class DockerController implements QueryProvider {
             const timestamp = new Date(timestampStr);
 
             // Apply search filter
-            if (searchCallback(message)) {
+            if (doesLogMatch(message)) {
               const { parsed, selectedMessageFieldName } = intelligentParse(
                 message,
                 container.name,
@@ -348,7 +218,7 @@ export class DockerController implements QueryProvider {
               });
             }
           }
-        } catch (_e) {
+        } catch {
           // Skip malformed log lines
           console.warn("Failed to parse log line:", strippedLine);
         }
@@ -403,7 +273,7 @@ export class DockerController implements QueryProvider {
     options: QueryOptions
   ): Promise<void> {
     try {
-      const searchCallback = buildSearchCallback(searchTerm);
+      const doesLogMatch = buildDoesLogMatchCallback(searchTerm);
       const containers = await this.getContainers();
 
       // Filter containers based on containerFilter if provided
@@ -442,7 +312,7 @@ export class DockerController implements QueryProvider {
             container,
             options.fromTime,
             options.toTime,
-            searchCallback,
+            doesLogMatch,
             options.cancelToken
           )
         )
@@ -491,14 +361,14 @@ export class DockerController implements QueryProvider {
     container: DockerContainer,
     fromTime: Date,
     toTime: Date,
-    searchCallback: SearchCallback,
+    doesLogMatch: BooleanSearchCallback,
     cancelToken: AbortSignal
   ): Promise<ProcessedData[]> {
     const logs = await this.getContainerLogs(
       container,
       fromTime,
       toTime,
-      searchCallback,
+      doesLogMatch,
       cancelToken
     );
 

@@ -1,10 +1,8 @@
+import { ControllerIndexParam, Search } from "~lib/qql/grammar";
 import {
-  ControllerIndexParam,
-  Search,
-  SearchAND,
-  SearchLiteral,
-  SearchOR,
-} from "~lib/qql/grammar";
+  buildSearchTreeCallback,
+  SearchTreeBuilder,
+} from "~lib/qql/searchTree";
 
 import regexEscape from "regex-escape";
 import { GrafanaLabelFilter } from "./types";
@@ -17,70 +15,45 @@ const andStatementPattern = (literal: string, literal2: string) => {
   return `(?:${literal}.*${literal2}|${literal2}.*${literal})`;
 };
 
-const buildSearchAndPattern = (
-  leftPattern: SearchPattern,
-  search: SearchAND
-) => {
-  const leftRes = leftPattern;
-
-  const rightRes = buildSearchPattern(search.right);
-
-  return andStatementPattern(leftRes, rightRes);
+const searchPatternTreeBuilder: SearchTreeBuilder<SearchPattern> = {
+  buildAnd: (leftCallback, search) => {
+    return (item) => {
+      const leftRes = leftCallback(item);
+      const rightRes = buildSearchTreeCallback(
+        search.right,
+        searchPatternTreeBuilder
+      )(item);
+      return andStatementPattern(leftRes, rightRes);
+    };
+  },
+  buildOr: (leftCallback, search) => {
+    return (item) => {
+      const leftRes = leftCallback(item);
+      const rightRes = buildSearchTreeCallback(
+        search.right,
+        searchPatternTreeBuilder
+      )(item);
+      return `(?:${leftRes}|${rightRes})`;
+    };
+  },
+  buildLiteral: (searchLiteral) => {
+    if (searchLiteral.tokens.length === 0) {
+      return () => "";
+    }
+    return () =>
+      searchLiteral.tokens
+        .map((token) => regexEscape(String(token)))
+        .reduce((res, current) => {
+          if (res === "") {
+            return current;
+          }
+          return andStatementPattern(res, current);
+        }, "");
+  },
 };
 
-const buildSearchOrPattern = (leftPattern: SearchPattern, search: SearchOR) => {
-  const leftRes = leftPattern;
-
-  const rightRes = buildSearchPattern(search.right);
-
-  return `(?:${leftRes}|${rightRes})`;
-};
-
-const buildSearchLiteralCallback = (searchLiteral: SearchLiteral) => {
-  if (searchLiteral.tokens.length === 0) {
-    return "";
-  }
-
-  return searchLiteral.tokens
-    .map((token) => regexEscape(String(token)))
-    .reduce((res, current) => {
-      if (res === "") {
-        return current;
-      }
-
-      return andStatementPattern(res, current);
-    }, "");
-};
-
-const buildSearchPattern = (searchTerm: Search) => {
-  const left = searchTerm.left;
-  const right = searchTerm.right;
-
-  let leftPattern: SearchPattern;
-  switch (left.type) {
-    case "search":
-      leftPattern = buildSearchPattern(left);
-      break;
-    case "searchLiteral":
-      leftPattern = buildSearchLiteralCallback(left);
-      break;
-  }
-
-  if (!right) {
-    return leftPattern;
-  }
-
-  let rightCallback: SearchPattern;
-  switch (right.type) {
-    case "and":
-      rightCallback = buildSearchAndPattern(leftPattern, right);
-      break;
-    case "or":
-      rightCallback = buildSearchOrPattern(leftPattern, right);
-      break;
-  }
-
-  return rightCallback;
+const buildSearchPattern = (searchTerm: Search): SearchPattern => {
+  return buildSearchTreeCallback(searchTerm, searchPatternTreeBuilder)("");
 };
 
 const escapeQuotes = (str: string) => {
