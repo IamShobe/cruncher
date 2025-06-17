@@ -2,7 +2,7 @@ import styled from "@emotion/styled";
 import type React from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { ProgressBar, ProgressRoot } from "~components/ui/progress";
-import { Collapsible } from "@chakra-ui/react";
+import { Collapsible, Field } from "@chakra-ui/react";
 
 import {
   Box,
@@ -430,6 +430,10 @@ const createSearchProfileIsLoadingSelector = (
   profileRef: SearchProfileRef
 ): ((state: ApplicationStore) => boolean) => {
   return (state: ApplicationStore) => {
+    if (state.hasError || state.searchProfiles.length === 0) {
+      return false;
+    }
+
     const profile = state.searchProfiles.find(
       (profile) => profile.name === profileRef
     );
@@ -451,6 +455,8 @@ const ProviderSelector = () => {
       selectedSearchProfile?.name ?? ("" as SearchProfileRef)
     )
   );
+
+  const hasError = useApplicationStore((state) => state.hasError);
 
   const initializedSearchProfiles = useApplicationStore(searchProfilesSelector);
   const initializeProfileDatasets = useApplicationStore(
@@ -489,42 +495,51 @@ const ProviderSelector = () => {
   };
 
   return (
-    <Select.Root
-      size="xs"
-      minW={"200px"}
-      maxW={"300px"}
-      collection={profiles}
-      value={selectedSearchProfile ? [selectedSearchProfile.name] : []}
-      onValueChange={onSelect}
-    >
-      <Select.HiddenSelect />
-      <Tooltip
-        content={<span>Select Search Profile</span>}
-        showArrow
-        positioning={{ placement: "bottom" }}
+    <Field.Root>
+      <Select.Root
+        size="xs"
+        minW={"200px"}
+        maxW={"300px"}
+        collection={profiles}
+        value={selectedSearchProfile ? [selectedSearchProfile.name] : []}
+        onValueChange={onSelect}
+        disabled={hasError || initializedSearchProfiles.length === 0}
       >
-        <Select.Control>
-          <Select.Trigger>
-            <Select.ValueText />
-          </Select.Trigger>
-          <Select.IndicatorGroup>
-            {isSelectedLoading && (
-              <Spinner size="xs" borderWidth="1.5px" color="fg.muted" />
-            )}
-            <Select.Indicator />
-            {/* <Select.ClearTrigger /> */}
-          </Select.IndicatorGroup>
-        </Select.Control>
-      </Tooltip>
+        <Select.HiddenSelect />
+        <Tooltip
+          content={<span>Select Search Profile</span>}
+          showArrow
+          positioning={{ placement: "bottom" }}
+        >
+          <Select.Control>
+            <Select.Trigger>
+              <Select.ValueText
+                placeholder={
+                  initializedSearchProfiles.length === 0
+                    ? "No Search Profiles"
+                    : "Select Search Profile"
+                }
+              />
+            </Select.Trigger>
+            <Select.IndicatorGroup>
+              {isSelectedLoading && (
+                <Spinner size="xs" borderWidth="1.5px" color="fg.muted" />
+              )}
+              <Select.Indicator />
+              {/* <Select.ClearTrigger /> */}
+            </Select.IndicatorGroup>
+          </Select.Control>
+        </Tooltip>
 
-      <Select.Positioner>
-        <Select.Content>
-          {profiles.items.map((item) => (
-            <InstanceSelectItem item={item} key={item.value} />
-          ))}
-        </Select.Content>
-      </Select.Positioner>
-    </Select.Root>
+        <Select.Positioner>
+          <Select.Content>
+            {profiles.items.map((item) => (
+              <InstanceSelectItem item={item} key={item.value} />
+            ))}
+          </Select.Content>
+        </Select.Positioner>
+      </Select.Root>
+    </Field.Root>
   );
 };
 

@@ -1,12 +1,14 @@
-import { z } from "zod";
+import { z } from "zod/v4";
 import { Adapter, newPluginRef, QueryProvider } from "~lib/adapters";
 import { DockerController } from "./background/controller";
 
 const paramsSchema = z.object({
   dockerHost: z.string().default("unix:///var/run/docker.sock"),
   containerFilter: z.string().optional(),
+  streams: z.array(z.enum(["stdout", "stderr"])).default(["stdout", "stderr"]),
   containerOverride: z
     .record(
+      z.string(),
       z.object({
         messageFieldName: z.string().optional(),
       })

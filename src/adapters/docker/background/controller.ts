@@ -65,6 +65,8 @@ interface DockerContainer {
   created: string;
 }
 
+type Stream = "stdout" | "stderr";
+
 interface DockerLogEntry {
   timestamp: Date;
   message: string;
@@ -75,6 +77,7 @@ interface DockerLogEntry {
   parsedFields: Record<string, unknown>;
   selectedMessageFieldName: string;
   ansiFreeLine: string;
+  stream: Stream;
 }
 
 export type LogPattern = {
@@ -83,7 +86,7 @@ export type LogPattern = {
 };
 
 export class DockerController implements QueryProvider {
-  constructor(private params: DockerParams) {}
+  constructor(private params: DockerParams) { }
 
   private async getContainers(): Promise<DockerContainer[]> {
     return new Promise((resolve, reject) => {
@@ -146,6 +149,7 @@ export class DockerController implements QueryProvider {
   }
 
   private async getContainerLogs(
+    controllerParams: ControllerIndexParam[],
     container: DockerContainer,
     fromTime: Date,
     toTime: Date,
@@ -156,6 +160,26 @@ export class DockerController implements QueryProvider {
       if (cancelToken.aborted) {
         reject(new Error("Query cancelled"));
         return;
+      }
+
+      const selectedStreams = controllerParams
+        .filter((param) => param.name === "stream").map(processStreamControllerParam);
+
+      console.log(
+        `Selected streams for container ${container.name}: ${selectedStreams.join(", ")}`
+      );
+
+      let isStdoutSelected = selectedStreams.some(
+        (stream) => stream.includes("stdout")
+      );
+      let isStderrSelected = selectedStreams.some(
+        (stream) => stream.includes("stderr")
+      );
+
+      if (!isStdoutSelected && !isStderrSelected) {
+        // Default to both streams if none are selected
+        isStdoutSelected = true;
+        isStderrSelected = true;
       }
 
       const args = ["logs"];
@@ -177,7 +201,8 @@ export class DockerController implements QueryProvider {
       const dockerProcess = spawn("docker", args);
       const logs: DockerLogEntry[] = [];
 
-      const processLogLine = (line: string) => {
+
+      const processLogLine = (line: string, stream: Stream) => {
         const indexOfSpace = line.indexOf(" ");
         const originalMessage = line.slice(indexOfSpace + 1);
         const timestampStr = line.slice(0, indexOfSpace).trim();
@@ -217,6 +242,7 @@ export class DockerController implements QueryProvider {
                 parsedFields: parsed,
                 selectedMessageFieldName: finalMessageFieldName,
                 ansiFreeLine: strippedOriginalMessage,
+                stream: stream,
               });
             }
           }
@@ -226,20 +252,27 @@ export class DockerController implements QueryProvider {
         }
       };
 
-      dockerProcess.stdout.setEncoding("utf8");
-      dockerProcess.stdout.on("data", (data) => {
-        const str = data.toString();
+      const processData = (data: string, stream: Stream) => {
         // process stdout line by line
-        const lines = str.split(/(\r?\n)/g);
+        const lines = data.split(/(\r?\n)/g);
         for (let i = 0; i < lines.length; i++) {
-          processLogLine(lines[i]);
+          processLogLine(lines[i], stream);
         }
-      });
+      }
 
-      dockerProcess.stderr.on("data", (data) => {
-        // Docker logs command outputs logs to stdout, stderr here would be actual errors
-        console.error("Docker logs error:", data.toString());
-      });
+      if (isStdoutSelected) {
+        dockerProcess.stdout.setEncoding("utf8");
+        dockerProcess.stdout.on("data", (data) => {
+          processData(data.toString(), "stdout");
+        });
+      }
+
+      if (isStderrSelected) {
+        dockerProcess.stderr.setEncoding("utf8");
+        dockerProcess.stderr.on("data", (data) => {
+          processData(data.toString(), "stderr");
+        });
+      }
 
       dockerProcess.on("close", (code) => {
         if (code !== 0 && code !== null) {
@@ -281,27 +314,25 @@ export class DockerController implements QueryProvider {
       // Filter containers based on containerFilter if provided
       const filteredContainers = this.params.containerFilter
         ? containers.filter(
-            (container) =>
-              container.name.includes(this.params.containerFilter ?? "") ||
-              container.id.includes(this.params.containerFilter ?? "")
-          )
+          (container) =>
+            container.name.includes(this.params.containerFilter ?? "") ||
+            container.id.includes(this.params.containerFilter ?? "")
+        )
         : containers;
 
       // Apply controller params filtering if any
-      const finalContainers =
-        controllerParams.length > 0
-          ? filteredContainers.filter((container) => {
-              return controllerParams.some((param) => {
-                if (param.name === "container") {
-                  return (
-                    container.name.includes(param.value.toString()) ||
-                    container.id.includes(param.value.toString())
-                  );
-                }
-                return false;
-              });
-            })
-          : filteredContainers;
+      const selectedContainers = controllerParams.filter((param) => param.name === "container").map(processContainerControllerParam);
+
+      const finalContainers = filteredContainers.filter((container) => {
+        return selectedContainers.length > 0
+          ? selectedContainers.some((selected) => {
+            return (
+              container.name.includes(selected) ||
+              container.id.includes(selected)
+            );
+          })
+          : true;
+      });
 
       if (finalContainers.length === 0) {
         options.onBatchDone([]);
@@ -311,6 +342,7 @@ export class DockerController implements QueryProvider {
       const allLogs = await Promise.all(
         finalContainers.map((container) =>
           this.processContainerLogs(
+            controllerParams,
             container,
             options.fromTime,
             options.toTime,
@@ -332,6 +364,7 @@ export class DockerController implements QueryProvider {
   }
 
   async getControllerParams(): Promise<Record<string, string[]>> {
+    const streams = ["stdout", "stderr"];
     try {
       const containers = await this.getContainers();
       const containerNames = containers.map((c) => c.name);
@@ -346,6 +379,7 @@ export class DockerController implements QueryProvider {
         container_id: [...containerIds],
         image: images,
         status: statuses,
+        stream: streams,
       };
     } catch (error) {
       console.error("Failed to get Docker containers:", error);
@@ -355,11 +389,13 @@ export class DockerController implements QueryProvider {
         container_id: [],
         image: [],
         status: [],
+        stream: streams,
       };
     }
   }
 
   async processContainerLogs(
+    controllerParams: ControllerIndexParam[],
     container: DockerContainer,
     fromTime: Date,
     toTime: Date,
@@ -367,6 +403,7 @@ export class DockerController implements QueryProvider {
     cancelToken: AbortSignal
   ): Promise<ProcessedData[]> {
     const logs = await this.getContainerLogs(
+      controllerParams,
       container,
       fromTime,
       toTime,
@@ -400,6 +437,7 @@ export class DockerController implements QueryProvider {
           containerId: processField(log.containerId),
           image: processField(log.containerImage),
           status: processField(log.containerStatus),
+          stream: processField(log.stream),
           ...fields,
         };
 
@@ -413,5 +451,37 @@ export class DockerController implements QueryProvider {
           (b.object._sortBy!.value as number) -
           (a.object._sortBy!.value as number)
       );
+  }
+}
+
+
+const processStreamControllerParam = (param: ControllerIndexParam) => {
+  console.log("Processing stream controller param:", param);
+  
+  if (param.value.type === "string") {
+    return extractStreamsFromString(param.value.value);
+  } else {
+    return extractStreamsFromString(param.value.pattern as Stream);
+  }
+}
+
+const extractStreamsFromString = (streamString: string): Stream[] => {
+  const streams: Stream[] = [];
+  const parts = streamString.split("|").map((s) => s.trim());
+  for (const part of parts) {
+    if (part === "stdout" || part === "stderr") {
+      streams.push(part as Stream);
+    } else {
+      console.warn(`Unknown stream type: ${part}`);
+    }
+  }
+  return streams;
+}
+
+const processContainerControllerParam = (param: ControllerIndexParam): string => {
+  if (param.value.type === "string") {
+    return param.value.value;
+  } else {
+    return param.value.pattern;
   }
 }

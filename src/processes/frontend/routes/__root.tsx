@@ -37,13 +37,14 @@ export const Route = createRootRoute({
       `}
     >
       <QueryClientProvider client={queryClient}>
-        <ApplicationProvider>
-          <Provider>
+        <Provider>
+          <Toaster />
+          <ApplicationProvider>
             <JotaiProvider>
               <MainContent />
             </JotaiProvider>
-          </Provider>
-        </ApplicationProvider>
+          </ApplicationProvider>
+        </Provider>
         <ReactQueryDevtools initialIsOpen={false} />
       </QueryClientProvider>
       <TanStackRouterDevtools position="bottom-right" />
@@ -84,7 +85,6 @@ const MainContent = () => {
   return (
     <Wrapper>
       <Shortcuts open={isHelpOpen} onOpenChange={setIsHelpOpen} />
-      <Toaster />
       <SideMenu />
       <Outlet />
     </Wrapper>

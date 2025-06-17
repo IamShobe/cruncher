@@ -8,6 +8,7 @@ import {
   Toast,
   createToaster,
 } from "@chakra-ui/react";
+import { css } from "@emotion/react";
 
 export const toaster = createToaster({
   placement: "bottom-end",
@@ -19,7 +20,7 @@ export const Toaster = () => {
     <Portal>
       <ChakraToaster toaster={toaster} insetInline={{ mdDown: "4" }}>
         {(toast) => (
-          <Toast.Root width={{ md: "sm" }}>
+          <Toast.Root width="md">
             {toast.type === "loading" ? (
               <Spinner size="sm" color="blue.solid" />
             ) : (
@@ -28,7 +29,14 @@ export const Toaster = () => {
             <Stack gap="1" flex="1" maxWidth="100%">
               {toast.title && <Toast.Title>{toast.title}</Toast.Title>}
               {toast.description && (
-                <Toast.Description>{toast.description}</Toast.Description>
+                <Toast.Description
+                  css={css`
+                    white-space: pre-wrap;
+                  `}
+                  height="auto"
+                >
+                  {toast.description}
+                </Toast.Description>
               )}
             </Stack>
             {toast.action && (

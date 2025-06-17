@@ -4,7 +4,7 @@ import { atomWithStore } from "jotai-zustand";
 import { loadable } from "jotai/utils";
 import React, { useEffect } from "react";
 import { QueryTask } from "src/processes/server/engineV2/types";
-import z from "zod";
+import z from "zod/v4";
 import { dateAsString, DateType, FullDate, isTimeNow } from "~lib/dateUtils";
 import { SubscribeOptions } from "~lib/network";
 import { parse } from "~lib/qql";
