@@ -1,10 +1,10 @@
-import { DisplayResults } from "~lib/displayTypes";
 import {
   asNumberField,
   Field,
   isNumberField,
   NumberField,
 } from "~lib/adapters/logTypes";
+import { DisplayResults } from "~lib/displayTypes";
 import {
   CalcAction,
   CalcExpression,
@@ -14,15 +14,13 @@ import {
   EvalCaseFunction,
   EvalFunction,
   EvalFunctionArg,
-  EvalIfFunction,
-  FunctionExpression,
+  EvalIfFunction
 } from "~lib/qql/grammar";
 import {
   Context,
-  isBooleanFunction,
-  processBooleanFunctionExpression,
   processFactor,
-  processLogicalExpression,
+  processFunctionExpression,
+  processLogicalExpression
 } from "./logicalExpression";
 
 export const processEval = (
@@ -69,7 +67,7 @@ const processEvalFunctionArg = (
 
     case "functionExpression":
       if (!isEvalFunction(expression)) {
-        return processFunction(expression, context);
+        return processFunctionExpression(expression, context);
       }
 
       return processEvalFunctionExpression(expression, context);
@@ -86,20 +84,6 @@ const processEvalFunctionArg = (
       // @ts-expect-error - this should never happen
       throw new Error(`Unsupported expression type: ${expression.type}`);
   }
-};
-
-const processFunction = (
-  expression: FunctionExpression,
-  context: Context,
-): Field => {
-  if (isBooleanFunction(expression.functionName)) {
-    return {
-      type: "boolean",
-      value: processBooleanFunctionExpression(expression, context),
-    };
-  }
-
-  throw new Error(`Unsupported function: ${expression.functionName}`);
 };
 
 const isEvalFunction = (expression: unknown): expression is EvalFunction => {

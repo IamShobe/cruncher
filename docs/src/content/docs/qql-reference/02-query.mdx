@@ -1,0 +1,116 @@
+---
+title: Querying Data in Cruncher
+description: How to query data in Cruncher using QQL.
+sidebar:
+    label: Query
+---
+
+Cruncher uses QQL (Quick Query Language) to let you query, filter, and transform your data efficiently. A QQL query is composed of several parts:
+
+- **Controller parameters** (controllerParams): Special key-value pairs at the start of the query that act as filters for the underlying data adapter, enabling more efficient data retrieval.
+- **Search expression**: A free-text or structured search to filter records.
+- **Pipeline commands**: A sequence of commands (like `where`, `stats`, `table`, etc.) to further process and shape your results.
+
+## Controller Parameters (controllerParams)
+
+Controller parameters are written at the beginning of your query, before the main search or pipeline. They use the syntax:
+
+```
+key="value"
+```
+
+- `key`: The name of the controller parameter (must match a label or field supported by the adapter).
+- `value`: The value to filter by (usually a string or number).
+
+Controller parameters are sent directly to the adapter backend, allowing it to filter data as early as possible. This can greatly improve query performance, especially on large datasets, by reducing the amount of data that needs to be loaded and processed.
+
+### Example
+
+```
+user="alice" environment="prod" error="true" | where duration > 1000 | table timestamp, message
+```
+
+In this example, `user`, `environment`, and `error` are controller parameters. The adapter will use these to filter records before any further processing happens in Cruncher.
+
+## Search Expressions
+
+After controller parameters, you can add a search expression. The search expression is a sequence of words or phrases that are matched against your data.
+
+- **Each word is treated as a separate token**. By default, there is an implicit AND between all tokens: all words must be present in a record for it to match.
+- To match a full sentence or exact phrase, wrap it in double quotes (`"...")`.
+- You can use the `OR` and `AND` operators to build more complex search logic:
+  - `error OR warning` matches records containing either "error" or "warning".
+  - `error AND timeout` (or just `error timeout`) matches records containing both "error" and "timeout".
+- Parentheses can be used to group conditions: `(error OR warning) AND timeout`.
+
+### Examples
+
+```
+user="alice" error | table message
+```
+Matches records where the user is "alice" and the word "error" appears anywhere in the record.
+
+```
+error timeout
+```
+Matches records containing both "error" and "timeout" (implicit AND).
+
+```
+"disk full"
+```
+Matches records containing the exact phrase "disk full".
+
+```
+error OR warning
+```
+Matches records containing either "error" or "warning".
+
+```
+(error OR warning) timeout
+```
+Matches records containing either "error" or "warning", and also "timeout".
+
+## Regex and String Literals
+
+When writing QQL queries, it's important to distinguish between string and regex types:
+
+- **String values** are usually wrapped in double quotes (`"...")`.
+- **Regex values** must be wrapped in backticks (`` `...` ``).
+
+This distinction is important for functions and commands that accept either type. For example:
+
+```
+where match(message, `^Error:.*`)
+```
+This matches records where the `message` field matches the regular expression `^Error:.*`.
+
+```
+where user == "alice"
+```
+This matches records where the `user` field is exactly "alice".
+
+Always use double quotes for string values and backticks for regex patterns in your QQL queries.
+
+## Query Structure
+
+A typical QQL query might look like:
+
+```
+controllerParam1="value1" controllerParam2="42" search terms | where ... | stats ... | table ...
+```
+
+- **Controller parameters**: `controllerParam1="value1" controllerParam2="42"`
+- **Search**: `search terms` (optional)
+- **Pipeline**: `| where ... | stats ... | table ...`
+
+## Why Use Controller Parameters?
+
+- They push filtering down to the adapter/backend, reducing data transfer and processing time.
+- They are especially useful for adapters that support server-side filtering (such as log aggregators, databases, or APIs).
+- Using controller parameters can make your queries much faster and more efficient.
+
+> **Tip:** Always use controller parameters for fields that are indexed or supported by your data source for best performance.
+
+---
+
+Continue to the next sections to learn about search expressions and pipeline commands in QQL.

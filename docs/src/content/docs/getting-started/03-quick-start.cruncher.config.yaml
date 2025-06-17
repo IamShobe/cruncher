@@ -1,0 +1,7 @@
+profiles:
+  default:
+    connectors: [mock]
+connectors:
+  - name: mock
+    type: mocked_data
+    params: {}

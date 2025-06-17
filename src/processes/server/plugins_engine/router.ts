@@ -135,12 +135,14 @@ export const newBatchDoneMessage = (
 export const newJobUpdatedMessage = (
   jobId: string,
   status: QueryTask["status"],
+  error?: string | null,
 ): QueryJobUpdated => {
   return {
     type: "query_job_updated",
     payload: {
       jobId: jobId,
       status: status,
+      error: error ?? null,
     },
   };
 };

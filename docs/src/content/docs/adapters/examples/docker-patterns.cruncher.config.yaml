@@ -1,0 +1,19 @@
+profiles:
+  default:
+    connectors: [docker]
+
+connectors:
+  - name: docker
+    type: docker
+    params:
+      containerOverride:
+        containerA: # lets say containerA has json logs
+          messageFieldName: raw_message # this is the field that contains the message
+
+      logPatterns:
+        - name: custom_pattern
+          pattern: "^(?P<timestamp>[^ ]+) (?P<level>[^ ]+) (?P<custom_message>.*)$"
+          applyToAll: true # apply this pattern to all containers
+          exclude:
+            - containerA # exclude containerA from this pattern
+          messageFieldName: custom_message

@@ -1,7 +1,7 @@
 import { Mutex } from "async-mutex";
 import BTree from "sorted-btree";
-import { JsonSchema7Type } from "zod-to-json-schema";
-import { Param, PluginRef, QueryProvider } from "~lib/adapters";
+import { JSONSchema } from "zod/v4/core";
+import { PluginRef, QueryProvider } from "~lib/adapters";
 import { ProcessedData } from "~lib/adapters/logTypes";
 import { FullDate } from "~lib/dateUtils";
 import { DisplayResults } from "~lib/displayTypes";
@@ -13,6 +13,7 @@ export type QueryTask = {
   id: TaskRef;
   input: QueryInput;
   status: "running" | "completed" | "failed" | "canceled";
+  error: string | null; // Error message if the task failed
   createdAt: Date;
 };
 
@@ -63,7 +64,7 @@ export type SerializableAdapter = {
   name: string;
   description: string;
   version: string;
-  params: JsonSchema7Type;
+  params: JSONSchema.BaseSchema;
 };
 
 // MUST BE SERIALIZABLE

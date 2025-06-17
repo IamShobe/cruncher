@@ -1,0 +1,92 @@
+---
+title: where
+---
+
+The `where` command filters records based on a boolean expression. Only records where the expression evaluates to true are kept. It is commonly used to narrow down results before further processing or visualization.
+
+## Syntax
+
+```
+where expression
+```
+
+- `expression`: A boolean condition using fields, operators, values, and functions. Expressions can be simple comparisons or complex logical statements.
+
+## Supported Operators
+
+- **Comparison:** `==`, `!=`, `>`, `<`, `>=`, `<=`, `in` (e.g., `status in ["error", "warn"]`)
+- **Logical:** `&&` (and), `||` (or), `!` (not)
+- **Parentheses:** Use `(` and `)` to group expressions and control precedence.
+
+## Supported Functions
+
+The following functions can be used in `where` expressions:
+
+- `contains(str, substr)`: Returns true if `str` contains `substr`.
+- `startsWith(str, prefix)`: Returns true if `str` starts with `prefix`.
+- `endsWith(str, suffix)`: Returns true if `str` ends with `suffix`.
+- `match(str, regex)`: Returns true if `str` matches the given regular expression.
+- `isNull(x)`: Returns true if `x` is null or undefined.
+- `isNotNull(x)`: Returns true if `x` is not null or undefined.
+
+> Only these functions are supported in boolean expressions for `where`.
+
+## Expression Possibilities
+
+- Compare fields to values: `level == "error"`, `duration > 1000`
+- Combine conditions: `status == "error" && duration > 1000`
+- Use `in` for set membership: `user in ["alice", "bob"]`
+- Negate conditions: `!(level == "info")`
+- Use parentheses for grouping: `(status == "error" || status == "warn") && duration > 1000`
+- Boolean literals: `is_active == true`
+- Use functions: `contains(user, "admin")`, `isNull(message)`
+
+## Usage Tips
+
+- The `where` command can appear anywhere in the pipeline to filter intermediate results.
+- Multiple `where` commands can be chained for stepwise filtering.
+- Supports referencing any field present in the data.
+
+## Examples
+
+```
+where status == "error" && duration > 1000
+```
+
+This keeps only records where `status` is `error` and `duration` is greater than 1000.
+
+```
+where user in ["alice", "bob"]
+```
+
+This keeps only records where the `user` field is either `alice` or `bob`.
+
+```
+where !(level == "info")
+```
+
+This excludes records where `level` is `info`.
+
+```
+where (status == "error" || status == "warn") && duration >= 500
+```
+
+This keeps records where `status` is `error` or `warn`, and `duration` is at least 500.
+
+```
+where contains(user, "admin")
+```
+
+This keeps records where the `user` field contains the substring `admin`.
+
+```
+where match(message, `^Error:.*`)
+```
+
+This keeps records where the `message` field matches the regular expression `^Error:.*`.
+
+```
+where isNull(optional_field)
+```
+
+This keeps records where `optional_field` is null or undefined.

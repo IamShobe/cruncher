@@ -1,0 +1,30 @@
+---
+const { label, type, description } = Astro.props;
+---
+
+<style>
+  .param-item {
+    display: flex;
+  }
+  .param-label {
+    font-weight: bold;
+    margin-right: 8px;
+  }
+  .param-type {
+    color: #555;
+    margin-right: 8px;
+  }
+  .param-description {
+    margin-left: 8px;
+    color: #333;
+  }
+</style>
+
+<div class="param-item">
+  <span class="param-label">{label}</span>
+  <span class="param-type">{type}</span>
+  -
+  <span class="param-description">
+    <slot />
+  </span>
+</div>

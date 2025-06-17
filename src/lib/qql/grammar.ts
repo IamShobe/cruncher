@@ -65,39 +65,39 @@ const extractLastPipeline = (matchedTokens: IToken[]) => {
 
 const matchCommand =
   (pattern: RegExp): CustomPatternMatcherFunc =>
-  (text, offset, matchedTokens, _groups) => {
-    if (matchedTokens.length < 1) {
-      return null;
-    }
+    (text, offset, matchedTokens, _groups) => {
+      if (matchedTokens.length < 1) {
+        return null;
+      }
 
-    const lastMatchedToken = matchedTokens[matchedTokens.length - 1];
-    if (!lastMatchedToken) {
-      return null;
-    }
+      const lastMatchedToken = matchedTokens[matchedTokens.length - 1];
+      if (!lastMatchedToken) {
+        return null;
+      }
 
-    if (!tokenMatcher(lastMatchedToken, Pipe)) {
-      return null;
-    }
+      if (!tokenMatcher(lastMatchedToken, Pipe)) {
+        return null;
+      }
 
-    // Note that just because we are using a custom token pattern
-    // Does not mean we cannot implement it using JavaScript Regular Expressions...
-    // get substring using offset
-    const textSubstring = text.substring(offset);
-    const execResult = pattern.exec(textSubstring);
-    return execResult;
-  };
+      // Note that just because we are using a custom token pattern
+      // Does not mean we cannot implement it using JavaScript Regular Expressions...
+      // get substring using offset
+      const textSubstring = text.substring(offset);
+      const execResult = pattern.exec(textSubstring);
+      return execResult;
+    };
 
 const matchKeywordOfSearch =
   (pattern: RegExp): CustomPatternMatcherFunc =>
-  (text, offset, matchedTokens, _groups) => {
-    const pipeline = extractLastPipeline(matchedTokens);
-    if (pipeline.length > 1) {
-      // if there is a pipeline then it's not a search
-      return null;
-    }
+    (text, offset, matchedTokens, _groups) => {
+      const pipeline = extractLastPipeline(matchedTokens);
+      if (pipeline.length > 1) {
+        // if there is a pipeline then it's not a search
+        return null;
+      }
 
-    return pattern.exec(text.substring(offset));
-  };
+      return pattern.exec(text.substring(offset));
+    };
 
 const isMatchingCommand = (
   token: TokenType | TokenType[],
@@ -120,13 +120,13 @@ const isMatchingCommand = (
 
 const matchKeywordOfCommand =
   (token: TokenType | TokenType[], pattern: RegExp): CustomPatternMatcherFunc =>
-  (text, offset, matchedTokens, _groups) => {
-    if (!isMatchingCommand(token, matchedTokens)) {
-      return null;
-    }
+    (text, offset, matchedTokens, _groups) => {
+      if (!isMatchingCommand(token, matchedTokens)) {
+        return null;
+      }
 
-    return pattern.exec(text.substring(offset));
-  };
+      return pattern.exec(text.substring(offset));
+    };
 
 // Commands
 const Table = createToken({
@@ -273,13 +273,13 @@ const As = createToken({
 
 const matchBooleanExpressionContext =
   (pattern: RegExp): CustomPatternMatcherFunc =>
-  (text, offset, matchedTokens, _groups) => {
-    if (!isMatchingCommand([Where, Eval], matchedTokens)) {
-      return null;
-    }
+    (text, offset, matchedTokens, _groups) => {
+      if (!isMatchingCommand([Where, Eval], matchedTokens)) {
+        return null;
+      }
 
-    return pattern.exec(text.substring(offset));
-  };
+      return pattern.exec(text.substring(offset));
+    };
 
 const Plus = createToken({
   name: "Plus",
@@ -536,14 +536,14 @@ export type OrExpression = {
 export type UnitExpression = {
   type: "unitExpression";
   value:
-    | InArrayExpression
-    | ComparisonExpression
-    | NotExpression
-    | FunctionExpression
-    | LogicalExpression;
+  | InArrayExpression
+  | ComparisonExpression
+  | NotExpression
+  | FunctionExpression
+  | LogicalExpression;
 };
 
-export type FunctionArg = FactorType | RegexLiteral | LogicalExpression;
+export type FunctionArg = FactorType | RegexLiteral | LogicalExpression | FunctionExpression;
 
 export type FunctionExpression = {
   type: "functionExpression";
@@ -1453,10 +1453,12 @@ export class QQLParser extends EmbeddedActionsParser {
   private functionArgs = this.RULE("functionArgs", (): FunctionArg => {
     return this.OR<FunctionArg>({
       DEF: [
+        { ALT: () => this.SUBRULE(this.functionExpression) },
         { ALT: () => this.SUBRULE(this.logicalExpression) },
         { ALT: () => this.SUBRULE(this.factor) },
         { ALT: () => this.SUBRULE(this.regexLiteral) },
       ],
+      IGNORE_AMBIGUITIES: true, // TODO: think about this - collision between grammar of evalFunction and logicalExpression
     });
   });
 

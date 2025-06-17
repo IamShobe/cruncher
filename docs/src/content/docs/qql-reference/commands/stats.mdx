@@ -1,0 +1,44 @@
+---
+title: stats
+description: Perform aggregations over your data using the stats command in QQL.
+---
+
+import { Badge } from '@astrojs/starlight/components';
+
+<Badge text="table" />
+
+The `stats` command performs aggregations (such as count, sum, avg, min, max, first, last) over your data, optionally grouped by one or more fields.
+
+## Syntax
+
+```
+stats [agg1(field1) as alias1, ...] [by groupField1, groupField2, ...]
+```
+
+- `agg(field) as alias`: Aggregation function (see below) applied to a field, optionally renamed with `as`.
+- `by groupField1, ...`: (Optional) Group results by one or more fields.
+
+## Available Aggregation Functions
+
+- `count()`: Counts the number of records in each group (or overall if no grouping).
+- `sum(field)`: Sums the values of `field` for each group.
+- `avg(field)`: Calculates the average value of `field` for each group.
+- `min(field)`: Finds the minimum value of `field` for each group.
+- `max(field)`: Finds the maximum value of `field` for each group.
+- `first(field)`: Returns the first non-null value of `field` in each group.
+- `last(field)`: Returns the last non-null value of `field` in each group.
+
+> You can use multiple aggregation functions in a single `stats` command, and each can be given an alias using `as`.
+
+## Usage
+
+- Use `stats` to summarize data, such as counting events or calculating averages.
+- Multiple aggregations and groupings are supported.
+
+## Example
+
+```
+stats count() as total, avg(duration) as avg_duration, first(user) as first_user by status
+```
+
+This counts all records, calculates the average `duration`, and returns the first `user` for each `status` group.

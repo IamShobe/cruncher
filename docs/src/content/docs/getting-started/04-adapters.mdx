@@ -1,0 +1,51 @@
+---
+title: Adapters
+description: How to use Cruncher with various data sources and adapters.
+---
+
+Cruncher supports a flexible adapter system, allowing you to connect to and query data from a variety of sources. Adapters are responsible for connecting to external systems, extracting fields, and providing data to Cruncher in a unified format.
+
+## What is an Adapter?
+
+An adapter is a module that knows how to communicate with a specific backend or data source (such as Grafana Loki, Docker logs, or mocked/test data). It extracts fields from the source data and exposes them to Cruncher for querying and analysis.
+
+## Built-in Adapters
+
+Cruncher comes with several built-in adapters, including:
+
+- **Grafana Browser Adapter**: Connects to Grafana Loki via the browser, allowing you to query logs and metrics from your Grafana instance.
+- **Docker Adapter**: Reads logs from Docker containers.
+- **Mocked Data Adapter**: Provides sample/mock data for testing and demos.
+
+## Configuring Adapters
+
+Adapters are configured in the Cruncher config file (`~/.config/cruncher/cruncher.config.yaml`). Each adapter entry specifies the type, name, and any required parameters. For example:
+
+```yaml
+connectors:
+  - type: grafana_browser
+    name: main
+    params:
+      grafanaUrl: <your_grafana_url>
+      uid: <your_loki_uid>
+      # ...other params...
+  - type: docker
+    name: docker_logs
+    # ...params...
+```
+
+See the [installation guide](/getting-started/02-installation) and [configuration reference](/getting-started/05-config-file) for more details.
+
+## How Adapters Work
+
+- Adapters extract fields and assign types to each field.
+- Controller parameters in your QQL queries are passed directly to the adapter, allowing for efficient server-side filtering.
+- Once data is loaded, you can use all of Cruncher's QQL features to analyze and transform it.
+
+## Writing Your Own Adapter
+
+Cruncher is designed to be extensible. You can implement your own adapter by following the patterns in the `src/adapters/` directory. Adapters must expose a controller and implement the required interface for data extraction and field typing.
+
+---
+
+Adapters make Cruncher a powerful tool for querying and analyzing data from many different sources, all with a consistent query experience.

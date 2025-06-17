@@ -1,0 +1,36 @@
+---
+title: timechart
+description: Create time series visualizations with the `timechart` command in QQL.
+---
+
+import { Badge } from '@astrojs/starlight/components';
+
+<Badge text="view" />
+
+The `timechart` command creates a time series visualization by aggregating data into time buckets. It supports multiple aggregation functions, grouping, and several parameters for customizing the time axis and grouping behavior.
+
+## Syntax
+
+```
+timechart [span=interval] [timeCol=field] [maxGroups=N] [agg(field) [as alias], ...] [by groupField1, ...]
+```
+
+- `span=interval`: (Optional) Bucket size for the time axis (e.g., `1m`, `5m`, `1h`).
+- `timeCol=field`: (Optional) The field to use as the time axis (default is usually `timestamp`).
+- `maxGroups=N`: (Optional) Maximum number of groups to display (limits cardinality).
+- `agg(field) [as alias]`: Aggregation function (e.g., `count()`, `sum(field)`, `avg(field)`) optionally renamed with `as`.
+- `by groupField1, ...`: (Optional) Group results by one or more fields.
+
+## Usage
+
+- Use `timechart` to visualize trends over time, with flexible grouping and aggregation.
+- Supports multiple aggregations, grouping, and time axis customization.
+- All parameters are optional except for at least one aggregation.
+
+## Example
+
+```
+timechart span=5m timeCol=event_time maxGroups=10 count() as total, avg(duration) as avg_duration by status 
+```
+
+This creates a time series of event counts and average duration per `status` in 5-minute intervals, using `event_time` as the time axis, and limits to 10 groups.

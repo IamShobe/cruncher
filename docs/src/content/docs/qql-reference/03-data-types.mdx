@@ -1,0 +1,32 @@
+---
+title: Data Types
+description: Learn about the different data types in Cruncher Query Language (QQL).
+---
+
+Cruncher QQL allows you to manipulate and analyze fields that are extracted by the underlying data adapters. Each field is assigned a type by the adapter, which can be one of the following:
+
+- **NumberField**: Numeric values (integers or floats)
+- **StringField**: Text values
+- **DateField**: Dates as numeric timestamps (milliseconds since epoch)
+- **BooleanField**: True/false values
+- **ArrayField**: Arrays of fields (can be mixed types)
+- **ObjectField**: Objects with named fields
+- **NullField**: Represents a missing or undefined value
+
+When you query data, the adapter extracts fields and assigns them types. Cruncher then allows you to manipulate, transform, and analyze these fields using QQL commands.
+
+If a value is missing or cannot be typed, it is treated as `null` or `undefined`.
+
+## Example: Using Field Types in Queries
+
+When you use QQL commands, fields are already typed by the adapter. For example:
+
+```
+eval duration_sec = duration / 1000
+```
+
+If `duration` is a number, `duration_sec` will also be a number field. If a field is missing, it will be `null` or `undefined`.
+
+---
+
+Understanding field types helps you write more precise queries and interpret your results with confidence.

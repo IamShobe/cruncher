@@ -1,0 +1,68 @@
+---
+title: Cruncher Config File
+description: How to create and configure the Cruncher config file.
+---
+import { Aside } from '@astrojs/starlight/components';
+
+Cruncher uses a YAML configuration file to define which adapters and data sources are available. This file tells Cruncher how to connect to your data and what options to use for each adapter.
+
+## Location
+
+The config file should be placed at:
+
+```
+~/.config/cruncher/cruncher.config.yaml
+```
+
+## Basic Structure
+
+A typical config file looks like this:
+
+```yaml
+# Cruncher configuration file
+profiles:
+    default:
+        connectors: [main]
+    docker:
+        connectors: [docker_logs]
+    all:
+        connectors: [main, docker_logs]
+connectors:
+  - type: grafana_browser
+    name: main
+    params:
+      grafanaUrl: <your_grafana_url>
+      uid: <your_loki_uid>
+      filter:
+        - key: label1
+          value: "label1_value"
+          operator: "="
+      querySuffix: []
+  - type: docker
+    name: docker_logs
+    # ...params for docker adapter...
+```
+
+- `connectors`: A list of adapters to use. Each entry defines an adapter type, a name, and any required parameters.
+- `type`: The adapter type (e.g., `grafana_browser`, `docker`, `mocked_data`).
+- `name`: A unique name for this adapter instance.
+- `params`: Adapter-specific parameters (see adapter docs for details).
+
+## Profiles
+
+Cruncher supports the concept of profiles, allowing you to define multiple sets of connectors and settings in the same config file. Each profile can represent a different environment, use case, or set of data sources.
+
+- The `default` profile is used automatically when starting Cruncher.
+- You can switch profiles to quickly inside the Cruncher platform.
+
+<Aside type="tip">
+- Use profiles to easily switch between production, development, or test data sources without editing your main config file each time.
+- You can define multiple connectors in the same config file.
+- Each adapter may require different parameters—see the adapter documentation for details.
+- After editing the config file, restart Cruncher to apply changes.
+</Aside>
+
+---
+
+For more details, see the [Adapters documentation](/getting-started/04-adapters).
+

@@ -14,6 +14,7 @@ export const QueryJobUpdatedSchema = z.object({
   payload: z.object({
     jobId: z.string(),
     status: z.enum(["running", "completed", "failed", "canceled"]),
+    error: z.string().nullable().optional(),
   }),
 });
 export type QueryJobUpdated = z.infer<typeof QueryJobUpdatedSchema>;

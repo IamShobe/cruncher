@@ -1,0 +1,8 @@
+profiles:
+  default:
+    connectors: [docker]
+
+connectors:
+  - name: docker
+    type: docker
+    params: {}

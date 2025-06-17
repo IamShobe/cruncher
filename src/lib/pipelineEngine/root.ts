@@ -103,8 +103,8 @@ const processPipeline = (
       );
       break;
     default:
-      // @ts-expect-error - this should never happen
       throw new Error(
+        // @ts-expect-error - this should never happen
         `Pipeline type '${currentPipeline.type}' not implemented`,
       );
   }

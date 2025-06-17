@@ -1,0 +1,32 @@
+---
+title: Quick Start
+description: A quick guide to get started with Cruncher.
+---
+import { FileTree } from '@astrojs/starlight/components';
+import { Steps } from '@astrojs/starlight/components';
+import { Code } from '@astrojs/starlight/components';
+import example from './03-quick-start.cruncher.config.yaml?raw';
+
+<Steps>
+
+1. Install Cruncher by following the [installation guide](/docs/getting-started/02-installation).
+2. Create a configuration file named `cruncher.config.yaml` in your home directory under
+   `~/.config/cruncher/`.
+   ```bash
+     mkdir -p ~/.config/cruncher
+   ```
+    <FileTree>
+    - ~/ user home directory
+        - .config/
+            - cruncher/
+                - **cruncher.config.yaml** cruncher main configuration file
+    </FileTree>
+3. Use the following template for your `cruncher.config.yaml` file:
+    <Code code={example} lang="yaml" title="cruncher.config.yaml" />
+
+4. Launch Cruncher and start exploring!
+
+5. Configure your data sources and adapters as needed.  
+   You can find more information on how to configure adapters in the [Adapters documentation](/getting-started/04-adapters).
+
+</Steps>

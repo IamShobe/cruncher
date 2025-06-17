@@ -1,0 +1,18 @@
+---
+title: contains
+description: Check if a string contains a substring.
+---
+
+The `contains` function returns true if the first argument contains the second argument as a substring.
+
+## Usage
+
+```
+contains(field, "substring")
+```
+
+**Example:**
+```
+where contains(message, "error")
+```
+This matches records where the `message` field contains the substring "error".

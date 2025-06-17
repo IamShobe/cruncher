@@ -9,12 +9,10 @@ Ever wanted to post process your data?
 
 ---
 
-Heavily inspired from `Splunk`, and other observability tools -  
+Heavily inspired from observability tools like `Splunk`, `Grafana` and more -  
 it's main purpose is to allow post process data from multiple sources.  
-Goal is to have a generic query language and to implement adapters to different backends - then you get all investigation capabilities right from the frontend.
-Of course this comes with alot of calculation costs - but my assumption is that if the initial filter is done well - and results into small number of entries then all the post processing after that can be done entirely on the frontend.  
-
-`Cruncher` was built with a mindset to be embedded everywhere - like inside an extension - so everything was built under unique [shadowDOM](https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_shadow_DOM).  
+Goal is to have a generic query language and to implement adapters to different backends - 
+then you get all investigation capabilities right from the frontend.
 
 
 ## Macos installation

@@ -1,0 +1,32 @@
+---
+title: table
+description: Displays the results of the pipeline as a table, allowing you to select and order specific fields.
+---
+
+import { Badge } from '@astrojs/starlight/components';
+
+<Badge text="table" />
+
+The `table` command displays the results of the pipeline as a table, allowing you to select and order specific fields. You can also use the `as` keyword to assign an alias to any column.
+
+## Syntax
+
+```
+table field1 [as alias1], field2 [as alias2], ...
+```
+
+- `field [as alias]`: The field to display as a column, optionally renamed with `as`.
+
+## Usage
+
+- Use `table` at the end of a pipeline to control which fields are shown and their order.
+- Use `as` to rename columns for clarity or convenience.
+- If not specified, all fields may be shown in default order.
+
+## Example
+
+```
+... | table timestamp as time, message, level as severity
+```
+
+This displays the `timestamp` field as `time`, the `message` field, and the `level` field as `severity` in the output table.

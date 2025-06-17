@@ -1,0 +1,70 @@
+---
+title: Docker
+description: How to use Cruncher with Docker.
+sidebar:
+    badge:
+        text: New
+        variant: tip
+---
+import { Code } from '@astrojs/starlight/components';
+import code1 from './examples/docker.cruncher.config.yaml?raw';
+import code2 from './examples/docker-patterns.cruncher.config.yaml?raw';
+import ParamItem from '../../../components/ParamItem.astro';
+
+## Params
+
+<ParamItem label="dockerHost" type="string">
+    The docker host url to use for docker commands.
+</ParamItem>
+<ParamItem label="containerFilter" type="string">
+    A filter to apply to the containers when listing them. This can be used to limit the containers that Cruncher will interact with.
+</ParamItem>
+<ParamItem label="streams" type="array">
+    The list of streams to use for the Cruncher instance. This can be used to limit the streams that Cruncher will interact with.
+    <br />
+    Values can be:
+    - `stdout` - Standard output stream of the container.
+    - `stderr` - Standard error stream of the container.
+</ParamItem>
+<ParamItem label="containerOverride" type="object">
+    An object to override the container settings. This can be used to set the container name, image, and other settings.
+
+    - `messageFieldName` - The field name to use for the message in the container logs. This is useful if the container logs are not in the default format.
+
+    <br />
+    **Example:**
+    ```yaml
+    containerOverride:
+        messageFieldName: 'message'  
+    ```
+</ParamItem>
+<ParamItem label="logPatterns" type="array">
+    A list of log patterns to use for the Cruncher instance. This can be used to limit the logs that Cruncher will interact with.
+    <br/>
+    Each field should be of the form:
+    ```yaml
+    - name: <pattern_name>
+      pattern: <pattern_value>
+      applyTo: [container]
+      exclude: [container]
+      applyToAll: false
+      messageFieldName: <field_name>
+    ```
+    <br/>
+    - `name` - The name of the pattern.
+    - `pattern` - The regex pattern to use for the logs.
+    - `applyTo` - The list of containers to apply the pattern to. This can be used to limit the containers that Cruncher will interact with.
+    - `exclude` - The list of containers to exclude from the pattern. This can be used to limit the containers that Cruncher will not interact with.
+    - `applyToAll` - If true, the pattern will be applied to all containers. If false, the pattern will only be applied to the containers specified in the `applyTo` field.
+    - `messageFieldName` - The field name to use for the message in the logs. This is useful if the logs are not in the default format.
+
+</ParamItem>
+
+## Examples
+
+### Minimal Configuration
+
+<Code code={code1} lang="yaml" title="cruncher.config.yaml" />
+
+### Config with log patterns
+<Code code={code2} lang="yaml" title="cruncher.config.yaml" />

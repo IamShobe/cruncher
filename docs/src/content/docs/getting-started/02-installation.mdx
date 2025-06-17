@@ -1,0 +1,31 @@
+---
+title: Installation
+description: How to install Cruncher on your system.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import { Steps } from '@astrojs/starlight/components';
+
+<Tabs syncKey="platform">
+  <TabItem label="MacOS" icon='apple'>
+
+### Download and Install
+
+<Steps>
+1. Go to the [Cruncher releases page](https://github.com/IamShobe/cruncher/releases/latest).
+2. Download the latest `.zip` file for macOS.
+3. Extract the zip file.
+4. Move the `cruncher.app` to your `Applications` folder.
+5. Double-click to run Cruncher.
+</Steps>
+
+#### If you see a corruption warning:
+Open your terminal and run:
+```zsh
+xattr -cr /Applications/cruncher.app
+```
+This will clear the quarantine attribute and allow you to open the app.  
+It's required because Cruncher is not codesigned yet.
+
+  </TabItem>
+</Tabs>
