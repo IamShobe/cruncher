@@ -37,6 +37,7 @@ import { CacheRecord, QueryCacheHolder } from "./cache";
 import {
   ClosestPoint,
   ExportResults,
+  finishedStatuses,
   InstanceRef,
   JobBatchFinished,
   PageResponse,
@@ -315,6 +316,7 @@ export class Engine {
         table: undefined,
         view: undefined,
       },
+      lastBatchStatus: null,
       abortController: new AbortController(),
       subTasks: [],
       ee: emitter, // Event emitter for task updates
@@ -381,7 +383,7 @@ export class Engine {
             }
           });
 
-          emitter.emit<JobBatchFinished>("add", {
+          queryTaskState.lastBatchStatus = {
             scale: {
               from: queryOptions.fromTime,
               to: queryOptions.toTime,
@@ -405,7 +407,9 @@ export class Engine {
                 : undefined,
               view: queryTaskState.displayResults.view ? {} : undefined,
             },
-          });
+          };
+
+          emitter.emit<JobBatchFinished>("add", queryTaskState.lastBatchStatus);
         });
       });
     };
@@ -753,6 +757,14 @@ export class Engine {
     const taskState = this.queryTasks[taskId];
     if (!taskState) {
       throw new Error(`Query task with id ${taskId} not found`);
+    }
+
+    if (taskState.lastBatchStatus) {
+      yield taskState.lastBatchStatus; // Yield the last batch status if it exists
+    }
+
+    if (finishedStatuses.has(taskState.task.status)) {
+      return; // No need to listen for further updates
     }
 
     for await (const [data] of on(taskState.ee, "add", {

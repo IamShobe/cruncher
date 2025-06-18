@@ -18,6 +18,12 @@ export type QueryTask = {
   createdAt: number;
 };
 
+export const finishedStatuses = new Set<QueryTask["status"]>([
+  "completed",
+  "failed",
+  "canceled",
+]);
+
 export type QueryInput = {
   searchTerm: string;
   queryOptions: SerializeableParams;
@@ -30,6 +36,7 @@ export type QueryTaskState = {
   abortController: AbortController;
   index: BTree<number, ProcessedData[]>;
   displayResults: DisplayResults;
+  lastBatchStatus: JobBatchFinished | null;
   finishedQuerying: Signal;
   mutex: Mutex;
   ee: EventEmitter;
