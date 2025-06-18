@@ -10,6 +10,8 @@ import {
   LuPanelTopOpen,
   LuTable,
 } from "react-icons/lu";
+import { Shortcut } from "~components/ui/shortcut";
+import { Tooltip } from "~components/ui/tooltip";
 import { isDateSelectorOpenAtom } from "./DateSelector";
 import { queryEditorAtom } from "./Editor";
 import DataLog from "./events/DataLog";
@@ -25,8 +27,6 @@ import { jobMetadataAtom, viewSelectedForQueryAtom } from "./store/queryState";
 import { TableView } from "./table/TableView";
 import { TimeChart } from "./TimeChart";
 import { ViewChart } from "./view/ViewChart";
-import { Tooltip } from "~components/ui/tooltip";
-import { Shortcut } from "~components/ui/shortcut";
 
 const MainContainer = styled.section`
   flex: 1;

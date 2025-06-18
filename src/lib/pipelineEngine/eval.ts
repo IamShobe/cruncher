@@ -14,13 +14,13 @@ import {
   EvalCaseFunction,
   EvalFunction,
   EvalFunctionArg,
-  EvalIfFunction
+  EvalIfFunction,
 } from "~lib/qql/grammar";
 import {
   Context,
   processFactor,
   processFunctionExpression,
-  processLogicalExpression
+  processLogicalExpression,
 } from "./logicalExpression";
 
 export const processEval = (

@@ -111,7 +111,6 @@ export const SUPPORTED_STRING_FUNCTIONS = [
 export type SupportedStringFunction =
   (typeof SUPPORTED_STRING_FUNCTIONS)[number];
 
-
 export const processStringFunctionExpression = (
   functionExpression: FunctionExpression,
   context: Context,
@@ -120,11 +119,17 @@ export const processStringFunctionExpression = (
 
   switch (functionName) {
     case "lower":
-      return processSingleArgFunction(args, context, (a) => asStringField(a).value.toLowerCase());
+      return processSingleArgFunction(args, context, (a) =>
+        asStringField(a).value.toLowerCase(),
+      );
     case "upper":
-      return processSingleArgFunction(args, context, (a) => asStringField(a).value.toUpperCase());
+      return processSingleArgFunction(args, context, (a) =>
+        asStringField(a).value.toUpperCase(),
+      );
     case "trim":
-      return processSingleArgFunction(args, context, (a) => asStringField(a).value.trim());
+      return processSingleArgFunction(args, context, (a) =>
+        asStringField(a).value.trim(),
+      );
     default:
       throw new Error(`Function \`${functionName}\` is not supported!`);
   }
@@ -146,9 +151,8 @@ export const isNumberFunction = (
 ): functionName is SupportedNumberFunction => {
   return SUPPORTED_NUMBER_FUNCTIONS.includes(
     functionName as SupportedNumberFunction,
-  )
-}
-
+  );
+};
 
 export const processNumberFunctionExpression = (
   functionExpression: FunctionExpression,
@@ -157,15 +161,27 @@ export const processNumberFunctionExpression = (
   const { functionName, args } = functionExpression;
   switch (functionName as SupportedNumberFunction) {
     case "abs":
-      return processSingleArgFunction(args, context, (a) => Math.abs(asNumberField(a).value));
+      return processSingleArgFunction(args, context, (a) =>
+        Math.abs(asNumberField(a).value),
+      );
     case "round":
-      return processSingleArgFunction(args, context, (a) => Math.round(asNumberField(a).value));
+      return processSingleArgFunction(args, context, (a) =>
+        Math.round(asNumberField(a).value),
+      );
     case "ceil":
-      return processSingleArgFunction(args, context, (a) => Math.ceil(asNumberField(a).value));
+      return processSingleArgFunction(args, context, (a) =>
+        Math.ceil(asNumberField(a).value),
+      );
     case "floor":
-      return processSingleArgFunction(args, context, (a) => Math.floor(asNumberField(a).value));
+      return processSingleArgFunction(args, context, (a) =>
+        Math.floor(asNumberField(a).value),
+      );
     case "length":
-      return processSingleArgFunction(args, context, (a) => asStringField(a).value.length);
+      return processSingleArgFunction(
+        args,
+        context,
+        (a) => asStringField(a).value.length,
+      );
     default:
       throw new Error(`Function \`${functionName}\` is not supported!`);
   }
