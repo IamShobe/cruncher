@@ -1,7 +1,6 @@
 import { MakerDeb } from '@electron-forge/maker-deb';
 import { MakerRpm } from '@electron-forge/maker-rpm';
 import { MakerSquirrel } from '@electron-forge/maker-squirrel';
-import {MakerDMG} from '@electron-forge/maker-dmg';
 import { MakerZIP } from '@electron-forge/maker-zip';
 import { FusesPlugin } from '@electron-forge/plugin-fuses';
 import { VitePlugin } from '@electron-forge/plugin-vite';
@@ -36,9 +35,6 @@ const config: ForgeConfig = {
         mimeType: ['x-scheme-handler/cruncher'],
       }
     }),
-    new MakerDMG({
-      format: 'ULFO',
-    }, ['darwin']),
   ],
   plugins: [
     new VitePlugin({
