@@ -10,7 +10,7 @@ import { isIpcMessage } from "./ipc";
 export function requestFromServer<T>(
   port: MessagePortMain | null,
   request: object,
-  responseType: string,
+  responseType: string
 ): Promise<T> {
   if (!port) {
     return Promise.reject(new Error("Server port is not initialized"));
@@ -21,10 +21,10 @@ export function requestFromServer<T>(
       port.off("message", handler);
       reject(
         new Error(
-          `Request timed out after 30 seconds for response type: ${responseType}`,
-        ),
+          `Request timed out after 60 seconds for response type: ${responseType}`
+        )
       );
-    }, 30000); // 30 seconds timeout
+    }, 60000); // 60 seconds timeout
 
     const handler = (payload: Electron.MessageEvent) => {
       const msg = payload.data;

@@ -1,12 +1,11 @@
 import { Mutex } from "async-mutex";
+import { generateCsv, mkConfig } from "export-to-csv";
 import { produce } from "immer";
 import merge from "merge-k-sorted-arrays";
+import EventEmitter, { on } from "node:events";
 import BTree from "sorted-btree";
-import {
-  newBatchDoneMessage,
-  newJobUpdatedMessage,
-} from "src/processes/server/plugins_engine/router";
 import { v4 as uuidv4 } from "uuid";
+import z from "zod/v4";
 import {
   Adapter,
   AdapterContext,
@@ -20,7 +19,6 @@ import {
   ProcessedData,
 } from "~lib/adapters/logTypes";
 import { DisplayResults, Events } from "~lib/displayTypes";
-import { ResponseHandler } from "~lib/networkTypes";
 import { processEval } from "~lib/pipelineEngine/eval";
 import { processRegex } from "~lib/pipelineEngine/regex";
 import {
@@ -57,8 +55,7 @@ import {
   TaskRef,
 } from "./types";
 import { calculateBuckets, getScale } from "./utils";
-import { generateCsv, mkConfig } from "export-to-csv";
-import z from "zod/v4";
+import { Repeater } from "@repeaterjs/repeater";
 
 export class Engine {
   private supportedPlugins: Adapter[] = [];
@@ -72,10 +69,7 @@ export class Engine {
 
   private executedJobs: TaskRef[] = []; // Keep track of executed jobs - to allow for cleanup
 
-  constructor(
-    private messageSender: ResponseHandler,
-    private authProvider: ExternalAuthProvider,
-  ) {}
+  constructor(private authProvider: ExternalAuthProvider) {}
 
   public registerPlugin(plugin: Adapter): void {
     if (this.supportedPlugins.some((p) => p.ref === plugin.ref)) {
@@ -99,7 +93,7 @@ export class Engine {
 
   public async getControllerParams(instanceId: InstanceRef) {
     const pluginContainer = this.initializedPlugins.find(
-      (p) => p.instance.name === instanceId,
+      (p) => p.instance.name === instanceId
     );
     if (!pluginContainer) {
       throw new Error(`Plugin instance with id ${instanceId} not found`);
@@ -125,7 +119,7 @@ export class Engine {
   public initializePlugin(
     pluginRef: PluginRef,
     name: InstanceRef,
-    params: Record<string, unknown>,
+    params: Record<string, unknown>
   ): PluginInstance {
     const plugin = this.supportedPlugins.find((p) => p.ref === pluginRef);
     if (!plugin) {
@@ -158,7 +152,7 @@ export class Engine {
 
   public initializeSearchProfile(
     name: SearchProfileRef,
-    instances: InstanceRef[],
+    instances: InstanceRef[]
   ): SearchProfile {
     // Validate instances
     for (const instance of instances) {
@@ -196,7 +190,7 @@ export class Engine {
   public getLogsPaginated(
     taskId: TaskRef,
     offset: number,
-    limit: number,
+    limit: number
   ): PageResponse<ProcessedData> {
     const task = this.queryTasks[taskId];
     if (!task) {
@@ -220,7 +214,7 @@ export class Engine {
   public getTableDataPaginated(
     taskId: TaskRef,
     offset: number,
-    limit: number,
+    limit: number
   ): TableDataResponse {
     const task = this.queryTasks[taskId];
     if (!task) {
@@ -287,7 +281,7 @@ export class Engine {
   public async runQuery(
     searchProfileRef: SearchProfileRef,
     searchTerm: string,
-    queryOptions: SerializeableParams,
+    queryOptions: SerializeableParams
   ) {
     const profile = this.searchProfiles[searchProfileRef];
     if (!profile) {
@@ -298,13 +292,15 @@ export class Engine {
     const task: QueryTask = {
       id: taskId,
       status: "running",
-      createdAt: new Date(),
+      createdAt: new Date().getTime(),
       error: null,
       input: {
         searchTerm: searchTerm,
         queryOptions: queryOptions,
       },
     };
+
+    const emitter = new EventEmitter();
 
     const queryTaskState: QueryTaskState = {
       task,
@@ -321,39 +317,42 @@ export class Engine {
       },
       abortController: new AbortController(),
       subTasks: [],
+      ee: emitter, // Event emitter for task updates
     };
     this.queryTasks[taskId] = queryTaskState;
     this.executedJobs.push(taskId); // Keep track of executed jobs for cleanup
     console.log(`Created query task with id ${taskId}`);
+
+    queryTaskState.finishedQuerying.then(() => {
+      emitter.emit("close");
+    });
 
     // parse the search term into params
     const parsedTree = parse(searchTerm);
 
     const instancesToSearchOn = this._getInstancesToQueryOn(
       searchProfileRef,
-      parsedTree,
+      parsedTree
     );
     if (instancesToSearchOn.length === 0) {
       throw new Error(`No instances found for search term: ${searchTerm}`);
     }
 
-    const messageSender = this.messageSender;
-
     const onTaskDone = async () => {
       const allCachedData = await Promise.all(
         queryTaskState.subTasks.map((subTask) => {
           return this.queryCache.getFromCacheByKey(subTask.cacheKey);
-        }),
+        })
       );
       const totalData = merge<ProcessedData>(
         allCachedData.map((record) => record.data),
-        compareProcessedData,
+        compareProcessedData
       );
 
       const pipelineData = this.getPipelineItems(
         queryTaskState,
         totalData,
-        parsedTree.pipeline,
+        parsedTree.pipeline
       );
 
       await queryTaskState.mutex.runExclusive(async () => {
@@ -369,7 +368,10 @@ export class Engine {
             queryTaskState.index.set(timestamp, toAppendTo);
           });
 
-          const scale = getScale(queryOptions.fromTime, queryOptions.toTime);
+          const scale = getScale(
+            new Date(queryOptions.fromTime),
+            new Date(queryOptions.toTime)
+          );
           const buckets = calculateBuckets(scale, pipelineData.events.data);
 
           const availableColumns = new Set<string>();
@@ -379,33 +381,31 @@ export class Engine {
             }
           });
 
-          await messageSender.sendMessage(
-            newBatchDoneMessage(taskId, {
-              scale: {
-                from: queryOptions.fromTime.getTime(),
-                to: queryOptions.toTime.getTime(),
+          emitter.emit<JobBatchFinished>("add", {
+            scale: {
+              from: queryOptions.fromTime,
+              to: queryOptions.toTime,
+            },
+            views: {
+              events: {
+                total: queryTaskState.displayResults.events.data.length,
+                buckets: buckets,
+                autoCompleteKeys: Array.from(availableColumns),
               },
-              views: {
-                events: {
-                  total: queryTaskState.displayResults.events.data.length,
-                  buckets: buckets,
-                  autoCompleteKeys: Array.from(availableColumns),
-                },
-                table: queryTaskState.displayResults.table
-                  ? {
-                      totalRows:
-                        queryTaskState.displayResults.table.dataPoints.length,
-                      columns: queryTaskState.displayResults.table.columns,
-                      columnLengths: getTableColumnLengths(
-                        queryTaskState.displayResults.table.columns,
-                        queryTaskState.displayResults.table.dataPoints,
-                      ),
-                    }
-                  : undefined,
-                view: queryTaskState.displayResults.view ? {} : undefined,
-              },
-            } satisfies JobBatchFinished),
-          );
+              table: queryTaskState.displayResults.table
+                ? {
+                    totalRows:
+                      queryTaskState.displayResults.table.dataPoints.length,
+                    columns: queryTaskState.displayResults.table.columns,
+                    columnLengths: getTableColumnLengths(
+                      queryTaskState.displayResults.table.columns,
+                      queryTaskState.displayResults.table.dataPoints
+                    ),
+                  }
+                : undefined,
+              view: queryTaskState.displayResults.view ? {} : undefined,
+            },
+          });
         });
       });
     };
@@ -424,7 +424,7 @@ export class Engine {
 
         cachedResult.data = merge<ProcessedData>(
           [cachedResult.data, data],
-          compareProcessedData,
+          compareProcessedData
         );
 
         // Handle batch done - emit event to client
@@ -433,19 +433,12 @@ export class Engine {
         } catch (error) {
           console.error(
             `Error occurred while processing task ${taskId}:`,
-            error,
+            error
           );
           // If an error occurs, we can mark the task as failed
           queryTaskState.task.status = "failed";
           queryTaskState.task.error =
             error instanceof Error ? error.message : "Unknown error";
-          messageSender.sendMessage(
-            newJobUpdatedMessage(
-              taskId,
-              queryTaskState.task.status,
-              queryTaskState.task.error,
-            ),
-          );
           queryTaskState.finishedQuerying.signal(); // Signal that the task is done
         }
         console.log(`Batch done for task ${taskId}`);
@@ -453,14 +446,14 @@ export class Engine {
 
     for (const instanceHolder of instancesToSearchOn) {
       console.log(
-        `Starting query on instance ${instanceHolder.instance.name} for task ${taskId}`,
+        `Starting query on instance ${instanceHolder.instance.name} for task ${taskId}`
       );
       const provider = instanceHolder.provider;
       const uniqueQueryExecution: QueryExecutionHistory = {
         params: parsedTree.controllerParams,
         search: parsedTree.search,
-        start: queryOptions.fromTime,
-        end: queryOptions.toTime,
+        start: new Date(queryOptions.fromTime),
+        end: new Date(queryOptions.toTime),
         instanceRef: instanceHolder.instance.name,
       };
 
@@ -478,13 +471,13 @@ export class Engine {
               // Start the query
               provider
                 .query(parsedTree.controllerParams, parsedTree.search, {
-                  fromTime: queryOptions.fromTime,
-                  toTime: queryOptions.toTime,
+                  fromTime: new Date(queryOptions.fromTime),
+                  toTime: new Date(queryOptions.toTime),
                   limit: queryOptions.limit,
                   cancelToken: queryTaskState.abortController.signal,
                   onBatchDone: onProviderBatchDone(
                     record.key,
-                    instanceHolder.instance.name,
+                    instanceHolder.instance.name
                   ),
                 })
                 .then(async () => {
@@ -496,18 +489,18 @@ export class Engine {
                   record.status = "failed";
                   console.error(
                     `Query subtask failed for task ${taskId}:`,
-                    error,
+                    error
                   );
                   reject(error);
                 });
             });
-          },
+          }
         );
       } else {
         // If the query is already in cache, we just reference it
         cacheRecord = await this.queryCache.referenceCache(
           uniqueQueryExecution,
-          taskId,
+          taskId
         );
         console.log(`Query subtask referenced from cache for task ${taskId}`);
       }
@@ -523,15 +516,15 @@ export class Engine {
     }
 
     Promise.allSettled(
-      queryTaskState.subTasks.map((task) => task.isReady),
+      queryTaskState.subTasks.map((task) => task.isReady)
     ).then((statuses) => {
       const allReady = statuses.every(
-        (status) => status.status === "fulfilled",
+        (status) => status.status === "fulfilled"
       );
       if (!allReady) {
         // get the first error that occurred
         const error = statuses.find(
-          (status) => status.status === "rejected",
+          (status) => status.status === "rejected"
         )?.reason;
         // If any subtask fails, we mark the main task as failed
         task.status = "failed";
@@ -545,30 +538,16 @@ export class Engine {
 
       onTaskDone()
         .then(() => {
-          messageSender.sendMessage(
-            newJobUpdatedMessage(
-              taskId,
-              task.status,
-              queryTaskState.task.error,
-            ),
-          );
           queryTaskState.finishedQuerying.signal();
         })
         .catch((error) => {
           console.error(
             `Error occurred while finalizing task ${taskId}:`,
-            error,
+            error
           );
           // If an error occurs, we can mark the task as failed
           task.status = "failed";
           queryTaskState.task.error = error.message;
-          messageSender.sendMessage(
-            newJobUpdatedMessage(
-              taskId,
-              task.status,
-              queryTaskState.task.error,
-            ),
-          );
           queryTaskState.finishedQuerying.signal(); // Signal that the task is done
         });
     });
@@ -577,7 +556,7 @@ export class Engine {
   }
 
   public async getViewData(
-    taskId: TaskRef,
+    taskId: TaskRef
   ): Promise<NonNullable<DisplayResults["view"]>> {
     const taskState = this.queryTasks[taskId];
     if (!taskState) {
@@ -593,7 +572,7 @@ export class Engine {
 
   public async exportTableResults(
     taskId: TaskRef,
-    format: "csv" | "json",
+    format: "csv" | "json"
   ): Promise<ExportResults> {
     const taskState = this.queryTasks[taskId];
     if (!taskState) {
@@ -638,7 +617,7 @@ export class Engine {
     const taskState = this.queryTasks[taskId];
     if (!taskState) {
       console.warn(
-        `No resources to release for task ${taskId} - task not found`,
+        `No resources to release for task ${taskId} - task not found`
       );
       return; // No resources to release if the task does not exist
     }
@@ -656,14 +635,14 @@ export class Engine {
 
   private _getInstancesToQueryOn(
     searchProfileRef: SearchProfileRef,
-    parsedTree: ParsedQuery,
+    parsedTree: ParsedQuery
   ): PluginInstanceContainer[] {
     const selectedProfile = this.searchProfiles[searchProfileRef];
     let instancesToSearchOn: PluginInstanceContainer[] = [];
     if (parsedTree.dataSources.length === 0) {
       // If no data sources are specified, use all instances in the selected search profile
       instancesToSearchOn = this.initializedPlugins.filter((p) =>
-        selectedProfile.instances.includes(p.instance.name),
+        selectedProfile.instances.includes(p.instance.name)
       );
     } else {
       // If data sources are specified, filter instances based on the data sources
@@ -671,7 +650,7 @@ export class Engine {
       instancesToSearchOn = this.initializedPlugins.filter(
         (p) =>
           dataSources.includes(p.instance.name) &&
-          selectedProfile.instances.includes(p.instance.name),
+          selectedProfile.instances.includes(p.instance.name)
       );
     }
 
@@ -686,7 +665,7 @@ export class Engine {
         processRegex(
           currentData,
           new RegExp(options.pattern),
-          options.columnSelected,
+          options.columnSelected
         ),
       sort: (_context, currentData, options) =>
         processSort(currentData, options.columns),
@@ -701,7 +680,7 @@ export class Engine {
           options.groupBy,
           context.startTime,
           context.endTime,
-          options.params,
+          options.params
         ),
       where: (_context, currentData, options) =>
         processWhere(currentData, options.expression),
@@ -711,7 +690,7 @@ export class Engine {
   private getPipelineItems(
     taskState: QueryTaskState,
     data: ProcessedData[],
-    pipeline: PipelineItem[],
+    pipeline: PipelineItem[]
   ) {
     const currentData = {
       type: "events",
@@ -725,8 +704,8 @@ export class Engine {
     };
 
     const context: PipelineContext = {
-      startTime: taskState.task.input.queryOptions.fromTime,
-      endTime: taskState.task.input.queryOptions.toTime,
+      startTime: new Date(taskState.task.input.queryOptions.fromTime),
+      endTime: new Date(taskState.task.input.queryOptions.toTime),
     };
 
     const pipelineStart = new Date();
@@ -737,7 +716,7 @@ export class Engine {
           this.createProcessor(),
           draft,
           pipeline,
-          context,
+          context
         );
         draft.events = res.events;
         draft.table = res.table;
@@ -750,7 +729,7 @@ export class Engine {
       console.log("[Pipeline] End time: ", pipelineEnd);
       console.log(
         "[Pipeline] Time taken: ",
-        pipelineEnd.getTime() - pipelineStart.getTime(),
+        pipelineEnd.getTime() - pipelineStart.getTime()
       );
     }
   }
@@ -764,9 +743,39 @@ export class Engine {
     taskState.task.status = "canceled"; // or you can set it to "cancelled" if you prefer
     console.log(`Query task ${taskId} cancelled`);
     taskState.task.error = "Query was cancelled"; // Set an error message for the cancellation
-    this.messageSender.sendMessage(
-      newJobUpdatedMessage(taskId, taskState.task.status, taskState.task.error),
-    ); // Notify the client about the cancellation
+    taskState.finishedQuerying.signal();
+  }
+
+  public async *getJobUpdates(
+    taskId: TaskRef,
+    signal?: AbortSignal
+  ): AsyncGenerator<JobBatchFinished> {
+    const taskState = this.queryTasks[taskId];
+    if (!taskState) {
+      throw new Error(`Query task with id ${taskId} not found`);
+    }
+
+    for await (const [data] of on(taskState.ee, "add", {
+      signal: signal,
+      close: ["close"],
+    })) {
+      yield data;
+    }
+  }
+
+  public async *getJobDoneUpdates(
+    taskId: TaskRef,
+    signal?: AbortSignal
+  ): AsyncGenerator<QueryTaskState> {
+    const taskState = this.queryTasks[taskId];
+    if (!taskState) {
+      throw new Error(`Query task with id ${taskId} not found`);
+    }
+
+    // Wait for the task to finish querying
+    await taskState.finishedQuerying.wait({ signal });
+
+    yield taskState;
   }
 }
 
@@ -794,11 +803,11 @@ const getTableColumnLengths = (columns: string[], data: ProcessedData[]) => {
           ...data.map((row) => {
             const value = row.object[col];
             return asDisplayString(value).length + 3; // Length of the value in the column
-          }),
-        ),
+          })
+        )
       );
       return acc;
     },
-    {} as Record<string, number>,
+    {} as Record<string, number>
   );
 };

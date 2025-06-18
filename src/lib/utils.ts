@@ -47,13 +47,27 @@ export const createSignal = <T = void>() => {
     });
   };
 
-  const wait = (opts: { timeout?: number } = {}) => {
+  const wait = (opts: { timeout?: number; signal?: AbortSignal } = {}) => {
+    let abortPromise = promise;
+    if (opts.signal) {
+      abortPromise = new Promise<T>((res, rej) => {
+        const handler = () => {
+          rej(new Error("Signal wait aborted"));
+          opts.signal!.removeEventListener("abort", handler);
+        }
+        opts.signal!.addEventListener("abort", handler);
+
+        promise.then((value) => res(value)).catch((error) => rej(error));
+      });
+    }
+
+    let timeoutPromise = abortPromise;
     if (opts.timeout) {
-      return new Promise<T>((res, rej) => {
+      timeoutPromise =  new Promise<T>((res, rej) => {
         const timer = setTimeout(() => {
           rej(new Error("Signal wait timed out"));
         }, opts.timeout);
-        promise
+        abortPromise
           .then((value) => {
             clearTimeout(timer);
             res(value);
@@ -64,7 +78,9 @@ export const createSignal = <T = void>() => {
           });
       });
     }
-    return promise;
+
+
+    return timeoutPromise;
   };
 
   reset(); // Initialize the promise
@@ -73,6 +89,9 @@ export const createSignal = <T = void>() => {
     reset: reset, // Reset the signal to a new promise
     wait: wait, // Await this to wait for the signal
     signal: (value: T | PromiseLike<T>) => resolve(value), // Call this to resolve the signal
+    then: (onFulfilled: (value: T) => void, onRejected?: (reason: any) => void) => {
+      return promise.then(onFulfilled, onRejected);
+    },
   };
 };
 

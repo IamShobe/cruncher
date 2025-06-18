@@ -1,127 +1,215 @@
+import { on } from "node:events";
 import {
   InstanceRef,
   QueryTask,
   SearchProfileRef,
-  SerializeableParams,
   TaskRef,
 } from "src/processes/server/engineV2/types";
-import {
-  getAsyncRequestHandler,
-  getSyncRequestHandler,
-} from "~lib/websocket/server";
-import { Engine } from "../engineV2/engine";
+import z from "zod/v4";
 import { appGeneralSettings, setupPluginsFromConfig } from "./config";
 import { QueryBatchDone, QueryJobUpdated, UrlNavigation } from "./protocolOut";
+import { publicProcedure, router } from "./trpc";
 
-export const getRoutes = async (engineV2: Engine) => {
-  return [
-    getSyncRequestHandler("reloadConfig", async () => {
-      setupPluginsFromConfig(appGeneralSettings, engineV2);
+export const appRouter = router({
+  reloadConfig: publicProcedure.mutation(async ({ ctx }) => {
+    setupPluginsFromConfig(appGeneralSettings, ctx.engine);
+    return { success: true };
+  }),
+  resetQueries: publicProcedure.mutation(async ({ ctx }) => {
+    ctx.engine.resetQueries();
+    return { success: true };
+  }),
+  getSupportedPlugins: publicProcedure.query(async ({ ctx }) => {
+    return ctx.engine.getSupportedPlugins();
+  }),
+  getInitializedPlugins: publicProcedure.query(async ({ ctx }) => {
+    return ctx.engine.getInitializedPlugins();
+  }),
+  getSearchProfiles: publicProcedure.query(async ({ ctx }) => {
+    return ctx.engine.getSearchProfiles();
+  }),
+  runQueryV2: publicProcedure
+    .input(
+      z.object({
+        searchProfileRef: z.string(),
+        searchTerm: z.string(),
+        queryOptions: z.object({
+          fromTime: z.number(),
+          toTime: z.number(),
+          limit: z.number(),
+          isForced: z.boolean(),
+        }),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      return await ctx.engine.runQuery(
+        input.searchProfileRef as SearchProfileRef,
+        input.searchTerm,
+        input.queryOptions
+      );
+    }),
+  getControllerParams: publicProcedure
+    .input(
+      z.object({
+        instanceRef: z.string(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return await ctx.engine.getControllerParams(
+        input.instanceRef as InstanceRef
+      );
+    }),
+  cancelQuery: publicProcedure
+    .input(
+      z.object({
+        taskId: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      ctx.engine.cancelQuery(input.taskId as TaskRef);
       return { success: true };
     }),
-    getSyncRequestHandler("resetQueries", async () => {
-      engineV2.resetQueries();
+  getLogs: publicProcedure
+    .input(
+      z.object({
+        jobId: z.string(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return ctx.engine.getLogs(input.jobId as TaskRef);
+    }),
+  getLogsPaginated: publicProcedure
+    .input(
+      z.object({
+        jobId: z.string(),
+        offset: z.number(),
+        limit: z.number(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return ctx.engine.getLogsPaginated(
+        input.jobId as TaskRef,
+        input.offset,
+        input.limit
+      );
+    }),
+  getTableDataPaginated: publicProcedure
+    .input(
+      z.object({
+        jobId: z.string(),
+        offset: z.number(),
+        limit: z.number(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return ctx.engine.getTableDataPaginated(
+        input.jobId as TaskRef,
+        input.offset,
+        input.limit
+      );
+    }),
+  getClosestDateEvent: publicProcedure
+    .input(
+      z.object({
+        jobId: z.string(),
+        refDate: z.number(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return ctx.engine.getClosestDateEvent(
+        input.jobId as TaskRef,
+        input.refDate
+      );
+    }),
+  releaseTaskResources: publicProcedure
+    .input(
+      z.object({
+        jobId: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      ctx.engine.releaseTaskResources(input.jobId as TaskRef);
       return { success: true };
     }),
-    getSyncRequestHandler("getSupportedPlugins", async () => {
-      return engineV2.getSupportedPlugins();
+  ping: publicProcedure
+    .input(
+      z.object({
+        name: z.string(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      console.log(`Hello, ${input.name}!`);
     }),
-    // getSyncRequestHandler("initializePlugin", async (params: { pluginRef: string, name: string, params: Record<string, unknown> }) => {
-    //     return controller.initializePlugin(params.pluginRef, params.name, params.params);
-    // }),
-    getSyncRequestHandler("getInitializedPlugins", async () => {
-      return engineV2.getInitializedPlugins();
+  getGeneralSettings: publicProcedure.query(async () => {
+    return appGeneralSettings;
+  }),
+  exportTableResults: publicProcedure
+    .input(
+      z.object({
+        jobId: z.string(),
+        format: z.enum(["csv", "json"]),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      return ctx.engine.exportTableResults(
+        input.jobId as TaskRef,
+        input.format
+      );
     }),
-    getSyncRequestHandler("getSearchProfiles", async () => {
-      return engineV2.getSearchProfiles();
+  getViewData: publicProcedure
+    .input(
+      z.object({
+        jobId: z.string(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      return ctx.engine.getViewData(input.jobId as TaskRef);
     }),
-    getSyncRequestHandler(
-      "runQueryV2",
-      async (params: {
-        searchProfileRef: SearchProfileRef;
-        searchTerm: string;
-        queryOptions: SerializeableParams;
-      }) => {
-        return await engineV2.runQuery(
-          params.searchProfileRef,
-          params.searchTerm,
-          params.queryOptions,
-        );
-      },
-    ),
-    getSyncRequestHandler(
-      "getControllerParams",
-      async (params: { instanceRef: InstanceRef }) => {
-        // return controller.getControllerParams(params.instanceId);
-        return await engineV2.getControllerParams(params.instanceRef);
-      },
-    ),
-    getSyncRequestHandler(
-      "cancelQuery",
-      async (params: { taskId: TaskRef }) => {
-        engineV2.cancelQuery(params.taskId);
-        return { success: true };
-      },
-    ),
-    getSyncRequestHandler("getLogs", async (params: { jobId: TaskRef }) => {
-      return engineV2.getLogs(params.jobId);
-    }),
-    getSyncRequestHandler(
-      "getLogsPaginated",
-      async (params: { jobId: TaskRef; offset: number; limit: number }) => {
-        return engineV2.getLogsPaginated(
-          params.jobId,
-          params.offset,
-          params.limit,
-        );
-      },
-    ),
-    getSyncRequestHandler(
-      "getTableDataPaginated",
-      async (params: { jobId: TaskRef; offset: number; limit: number }) => {
-        return engineV2.getTableDataPaginated(
-          params.jobId,
-          params.offset,
-          params.limit,
-        );
-      },
-    ),
-    getSyncRequestHandler(
-      "getClosestDateEvent",
-      async (params: { jobId: TaskRef; refDate: number }) => {
-        return engineV2.getClosestDateEvent(params.jobId, params.refDate);
-      },
-    ),
 
-    getSyncRequestHandler(
-      "releaseTaskResources",
-      async (params: { jobId: TaskRef }) => {
-        engineV2.releaseTaskResources(params.jobId);
-        return { success: true };
-      },
-    ),
-
-    getAsyncRequestHandler("ping", async (params: { name: string }) => {
-      console.log(`Hello, ${params.name}!`);
+  // Subscriptions
+  onJobBatchDone: publicProcedure
+    .input(
+      z.object({
+        jobId: z.string(),
+      })
+    )
+    .subscription(async function* ({ ctx, input, signal }) {
+      const jobId = input.jobId as TaskRef;
+      for await (const update of ctx.engine.getJobUpdates(jobId, signal)) {
+        yield newBatchDoneMessage(jobId, update);
+      }
     }),
-    getSyncRequestHandler("getGeneralSettings", async () => {
-      return appGeneralSettings;
+  onJobDone: publicProcedure
+    .input(
+      z.object({
+        jobId: z.string(),
+      })
+    )
+    .subscription(async function* ({ ctx, input, signal }) {
+      const jobId = input.jobId as TaskRef;
+      for await (const update of ctx.engine.getJobDoneUpdates(jobId, signal)) {
+        yield newJobUpdatedMessage(
+          jobId,
+          update.task.status,
+          update.task.error
+        );
+      }
     }),
-    getSyncRequestHandler(
-      "exportTableResults",
-      async (params: { jobId: TaskRef; format: "csv" | "json" }) => {
-        return engineV2.exportTableResults(params.jobId, params.format);
-      },
-    ),
-    getSyncRequestHandler("getViewData", async (params: { jobId: TaskRef }) => {
-      return engineV2.getViewData(params.jobId);
-    }),
-  ] as const;
-};
+  onUrlNavigation: publicProcedure.subscription(async function* ({
+    ctx,
+    signal,
+  }) {
+    for await (const [data] of on(ctx.eventEmitter, "urlNavigation", {
+      signal,
+    })) {
+      yield newUrlNavigationMessage(data);
+    }
+  }),
+});
 
 export const newBatchDoneMessage = (
   jobId: string,
-  data: unknown,
+  data: unknown
 ): QueryBatchDone => {
   return {
     type: "query_batch_done",
@@ -135,7 +223,7 @@ export const newBatchDoneMessage = (
 export const newJobUpdatedMessage = (
   jobId: string,
   status: QueryTask["status"],
-  error?: string | null,
+  error?: string | null
 ): QueryJobUpdated => {
   return {
     type: "query_job_updated",

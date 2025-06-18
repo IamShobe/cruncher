@@ -37,6 +37,6 @@
   },
   "include": [
     "src/processes/frontend/**/*",
-    "src/lib/streamMessages.d.ts"
+    "src/processes/server/plugins_engine/router_messages.d.ts",
   ],
 }

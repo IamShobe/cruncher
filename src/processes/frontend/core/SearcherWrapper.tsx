@@ -4,7 +4,6 @@ import { atom, createStore, Provider, useAtom, useAtomValue } from "jotai";
 import React, { useCallback, useState } from "react";
 import { VscAdd, VscClose } from "react-icons/vsc";
 import { useMount } from "react-use";
-import { UrlNavigationSchema } from "src/processes/server/plugins_engine/protocolOut";
 import { v4 as uuidv4 } from "uuid";
 import { Shortcut } from "~components/ui/shortcut";
 import { Tooltip } from "~components/ui/tooltip";
@@ -19,7 +18,7 @@ import {
   runQueryForStore,
   selectedSearchProfileAtom,
   selectedSearchProfileIndexAtom,
-  useMessageEvent,
+  useUrlNavigation
 } from "./search";
 import { appStore } from "./store/appStore";
 import { endFullDateAtom, startFullDateAtom } from "./store/dateState";
@@ -97,7 +96,7 @@ export const useTabs = () => {
     const controller = deletedTab.store.get(appStoreAtom).controller;
     const lastRanJob = deletedTab.store.get(lastRanJobAtom);
     console.log(
-      `Removing tab with key ${key}, last ran job was ${lastRanJob?.id}`,
+      `Removing tab with key ${key}, last ran job was ${lastRanJob?.id}`
     );
     if (lastRanJob) {
       controller.releaseResources(lastRanJob.id);
@@ -112,7 +111,7 @@ export const useTabs = () => {
       setSelectedTab(tabIndex);
     } else {
       const newSelectedIndex = newTabs.findIndex(
-        (tab) => tab.key === selectedTabInfo.key,
+        (tab) => tab.key === selectedTabInfo.key
       );
       setSelectedTab(newSelectedIndex);
     }
@@ -123,7 +122,7 @@ export const useTabs = () => {
     if (!tab) {
       notifyError(
         `Tab with key ${key} not found`,
-        new Error(`Tab with key ${key} not found`),
+        new Error(`Tab with key ${key} not found`)
       );
       return;
     }
@@ -144,60 +143,57 @@ export const SearcherWrapper = () => {
   // TODO: Implement tab selection logic
   const { tabs, addTab, removeTab, selectedTab, setSelectedTab } = useTabs();
 
-  useMessageEvent(UrlNavigationSchema, {
-    callback: async (urlNavigationMessage) => {
-      console.log("URL Navigation message received:", urlNavigationMessage);
+  useUrlNavigation(async (url) => {
+    console.log("URL Navigation message received:", url);
+    const parsedUrl = new URL(url);
+    const tabName = parsedUrl.searchParams.get("name") || "New Search";
+    const startFullDate = parsedUrl.searchParams.get("startTime");
+    const endFullDate = parsedUrl.searchParams.get("endTime");
+    const searchQuery = parsedUrl.searchParams.get("searchQuery");
+    const selectedProfile = parsedUrl.searchParams.get("profile");
+    const initialStartTime = parseDate(startFullDate) ?? undefined;
+    const initialEndTime = parseDate(endFullDate) ?? undefined;
+    const initialQuery = searchQuery || "";
 
-      const parsedUrl = new URL(urlNavigationMessage.payload.url);
-      const tabName = parsedUrl.searchParams.get("name") || "New Search";
-      const startFullDate = parsedUrl.searchParams.get("startTime");
-      const endFullDate = parsedUrl.searchParams.get("endTime");
-      const searchQuery = parsedUrl.searchParams.get("searchQuery");
-      const selectedProfile = parsedUrl.searchParams.get("profile");
-      const initialStartTime = parseDate(startFullDate) ?? undefined;
-      const initialEndTime = parseDate(endFullDate) ?? undefined;
-      const initialQuery = searchQuery || "";
+    console.log("Parsed URL parameters:", {
+      startFullDate: initialStartTime,
+      endFullDate: initialEndTime,
+      searchQuery: initialQuery,
+      profile: selectedProfile,
+      tabName,
+    });
 
-      console.log("Parsed URL parameters:", {
-        startFullDate: initialStartTime,
-        endFullDate: initialEndTime,
-        searchQuery: initialQuery,
-        profile: selectedProfile,
-        tabName,
-      });
+    // create new tab with label from URL
+    const createdTab = addTab(tabName);
 
-      // create new tab with label from URL
-      const createdTab = addTab(tabName);
+    const querySpecificStore = createdTab.createdTab.store;
 
-      const querySpecificStore = createdTab.createdTab.store;
+    querySpecificStore.set(searchQueryAtom, initialQuery);
+    querySpecificStore.set(startFullDateAtom, initialStartTime);
+    querySpecificStore.set(endFullDateAtom, initialEndTime);
 
-      querySpecificStore.set(searchQueryAtom, initialQuery);
-      querySpecificStore.set(startFullDateAtom, initialStartTime);
-      querySpecificStore.set(endFullDateAtom, initialEndTime);
-
-      if (selectedProfile) {
-        const profiles = appStore.getState().searchProfiles;
-        const selectedInstanceIndex = profiles.findIndex(
-          (profile) => profile.name === selectedProfile,
-        );
-        if (selectedInstanceIndex === -1) {
-          notifyError(
-            `Profile \"${selectedProfile}\" not found. Please select a valid profile.`,
-            new Error(`Profile \"${selectedProfile}\" not found.`),
-          );
-        }
-
-        querySpecificStore.set(
-          selectedSearchProfileIndexAtom,
-          selectedInstanceIndex,
+    if (selectedProfile) {
+      const profiles = appStore.getState().searchProfiles;
+      const selectedInstanceIndex = profiles.findIndex(
+        (profile) => profile.name === selectedProfile
+      );
+      if (selectedInstanceIndex === -1) {
+        notifyError(
+          `Profile \"${selectedProfile}\" not found. Please select a valid profile.`,
+          new Error(`Profile \"${selectedProfile}\" not found.`)
         );
       }
-      setSelectedTab(createdTab.index);
-      await createdTab.createdTab.readySignal.wait({
-        timeout: 5000,
-      });
-      await runQueryForStore(createdTab.createdTab.store, true);
-    },
+
+      querySpecificStore.set(
+        selectedSearchProfileIndexAtom,
+        selectedInstanceIndex
+      );
+    }
+    setSelectedTab(createdTab.index);
+    await createdTab.createdTab.readySignal.wait({
+      timeout: 5000,
+    });
+    await runQueryForStore(createdTab.createdTab.store, true);
   });
 
   const initializeProfiles = useCallback(
@@ -205,14 +201,14 @@ export const SearcherWrapper = () => {
       const profileNames = new Set(
         tabs.map((tab) => {
           const selectedSearchProfile = tab.store.get(
-            selectedSearchProfileAtom,
+            selectedSearchProfileAtom
           );
           if (!selectedSearchProfile) {
             return;
           }
 
           return selectedSearchProfile.name;
-        }),
+        })
       );
 
       for (const profileName of profileNames) {
@@ -224,7 +220,7 @@ export const SearcherWrapper = () => {
         await appStore.getState().initializeProfileDatasets(profileName);
       }
     }, 200),
-    [tabs],
+    [tabs]
   );
 
   useMount(() => {
@@ -331,7 +327,7 @@ const DisplayTab: React.FC<{
     if (!newLabel || newLabel.trim() === "") {
       notifyError(
         "Tab name cannot be empty",
-        new Error("Tab name cannot be empty"),
+        new Error("Tab name cannot be empty")
       );
       return;
     }

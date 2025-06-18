@@ -1,20 +1,16 @@
 import { sub } from "date-fns";
 import { expect, test } from "vitest";
 import * as mockedData from "~adapters/mocked_data";
-import { ResponseHandler } from "~lib/networkTypes";
+import { ExternalAuthProvider } from "~lib/adapters";
 import { Engine } from "./engine";
 import { InstanceRef, SearchProfileRef } from "./types";
 
 test("engine register plugin", () => {
-  const messages: any[] = [];
-  const mockedMessageSender: ResponseHandler = {
-    waitUntilReady: () => Promise.resolve(),
-    sendMessage: async (message) => {
-      messages.push(message);
-    },
-  };
+  const externalAuthProvider = {
+    getCookies: () => Promise.resolve({}),
+  } satisfies ExternalAuthProvider;
 
-  const engine = new Engine(mockedMessageSender);
+  const engine = new Engine(externalAuthProvider);
   engine.registerPlugin(mockedData.adapter);
 
   expect(engine.getSupportedPlugins().length).toBe(1);
@@ -22,15 +18,11 @@ test("engine register plugin", () => {
 });
 
 test("engine initialize plugin", () => {
-  const messages: any[] = [];
-  const mockedMessageSender: ResponseHandler = {
-    waitUntilReady: () => Promise.resolve(),
-    sendMessage: async (message) => {
-      messages.push(message);
-    },
-  };
+  const externalAuthProvider = {
+    getCookies: () => Promise.resolve({}),
+  } satisfies ExternalAuthProvider;
 
-  const engine = new Engine(mockedMessageSender);
+  const engine = new Engine(externalAuthProvider);
   engine.registerPlugin(mockedData.adapter);
 
   const plugins = engine.getSupportedPlugins();
@@ -41,24 +33,19 @@ test("engine initialize plugin", () => {
   const pluginInstance = engine.initializePlugin(
     pluginToInitialize.ref,
     "newInstance" as InstanceRef,
-    {},
+    {}
   );
 
   expect(pluginInstance).toBeDefined();
   expect(pluginInstance.pluginRef).toBe("mocked_data");
-  expect(messages.length).toBe(0); // No messages should be sent on initialization
 });
 
 test("engine initialize profile", () => {
-  const messages: any[] = [];
-  const mockedMessageSender: ResponseHandler = {
-    waitUntilReady: () => Promise.resolve(),
-    sendMessage: async (message) => {
-      messages.push(message);
-    },
-  };
+  const externalAuthProvider = {
+    getCookies: () => Promise.resolve({}),
+  } satisfies ExternalAuthProvider;
 
-  const engine = new Engine(mockedMessageSender);
+  const engine = new Engine(externalAuthProvider);
   engine.registerPlugin(mockedData.adapter);
 
   const plugins = engine.getSupportedPlugins();
@@ -68,11 +55,11 @@ test("engine initialize profile", () => {
   const pluginInstance = engine.initializePlugin(
     pluginToInitialize.ref,
     "newInstance" as InstanceRef,
-    {},
+    {}
   );
   const profile = engine.initializeSearchProfile(
     "default" as SearchProfileRef,
-    [pluginInstance.name],
+    [pluginInstance.name]
   );
 
   expect(profile).toBeDefined();
@@ -80,15 +67,11 @@ test("engine initialize profile", () => {
 });
 
 test("engine query", async () => {
-  const messages: any[] = [];
-  const mockedMessageSender: ResponseHandler = {
-    waitUntilReady: () => Promise.resolve(),
-    sendMessage: async (message) => {
-      messages.push(message);
-    },
-  };
+  const externalAuthProvider = {
+    getCookies: () => Promise.resolve({}),
+  } satisfies ExternalAuthProvider;
 
-  const engine = new Engine(mockedMessageSender);
+  const engine = new Engine(externalAuthProvider);
   engine.registerPlugin(mockedData.adapter);
 
   const plugins = engine.getSupportedPlugins();
@@ -98,7 +81,7 @@ test("engine query", async () => {
   const pluginInstance = engine.initializePlugin(
     pluginToInitialize.ref,
     "newInstance" as InstanceRef,
-    {},
+    {}
   );
   const searchProfile = "default" as SearchProfileRef;
   const profile = engine.initializeSearchProfile(searchProfile, [
@@ -107,8 +90,8 @@ test("engine query", async () => {
 
   const task = await engine.runQuery(profile.name, "", {
     // empty search term to match all data
-    fromTime: sub(new Date(), { days: 1 }),
-    toTime: new Date(),
+    fromTime: sub(new Date(), { days: 1 }).getTime(),
+    toTime: new Date().getTime(),
     limit: 100000,
     isForced: false,
   });
@@ -120,12 +103,12 @@ test("engine query", async () => {
 
   await state.finishedQuerying.wait();
   expect(state.task.status).toBe("completed");
-  expect(messages.length).toBe(3);
-  expect(messages[0].type).toBe("query_batch_done");
-  expect(messages[0].payload.jobId).toBe(task.id);
-  expect(messages[1].type).toBe("query_batch_done");
-  expect(messages[1].payload.jobId).toBe(task.id);
-  expect(messages[2].type).toBe("query_job_updated");
-  expect(messages[2].payload.jobId).toBe(task.id);
-  expect(messages[2].payload.status).toBe("completed");
+  // expect(messages.length).toBe(3);
+  // expect(messages[0].type).toBe("query_batch_done");
+  // expect(messages[0].payload.jobId).toBe(task.id);
+  // expect(messages[1].type).toBe("query_batch_done");
+  // expect(messages[1].payload.jobId).toBe(task.id);
+  // expect(messages[2].type).toBe("query_job_updated");
+  // expect(messages[2].payload.jobId).toBe(task.id);
+  // expect(messages[2].payload.status).toBe("completed");
 });

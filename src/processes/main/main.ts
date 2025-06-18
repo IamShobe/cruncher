@@ -38,7 +38,7 @@ const checkForUpdates = async () => {
   if (!fetchResponse.ok) {
     console.error(
       "Failed to fetch update information:",
-      fetchResponse.statusText,
+      fetchResponse.statusText
     );
     return;
   }
@@ -107,7 +107,7 @@ const createWindow = () => {
     mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
   } else {
     mainWindow.loadFile(
-      path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`),
+      path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`)
     );
   }
 
@@ -144,7 +144,7 @@ function startServerProcess() {
     if (code !== 0) {
       dialog.showErrorBox(
         "FATAL ERROR",
-        `Server process exited with code: ${code}`,
+        `Server process exited with code: ${code}`
       );
       serverProcess = null;
       serverReady = null;
@@ -164,7 +164,7 @@ function startServerProcess() {
     console.error("Failed to start server process:", err);
     dialog.showErrorBox(
       "FATAL ERROR",
-      `Failed to start server process: ${err}`,
+      `Failed to start server process: ${err}`
     );
     port1.close();
     port2.close();
@@ -180,7 +180,7 @@ function startServerProcess() {
       const requestedCookies = msg.cookies as string[];
       const jobId = msg.jobId as string;
       console.log(
-        "Received authentication request from server process, sending cookies...",
+        "Received authentication request from server process, sending cookies..."
       );
 
       try {
@@ -191,7 +191,7 @@ function startServerProcess() {
           }>(
             port2,
             { type: "authResult", jobId: jobId, cookies: cookies },
-            "authResult",
+            "authResult"
           );
 
           return result.status;
@@ -201,7 +201,7 @@ function startServerProcess() {
           console.error("Error during authentication", error);
         } else {
           console.warn(
-            "Server process is not active, skipping authentication error handling.",
+            "Server process is not active, skipping authentication error handling."
           );
         }
       }
@@ -214,7 +214,7 @@ function startServerProcess() {
   serverReady = requestFromServer<void>(
     port2,
     {}, // No request message needed, just wait for the first 'ready' message
-    "ready",
+    "ready"
   );
 }
 
@@ -250,7 +250,7 @@ const ready = async () => {
     const msg = await requestFromServer<{ type: string; port: number }>(
       port,
       { type: "getPort" },
-      "port",
+      "port"
     );
     return msg.port;
   });

@@ -1,4 +1,5 @@
 import { Mutex } from "async-mutex";
+import EventEmitter from "node:events";
 import BTree from "sorted-btree";
 import { JSONSchema } from "zod/v4/core";
 import { PluginRef, QueryProvider } from "~lib/adapters";
@@ -14,7 +15,7 @@ export type QueryTask = {
   input: QueryInput;
   status: "running" | "completed" | "failed" | "canceled";
   error: string | null; // Error message if the task failed
-  createdAt: Date;
+  createdAt: number;
 };
 
 export type QueryInput = {
@@ -31,6 +32,7 @@ export type QueryTaskState = {
   displayResults: DisplayResults;
   finishedQuerying: Signal;
   mutex: Mutex;
+  ee: EventEmitter;
 };
 
 export type QueryExecutionHistory = {
@@ -69,8 +71,8 @@ export type SerializableAdapter = {
 
 // MUST BE SERIALIZABLE
 export type SerializeableParams = {
-  fromTime: Date;
-  toTime: Date;
+  fromTime: number;
+  toTime: number;
   limit: number;
   isForced: boolean;
 };

@@ -1,93 +1,74 @@
+import { TRPCClient } from "@trpc/client";
+import { Unsubscribable } from "@trpc/server/observable";
 import {
   ClosestPoint,
   ExportResults,
   InstanceRef,
   PageResponse,
-  QueryTask,
   SearchProfileRef,
   TableDataResponse,
   TaskRef,
 } from "src/processes/server/engineV2/types";
-import {
-  QueryBatchDoneSchema,
-  QueryJobUpdatedSchema,
-} from "src/processes/server/plugins_engine/protocolOut";
-import z from "zod/v4";
+import { AppRouter } from "src/processes/server/plugins_engine/router_messages";
 import { ProcessedData } from "~lib/adapters/logTypes";
 import { DisplayResults } from "~lib/displayTypes";
-import {
-  StreamConnection,
-  SubscribeOptions,
-  UnsubscribeFunction,
-} from "~lib/network";
 import { removeJobQueries } from "./api";
 import { QueryOptions } from "./common/interface";
 
 export class ApiController {
-  constructor(private connection: StreamConnection) {}
+  constructor(private connection: TRPCClient<AppRouter>) {}
   reload = async () => {
-    return await this.connection.invoke("reloadConfig", {});
+    return await this.connection.reloadConfig.mutate();
   };
 
   resetQueries = async () => {
-    return await this.connection.invoke("resetQueries", {});
+    return await this.connection.resetQueries.mutate();
   };
 
   listPlugins = async () => {
-    return await this.connection.invoke("getSupportedPlugins", {});
+    return await this.connection.getSupportedPlugins.query();
   };
 
   listInitializedPlugins = async () => {
-    return await this.connection.invoke("getInitializedPlugins", {});
+    return await this.connection.getInitializedPlugins.query();
   };
 
   listInitializedSearchProfiles = async () => {
-    return await this.connection.invoke("getSearchProfiles", {});
+    return await this.connection.getSearchProfiles.query();
   };
 
   getGeneralSettings = async () => {
-    return await this.connection.invoke("getGeneralSettings", {});
+    return await this.connection.getGeneralSettings.query();
   };
 
   getControllerParams = async (
-    pluginInstanceRef: InstanceRef,
+    pluginInstanceRef: InstanceRef
   ): Promise<Record<string, string[]>> => {
-    return await this.connection.invoke(
-      "getControllerParams",
-      { instanceRef: pluginInstanceRef },
-      {
-        timeout: 120000, // Set a timeout for the request
+    return await this.connection.getControllerParams.query({
+      instanceRef: pluginInstanceRef,
+    });
+  };
+
+  onUrlNavigation = (callback: (url: string) => void) => {
+    return this.connection.onUrlNavigation.subscribe(undefined, {
+      onData: (message) => {
+        callback(message.payload.url);
       },
-    );
+    });
   };
-
-  subscribeToMessages = <T extends z.ZodTypeAny>(
-    schema: T,
-    options: SubscribeOptions<T>,
-  ) => {
-    const unsub = this.connection.subscribe(schema, options);
-
-    return () => {
-      unsub(); // Unsubscribe from the WebSocket messages
-    };
-  };
-
-  async getLogs(taskId: TaskRef): Promise<DisplayResults> {
-    return await this.connection.invoke("getLogs", { jobId: taskId });
-  }
 
   async getViewData(
-    taskId: TaskRef,
+    taskId: TaskRef
   ): Promise<NonNullable<DisplayResults["view"]>> {
-    return await this.connection.invoke("getViewData", { jobId: taskId });
+    return await this.connection.getViewData.query({ jobId: taskId });
   }
 
   async getTableDataPaginated(
     taskId: TaskRef,
     offset: number,
-    limit: number,
+    limit: number
   ): Promise<TableDataResponse> {
-    return await this.connection.invoke("getTableDataPaginated", {
+    return await this.connection.getTableDataPaginated.query({
       jobId: taskId,
       offset: offset,
       limit: limit,
@@ -97,9 +78,9 @@ export class ApiController {
   async getLogsPaginated(
     taskId: TaskRef,
     offset: number,
-    limit: number,
+    limit: number
   ): Promise<PageResponse<ProcessedData>> {
-    const results = await this.connection.invoke("getLogsPaginated", {
+    const results = await this.connection.getLogsPaginated.query({
       jobId: taskId,
       offset: offset,
       limit: limit,
@@ -110,9 +91,9 @@ export class ApiController {
 
   async getClosestDateEvent(
     taskId: TaskRef,
-    refDate: number,
+    refDate: number
   ): Promise<ClosestPoint | null> {
-    const results = await this.connection.invoke("getClosestDateEvent", {
+    const results = await this.connection.getClosestDateEvent.query({
       jobId: taskId,
       refDate: refDate,
     });
@@ -127,9 +108,9 @@ export class ApiController {
 
   async exportTableResults(
     taskId: TaskRef,
-    format: "csv" | "json",
+    format: "csv" | "json"
   ): Promise<ExportResults> {
-    return await this.connection.invoke("exportTableResults", {
+    return await this.connection.exportTableResults.mutate({
       jobId: taskId,
       format: format,
     });
@@ -137,7 +118,7 @@ export class ApiController {
 
   async releaseResources(taskId: TaskRef): Promise<void> {
     await removeJobQueries(taskId);
-    this.connection.invoke("releaseTaskResources", {
+    this.connection.releaseTaskResources.mutate({
       jobId: taskId,
     });
   }
@@ -145,79 +126,83 @@ export class ApiController {
   async query(
     searchProfileRef: SearchProfileRef,
     searchTerm: string,
-    queryOptions: QueryOptions,
+    queryOptions: QueryOptions
   ) {
     // setup cancel token
     const cancelToken = queryOptions.cancelToken;
-    let unsubscribeJobDoneHandler!: UnsubscribeFunction;
-    let executedJob: QueryTask | null = null;
-    cancelToken.addEventListener("abort", async () => {
-      if (!executedJob) {
-        console.warn("No job to cancel");
-        return;
-      }
+    let unsubscribeJobDoneHandler: Unsubscribable;
 
-      console.log(`Query job ${executedJob.id} cancelled`);
-      await this.connection.invoke("cancelQuery", {
-        taskId: executedJob.id,
-      });
-      executedJob = null; // Clear the executed job after cancellation
-      unsubscribeJobDoneHandler?.();
-    });
-
-    const unsubscribeBatchHandler = this.connection.subscribe(
-      QueryBatchDoneSchema,
-      {
-        predicate: (batchMessage) =>
-          batchMessage.payload.jobId === executedJob?.id,
-        callback: (batchMessage) => {
-          queryOptions.onBatchDone(batchMessage.payload.data);
-        },
-      },
-    );
-
-    executedJob = await this.connection.invoke("runQueryV2", {
+    const executedJob = await this.connection.runQueryV2.mutate({
       searchProfileRef: searchProfileRef,
       searchTerm,
       queryOptions: {
-        fromTime: queryOptions.fromTime,
-        toTime: queryOptions.toTime,
+        fromTime: queryOptions.fromTime.getTime(),
+        toTime: queryOptions.toTime.getTime(),
         limit: queryOptions.limit,
         isForced: queryOptions.isForced || false, // Default to false if not provided
       },
     });
+
+    cancelToken.addEventListener("abort", async () => {
+      console.log(`Query job ${executedJob.id} cancelled`);
+      await this.connection.cancelQuery.mutate({
+        taskId: executedJob.id,
+      });
+    });
+
+    const unsubscribeBatchHandler = this.connection.onJobBatchDone.subscribe(
+      {
+        jobId: executedJob.id,
+      },
+      {
+        onData: (batchMessage) => {
+          queryOptions.onBatchDone(batchMessage.payload.data);
+        },
+      }
+    );
+
     console.log("Query job started:", executedJob);
     return {
       job: executedJob,
       promise: new Promise<void>((resolve, reject) => {
-        unsubscribeJobDoneHandler = this.connection.subscribe(
-          QueryJobUpdatedSchema,
+        unsubscribeJobDoneHandler = this.connection.onJobDone.subscribe(
           {
-            predicate: (jobUpdateMessage) =>
-              jobUpdateMessage.payload.jobId === executedJob?.id,
-            callback: (jobUpdateMessage) => {
+            jobId: executedJob.id,
+          },
+          {
+            onData: (jobUpdateMessage) => {
               try {
                 const jobUpdate = jobUpdateMessage.payload;
                 if (jobUpdate.status === "completed") {
                   console.log(`Job ${jobUpdate.jobId} completed`);
                   resolve();
-                } else {
-                  console.log(
-                    `Job ${jobUpdate.jobId} updated: ${jobUpdate.status}`,
+                } else if (
+                  jobUpdate.status === "failed" ||
+                  jobUpdate.status === "canceled"
+                ) {
+                  console.error(
+                    `Job ${jobUpdate.jobId} failed with error: ${jobUpdate.error || "Unknown error"}`
                   );
-                  // You can handle other statuses if needed
                   reject(
                     new Error(
-                      `Query job ${jobUpdate.jobId} failed with status: ${jobUpdate.status}\nError: ${jobUpdate.error || "Unknown error"}`,
-                    ),
+                      `Query job ${jobUpdate.jobId} failed with status: ${jobUpdate.status}\nError: ${
+                        jobUpdate.error || "Unknown error"
+                      }`
+                    )
+                  );
+                } else {
+                  console.log(
+                    `Job ${jobUpdate.jobId} updated: ${jobUpdate.status}`
                   );
                 }
+              } catch (error) {
+                reject(error);
               } finally {
-                unsubscribeBatchHandler();
-                unsubscribeJobDoneHandler();
+                unsubscribeBatchHandler.unsubscribe();
+                unsubscribeJobDoneHandler.unsubscribe();
               }
             },
-          },
+          }
         );
       }),
     };
