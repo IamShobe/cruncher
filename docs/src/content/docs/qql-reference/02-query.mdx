@@ -74,8 +74,9 @@ Matches records containing either "error" or "warning", and also "timeout".
 
 When writing QQL queries, it's important to distinguish between string and regex types:
 
-- **String values** are usually wrapped in double quotes (`"...")`.
+- **String values** are usually wrapped in double quotes (`"..."`).
 - **Regex values** must be wrapped in backticks (`` `...` ``).
+- **Single quoted strings** (`'...'`) can be used for column names that contain special characters, spaces, or reserved words. For example, `where 'user name' == "alice"` matches a column literally named `user name`.
 
 This distinction is important for functions and commands that accept either type. For example:
 
@@ -89,7 +90,12 @@ where user == "alice"
 ```
 This matches records where the `user` field is exactly "alice".
 
-Always use double quotes for string values and backticks for regex patterns in your QQL queries.
+```
+where 'user name' == "alice"
+```
+This matches records where the column named `user name` is exactly "alice".
+
+Always use double quotes for string values, single quotes for column names with special characters, and backticks for regex patterns in your QQL queries.
 
 ## Query Structure
 
