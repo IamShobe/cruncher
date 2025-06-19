@@ -7,9 +7,9 @@ import { ProcessedData } from "~lib/adapters/logTypes";
 import { FullDate } from "~lib/dateUtils";
 import { DisplayResults } from "~lib/displayTypes";
 import { ControllerIndexParam, Search } from "~lib/qql/grammar";
-import { Signal } from "~lib/utils";
+import { Brand, Signal } from "~lib/utils";
 
-export type TaskRef = string & { _tr: never }; // A unique identifier for a plugin
+export type TaskRef = Brand<string, "TaskRef">;
 export type QueryTask = {
   id: TaskRef;
   input: QueryInput;
@@ -50,8 +50,8 @@ export type QueryExecutionHistory = {
   instanceRef: InstanceRef;
 };
 
-export type InstanceRef = string & { _ir: never }; // A unique identifier for a plugin instance
-export type SearchProfileRef = string & { _spr: never }; // A unique identifier for a search profile
+export type InstanceRef = Brand<string, "InstanceRef">;
+export type SearchProfileRef = Brand<string, "SearchProfileRef">;
 
 // MUST BE SERIALIZABLE
 export type SearchProfile = {
@@ -104,7 +104,7 @@ export type ClosestPoint = {
   index: number | null; // Index of the closest point in the data array
 };
 
-export type SubTaskRef = string & { _: never }; // A unique identifier for a subtask
+export type SubTaskRef = Brand<string, "SubTaskRef">;
 export type SubTask = {
   id: SubTaskRef;
   createdAt: Date;

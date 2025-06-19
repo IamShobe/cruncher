@@ -54,7 +54,7 @@ export const createSignal = <T = void>() => {
         const handler = () => {
           rej(new Error("Signal wait aborted"));
           opts.signal!.removeEventListener("abort", handler);
-        }
+        };
         opts.signal!.addEventListener("abort", handler);
 
         promise.then((value) => res(value)).catch((error) => rej(error));
@@ -63,7 +63,7 @@ export const createSignal = <T = void>() => {
 
     let timeoutPromise = abortPromise;
     if (opts.timeout) {
-      timeoutPromise =  new Promise<T>((res, rej) => {
+      timeoutPromise = new Promise<T>((res, rej) => {
         const timer = setTimeout(() => {
           rej(new Error("Signal wait timed out"));
         }, opts.timeout);
@@ -79,7 +79,6 @@ export const createSignal = <T = void>() => {
       });
     }
 
-
     return timeoutPromise;
   };
 
@@ -89,7 +88,10 @@ export const createSignal = <T = void>() => {
     reset: reset, // Reset the signal to a new promise
     wait: wait, // Await this to wait for the signal
     signal: (value: T | PromiseLike<T>) => resolve(value), // Call this to resolve the signal
-    then: (onFulfilled: (value: T) => void, onRejected?: (reason: any) => void) => {
+    then: (
+      onFulfilled: (value: T) => void,
+      onRejected?: (reason: any) => void
+    ) => {
       return promise.then(onFulfilled, onRejected);
     },
   };
@@ -123,12 +125,23 @@ export const atLeastOneConnectionSignal = () => {
   };
 };
 
-export const debounceInitialize = (fn: () => void, delay: number) => {
+export const debounceInitialize = <T, R>(
+  fn: (...args: T[]) => Promise<R>,
+  delay: number
+): ((...args: T[]) => Promise<R>) => {
   let timeoutId: NodeJS.Timeout;
-  return () => {
+  return (...args: T[]) => {
     clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => {
-      fn();
-    }, delay);
+    return new Promise<R>((resolve, reject) => {
+      timeoutId = setTimeout(() => {
+        fn(...args).then(resolve).catch(reject);
+      }, delay);
+    });
   };
+};
+
+export type Brand<K, T> = K & { __brand: T };
+
+export const asBrand = <T, K = unknown>(value: K): Brand<K, T> => {
+  return value as Brand<K, T>;
 };

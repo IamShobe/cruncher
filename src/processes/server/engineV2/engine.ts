@@ -56,7 +56,6 @@ import {
   TaskRef,
 } from "./types";
 import { calculateBuckets, getScale } from "./utils";
-import { Repeater } from "@repeaterjs/repeater";
 
 export class Engine {
   private supportedPlugins: Adapter[] = [];

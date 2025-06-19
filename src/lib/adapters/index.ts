@@ -1,6 +1,7 @@
 import { ControllerIndexParam, Search } from "~lib/qql/grammar";
 import { ProcessedData } from "./logTypes";
 import { z } from "zod/v4";
+import { Brand } from "~lib/utils";
 
 export type QueryOptions = {
   fromTime: Date;
@@ -15,7 +16,7 @@ export interface QueryProvider {
   query(
     params: ControllerIndexParam[],
     searchTerm: Search,
-    queryOptions: QueryOptions,
+    queryOptions: QueryOptions
   ): Promise<void>;
 }
 
@@ -60,13 +61,13 @@ export type FactoryParams = {
   params: Record<string, unknown>;
 };
 
-export type PluginRef = string & { _pr: never }; // A unique identifier for a plugin
+export type PluginRef = Brand<string, "PluginRef">; // A unique identifier for a plugin
 
 export type ExternalAuthProvider = {
   getCookies(
     requestedUrl: string,
     cookies: string[],
-    validate: (cookies: Record<string, string>) => Promise<boolean>,
+    validate: (cookies: Record<string, string>) => Promise<boolean>
   ): Promise<Record<string, string>>;
 };
 
