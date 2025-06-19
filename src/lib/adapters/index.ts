@@ -16,7 +16,7 @@ export interface QueryProvider {
   query(
     params: ControllerIndexParam[],
     searchTerm: Search,
-    queryOptions: QueryOptions
+    queryOptions: QueryOptions,
   ): Promise<void>;
 }
 
@@ -67,7 +67,7 @@ export type ExternalAuthProvider = {
   getCookies(
     requestedUrl: string,
     cookies: string[],
-    validate: (cookies: Record<string, string>) => Promise<boolean>
+    validate: (cookies: Record<string, string>) => Promise<boolean>,
   ): Promise<Record<string, string>>;
 };
 

@@ -12,22 +12,22 @@ import { AwaitableTask } from "./common/interface";
 import { openIndexesAtom } from "./events/state";
 import { notifyError, notifySuccess } from "./notifyError";
 import {
-    ApplicationStore,
-    appStore,
-    useApplicationStore,
+  ApplicationStore,
+  appStore,
+  useApplicationStore,
 } from "./store/appStore";
 import {
-    actualEndTimeAtom,
-    actualStartTimeAtom,
-    endFullDateAtom,
-    startFullDateAtom,
+  actualEndTimeAtom,
+  actualStartTimeAtom,
+  endFullDateAtom,
+  startFullDateAtom,
 } from "./store/dateState";
 import {
-    jobMetadataAtom,
-    searchQueryAtom,
-    tabNameAtom,
-    useQuerySpecificStoreInternal,
-    viewSelectedForQueryAtom,
+  jobMetadataAtom,
+  searchQueryAtom,
+  tabNameAtom,
+  useQuerySpecificStoreInternal,
+  viewSelectedForQueryAtom,
 } from "./store/queryState";
 
 export type QueryState = {
@@ -104,7 +104,7 @@ export const selectedSearchProfileAtom = atom((get) => {
 });
 
 export const useSelectedSearchProfile = (
-  opts: { store?: ReturnType<typeof createStore> } = {}
+  opts: { store?: ReturnType<typeof createStore> } = {},
 ) => {
   return useAtomValue(selectedSearchProfileAtom, { store: opts.store });
 };
@@ -123,7 +123,7 @@ const controllerParamsAtom = atom(async (get) => {
   const controllerParams: Record<string, string[]> = {};
   for (const instance of selectedProfile.instances) {
     for (const [key, values] of Object.entries(
-      get(appStoreAtom).datasets[instance]?.controllerParams ?? {}
+      get(appStoreAtom).datasets[instance]?.controllerParams ?? {},
     )) {
       if (!controllerParams[key]) {
         controllerParams[key] = [];
@@ -143,7 +143,7 @@ export const useControllerParams = () => {
 export const lastQueryAtom = atom<QueryExecutionHistory | undefined>(undefined);
 
 export const lastExecutedQueryStateAtom = atom<QueryState | undefined>(
-  undefined
+  undefined,
 );
 
 export const isLoadingAtom = atom(false);
@@ -159,7 +159,7 @@ export const useInitializedController = () => {
   const isInitialized = useApplicationStore((state) => state.isInitialized);
   if (!isInitialized) {
     throw new Error(
-      "Controller is not initialized yet. Please wait for the application to load."
+      "Controller is not initialized yet. Please wait for the application to load.",
     );
   }
 
@@ -179,7 +179,7 @@ export const useUrlNavigation = (callback: (url: string) => void) => {
 };
 
 export const useQueryExecutedEffect = (
-  callback: (state: QueryState) => void
+  callback: (state: QueryState) => void,
 ) => {
   const lastExecutedQueryState = useAtomValue(lastExecutedQueryStateAtom);
   useEffect(() => {
@@ -269,13 +269,13 @@ export const useRunQuery = () => {
     (isForced: boolean) => {
       return runQueryForStore(store, isForced);
     },
-    [store]
+    [store],
   );
 };
 
 export const runQueryForStore = async (
   store: ReturnType<typeof createStore>,
-  isForced: boolean
+  isForced: boolean,
 ) => {
   const controller = store.get(appStoreAtom).controller;
   const resetBeforeNewBackendQuery = () => {
@@ -380,7 +380,7 @@ export const runQueryForStore = async (
                 store.set(jobMetadataAtom, data);
                 // store.set(dataViewModelAtom, data);
               },
-            }
+            },
           );
           await awaitableJob.promise;
           store.set(isQuerySuccessAtom, true);

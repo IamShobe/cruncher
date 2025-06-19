@@ -42,7 +42,7 @@ export class ApiController {
   };
 
   getControllerParams = async (
-    pluginInstanceRef: InstanceRef
+    pluginInstanceRef: InstanceRef,
   ): Promise<Record<string, string[]>> => {
     return await this.connection.getControllerParams.query({
       instanceRef: pluginInstanceRef,
@@ -58,7 +58,7 @@ export class ApiController {
   };
 
   async getViewData(
-    taskId: TaskRef
+    taskId: TaskRef,
   ): Promise<NonNullable<DisplayResults["view"]>> {
     return await this.connection.getViewData.query({ jobId: taskId });
   }
@@ -66,7 +66,7 @@ export class ApiController {
   async getTableDataPaginated(
     taskId: TaskRef,
     offset: number,
-    limit: number
+    limit: number,
   ): Promise<TableDataResponse> {
     return await this.connection.getTableDataPaginated.query({
       jobId: taskId,
@@ -78,7 +78,7 @@ export class ApiController {
   async getLogsPaginated(
     taskId: TaskRef,
     offset: number,
-    limit: number
+    limit: number,
   ): Promise<PageResponse<ProcessedData>> {
     const results = await this.connection.getLogsPaginated.query({
       jobId: taskId,
@@ -91,7 +91,7 @@ export class ApiController {
 
   async getClosestDateEvent(
     taskId: TaskRef,
-    refDate: number
+    refDate: number,
   ): Promise<ClosestPoint | null> {
     const results = await this.connection.getClosestDateEvent.query({
       jobId: taskId,
@@ -108,7 +108,7 @@ export class ApiController {
 
   async exportTableResults(
     taskId: TaskRef,
-    format: "csv" | "json"
+    format: "csv" | "json",
   ): Promise<ExportResults> {
     return await this.connection.exportTableResults.mutate({
       jobId: taskId,
@@ -126,7 +126,7 @@ export class ApiController {
   async query(
     searchProfileRef: SearchProfileRef,
     searchTerm: string,
-    queryOptions: QueryOptions
+    queryOptions: QueryOptions,
   ) {
     // setup cancel token
     const cancelToken = queryOptions.cancelToken;
@@ -158,7 +158,7 @@ export class ApiController {
         onData: (batchMessage) => {
           queryOptions.onBatchDone(batchMessage.payload.data);
         },
-      }
+      },
     );
 
     console.log("Query job started:", executedJob);
@@ -181,18 +181,18 @@ export class ApiController {
                   jobUpdate.status === "canceled"
                 ) {
                   console.error(
-                    `Job ${jobUpdate.jobId} failed with error: ${jobUpdate.error || "Unknown error"}`
+                    `Job ${jobUpdate.jobId} failed with error: ${jobUpdate.error || "Unknown error"}`,
                   );
                   reject(
                     new Error(
                       `Query job ${jobUpdate.jobId} failed with status: ${jobUpdate.status}\nError: ${
                         jobUpdate.error || "Unknown error"
-                      }`
-                    )
+                      }`,
+                    ),
                   );
                 } else {
                   console.log(
-                    `Job ${jobUpdate.jobId} updated: ${jobUpdate.status}`
+                    `Job ${jobUpdate.jobId} updated: ${jobUpdate.status}`,
                   );
                 }
               } catch (error) {
@@ -202,7 +202,7 @@ export class ApiController {
                 unsubscribeJobDoneHandler.unsubscribe();
               }
             },
-          }
+          },
         );
       }),
     };

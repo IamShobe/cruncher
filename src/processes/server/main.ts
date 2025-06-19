@@ -7,6 +7,7 @@ import { createSignal } from "~lib/utils";
 import * as docker from "../../adapters/docker";
 import * as grafana from "../../adapters/grafana_browser";
 import * as local from "../../adapters/mocked_data";
+import * as coralogix from "../../adapters/coralogix";
 import { Engine } from "./engineV2/engine";
 import {
   DefaultExternalAuthProvider,
@@ -67,7 +68,7 @@ const startServer = async (engineV2: Engine, eventEmitter: EventEmitter) => {
         const address = wss.address();
         if (typeof address === "string") {
           console.error(
-            "WebSocket server address is a string, cannot determine port"
+            "WebSocket server address is a string, cannot determine port",
           );
           reject(new Error("WebSocket server address is a string"));
           return;
@@ -81,7 +82,7 @@ const startServer = async (engineV2: Engine, eventEmitter: EventEmitter) => {
         console.log(`Server is listening on port ${port}`);
         messageSenderReady.signal();
       });
-    }
+    },
   );
 };
 
@@ -100,6 +101,7 @@ const initializeServer = async (authProvider: ExternalAuthProvider) => {
   engineV2.registerPlugin(grafana.adapter);
   engineV2.registerPlugin(local.adapter);
   engineV2.registerPlugin(docker.adapter);
+  engineV2.registerPlugin(coralogix.adapter);
 
   //   const routes = await getRoutes(engineV2);
   //   await setupEngine(serverContainer, routes);
@@ -123,7 +125,7 @@ if (require.main === module) {
       process.parentPort?.on("message", async (e) => {
         const [port] = e.ports;
         const serverData = await initializeServer(
-          new ElectronExternalAuthProvider(port)
+          new ElectronExternalAuthProvider(port),
         );
 
         port.on("message", (e) => {

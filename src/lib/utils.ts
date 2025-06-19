@@ -90,7 +90,7 @@ export const createSignal = <T = void>() => {
     signal: (value: T | PromiseLike<T>) => resolve(value), // Call this to resolve the signal
     then: (
       onFulfilled: (value: T) => void,
-      onRejected?: (reason: any) => void
+      onRejected?: (reason: any) => void,
     ) => {
       return promise.then(onFulfilled, onRejected);
     },
@@ -127,14 +127,16 @@ export const atLeastOneConnectionSignal = () => {
 
 export const debounceInitialize = <T, R>(
   fn: (...args: T[]) => Promise<R>,
-  delay: number
+  delay: number,
 ): ((...args: T[]) => Promise<R>) => {
   let timeoutId: NodeJS.Timeout;
   return (...args: T[]) => {
     clearTimeout(timeoutId);
     return new Promise<R>((resolve, reject) => {
       timeoutId = setTimeout(() => {
-        fn(...args).then(resolve).catch(reject);
+        fn(...args)
+          .then(resolve)
+          .catch(reject);
       }, delay);
     });
   };

@@ -111,7 +111,14 @@ export const RowDetail: React.FC<DataRowProps> = ({ rowKey, rowValue }) => {
           align-items: center;
         `}
       >
-        {rowKey}
+        <span
+          css={css`
+            white-space: pre-wrap;
+            word-break: break-all;
+          `}
+        >
+          {rowKey}
+        </span>
         <IconButton
           size={"2xs"}
           variant="ghost"

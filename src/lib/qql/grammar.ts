@@ -32,6 +32,10 @@ const DoubleQoutedString = createToken({
   name: "DoubleQoutedString",
   pattern: /"(?:[^\\"]|\\(?:[bfnrtv"\\/]|u[0-9a-fA-F]{4}))*"/,
 });
+const SingleQoutedString = createToken({
+  name: "SingleQoutedString",
+  pattern: /'(?:[^\\']|\\(?:[bfnrtv'\\/]|u[0-9a-fA-F]{4}))*'/,
+});
 const AtDatasource = createToken({
   name: "AtDatasource",
   pattern: /@([a-zA-Z_][0-9a-zA-Z_-]*)/,
@@ -148,6 +152,14 @@ const Stats = createToken({
 const Regex = createToken({
   name: "Regex",
   pattern: matchCommand(/^regex/),
+  longer_alt: Identifier,
+  line_breaks: false,
+});
+
+// unpack
+const Unpack = createToken({
+  name: "Unpack",
+  pattern: matchCommand(/^unpack/),
   longer_alt: Identifier,
   line_breaks: false,
 });
@@ -381,6 +393,7 @@ const allTokens = [
   WhiteSpace,
   Comment,
   DoubleQoutedString,
+  SingleQoutedString,
   RegexPattern,
   AtDatasource,
 
@@ -415,6 +428,7 @@ const allTokens = [
   Table,
   Stats,
   Regex,
+  Unpack,
   Sort,
   Where,
   TimeChart,
@@ -877,6 +891,7 @@ export class QQLParser extends EmbeddedActionsParser {
         "where",
         "timechart",
         "eval",
+        "unpack",
       ],
     }).closeAfter1();
 
@@ -884,6 +899,7 @@ export class QQLParser extends EmbeddedActionsParser {
       | ReturnType<typeof this.table>
       | ReturnType<typeof this.statsCommand>
       | ReturnType<typeof this.regex>
+      | ReturnType<typeof this.unpack>
       | ReturnType<typeof this.sort>
       | ReturnType<typeof this.where>
       | ReturnType<typeof this.timeChart>
@@ -892,6 +908,7 @@ export class QQLParser extends EmbeddedActionsParser {
       { ALT: () => this.SUBRULE(this.table) },
       { ALT: () => this.SUBRULE(this.statsCommand) },
       { ALT: () => this.SUBRULE(this.regex) },
+      { ALT: () => this.SUBRULE(this.unpack) },
       { ALT: () => this.SUBRULE(this.sort) },
       { ALT: () => this.SUBRULE(this.where) },
       { ALT: () => this.SUBRULE(this.timeChart) },
@@ -1048,17 +1065,14 @@ export class QQLParser extends EmbeddedActionsParser {
       this.addHighlightData("keyword", token);
     });
 
-    const variableName = this.CONSUME(Identifier);
-    this.ACTION(() => {
-      this.addHighlightData("column", variableName);
-    });
+    const variableName = this.SUBRULE1(this.columnName);
     this.CONSUME(Equal);
 
-    const expression = this.SUBRULE(this.evalFunctionArg);
+    const expression = this.SUBRULE2(this.evalFunctionArg);
 
     return {
       type: "eval",
-      variableName: variableName.image,
+      variableName: variableName,
       expression: expression,
     } as const;
   });
@@ -1735,6 +1749,34 @@ export class QQLParser extends EmbeddedActionsParser {
     );
   });
 
+  private unpack = this.RULE("unpack", () => {
+    const token = this.CONSUME(Unpack);
+    this.ACTION(() => {
+      this.addHighlightData("keyword", token);
+    });
+    const columns: string[] = [];
+    const autoComplete = this.addAutoCompleteType(
+      {
+        type: "column",
+      },
+      { spacing: 1 },
+    ); // require a space after the column name
+
+    this.AT_LEAST_ONE({
+      DEF: () => {
+        const column = this.SUBRULE(this.columnName);
+        this.OPTION(() => this.CONSUME(Comma));
+        columns.push(column);
+      },
+      ERR_MSG: "at least one column name",
+    });
+    autoComplete.close();
+    return {
+      type: "unpack",
+      columns: columns,
+    } as const;
+  });
+
   private table = this.RULE("table", () => {
     const token = this.CONSUME(Table);
 
@@ -1922,13 +1964,35 @@ export class QQLParser extends EmbeddedActionsParser {
   });
 
   private columnName = this.RULE("columnName", () => {
-    const column = this.CONSUME(Identifier);
-
-    this.ACTION(() => {
-      this.addHighlightData("column", column);
+    let token: IToken | undefined = undefined;
+    let column: string | undefined = undefined;
+    this.OR({
+      DEF: [
+        {
+          ALT: () => {
+            token = this.CONSUME(Identifier);
+            column = token.image;
+          },
+        },
+        {
+          ALT: () => {
+            token = this.CONSUME(SingleQoutedString);
+            this.ACTION(() => {
+              column = parseSingleQuotedString(token!.image);
+            });
+          },
+        },
+      ],
     });
 
-    return column.image;
+    return this.ACTION(() => {
+      if (token === undefined || column === undefined) {
+        throw new Error("Column name is not defined");
+      }
+      this.addHighlightData("column", token!);
+
+      return column;
+    });
   });
 
   private regexLiteral = this.RULE("regexLiteral", (): RegexLiteral => {
@@ -1976,11 +2040,7 @@ export class QQLParser extends EmbeddedActionsParser {
 
     return this.ACTION(() => {
       this.addHighlightData("string", token);
-
-      // replace new line characters with escape sequences
-      const value = token.image.replace(/\n/g, "\\n");
-      // remove the double quotes from the string
-      return JSON.parse(value);
+      return parseDoubleQuotedString(token.image);
     });
   });
 
@@ -2004,4 +2064,15 @@ export type TimeChartParams = ReturnType<QQLParser["timeChart"]>["params"];
 // if backtick is escaped, then keep it
 const unqouteBacktick = (input: string) => {
   return input.replace(/\\`/g, "`").slice(1, -1);
+};
+
+const parseDoubleQuotedString = (input: string): string => {
+  // replace new line characters with escape sequences
+  const value = input.replace(/\n/g, "\\n");
+  // remove the double quotes from the string
+  return JSON.parse(value);
+};
+
+const parseSingleQuotedString = (input: string): string => {
+  return input.slice(1, -1);
 };

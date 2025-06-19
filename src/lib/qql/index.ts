@@ -41,7 +41,7 @@ export const allData = (input: string) => {
 export const parse = (input: string) => {
   const lexer = QQLLexer.tokenize(input);
   if (lexer.errors.length > 0) {
-    throw new QQLLexingError("Failed to parse input", lexer.errors);
+    throw new QQLLexingError("Failed to tokenize input", lexer.errors);
   }
 
   const parser = new QQLParser();

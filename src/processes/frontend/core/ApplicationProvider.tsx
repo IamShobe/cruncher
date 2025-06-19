@@ -53,15 +53,17 @@ export const ApplicationProvider: React.FC<{
         } catch (error) {
           console.error(
             "Failed to initialize stream server connection:",
-            error
+            error,
           );
           await new Promise((resolve) => setTimeout(resolve, 2000));
         }
       }
 
-      throw new Error("Failed to initialize stream server connection after 3 attempts");
+      throw new Error(
+        "Failed to initialize stream server connection after 3 attempts",
+      );
     }, 200), // Debounce to avoid multiple rapid calls
-    []
+    [],
   );
 
   useEffect(() => {

@@ -8,7 +8,7 @@ import { EventEmitter } from "stream";
  */
 export const createContext = async (
   engineV2: Engine,
-  eventEmitter: EventEmitter
+  eventEmitter: EventEmitter,
 ) => {
   return {
     engine: engineV2,

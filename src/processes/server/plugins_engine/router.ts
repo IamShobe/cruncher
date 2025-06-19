@@ -39,31 +39,31 @@ export const appRouter = router({
           limit: z.number(),
           isForced: z.boolean(),
         }),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       return await ctx.engine.runQuery(
         input.searchProfileRef as SearchProfileRef,
         input.searchTerm,
-        input.queryOptions
+        input.queryOptions,
       );
     }),
   getControllerParams: publicProcedure
     .input(
       z.object({
         instanceRef: z.string(),
-      })
+      }),
     )
     .query(async ({ ctx, input }) => {
       return await ctx.engine.getControllerParams(
-        input.instanceRef as InstanceRef
+        input.instanceRef as InstanceRef,
       );
     }),
   cancelQuery: publicProcedure
     .input(
       z.object({
         taskId: z.string(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       ctx.engine.cancelQuery(input.taskId as TaskRef);
@@ -73,7 +73,7 @@ export const appRouter = router({
     .input(
       z.object({
         jobId: z.string(),
-      })
+      }),
     )
     .query(async ({ ctx, input }) => {
       return ctx.engine.getLogs(input.jobId as TaskRef);
@@ -84,13 +84,13 @@ export const appRouter = router({
         jobId: z.string(),
         offset: z.number(),
         limit: z.number(),
-      })
+      }),
     )
     .query(async ({ ctx, input }) => {
       return ctx.engine.getLogsPaginated(
         input.jobId as TaskRef,
         input.offset,
-        input.limit
+        input.limit,
       );
     }),
   getTableDataPaginated: publicProcedure
@@ -99,13 +99,13 @@ export const appRouter = router({
         jobId: z.string(),
         offset: z.number(),
         limit: z.number(),
-      })
+      }),
     )
     .query(async ({ ctx, input }) => {
       return ctx.engine.getTableDataPaginated(
         input.jobId as TaskRef,
         input.offset,
-        input.limit
+        input.limit,
       );
     }),
   getClosestDateEvent: publicProcedure
@@ -113,19 +113,19 @@ export const appRouter = router({
       z.object({
         jobId: z.string(),
         refDate: z.number(),
-      })
+      }),
     )
     .query(async ({ ctx, input }) => {
       return ctx.engine.getClosestDateEvent(
         input.jobId as TaskRef,
-        input.refDate
+        input.refDate,
       );
     }),
   releaseTaskResources: publicProcedure
     .input(
       z.object({
         jobId: z.string(),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       ctx.engine.releaseTaskResources(input.jobId as TaskRef);
@@ -135,7 +135,7 @@ export const appRouter = router({
     .input(
       z.object({
         name: z.string(),
-      })
+      }),
     )
     .mutation(async ({ input }) => {
       console.log(`Hello, ${input.name}!`);
@@ -148,19 +148,19 @@ export const appRouter = router({
       z.object({
         jobId: z.string(),
         format: z.enum(["csv", "json"]),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       return ctx.engine.exportTableResults(
         input.jobId as TaskRef,
-        input.format
+        input.format,
       );
     }),
   getViewData: publicProcedure
     .input(
       z.object({
         jobId: z.string(),
-      })
+      }),
     )
     .query(async ({ ctx, input }) => {
       return ctx.engine.getViewData(input.jobId as TaskRef);
@@ -171,7 +171,7 @@ export const appRouter = router({
     .input(
       z.object({
         jobId: z.string(),
-      })
+      }),
     )
     .subscription(async function* ({ ctx, input, signal }) {
       const jobId = input.jobId as TaskRef;
@@ -183,7 +183,7 @@ export const appRouter = router({
     .input(
       z.object({
         jobId: z.string(),
-      })
+      }),
     )
     .subscription(async function* ({ ctx, input, signal }) {
       const jobId = input.jobId as TaskRef;
@@ -191,7 +191,7 @@ export const appRouter = router({
         yield newJobUpdatedMessage(
           jobId,
           update.task.status,
-          update.task.error
+          update.task.error,
         );
       }
     }),
@@ -209,7 +209,7 @@ export const appRouter = router({
 
 export const newBatchDoneMessage = (
   jobId: string,
-  data: unknown
+  data: unknown,
 ): QueryBatchDone => {
   return {
     type: "query_batch_done",
@@ -223,7 +223,7 @@ export const newBatchDoneMessage = (
 export const newJobUpdatedMessage = (
   jobId: string,
   status: QueryTask["status"],
-  error?: string | null
+  error?: string | null,
 ): QueryJobUpdated => {
   return {
     type: "query_job_updated",

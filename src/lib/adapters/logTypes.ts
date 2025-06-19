@@ -35,6 +35,7 @@ export type ArrayField = {
 
 export type ObjectField = {
   type: "object";
+  raw: Record<string, unknown>;
   value: ObjectFields;
 } & FieldWithError;
 
@@ -245,6 +246,7 @@ export const processField = (field: unknown): Field => {
 
     return {
       type: "object",
+      raw: field as Record<string, unknown>,
       value: objectFields,
     } satisfies ObjectField;
   } else if (typeof field === "string") {

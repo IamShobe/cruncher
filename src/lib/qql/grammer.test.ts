@@ -201,6 +201,37 @@ test("table command", () => {
   });
 });
 
+test("table command - column with quotes", () => {
+  const parser = new QQLParser();
+
+  const lexer = QQLLexer.tokenize(`hello world | table 'column1'`);
+  expect(lexer.errors).toEqual([]);
+  parser.input = lexer.tokens;
+  expect(parser.query()).toMatchObject({
+    type: "query",
+    dataSources: [],
+    controllerParams: [],
+    search: {
+      type: "search",
+      left: {
+        type: "searchLiteral",
+        tokens: ["hello", "world"],
+      },
+    },
+    pipeline: [
+      {
+        type: "table",
+        columns: [
+          {
+            column: "column1",
+            alias: undefined,
+          },
+        ],
+      },
+    ],
+  });
+});
+
 test("table command - alias", () => {
   const parser = new QQLParser();
 
