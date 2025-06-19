@@ -2,3 +2,66 @@
 title: Grafana Loki Browser
 description: How to use Cruncher with Grafana Loki.
 ---
+import ParamItem from '../../../components/ParamItem.astro';
+
+import { Badge } from '@astrojs/starlight/components';
+
+<Badge text="grafana-loki" />
+
+## Params
+
+<ParamItem label="grafanaUrl" type="string">
+    The base URL of your Grafana instance (e.g., https://my-grafana.example.com).
+</ParamItem>
+<ParamItem label="uid" type="string">
+    The UID of the Loki data source in Grafana.
+</ParamItem>
+<ParamItem label="filter" type="array" optional>
+    A list of filter objects to apply to your queries. Each filter object should have:
+    <br/>
+    - <b>key</b> (string): The label or field to filter on.<br/>
+    - <b>value</b> (string): The value to match.<br/>
+    - <b>operator</b> (enum): One of `=`, `=~`, `!=`, `!~` (exact match, regex match, not equal, not regex match).
+</ParamItem>
+<ParamItem label="querySuffix" type="array" optional>
+    Additional query suffixes to append to your Loki queries.
+</ParamItem>
+
+## Examples
+
+### Minimal Configuration
+
+```yaml
+connectors:
+  - type: grafana_browser
+    name: my_loki
+    params:
+      grafanaUrl: "https://my-grafana.example.com"
+      uid: "loki-uid-123"
+```
+
+### Full Configuration
+
+```yaml
+connectors:
+  - type: grafana_browser
+    name: my_loki
+    params:
+      grafanaUrl: "https://my-grafana.example.com"
+      uid: "loki-uid-123"
+      filter:
+        - key: "job"
+          value: "my-app"
+          operator: "="
+      querySuffix: ["| json"]
+```
+
+## Usage Notes
+
+- When you run a query using this adapter, Cruncher will automatically open a login prompt in your browser if you are not already authenticated with Grafana.
+- You can use the `filter` parameter to restrict logs to specific labels or values.
+- The `querySuffix` parameter allows you to append additional Loki query language expressions to your queries.
+
+---
+
+For more information on how to obtain your Grafana Loki data source UID, see the Grafana documentation or ask your Grafana administrator.

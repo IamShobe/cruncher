@@ -1,0 +1,65 @@
+---
+title: unpack
+description: Extracts and flattens fields from nested objects or JSON strings in a column, creating new columns for each key.
+---
+
+The `unpack` command extracts and flattens fields from nested objects or JSON strings in the specified columns. For each key in the object or parsed JSON, a new column is created with the name `<column>.<key>`. This is useful for working with logs or data where fields are embedded as JSON or objects inside a single column.
+
+## Syntax
+
+```
+unpack <column1>[, <column2>, ...]
+```
+
+- `<column>`: The name of the column to unpack. You can specify multiple columns, separated by commas.
+
+## Usage
+
+- Use `unpack` to flatten nested objects or JSON strings in your data, making each key accessible as its own column.
+- If the column contains a JSON string, it will be parsed and its keys unpacked.
+- If the column is already an object, its keys will be unpacked directly.
+- If the column is not an object or a valid JSON string, an error will be logged and the row will be skipped for that column.
+
+## Examples
+
+Unpack a JSON string in the `payload` column:
+
+```
+... | unpack payload
+```
+
+If `payload` contains:
+
+```json
+{"user":"alice","ip":"1.2.3.4"}
+```
+
+The result will have new columns: `payload.user` and `payload.ip`.
+
+Unpack multiple columns:
+
+```
+... | unpack payload, details
+```
+
+If `details` contains:
+
+```json
+{"os":"linux","version":"1.0"}
+```
+
+The result will have: `payload.user`, `payload.ip`, `details.os`, `details.version`.
+
+Unpack an object column:
+
+```
+... | unpack metadata
+```
+
+If `metadata` is already an object like:
+
+```json
+{"env":"prod","region":"us-east"}
+```
+
+The result will have: `metadata.env`, `metadata.region`.

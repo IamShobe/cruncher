@@ -1,0 +1,58 @@
+---
+title: Coralogix
+description: How to use Cruncher with Coralogix.
+sidebar:
+    badge:
+        text: New
+        variant: tip
+---
+import ParamItem from '../../../components/ParamItem.astro';
+
+import { Badge } from '@astrojs/starlight/components';
+
+<Badge text="coralogix" />
+
+## Params
+
+<ParamItem label="api_url" type="string" optional default="https://api.coralogix.us/api/v1">
+    The base API URL for Coralogix queries.
+</ParamItem>
+<ParamItem label="dashboard_url" type="string">
+    The URL of your Coralogix dashboard (e.g., https://app.coralogix.com).
+</ParamItem>
+<ParamItem label="region" type="string" optional default="usprod1">
+    The Coralogix region identifier (e.g., usprod1).
+</ParamItem>
+
+## Examples
+
+### Minimal Configuration
+
+```yaml
+connectors:
+  - type: coralogix
+    name: my_coralogix
+    params:
+      dashboard_url: "https://app.coralogix.com"
+```
+
+### Full Configuration
+
+```yaml
+connectors:
+  - type: coralogix
+    name: my_coralogix
+    params:
+      api_url: "https://api.coralogix.us/api/v1"
+      dashboard_url: "https://app.coralogix.com"
+      region: "usprod1"
+```
+
+## Usage Notes
+
+- When you run a query using this adapter, Cruncher will automatically open a login prompt in your browser if you are not already authenticated with Coralogix.
+- The `api_url` and `region` parameters have sensible defaults for most users; you usually only need to set `dashboard_url`.
+
+---
+
+For more information on how to obtain your Coralogix dashboard URL and region, see the Coralogix documentation or ask your Coralogix administrator.
