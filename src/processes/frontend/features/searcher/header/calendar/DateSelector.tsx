@@ -80,7 +80,7 @@ export const DateSelector = () => {
     <PopoverRoot
       open={isOpen}
       initialFocusEl={() => firstFocusRef.current}
-      positioning={{ placement: "left-end" }}
+      positioning={{ placement: "bottom" }}
       lazyMount
       unmountOnExit
     >
