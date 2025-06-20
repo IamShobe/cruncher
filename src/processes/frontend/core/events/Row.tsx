@@ -7,7 +7,7 @@ import { formatDataTime } from "~lib/adapters/formatters";
 import { asDateField, ProcessedData } from "~lib/adapters/logTypes";
 import { openIndexesAtom, useIsIndexOpen } from "./state";
 import { highlightItemQueryAtom } from "~core/search";
-import { highlightText } from "./utils";
+import { highlightText } from "../common/utils";
 
 type DataRowProps = {
   row: ProcessedData;

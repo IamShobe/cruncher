@@ -8,6 +8,8 @@ import {
   asDisplayString,
   ProcessedData,
 } from "../../../../lib/adapters/logTypes";
+import { highlightText } from "~core/common/utils";
+import { highlightItemQueryAtom } from "~core/search";
 
 export type TableViewProps = {};
 
@@ -30,6 +32,7 @@ export const TableView: React.FC<TableViewProps> = ({}) => {
   const jobMetadata = useAtomValue(jobMetadataAtom);
   const columns = jobMetadata?.views.table?.columns ?? [];
   const columnSizes = jobMetadata?.views.table?.columnLengths ?? {};
+  const highlightTextQuery = useAtomValue(highlightItemQueryAtom);
 
   const components = useMemo<TableComponents<ProcessedData>>(() => {
     return {
@@ -91,7 +94,7 @@ export const TableView: React.FC<TableViewProps> = ({}) => {
                 verticalAlign: "top",
               }}
             >
-              {value}
+              {highlightText(value, highlightTextQuery)}
             </Table.Cell>
           ))}
         </>

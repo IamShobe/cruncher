@@ -27,7 +27,7 @@ import {
   VscSymbolString,
 } from "react-icons/vsc";
 import { highlightItemQueryAtom } from "~core/search";
-import { highlightText } from "./utils";
+import { highlightText } from "../common/utils";
 
 type DataRowProps = {
   rowKey: string;
