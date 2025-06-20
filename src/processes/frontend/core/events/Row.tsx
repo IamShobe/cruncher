@@ -6,8 +6,8 @@ import React, { useMemo } from "react";
 import { formatDataTime } from "~lib/adapters/formatters";
 import { asDateField, ProcessedData } from "~lib/adapters/logTypes";
 import { openIndexesAtom, useIsIndexOpen } from "./state";
-import { highlightText } from "./RowDetails";
 import { highlightItemQueryAtom } from "~core/search";
+import { highlightText } from "./utils";
 
 type DataRowProps = {
   row: ProcessedData;
