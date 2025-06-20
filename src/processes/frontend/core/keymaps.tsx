@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-type KeyTypes = "Meta" | "Shift" | "Alt" | "Control";
+type KeyTypes = "Meta" | "Shift" | "Alt" | "Control" | "Slash";
 
 type PlatformTypes = "Mac" | "Windows";
 
@@ -14,12 +14,14 @@ const keyMapsAliases: ShortcutAliases = {
     Shift: "⇧",
     Alt: "⌥",
     Control: "⌃",
+    Slash: "/",
   },
   Windows: {
     Meta: "Win",
     Shift: "Shift",
     Alt: "Alt",
     Control: "Ctrl",
+    Slash: "/",
   },
 };
 
@@ -106,10 +108,10 @@ export const searcherShortcuts = new ShortcutHolder({
     Mac: "Meta + H",
     Windows: "Control + H",
   },
-  "highlight": {
+  highlight: {
     Mac: "Meta + F",
     Windows: "Control + F",
-  }
+  },
 });
 
 export const searcherGlobalShortcuts = new ShortcutHolder({

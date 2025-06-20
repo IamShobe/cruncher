@@ -7,7 +7,14 @@ import {
   Stack,
 } from "@chakra-ui/react";
 import { FC } from "react";
-import { searcherShortcuts } from "./keymaps";
+import {
+  globalShortcuts,
+  headerShortcuts,
+  searcherGlobalShortcuts,
+  searcherShortcuts,
+  ShortcutDefinitions,
+  ShortcutHolder,
+} from "./keymaps";
 import { Shortcut } from "~components/ui/shortcut";
 
 export type ShortcutsProps = {
@@ -35,30 +42,27 @@ export const Shortcuts: FC<ShortcutsProps> = ({ open, onOpenChange }) => {
               </Dialog.CloseTrigger>
             </Dialog.Header>
             <Dialog.Body>
-              <Stack>
-                <Box maxW="20rem">
-                  <Heading size="md">Searcher Shortcuts</Heading>
-                  {Object.keys(searcherShortcuts.getShortcuts()).map(
-                    (value) => {
-                      return (
-                        <Box
-                          display="flex"
-                          justifyContent="space-between"
-                          key={value}
-                        >
-                          <span>{value}</span>
-                          <Shortcut
-                            keys={searcherShortcuts.getAlias(
-                              value as keyof ReturnType<
-                                typeof searcherShortcuts.getShortcuts
-                              >,
-                            )}
-                          />
-                        </Box>
-                      );
-                    },
-                  )}
-                </Box>
+              <Stack direction="row" gap={4}>
+                <Stack gap={4} flex={1}>
+                  <ShortcutsDisplay
+                    shortcuts={globalShortcuts}
+                    title="Global Shortcuts"
+                  />
+                  <ShortcutsDisplay
+                    shortcuts={searcherGlobalShortcuts}
+                    title="Searcher Global Shortcuts"
+                  />
+                  <ShortcutsDisplay
+                    shortcuts={searcherShortcuts}
+                    title="Searcher Shortcuts"
+                  />
+                </Stack>
+                <Stack gap={2} flex={1}>
+                  <ShortcutsDisplay
+                    shortcuts={headerShortcuts}
+                    title="Query Shortcuts"
+                  />
+                </Stack>
               </Stack>
             </Dialog.Body>
           </Dialog.Content>
@@ -67,3 +71,29 @@ export const Shortcuts: FC<ShortcutsProps> = ({ open, onOpenChange }) => {
     </Dialog.Root>
   );
 };
+
+function ShortcutsDisplay<T extends ShortcutDefinitions>({
+  shortcuts,
+  title,
+}: {
+  shortcuts: ShortcutHolder<T>;
+  title: string;
+}) {
+  return (
+    <Box maxW="20rem">
+      <Heading size="md">{title}</Heading>
+      {Object.keys(shortcuts.getShortcuts()).map((value) => {
+        return (
+          <Box display="flex" justifyContent="space-between" key={value}>
+            <span>{value}</span>
+            <Shortcut
+              keys={shortcuts.getAlias(
+                value as keyof ReturnType<typeof shortcuts.getShortcuts>,
+              )}
+            />
+          </Box>
+        );
+      })}
+    </Box>
+  );
+}
