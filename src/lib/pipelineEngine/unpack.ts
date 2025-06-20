@@ -1,4 +1,4 @@
-import { ObjectField, processField } from "~lib/adapters/logTypes";
+import { processField } from "~lib/adapters/logTypes";
 import { DisplayResults } from "~lib/displayTypes";
 
 export const processUnpack = (
