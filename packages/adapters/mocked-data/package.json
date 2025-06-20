@@ -1,7 +1,7 @@
 {
-  "name": "@cruncher/qql",
+  "name": "@cruncher/adapter-mock",
   "version": "0.1.0",
-  "description": "QQL query language for Cruncher platform.",
+  "description": "Mocked data adapter for Cruncher.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
@@ -9,16 +9,6 @@
       "import": "./dist/index.js",
       "require": "./dist/index.js",
       "types": "./dist/index.d.ts"
-    },
-    "./grammar": {
-      "import": "./dist/grammar.js",
-      "require": "./dist/grammar.js",
-      "types": "./dist/grammar.d.ts"
-    },
-    "./searchTree": {
-      "import": "./dist/searchTree.js",
-      "require": "./dist/searchTree.js",
-      "types": "./dist/searchTree.d.ts"
     }
   },
   "files": [
@@ -26,23 +16,25 @@
   ],
   "scripts": {
     "build": "tsc --project tsconfig.json",
-    "test": "vitest run",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
     "cruncher",
     "qql",
-    "query-language"
+    "query-language",
+    "coralogix",
+    "adapter"
   ],
   "author": {
     "name": "Elran Shefer"
   },
   "license": "GPL-3.0-only",
   "dependencies": {
-    "chevrotain": "^11.0.3"
+    "zod": "^3.25.67",
+    "@cruncher/qql": "workspace:*",
+    "@cruncher/adapter-utils": "workspace:*"
   },
   "devDependencies": {
-    "typescript": "^5.8.3",
-    "vitest": "^3.2.4"
+    "typescript": "^5.8.3"
   }
 }
