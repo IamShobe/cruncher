@@ -1,18 +1,18 @@
 import { IRecognitionException } from "chevrotain";
 import { atom, useAtomValue, useSetAtom } from "jotai";
 import { useMemo } from "react";
-import { Suggestion } from "~components/ui/editor/AutoCompleter";
-import { Editor as EditorComponent } from "~components/ui/editor/Editor";
-import { HighlightData } from "~components/ui/editor/Highlighter";
-import { SUPPORTED_AGG_FUNCTIONS } from "~lib/pipelineEngine/aggregateData";
+import { Suggestion } from "~components/ui/editor/AutoCompleter.tsx";
+import { Editor as EditorComponent } from "~components/ui/editor/Editor.tsx";
+import { HighlightData } from "~components/ui/editor/Highlighter.tsx";
+import { SUPPORTED_AGG_FUNCTIONS } from "~lib/pipelineEngine/aggregateData.ts";
 import {
   isBooleanFunction,
   SUPPORTED_BOOLEAN_FUNCTIONS,
-} from "~lib/pipelineEngine/logicalExpression";
-import { HighlightData as ParserHighlightData } from "~lib/qql/grammar";
-import { getPopperRoot } from "./shadowUtils";
-import { availableColumnsAtom, queryDataAtom } from "./store/queryState";
-import { useControllerParams } from "./search";
+} from "~lib/pipelineEngine/logicalExpression.ts";
+import { HighlightData as ParserHighlightData } from "~lib/qql/grammar.ts";
+import { getPopperRoot } from "../../../core/utils/shadowUtils.ts";
+import { availableColumnsAtom, queryDataAtom } from "../../../core/store/queryState.ts";
+import { useControllerParams } from "../../../core/search.ts";
 
 export const queryEditorAtom = atom<HTMLTextAreaElement | null>(null);
 

@@ -1,8 +1,8 @@
+import { Collapsible, Field } from "@chakra-ui/react";
 import styled from "@emotion/styled";
 import type React from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
-import { ProgressBar, ProgressRoot } from "~components/ui/progress";
-import { Collapsible, Field } from "@chakra-ui/react";
+import { ProgressBar, ProgressRoot } from "~components/ui/progress.tsx";
 
 import {
   Box,
@@ -29,25 +29,25 @@ import {
   LuSearchX,
   LuSigma,
 } from "react-icons/lu";
-import { SearchProfileRef } from "src/processes/server/engineV2/types";
+import { SearchProfileRef } from "../../../../server/engineV2/types.ts";
 import {
   MenuContent,
   MenuItem,
   MenuRoot,
   MenuTrigger,
-} from "~components/ui/menu";
-import { Shortcut } from "~components/ui/shortcut";
-import { Tooltip } from "~components/ui/tooltip";
-import { DateType } from "~lib/dateUtils";
-import { DateSelector, isDateSelectorOpenAtom } from "./DateSelector";
-import { SettingsDrawer } from "./drawer/Drawer";
-import { Editor } from "./Editor";
+} from "~components/ui/menu.tsx";
+import { Shortcut } from "~components/ui/shortcut.tsx";
+import { Tooltip } from "~components/ui/tooltip.tsx";
+import { DateType } from "~lib/dateUtils.ts";
+import { DateSelector, isDateSelectorOpenAtom } from "./calendar/DateSelector.tsx";
+import { SettingsDrawer } from "~features/searcher/header/settings-drawer/Drawer.tsx";
+import { Editor } from "./Editor.tsx";
 import {
   createShortcutsHandler,
   headerShortcuts,
   searcherShortcuts,
-} from "./keymaps";
-import { notifySuccess } from "./notifyError";
+} from "../../../core/keymaps.tsx";
+import { notifySuccess } from "../../../core/notifyError.tsx";
 import {
   FormValues,
   isHeaderOpenAtom,
@@ -62,11 +62,12 @@ import {
   useQueryActions,
   useRunQuery,
   useSelectedSearchProfile,
-} from "./search";
-import { ApplicationStore, useApplicationStore } from "./store/appStore";
-import { endFullDateAtom, startFullDateAtom } from "./store/dateState";
-import { jobMetadataAtom, searchQueryAtom } from "./store/queryState";
-import { Timer } from "./Timer";
+} from "../../../core/search.ts";
+import { ApplicationStore, useApplicationStore } from "../../../core/store/appStore.ts";
+import { endFullDateAtom, startFullDateAtom } from "../../../core/store/dateState.ts";
+import { jobMetadataAtom, searchQueryAtom } from "../../../core/store/queryState.ts";
+import { Timer } from "./Timer.tsx";
+import { MiniIconButton } from "~components/presets/IconButton.tsx";
 
 const StyledHeader = styled.form`
   display: flex;
@@ -217,88 +218,16 @@ const SearchBarButtons: React.FC<SearchBarButtonsProps> = ({
   onForceSubmit,
   onTerminateSearch,
 }) => {
-  const endTime = useAtomValue(endFullDateAtom);
-  const startTime = useAtomValue(startFullDateAtom);
-  const isRelativeTimeSelected = useMemo(() => {
-    return endTime === DateType.Now || startTime === DateType.Now;
-  }, [endTime, startTime]);
-
   return (
     <ButtonsHolder>
       <Wrap gap={2} alignItems="center" flex={1}>
         <Stack direction="row" gap={2} alignItems="center">
-          {isLoading ? (
-            <Tooltip
-              content={<span>Terminate Search</span>}
-              showArrow
-              positioning={{
-                placement: "bottom",
-              }}
-            >
-              <IconButton
-                aria-label="Terminate database"
-                onClick={() => onTerminateSearch()}
-              >
-                <LuSearchX />
-              </IconButton>
-            </Tooltip>
-          ) : (
-            <Tooltip
-              content={
-                <span>
-                  Search <Shortcut keys={headerShortcuts.getAlias("search")} />
-                </span>
-              }
-              showArrow
-              positioning={{
-                placement: "bottom",
-              }}
-            >
-              <IconButton
-                aria-label="Search database"
-                onClick={() => onForceSubmit()}
-              >
-                <LuSearch />
-              </IconButton>
-            </Tooltip>
-          )}
-          <Box position="relative">
-            <Tooltip
-              content={
-                <span>
-                  Process Pipeline {!isRelativeTimeSelected && "Only"}{" "}
-                  <Shortcut keys={headerShortcuts.getAlias("re-evaluate")} />
-                </span>
-              }
-              showArrow
-              positioning={{
-                placement: "bottom",
-              }}
-            >
-              <IconButton
-                aria-label="Re-evalutate"
-                type="submit"
-                disabled={isLoading}
-              >
-                <LuSigma />
-              </IconButton>
-            </Tooltip>
-            {isRelativeTimeSelected && (
-              <Tooltip
-                content={
-                  <span>
-                    Relative time is selected, full refresh is required!
-                  </span>
-                }
-                showArrow
-                contentProps={{ css: { "--tooltip-bg": "tomato" } }}
-              >
-                <Float placement="top-end">
-                  <Circle size="3" bg="red" color="white"></Circle>
-                </Float>
-              </Tooltip>
-            )}
-          </Box>
+          <MainSearchButton
+            isLoading={isLoading}
+            onTerminateSearch={onTerminateSearch}
+            onForceSubmit={onForceSubmit}
+          />
+          <ReEvaluateButton isLoading={isLoading} />
         </Stack>
         <DateSelector />
         <MiniButtons />
@@ -323,104 +252,10 @@ const downloadFile = (filename: string, data: string, mimeType: string) => {
 };
 
 const MiniButtons = () => {
-  const controller = useInitializedController();
-  const task = useAtomValue(lastRanJobAtom);
-  const batchCompleteStatus = useAtomValue(jobMetadataAtom);
-  const isDisabled = batchCompleteStatus?.views.table === undefined;
-
-  const { copyCurrentShareLink } = useQueryActions();
-
-  const exportData = async (format: "csv" | "json") => {
-    if (!task) {
-      throw new Error("No task available for export");
-    }
-
-    return await controller.exportTableResults(task.id, format);
-  };
-
-  const downloadCsv = async () => {
-    const csvValue = await exportData("csv");
-    const filename = `data-export-${new Date().toISOString()}.csv`;
-    downloadFile(filename, csvValue.payload, csvValue.contentType);
-  };
-
-  const copyCsv = async () => {
-    const csvValue = await exportData("csv");
-    navigator.clipboard.writeText(csvValue.payload);
-    notifySuccess("CSV copied to clipboard");
-  };
-
-  const copyJson = async () => {
-    const jsonValue = await exportData("json");
-    navigator.clipboard.writeText(jsonValue.payload);
-    notifySuccess("JSON copied to clipboard");
-  };
-
-  const downloadJson = async () => {
-    const jsonValue = await exportData("json");
-    const filename = `data-export-${new Date().toISOString()}.json`;
-    downloadFile(filename, jsonValue.payload, jsonValue.contentType);
-  };
-
   return (
     <Stack gap={3} direction="row" alignItems="center" p={1.5}>
-      <MenuRoot lazyMount unmountOnExit>
-        <MenuTrigger disabled={isDisabled}>
-          <Tooltip
-            content={<span>Export</span>}
-            showArrow
-            positioning={{ placement: "bottom" }}
-          >
-            <IconButton
-              aria-label="Export"
-              size="2xs"
-              variant="surface"
-              as={"div"}
-              disabled={isDisabled}
-            >
-              <CiExport />
-            </IconButton>
-          </Tooltip>
-        </MenuTrigger>
-        <MenuContent>
-          <MenuItem value="json-copy" cursor="pointer" onClick={copyJson}>
-            <LuClipboardCopy /> Copy JSON
-          </MenuItem>
-          <MenuItem value="csv-copy" cursor="pointer" onClick={copyCsv}>
-            <LuClipboardCopy /> Copy CSV
-          </MenuItem>
-          <MenuSeparator />
-          <MenuItem
-            value="json-download"
-            cursor="pointer"
-            onClick={downloadJson}
-          >
-            <LuDownload /> Download JSON
-          </MenuItem>
-          <MenuItem value="csv-download" cursor="pointer" onClick={downloadCsv}>
-            <LuDownload /> Download CSV
-          </MenuItem>
-        </MenuContent>
-      </MenuRoot>
-      <Tooltip
-        content={
-          <span>
-            Copy External Link{" "}
-            <Shortcut keys={searcherShortcuts.getAlias("copy-link")} />
-          </span>
-        }
-        showArrow
-        positioning={{ placement: "bottom" }}
-      >
-        <IconButton
-          aria-label="Copy Shareable Link"
-          size="2xs"
-          variant="surface"
-          onClick={copyCurrentShareLink}
-        >
-          <LuLink />
-        </IconButton>
-      </Tooltip>
+      <ExportButton />
+      <CopyShareLinkButton />
       <SettingsDrawer />
     </Stack>
   );
@@ -562,6 +397,178 @@ const InstanceSelectItem: React.FC<{
         <Select.ItemIndicator />
       )}
     </Select.Item>
+  );
+};
+
+const MainSearchButton: React.FC<SearchBarButtonsProps> = ({
+  isLoading,
+  onTerminateSearch,
+  onForceSubmit,
+}) => {
+  return (
+    <>
+      {isLoading ? (
+        <Tooltip
+          content={<span>Terminate Search</span>}
+          showArrow
+          positioning={{
+            placement: "bottom",
+          }}
+        >
+          <IconButton
+            aria-label="Terminate database"
+            onClick={() => onTerminateSearch()}
+          >
+            <LuSearchX />
+          </IconButton>
+        </Tooltip>
+      ) : (
+        <Tooltip
+          content={
+            <span>
+              Search <Shortcut keys={headerShortcuts.getAlias("search")} />
+            </span>
+          }
+          showArrow
+          positioning={{
+            placement: "bottom",
+          }}
+        >
+          <IconButton
+            aria-label="Search database"
+            onClick={() => onForceSubmit()}
+          >
+            <LuSearch />
+          </IconButton>
+        </Tooltip>
+      )}
+    </>
+  );
+};
+
+const ReEvaluateButton: React.FC<{
+  isLoading: boolean;
+}> = ({ isLoading }) => {
+  const endTime = useAtomValue(endFullDateAtom);
+  const startTime = useAtomValue(startFullDateAtom);
+  const isRelativeTimeSelected = useMemo(() => {
+    return endTime === DateType.Now || startTime === DateType.Now;
+  }, [endTime, startTime]);
+
+  return (
+    <Box position="relative">
+      <Tooltip
+        content={
+          <span>
+            Process Pipeline {!isRelativeTimeSelected && "Only"}{" "}
+            <Shortcut keys={headerShortcuts.getAlias("re-evaluate")} />
+          </span>
+        }
+        showArrow
+        positioning={{
+          placement: "bottom",
+        }}
+      >
+        <IconButton
+          aria-label="Re-evalutate"
+          type="submit"
+          disabled={isLoading}
+        >
+          <LuSigma />
+        </IconButton>
+      </Tooltip>
+      {isRelativeTimeSelected && (
+        <Tooltip
+          content={
+            <span>Relative time is selected, full refresh is required!</span>
+          }
+          showArrow
+          contentProps={{ css: { "--tooltip-bg": "tomato" } }}
+        >
+          <Float placement="top-end">
+            <Circle size="3" bg="red" color="white"></Circle>
+          </Float>
+        </Tooltip>
+      )}
+    </Box>
+  );
+};
+
+export const ExportButton: React.FC<{
+  isDisabled?: boolean;
+}> = () => {
+  const controller = useInitializedController();
+  const task = useAtomValue(lastRanJobAtom);
+  const batchCompleteStatus = useAtomValue(jobMetadataAtom);
+  const isDisabled = batchCompleteStatus?.views.table === undefined;
+
+  const exportData = async (format: "csv" | "json") => {
+    if (!task) {
+      throw new Error("No task available for export");
+    }
+
+    return await controller.exportTableResults(task.id, format);
+  };
+
+  const downloadCsv = async () => {
+    const csvValue = await exportData("csv");
+    const filename = `data-export-${new Date().toISOString()}.csv`;
+    downloadFile(filename, csvValue.payload, csvValue.contentType);
+  };
+
+  const copyCsv = async () => {
+    const csvValue = await exportData("csv");
+    navigator.clipboard.writeText(csvValue.payload);
+    notifySuccess("CSV copied to clipboard");
+  };
+
+  const copyJson = async () => {
+    const jsonValue = await exportData("json");
+    navigator.clipboard.writeText(jsonValue.payload);
+    notifySuccess("JSON copied to clipboard");
+  };
+
+  const downloadJson = async () => {
+    const jsonValue = await exportData("json");
+    const filename = `data-export-${new Date().toISOString()}.json`;
+    downloadFile(filename, jsonValue.payload, jsonValue.contentType);
+  };
+  return (
+    <MenuRoot lazyMount unmountOnExit>
+      <MenuTrigger disabled={isDisabled}>
+        <MiniIconButton tooltip="Export" as="div" disabled={isDisabled}>
+          <CiExport />
+        </MiniIconButton>
+      </MenuTrigger>
+      <MenuContent>
+        <MenuItem value="json-copy" cursor="pointer" onClick={copyJson}>
+          <LuClipboardCopy /> Copy JSON
+        </MenuItem>
+        <MenuItem value="csv-copy" cursor="pointer" onClick={copyCsv}>
+          <LuClipboardCopy /> Copy CSV
+        </MenuItem>
+        <MenuSeparator />
+        <MenuItem value="json-download" cursor="pointer" onClick={downloadJson}>
+          <LuDownload /> Download JSON
+        </MenuItem>
+        <MenuItem value="csv-download" cursor="pointer" onClick={downloadCsv}>
+          <LuDownload /> Download CSV
+        </MenuItem>
+      </MenuContent>
+    </MenuRoot>
+  );
+};
+
+export const CopyShareLinkButton: React.FC = () => {
+  const { copyCurrentShareLink } = useQueryActions();
+  return (
+    <MiniIconButton
+      tooltip="Copy External Link"
+      tooltipShortcut={searcherShortcuts.getAlias("copy-link")}
+      onClick={copyCurrentShareLink}
+    >
+      <LuLink />
+    </MiniIconButton>
   );
 };
 

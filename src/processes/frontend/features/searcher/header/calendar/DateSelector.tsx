@@ -10,26 +10,26 @@ import {
   renderedStartDateAtom,
   startFullDateAtom,
   useTryToUpdateDate,
-} from "./store/dateState";
+} from "~core/store/dateState.ts";
 
 import { IconButton, Input, SimpleGrid, Stack } from "@chakra-ui/react";
 import { LuClock2 } from "react-icons/lu";
-import { Button } from "~components/ui/button";
+import { Button } from "~components/ui/button.tsx";
 import {
   PopoverArrow,
   PopoverBody,
   PopoverContent,
   PopoverRoot,
   PopoverTrigger,
-} from "~components/ui/popover";
-import { Shortcut } from "~components/ui/shortcut";
-import { Tooltip } from "~components/ui/tooltip";
-import { useOutsideDetector } from "~components/ui/useOutsideDetector";
-import { CalendarSelector } from "./CalendarSelector";
-import { searcherShortcuts } from "./keymaps";
-import { useQueryActions } from "./search";
-import { useQuerySpecificStoreInternal } from "./store/queryState";
-import { compareFullDates } from "~lib/dateUtils";
+} from "~components/ui/popover.tsx";
+import { Shortcut } from "~components/ui/shortcut.tsx";
+import { Tooltip } from "~components/ui/tooltip.tsx";
+import { useOutsideDetector } from "~components/ui/useOutsideDetector.ts";
+import { CalendarSelector } from "./CalendarSelector.tsx";
+import { searcherShortcuts } from "~core/keymaps.tsx";
+import { useQueryActions } from "~core/search.ts";
+import { useQuerySpecificStoreInternal } from "~core/store/queryState.ts";
+import { compareFullDates } from "~lib/dateUtils.ts";
 
 const useDateOperations = () => {
   const setStartFullDate = useSetAtom(startFullDateAtom);

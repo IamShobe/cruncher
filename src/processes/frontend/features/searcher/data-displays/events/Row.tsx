@@ -3,11 +3,11 @@ import styled from "@emotion/styled";
 import { parse } from "ansicolor";
 import { useAtomValue, useSetAtom } from "jotai";
 import React, { useMemo } from "react";
-import { formatDataTime } from "~lib/adapters/formatters";
-import { asDateField, ProcessedData } from "~lib/adapters/logTypes";
-import { openIndexesAtom, useIsIndexOpen } from "./state";
-import { highlightItemQueryAtom } from "~core/search";
-import { highlightText } from "../common/utils";
+import { formatDataTime } from "~lib/adapters/formatters.ts";
+import { asDateField, ProcessedData } from "~lib/adapters/logTypes.ts";
+import { openIndexesAtom, useIsIndexOpen } from "./state.ts";
+import { highlightItemQueryAtom } from "~core/search.ts";
+import { highlightText } from "~core/utils/highlight.tsx";
 
 type DataRowProps = {
   row: ProcessedData;

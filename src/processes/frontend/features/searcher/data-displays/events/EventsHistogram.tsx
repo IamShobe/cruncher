@@ -14,13 +14,13 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { formatDataTimeShort } from "~lib/adapters/formatters";
-import { scrollToIndexAtom } from "./events/DataLog";
-import { rangeInViewAtom } from "./events/state";
-import { lastRanJobAtom, useInitializedController } from "./search";
-import { dataBucketsAtom, scaleAtom } from "./store/queryState";
+import { formatDataTimeShort } from "~lib/adapters/formatters.ts";
+import { scrollToIndexAtom } from "~features/searcher/data-displays/events/DataLog.tsx";
+import { rangeInViewAtom } from "~features/searcher/data-displays/events/state.ts";
+import { lastRanJobAtom, useInitializedController } from "~core/search.ts";
+import { dataBucketsAtom, scaleAtom } from "~core/store/queryState.ts";
 
-export const TimeChart = () => {
+export const EventsHistogram = () => {
   const scrollToIndex = useAtomValue(scrollToIndexAtom);
 
   const ref = useRef(null);

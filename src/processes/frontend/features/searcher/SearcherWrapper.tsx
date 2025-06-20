@@ -1,17 +1,17 @@
-import { Box, IconButton, Stack } from "@chakra-ui/react";
+import { Box, Stack } from "@chakra-ui/react";
 import { css } from "@emotion/react";
 import { atom, createStore, Provider, useAtom, useAtomValue } from "jotai";
+import { v4 as uuidv4 } from "uuid";
 import React, { useCallback, useState } from "react";
 import { VscAdd, VscClose } from "react-icons/vsc";
+import { createSignal } from "~lib/utils";
 import { useMount } from "react-use";
-import { v4 as uuidv4 } from "uuid";
-import { Shortcut } from "~components/ui/shortcut";
-import { Tooltip } from "~components/ui/tooltip";
+import { MiniIconButton } from "~components/presets/IconButton";
 import { parseDate } from "~lib/dateUtils";
-import { createSignal, debounceInitialize, Signal } from "~lib/utils";
+import { debounceInitialize, Signal } from "~lib/utils";
 import { Searcher } from "./Searcher";
-import { searcherGlobalShortcuts, useShortcuts } from "./keymaps";
-import { notifyError } from "./notifyError";
+import { searcherGlobalShortcuts, useShortcuts } from "~core/keymaps.tsx";
+import { notifyError } from "~core/notifyError.tsx";
 import {
   appStoreAtom,
   lastRanJobAtom,
@@ -19,14 +19,14 @@ import {
   selectedSearchProfileAtom,
   selectedSearchProfileIndexAtom,
   useUrlNavigation,
-} from "./search";
-import { appStore } from "./store/appStore";
-import { endFullDateAtom, startFullDateAtom } from "./store/dateState";
+} from "~core/search.ts";
+import { appStore } from "~core/store/appStore.ts";
+import { endFullDateAtom, startFullDateAtom } from "~core/store/dateState.ts";
 import {
   QuerySpecificContext,
   searchQueryAtom,
   tabNameAtom,
-} from "./store/queryState";
+} from "~core/store/queryState.ts";
 
 const createNewTab = (label?: string) => {
   const store = createStore();
@@ -274,33 +274,18 @@ export const SearcherWrapper = () => {
           {tabs.map((tab, index) => (
             <DisplayTab key={tab.key} tab={tab} index={index} />
           ))}
-          <Tooltip
-            content={
-              <span>
-                Add Tab{" "}
-                <Shortcut
-                  keys={searcherGlobalShortcuts.getAlias("create-new-tab")}
-                />
-              </span>
-            }
-            showArrow
-            positioning={{
-              placement: "bottom",
+          <MiniIconButton
+            tooltip="Add Tab"
+            tooltipShortcut={searcherGlobalShortcuts.getAlias("create-new-tab")}
+            aria-label="Add new tab"
+            onClick={() => {
+              const created = addTab();
+              setSelectedTab(created.index);
             }}
+            margin={2}
           >
-            <IconButton
-              size="2xs"
-              variant="surface"
-              aria-label="Create new tab"
-              onClick={() => {
-                const created = addTab();
-                setSelectedTab(created.index);
-              }}
-              margin={2}
-            >
-              <VscAdd />
-            </IconButton>
-          </Tooltip>
+            <VscAdd />
+          </MiniIconButton>
         </Stack>
       </div>
       {selectedTabInfo && (
@@ -407,32 +392,19 @@ const DisplayTab: React.FC<{
       ) : (
         <span>{tab.store.get(tabNameAtom)}</span>
       )}
-      <Tooltip
-        content={
-          <span>
-            Close {selectedTab === index && "Active"} Tab{" "}
-            {selectedTab === index && (
-              <Shortcut keys={searcherGlobalShortcuts.getAlias("close-tab")} />
-            )}
-          </span>
-        }
-        showArrow
-        positioning={{
-          placement: "bottom",
+      <MiniIconButton
+        tooltip={`Close ${selectedTab === index ? "Active" : ""} Tab`}
+        tooltipShortcut={searcherGlobalShortcuts.getAlias("close-tab")}
+        aria-label="Close tab"
+        variant="ghost"
+        onClick={(e) => {
+          e.stopPropagation();
+          setEditingTabKey(null);
+          removeTab(tab.key);
         }}
       >
-        <IconButton
-          size="2xs"
-          variant="ghost"
-          aria-label="Close tab"
-          onClick={(e) => {
-            e.stopPropagation();
-            removeTab(tab.key);
-          }}
-        >
-          <VscClose />
-        </IconButton>
-      </Tooltip>
+        <VscClose />
+      </MiniIconButton>
     </Stack>
   );
 };

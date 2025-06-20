@@ -1,10 +1,15 @@
 import { Badge, Icon, IconButton, Separator, Stack } from "@chakra-ui/react";
 import { Link } from "@tanstack/react-router";
 import { ReactNode } from "react";
-import { LuBolt, LuFileSearch } from "react-icons/lu";
+import { LuBolt, LuFileSearch, LuKeyboard } from "react-icons/lu";
 import logo from "src/icons/png/256x256.png";
-import { Tooltip } from "~components/ui/tooltip";
-import { ApplicationStore, useApplicationStore } from "./store/appStore";
+import {
+  ApplicationStore,
+  useApplicationStore,
+  useSetShortcutsShown,
+} from "~core/store/appStore";
+import { Tooltip } from "../components/presets/Tooltip";
+import { globalShortcuts } from "~core/keymaps";
 
 export type MenuItem = "searcher" | "settings";
 
@@ -19,6 +24,7 @@ const versionSelector = (state: ApplicationStore) => {
 
 export const SideMenu = () => {
   const version = useApplicationStore(versionSelector);
+  const setShortcutsShown = useSetShortcutsShown();
 
   return (
     <Stack direction="row" backgroundColor="rgb(22, 23, 29)" gap={0}>
@@ -47,6 +53,19 @@ export const SideMenu = () => {
 
         <Stack>
           <Separator />
+          <Tooltip
+            text="Keyboard Shortcuts"
+            position="right"
+            shortcut={globalShortcuts.getAlias("toggle-help")}
+          >
+            <IconButton
+              variant={"outline"}
+              size="2xs"
+              onClick={() => setShortcutsShown((prev) => !prev)}
+            >
+              <LuKeyboard />
+            </IconButton>
+          </Tooltip>
           <Stack gap={2}>
             <Link to={"/settings"}>
               {({ isActive }) => (
@@ -74,13 +93,7 @@ const MenuButton: React.FC<{
   icon: ReactNode;
 }> = ({ isActive: isSelected, tooltip, icon }) => {
   return (
-    <Tooltip
-      content={tooltip}
-      showArrow
-      positioning={{
-        placement: "right",
-      }}
-    >
+    <Tooltip text={tooltip} position="right">
       <IconButton variant={isSelected ? "solid" : "outline"}>{icon}</IconButton>
     </Tooltip>
   );

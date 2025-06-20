@@ -6,16 +6,12 @@ import {
   Portal,
 } from "@chakra-ui/react";
 import { LuSettings } from "react-icons/lu";
-import { Tooltip } from "~components/ui/tooltip";
+import { Tooltip } from "~components/presets/Tooltip.tsx";
 
 export const SettingsDrawer = () => {
   return (
     <Drawer.Root size={"md"}>
-      <Tooltip
-        content={<span>Search Settings</span>}
-        showArrow
-        positioning={{ placement: "bottom" }}
-      >
+      <Tooltip text="Search Settings">
         <Drawer.Trigger asChild>
           <IconButton aria-label="Settings" size="2xs" variant="surface">
             <LuSettings />

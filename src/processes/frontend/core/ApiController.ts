@@ -4,6 +4,7 @@ import {
   ClosestPoint,
   ExportResults,
   InstanceRef,
+  JobBatchFinished,
   PageResponse,
   SearchProfileRef,
   TableDataResponse,
@@ -13,7 +14,15 @@ import { AppRouter } from "src/processes/server/plugins_engine/router_messages";
 import { ProcessedData } from "~lib/adapters/logTypes";
 import { DisplayResults } from "~lib/displayTypes";
 import { removeJobQueries } from "./api";
-import { QueryOptions } from "./common/interface";
+
+export type QueryOptions = {
+  fromTime: Date;
+  toTime: Date;
+  cancelToken: AbortSignal;
+  limit: number;
+  isForced: boolean;
+  onBatchDone: (data: JobBatchFinished) => void;
+};
 
 export class ApiController {
   constructor(private connection: TRPCClient<AppRouter>) {}

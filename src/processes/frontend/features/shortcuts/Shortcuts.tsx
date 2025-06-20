@@ -14,8 +14,8 @@ import {
   searcherShortcuts,
   ShortcutDefinitions,
   ShortcutHolder,
-} from "./keymaps";
-import { Shortcut } from "~components/ui/shortcut";
+} from "~core/keymaps.tsx";
+import { Shortcut } from "~components/ui/shortcut.tsx";
 
 export type ShortcutsProps = {
   open?: boolean;

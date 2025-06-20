@@ -1,33 +1,20 @@
-import { Badge, IconButton, Stack, Tabs } from "@chakra-ui/react";
+import { Badge, Tabs } from "@chakra-ui/react";
 import { css } from "@emotion/react";
 import styled from "@emotion/styled";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { useEffect, useRef, useState } from "react";
-import {
-  LuChartArea,
-  LuLogs,
-  LuPanelTopClose,
-  LuPanelTopOpen,
-  LuTable,
-} from "react-icons/lu";
-import { Shortcut } from "~components/ui/shortcut";
-import { Tooltip } from "~components/ui/tooltip";
-import { isDateSelectorOpenAtom } from "./DateSelector";
-import { queryEditorAtom } from "./Editor";
-import DataLog from "./events/DataLog";
-import Header from "./Header";
-import { Highlighter, HighlighterRef } from "./Highlighter";
-import { searcherShortcuts, useShortcuts } from "./keymaps";
-import {
-  isHeaderOpenAtom,
-  QueryState,
-  useQueryActions,
-  useQueryExecutedEffect,
-} from "./search";
-import { jobMetadataAtom, viewSelectedForQueryAtom } from "./store/queryState";
-import { TableView } from "./table/TableView";
-import { TimeChart } from "./TimeChart";
-import { ViewChart } from "./view/ViewChart";
+import { useEffect, useState } from "react";
+import { LuChartArea, LuLogs, LuTable } from "react-icons/lu";
+import { isDateSelectorOpenAtom } from "~features/searcher/header/calendar/DateSelector.tsx";
+import { queryEditorAtom } from "~features/searcher/header/Editor.tsx";
+import DataLog from "~features/searcher/data-displays/events/DataLog";
+import Header from "~features/searcher/header/Header.tsx";
+import { searcherShortcuts, useShortcuts } from "~core/keymaps";
+import { QueryState, useQueryActions, useQueryExecutedEffect } from "~core/search";
+import { jobMetadataAtom, viewSelectedForQueryAtom } from "~core/store/queryState";
+import { TableView } from "~features/searcher/data-displays/table/TableView";
+import { EventsHistogram } from "~features/searcher/data-displays/events/EventsHistogram.tsx";
+import { ViewChart } from "~features/searcher/data-displays/view/ViewChart";
+import { TabsLineButtons } from "~features/searcher/TabsLineButtons.tsx";
 
 const MainContainer = styled.section`
   flex: 1;
@@ -52,12 +39,10 @@ export const Searcher: React.FC<SearcherProps> = () => {
   const hasViewChart = jobStatus?.views.view !== undefined;
 
   const editor = useAtomValue(queryEditorAtom);
-  const highlightBoxRef = useRef<HighlighterRef>(null);
 
   const queryActions = useQueryActions();
   const setDateSelectorIsOpen = useSetAtom(isDateSelectorOpenAtom);
 
-  const [isHeaderOpen, setIsHeaderOpen] = useAtom(isHeaderOpenAtom);
 
   const [viewSelectedForQuery, setViewSelectedForQuery] = useAtom(
     viewSelectedForQueryAtom,
@@ -83,9 +68,6 @@ export const Searcher: React.FC<SearcherProps> = () => {
     }
   }, [jobStatus, viewSelectedForQuery]);
 
-  const toggleHeader = () => {
-    setIsHeaderOpen((prev) => !prev);
-  };
 
   useShortcuts(searcherShortcuts, (shortcut) => {
     switch (shortcut) {
@@ -101,12 +83,6 @@ export const Searcher: React.FC<SearcherProps> = () => {
         break;
       case "toggle-until-now":
         queryActions.toggleUntilNow();
-        break;
-      case "toggle-header":
-        toggleHeader();
-        break;
-      case "highlight":
-        highlightBoxRef.current?.focus();
         break;
     }
   });
@@ -137,28 +113,7 @@ export const Searcher: React.FC<SearcherProps> = () => {
           <Tabs.Trigger value="view" disabled={!hasViewChart}>
             <LuChartArea /> View
           </Tabs.Trigger>
-
-          <Stack direction="row" ml="auto" mr={4} alignItems="center">
-            <Highlighter ref={highlightBoxRef} />
-            <Tooltip
-              content={
-                <span>
-                  Toggle header{" "}
-                  <Shortcut
-                    keys={searcherShortcuts.getAlias("toggle-header")}
-                  />
-                </span>
-              }
-              showArrow
-              positioning={{
-                placement: "bottom",
-              }}
-            >
-              <IconButton size="2xs" variant="surface" onClick={toggleHeader}>
-                {isHeaderOpen ? <LuPanelTopClose /> : <LuPanelTopOpen />}
-              </IconButton>
-            </Tooltip>
-          </Stack>
+          <TabsLineButtons />
         </Tabs.List>
         <Tabs.Content
           value="logs"
@@ -167,7 +122,7 @@ export const Searcher: React.FC<SearcherProps> = () => {
           display={"flex"}
           flexDirection={"column"}
         >
-          <TimeChart />
+          <EventsHistogram />
           <DataLog />
         </Tabs.Content>
         <Tabs.Content

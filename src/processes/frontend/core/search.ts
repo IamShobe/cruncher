@@ -8,20 +8,10 @@ import { dateAsString, DateType, FullDate, isTimeNow } from "~lib/dateUtils";
 import { parse } from "~lib/qql";
 import { ControllerIndexParam, Search } from "~lib/qql/grammar";
 import { invalidateJobQueries } from "./api";
-import { AwaitableTask } from "./common/interface";
-import { openIndexesAtom } from "./events/state";
+import { openIndexesAtom } from "~features/searcher/data-displays/events/state";
 import { notifyError, notifySuccess } from "./notifyError";
-import {
-  ApplicationStore,
-  appStore,
-  useApplicationStore,
-} from "./store/appStore";
-import {
-  actualEndTimeAtom,
-  actualStartTimeAtom,
-  endFullDateAtom,
-  startFullDateAtom,
-} from "./store/dateState";
+import { ApplicationStore, appStore, useApplicationStore } from "./store/appStore";
+import { actualEndTimeAtom, actualStartTimeAtom, endFullDateAtom, startFullDateAtom } from "./store/dateState";
 import {
   jobMetadataAtom,
   searchQueryAtom,
@@ -273,6 +263,11 @@ export const useRunQuery = () => {
     },
     [store],
   );
+};
+
+export type AwaitableTask = {
+  job: QueryTask;
+  promise: Promise<void>;
 };
 
 export const runQueryForStore = async (

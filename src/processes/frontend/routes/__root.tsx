@@ -1,20 +1,23 @@
 import { Box, ProgressCircle } from "@chakra-ui/react";
 import { css } from "@emotion/react";
 import styled from "@emotion/styled";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { createRootRoute, Outlet } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { Provider as JotaiProvider } from "jotai";
-import { useState } from "react";
 import { Provider } from "~components/ui/provider";
 import { Toaster } from "~components/ui/toaster";
 import { ApplicationProvider } from "~core/ApplicationProvider";
-import { globalShortcuts, useShortcuts } from "~core/keymaps";
-import { Shortcuts } from "~core/Shortcuts";
-import { SideMenu } from "~core/SideMenu";
-import { useApplicationStore } from "~core/store/appStore";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "~core/client";
+import { globalShortcuts, useShortcuts } from "~core/keymaps";
+import { Shortcuts } from "~features/shortcuts/Shortcuts.tsx";
+import { SideMenu } from "~features/SideMenu";
+import {
+  useApplicationStore,
+  useIsShortcutsShown,
+  useSetShortcutsShown,
+} from "~core/store/appStore";
 
 import "../index.css";
 
@@ -54,12 +57,14 @@ export const Route = createRootRoute({
 
 const MainContent = () => {
   const isInitialized = useApplicationStore((state) => state.isInitialized);
-  const [isHelpOpen, setIsHelpOpen] = useState(false);
+
+  const isShown = useIsShortcutsShown();
+  const setIsShown = useSetShortcutsShown();
 
   useShortcuts(globalShortcuts, (shortcut) => {
     switch (shortcut) {
       case "toggle-help":
-        setIsHelpOpen((prev) => !prev);
+        setIsShown(!isShown);
         break;
     }
   });
@@ -84,7 +89,7 @@ const MainContent = () => {
 
   return (
     <Wrapper>
-      <Shortcuts open={isHelpOpen} onOpenChange={setIsHelpOpen} />
+      <Shortcuts open={isShown} onOpenChange={setIsShown} />
       <SideMenu />
       <Outlet />
     </Wrapper>

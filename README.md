@@ -1,8 +1,8 @@
-<img src="./docs/src/assets/cruncher_full_logo.png">
+<img alt="logo" src="./docs/src/assets/cruncher_full_logo.png">
 
 # Cruncher
 
-<img src="./docs/src/assets/splash.png">
+<img alt="splash" src="./docs/src/assets/splash.png">
 
 Ever wanted to post process your data?  
 `Cruncher` is here for the rescue!

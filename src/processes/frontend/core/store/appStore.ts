@@ -44,6 +44,9 @@ export type ApplicationStore = {
   supportedPlugins: SerializableAdapter[];
   initializedInstances: PluginInstance[];
   searchProfiles: SearchProfile[];
+
+  isShortcutsShown: boolean;
+  setIsShortcutsShown: (value: boolean | ((prev: boolean) => boolean)) => void;
 };
 
 export const appStore = createStore<ApplicationStore>((set, get) => ({
@@ -190,6 +193,13 @@ export const appStore = createStore<ApplicationStore>((set, get) => ({
   supportedPlugins: [],
   initializedInstances: [],
   searchProfiles: [],
+
+  isShortcutsShown: false,
+  setIsShortcutsShown: (value: boolean | ((prev: boolean) => boolean)) => {
+    set((state) => ({
+      isShortcutsShown: typeof value === "boolean" ? value : value(state.isShortcutsShown),
+    }));
+  },
 }));
 
 export const useApplicationStore = <T>(
@@ -200,4 +210,12 @@ export const useApplicationStore = <T>(
 
 export const useGeneralSettings = () => {
   return useApplicationStore((state) => state.generalSettings);
+};
+
+export const useIsShortcutsShown = () => {
+  return useApplicationStore((state) => state.isShortcutsShown);
+};
+
+export const useSetShortcutsShown = () => {
+  return useApplicationStore((state) => state.setIsShortcutsShown);
 };

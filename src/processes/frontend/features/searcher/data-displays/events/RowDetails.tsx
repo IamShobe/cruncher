@@ -12,10 +12,10 @@ import {
   MenuItem,
   MenuRoot,
   MenuTrigger,
-} from "~components/ui/menu";
-import { asDisplayString, Field, ProcessedData } from "~lib/adapters/logTypes";
-import { searchQueryAtom } from "../store/queryState";
-import { useIsIndexOpen } from "./state";
+} from "~components/ui/menu.tsx";
+import { asDisplayString, Field, ProcessedData } from "~lib/adapters/logTypes.ts";
+import { searchQueryAtom } from "~core/store/queryState.ts";
+import { useIsIndexOpen } from "./state.ts";
 
 import { CiCalendarDate } from "react-icons/ci";
 import { GrStatusUnknown } from "react-icons/gr";
@@ -26,8 +26,8 @@ import {
   VscSymbolNumeric,
   VscSymbolString,
 } from "react-icons/vsc";
-import { highlightItemQueryAtom } from "~core/search";
-import { highlightText } from "../common/utils";
+import { highlightItemQueryAtom } from "~core/search.ts";
+import { highlightText } from "~core/utils/highlight.tsx";
 
 type DataRowProps = {
   rowKey: string;
