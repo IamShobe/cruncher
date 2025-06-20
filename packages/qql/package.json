@@ -1,0 +1,34 @@
+{
+  "name": "@cruncher/qql",
+  "version": "0.1.0",
+  "description": "QQL query language for Cruncher platform.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "cruncher",
+    "qql",
+    "query-language"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "chevrotain": "^11.0.3"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  }
+}

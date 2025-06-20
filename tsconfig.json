@@ -3,5 +3,6 @@
   "references": [
     { "path": "./tsconfig.app.json" },
     { "path": "./tsconfig.node.json" }
-  ]
+  ],
+  "exclude": ["node_modules", "dist", "build", "coverage", "tmp", "e2e", "apps", "libs"]
 }

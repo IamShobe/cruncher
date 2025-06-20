@@ -19,8 +19,7 @@
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
     "test": "vitest run",
-    "format": "prettier --write src/",
-    "dmg": "create-dmg ./out/cruncher-darwin-arm64/cruncher.app/ --overwrite"
+    "format": "prettier --write src/"
   },
   "keywords": [],
   "author": {
@@ -73,7 +72,8 @@
     "typescript": "^5.8.3",
     "vite": "^5.4.19",
     "vite-tsconfig-paths": "^5.1.4",
-    "vitest": "^2.1.9"
+    "vitest": "^2.1.9",
+    "nx": "21.2.1"
   },
   "dependencies": {
     "@chakra-ui/react": "^3.21.0",
@@ -132,5 +132,6 @@
     "yaml": "^2.8.0",
     "zod": "^3.25.67",
     "zustand": "^5.0.5"
-  }
+  },
+  "nx": {}
 }

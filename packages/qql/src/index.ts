@@ -63,3 +63,5 @@ export type NarrowedPipelineItem<T extends PipelineItemType> = Extract<
   PipelineItem,
   { type: T }
 >;
+
+export * from "./searchTree";

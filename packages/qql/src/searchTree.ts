@@ -1,4 +1,4 @@
-import { Search, SearchAND, SearchOR, SearchLiteral } from "~lib/qql/grammar";
+import { Search, SearchAND, SearchOR, SearchLiteral } from "./grammar";
 
 export type SearchTreeCallback<T> = (item: string) => T;
 
