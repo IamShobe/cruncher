@@ -1,8 +1,8 @@
-import { Badge, IconButton, Tabs } from "@chakra-ui/react";
+import { Badge, IconButton, Stack, Tabs } from "@chakra-ui/react";
 import { css } from "@emotion/react";
 import styled from "@emotion/styled";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   LuChartArea,
   LuLogs,
@@ -16,6 +16,7 @@ import { isDateSelectorOpenAtom } from "./DateSelector";
 import { queryEditorAtom } from "./Editor";
 import DataLog from "./events/DataLog";
 import Header from "./Header";
+import { Highlighter, HighlighterRef } from "./Highlighter";
 import { searcherShortcuts, useShortcuts } from "./keymaps";
 import {
   isHeaderOpenAtom,
@@ -51,6 +52,7 @@ export const Searcher: React.FC<SearcherProps> = () => {
   const hasViewChart = jobStatus?.views.view !== undefined;
 
   const editor = useAtomValue(queryEditorAtom);
+  const highlightBoxRef = useRef<HighlighterRef>(null);
 
   const queryActions = useQueryActions();
   const setDateSelectorIsOpen = useSetAtom(isDateSelectorOpenAtom);
@@ -103,6 +105,9 @@ export const Searcher: React.FC<SearcherProps> = () => {
       case "toggle-header":
         toggleHeader();
         break;
+      case "highlight":
+        highlightBoxRef.current?.focus();
+        break;
     }
   });
 
@@ -133,28 +138,27 @@ export const Searcher: React.FC<SearcherProps> = () => {
             <LuChartArea /> View
           </Tabs.Trigger>
 
-          <Tooltip
-            content={
-              <span>
-                Toggle header{" "}
-                <Shortcut keys={searcherShortcuts.getAlias("toggle-header")} />
-              </span>
-            }
-            showArrow
-            positioning={{
-              placement: "bottom",
-            }}
-          >
-            <IconButton
-              size="2xs"
-              variant="surface"
-              onClick={toggleHeader}
-              ml="auto"
-              mr={4}
+          <Stack direction="row" ml="auto" mr={4} alignItems="center">
+            <Highlighter ref={highlightBoxRef} />
+            <Tooltip
+              content={
+                <span>
+                  Toggle header{" "}
+                  <Shortcut
+                    keys={searcherShortcuts.getAlias("toggle-header")}
+                  />
+                </span>
+              }
+              showArrow
+              positioning={{
+                placement: "bottom",
+              }}
             >
-              {isHeaderOpen ? <LuPanelTopClose /> : <LuPanelTopOpen />}
-            </IconButton>
-          </Tooltip>
+              <IconButton size="2xs" variant="surface" onClick={toggleHeader}>
+                {isHeaderOpen ? <LuPanelTopClose /> : <LuPanelTopOpen />}
+              </IconButton>
+            </Tooltip>
+          </Stack>
         </Tabs.List>
         <Tabs.Content
           value="logs"

@@ -71,6 +71,8 @@ export type QueryExecutionHistory = {
 const submitMutexAtom = atom(new Mutex());
 const abortControllerAtom = atom(new AbortController());
 
+export const highlightItemQueryAtom = atom<string | undefined>(undefined);
+
 export const initializedInstancesSelector = (state: ApplicationStore) =>
   state.initializedInstances;
 export const supportedPluginsSelector = (state: ApplicationStore) =>

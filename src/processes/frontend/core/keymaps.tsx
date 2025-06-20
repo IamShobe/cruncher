@@ -106,6 +106,10 @@ export const searcherShortcuts = new ShortcutHolder({
     Mac: "Meta + H",
     Windows: "Control + H",
   },
+  "highlight": {
+    Mac: "Meta + F",
+    Windows: "Control + F",
+  }
 });
 
 export const searcherGlobalShortcuts = new ShortcutHolder({

@@ -1,11 +1,13 @@
 import { css } from "@emotion/react";
 import styled from "@emotion/styled";
 import { parse } from "ansicolor";
-import { useSetAtom } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import React, { useMemo } from "react";
 import { formatDataTime } from "~lib/adapters/formatters";
 import { asDateField, ProcessedData } from "~lib/adapters/logTypes";
 import { openIndexesAtom, useIsIndexOpen } from "./state";
+import { highlightText } from "./RowDetails";
+import { highlightItemQueryAtom } from "~core/search";
 
 type DataRowProps = {
   row: ProcessedData;
@@ -59,6 +61,8 @@ const DataRow: React.FC<DataRowProps> = ({ row, index }) => {
   const isIndexOpen = useIsIndexOpen();
   const isOpen = useMemo(() => isIndexOpen(index), [index, isIndexOpen]);
 
+  const highlightItemQuery = useAtomValue(highlightItemQueryAtom);
+
   const setIsOpen = (value: boolean) => {
     if (value) {
       setOpenIndexes((prev) => [...prev, index]);
@@ -105,7 +109,7 @@ const DataRow: React.FC<DataRowProps> = ({ row, index }) => {
                     ${span.css}
                   `}
                 >
-                  {span.text}
+                  {highlightText(span.text, highlightItemQuery)}
                 </span>
               );
             })}

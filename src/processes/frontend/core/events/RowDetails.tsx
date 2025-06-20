@@ -1,6 +1,6 @@
 import { Box, IconButton } from "@chakra-ui/react";
 import { css } from "@emotion/react";
-import { useSetAtom } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import React, { useMemo } from "react";
 import {
   LuAArrowUp,
@@ -26,6 +26,7 @@ import {
   VscSymbolNumeric,
   VscSymbolString,
 } from "react-icons/vsc";
+import { highlightItemQueryAtom } from "~core/search";
 
 type DataRowProps = {
   rowKey: string;
@@ -89,6 +90,7 @@ const getRowIcon = (row: Field) => {
 
 export const RowDetail: React.FC<DataRowProps> = ({ rowKey, rowValue }) => {
   const setSearchQuery = useSetAtom(searchQueryAtom);
+  const highlightItemQuery = useAtomValue(highlightItemQueryAtom);
   return (
     <div
       css={css`
@@ -117,7 +119,7 @@ export const RowDetail: React.FC<DataRowProps> = ({ rowKey, rowValue }) => {
             word-break: break-all;
           `}
         >
-          {rowKey}
+          {highlightText(rowKey, highlightItemQuery)}
         </span>
         <IconButton
           size={"2xs"}
@@ -145,7 +147,7 @@ export const RowDetail: React.FC<DataRowProps> = ({ rowKey, rowValue }) => {
             line-height: 1.5;
           `}
         >
-          {asDisplayString(rowValue)}
+          {highlightText(asDisplayString(rowValue), highlightItemQuery)}
         </span>
       </div>
       {/* <PopoverRoot
@@ -182,3 +184,25 @@ export const RowDetail: React.FC<DataRowProps> = ({ rowKey, rowValue }) => {
     </div>
   );
 };
+
+// Utility to highlight search term in a string
+export function highlightText(text: string, searchTerm?: string) {
+  if (!searchTerm) return text;
+  const regex = new RegExp(
+    `(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`,
+    "gi",
+  );
+  const parts = text.split(regex);
+  return parts.map((part, i) =>
+    regex.test(part) ? (
+      <mark
+        key={i}
+        style={{ background: "#ffe066", color: "#222", padding: 0 }}
+      >
+        {part}
+      </mark>
+    ) : (
+      part
+    ),
+  );
+}
