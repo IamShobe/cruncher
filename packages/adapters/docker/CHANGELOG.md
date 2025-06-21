@@ -1,3 +1,10 @@
+## 0.2.1 (2025-06-21)
+
+### 🧱 Updated Dependencies
+
+- Updated @cruncher/adapters-utils to 0.2.1
+- Updated @cruncher/qql to 0.2.2
+
 ## 0.2.0 (2025-06-21)
 
 ### 🚀 Features

@@ -1,7 +1,7 @@
 {
   "name": "@cruncher/adapter-coralogix",
   "type": "module",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Coralogix adapter for Cruncher.",
   "publishConfig": {
     "access": "public"

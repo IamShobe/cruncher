@@ -1,3 +1,9 @@
+## 0.2.2 (2025-06-21)
+
+### 🩹 Fixes
+
+- test bump ([5d62e3c](https://github.com/IamShobe/cruncher/commit/5d62e3c))
+
 ## 0.2.1 (2025-06-21)
 
 ### 🩹 Fixes
