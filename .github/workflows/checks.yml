@@ -1,0 +1,30 @@
+name: "PR Version Plan Check"
+
+on:
+  pull_request:
+
+jobs:
+  plan_check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout full repo with history and tags
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Configure SHAs for Nx
+        uses: nrwl/nx-set-shas@v4
+
+      - name: Run `nx release plan:check`
+        run: |
+          npx nx release plan:check --base=origin/main --head=HEAD
+
+      - name: Fail if plan check fails
+        if: failure()
+        run: |
+          echo "Plan check failed. Please make sure to run `pnpm nx release plan` before pushing your changes."
+          exit 1

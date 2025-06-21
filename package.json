@@ -21,7 +21,8 @@
     "build": "nx run-many -t build",
     "publish": "nx run @cruncher/app:publish",
     "clean": "find . -name 'node_modules' -type d -prune -exec rm -rf '{}' +",
-    "prepare-pr": "nx release plan"
+    "prepare-pr": "nx release plan",
+    "push-all": "git push && git push --tags"
   },
   "keywords": [],
   "author": {
