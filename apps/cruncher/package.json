@@ -1,7 +1,7 @@
 {
   "name": "@cruncher/app",
   "productName": "cruncher",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "private": true,
   "description": "Cruncher is a tool for analyzing and processing data efficiently.",
   "main": ".vite/build/main.js",
