@@ -3,7 +3,7 @@
   "productName": "cruncher",
   "version": "1.6.2",
   "private": true,
-  "description": "Cruncher is a tool for analyzing and processing data efficiently.",
+  "description": "Cruncher main application - a tool for analyzing and processing data efficiently.",
   "main": ".vite/build/main.js",
   "repository": {
     "type": "git",
