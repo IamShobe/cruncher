@@ -1,3 +1,9 @@
+## 0.2.3 (2025-06-21)
+
+### 🩹 Fixes
+
+- fix typing ([9374f27](https://github.com/IamShobe/cruncher/commit/9374f27))
+
 ## 0.2.2 (2025-06-21)
 
 ### 🩹 Fixes

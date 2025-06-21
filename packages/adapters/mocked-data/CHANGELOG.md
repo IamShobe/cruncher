@@ -1,3 +1,9 @@
+## 0.2.3 (2025-06-21)
+
+### 🧱 Updated Dependencies
+
+- Updated @cruncher/adapters-utils to 0.2.3
+
 ## 0.2.2 (2025-06-21)
 
 ### 🩹 Fixes

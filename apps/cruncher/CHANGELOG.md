@@ -1,3 +1,17 @@
+## 1.6.8 (2025-06-21)
+
+### 🩹 Fixes
+
+- fix broken build ([#14](https://github.com/IamShobe/cruncher/pull/14))
+
+### 🧱 Updated Dependencies
+
+- Updated @cruncher/adapter-grafana-loki-browser to 0.2.3
+- Updated @cruncher/adapters-mock to 0.2.3
+- Updated @cruncher/adapter-coralogix to 0.2.3
+- Updated @cruncher/adapter-docker to 0.2.3
+- Updated @cruncher/adapters-utils to 0.2.3
+
 ## 1.6.7 (2025-06-21)
 
 ### 🩹 Fixes
