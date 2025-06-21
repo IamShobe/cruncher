@@ -31,6 +31,8 @@ const config: ForgeConfig = {
     }),
     new MakerDeb({
       options: {
+        name: "cruncher",
+        productName: "cruncher",
         mimeType: ["x-scheme-handler/cruncher"],
       },
     }),
