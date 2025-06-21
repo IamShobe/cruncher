@@ -1,6 +1,6 @@
 {
   "name": "@cruncher/utils",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Utility functions for Cruncher.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
