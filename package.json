@@ -20,6 +20,9 @@
     "serve:docs": "pnpm run -F ./docs serve",
     "build": "nx run-many -t build",
     "publish": "nx run @cruncher/app:publish",
+    "format": "nx run-many -t format",
+    "format:check": "nx run-many -t format:check",
+    "test": "nx run-many -t test",
     "clean": "find . -name 'node_modules' -type d -prune -exec rm -rf '{}' +",
     "prepare-pr": "nx release plan",
     "push-all": "git push && git push --tags"

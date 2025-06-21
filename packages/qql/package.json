@@ -29,7 +29,9 @@
   ],
   "scripts": {
     "build": "tsc --project tsconfig.json",
-    "test": "nx vite:test run",
+    "test": "nx vite:test",
+    "format": "prettier --write src/",
+    "format:check": "prettier --check src/",
     "prepublishOnly": "npm run build"
   },
   "keywords": [

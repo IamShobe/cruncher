@@ -20,6 +20,8 @@
   ],
   "scripts": {
     "build": "tsc --project tsconfig.json",
+    "format": "prettier --write src/",
+    "format:check": "prettier --check src/",
     "prepublishOnly": "npm run build"
   },
   "keywords": [

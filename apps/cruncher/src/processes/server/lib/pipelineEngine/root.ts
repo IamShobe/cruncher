@@ -1,5 +1,9 @@
 import { DisplayResults } from "~lib/displayTypes";
-import { NarrowedPipelineItem, PipelineItem, PipelineItemType } from "@cruncher/qql";
+import {
+  NarrowedPipelineItem,
+  PipelineItem,
+  PipelineItemType,
+} from "@cruncher/qql";
 
 export type PipelineContext = {
   startTime: Date;
