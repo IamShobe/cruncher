@@ -1,0 +1,22 @@
+import { Adapter, newPluginRef, QueryProvider } from "@cruncher/adapter-utils";
+import { <%= titleCaseWithController(name) %> } from "./controller";
+import { z } from "zod/v4";
+
+const paramsSchema = z.object({});
+
+export type <%= titleCase(name) %>Params = z.infer<typeof paramsSchema>;
+
+const adapter: Adapter = {
+  ref: newPluginRef("<%= name %>"),
+  name: "", // TODO: fill me in
+  description: "", // TODO: fill me in
+  version: "0.1.0",
+  params: paramsSchema,
+  factory: (ctx, {params}): QueryProvider => {
+    const parsedParams = paramsSchema.parse(params);
+
+    return new <%= titleCaseWithController(name) %>(parsedParams);
+  },
+};
+
+export default adapter;

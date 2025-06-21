@@ -1,0 +1,41 @@
+{
+  "name": "cruncher-tools",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "tools/cruncher-tools/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/tools/cruncher-tools",
+        "main": "tools/cruncher-tools/src/index.ts",
+        "tsConfig": "tools/cruncher-tools/tsconfig.lib.json",
+        "assets": [
+          "tools/cruncher-tools/*.md",
+          {
+            "input": "./tools/cruncher-tools/src",
+            "glob": "**/!(*.ts)",
+            "output": "./src"
+          },
+          {
+            "input": "./tools/cruncher-tools/src",
+            "glob": "**/*.d.ts",
+            "output": "./src"
+          },
+          {
+            "input": "./tools/cruncher-tools",
+            "glob": "generators.json",
+            "output": "."
+          },
+          {
+            "input": "./tools/cruncher-tools",
+            "glob": "executors.json",
+            "output": "."
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,22 @@
+import { QueryOptions, QueryProvider } from "@cruncher/adapter-utils";
+import { ControllerIndexParam, Search } from "@cruncher/qql/grammar";
+import type {<%= titleCase(name) %>Params} from ".";
+
+
+export class <%= titleCaseWithController(name) %> implements QueryProvider {
+  constructor(params: <%= titleCase(name) %>Params) {
+
+  }
+
+  query(
+    contollerParams: ControllerIndexParam[],
+    searchTerm: Search,
+    options: QueryOptions,
+  ): Promise<void> {
+    throw new Error("TODO: implement me")
+  }
+
+  getControllerParams(): Promise<Record<string, string[]>> {
+    throw new Error("TODO: implement me")
+  }
+}
