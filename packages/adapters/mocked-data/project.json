@@ -1,0 +1,8 @@
+{
+  "name": "@cruncher/adapters-mock",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "packages/adapters/mocked-data/src",
+  "tags": [],
+  "targets": {}
+}
