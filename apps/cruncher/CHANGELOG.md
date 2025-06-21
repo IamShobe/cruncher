@@ -1,3 +1,9 @@
+## 1.6.5 (2025-06-21)
+
+### 🩹 Fixes
+
+- another try ([caaf748](https://github.com/IamShobe/cruncher/commit/caaf748))
+
 ## 1.6.4 (2025-06-21)
 
 ### 🩹 Fixes
