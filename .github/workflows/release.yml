@@ -28,9 +28,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: Build libs
-        run: pnpm run build
-
       - name: Build and publish Electron app
         run: pnpm run publish
         env:
