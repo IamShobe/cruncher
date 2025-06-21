@@ -1,5 +1,5 @@
 {
-  "name": "@cruncher/app",
+  "name": "cruncher",
   "productName": "cruncher",
   "version": "1.6.4",
   "private": true,
