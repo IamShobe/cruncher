@@ -1,6 +1,6 @@
 {
   "name": "@cruncher/qql",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "QQL query language for Cruncher platform.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
