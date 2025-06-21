@@ -18,6 +18,7 @@
     "url": "https://github.com/IamShobe/cruncher.git"
   },
   "scripts": {
+    "start": "npm run serve",
     "serve": "nx run @cruncher/app:serve",
     "serve:docs": "pnpm run -F ./docs serve",
     "build": "nx run-many -t build",
