@@ -4,7 +4,7 @@ on:
   # Trigger the workflow every time you push to the `main` branch
   # Using a different branch name? Replace `main` with your branch’s name
   push:
-    branches: [ main ]
+    branches: [main]
   # Allows you to run this workflow manually from the Actions tab on GitHub.
   workflow_dispatch:
 
@@ -23,14 +23,14 @@ jobs:
 
       - uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 10
 
       - name: Install, build, and upload your site
         uses: withastro/action@v3
         with:
           path: ./docs/ # The root location of your Astro project inside the repository. (optional)
           node-version: 22
-          package-manager: pnpm@9
+          package-manager: pnpm@10
 
   deploy:
     needs: build
