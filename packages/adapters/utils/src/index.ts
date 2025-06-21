@@ -81,7 +81,8 @@ export interface Adapter {
   description: string;
   version: string;
 
-  params: z.ZodObject<{}>;
+  params: z.ZodObject;
+
   factory: (context: AdapterContext, params: FactoryParams) => QueryProvider;
 }
 
