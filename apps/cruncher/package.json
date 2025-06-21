@@ -1,7 +1,6 @@
 {
   "name": "cruncher",
   "productName": "cruncher",
-  "type": "module",
   "version": "1.6.7",
   "private": true,
   "description": "Cruncher main application - a tool for analyzing and processing data efficiently.",
