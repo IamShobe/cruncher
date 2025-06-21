@@ -271,7 +271,7 @@ test("table command no columns", () => {
   expect(lexer.errors).toEqual([]);
   parser.input = lexer.tokens;
   parser.query();
-  expect(parser.errors).length(1);
+  expect(parser.errors).toHaveLength(1);
   expect(parser.errors[0].message).toEqual(
     "Expecting: at least one column name\nbut found: ''",
   );

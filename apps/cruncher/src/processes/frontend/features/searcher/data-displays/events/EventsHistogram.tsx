@@ -15,10 +15,10 @@ import {
   YAxis,
 } from "recharts";
 import { formatDataTimeShort } from "@cruncher/adapter-utils/formatters";
-import { scrollToIndexAtom } from "~features/searcher/data-displays/events/DataLog.tsx";
-import { rangeInViewAtom } from "~features/searcher/data-displays/events/state.ts";
-import { lastRanJobAtom, useInitializedController } from "~core/search.ts";
-import { dataBucketsAtom, scaleAtom } from "~core/store/queryState.ts";
+import { scrollToIndexAtom } from "~features/searcher/data-displays/events/DataLog";
+import { rangeInViewAtom } from "~features/searcher/data-displays/events/state";
+import { lastRanJobAtom, useInitializedController } from "~core/search";
+import { dataBucketsAtom, scaleAtom } from "~core/store/queryState";
 
 export const EventsHistogram = () => {
   const scrollToIndex = useAtomValue(scrollToIndexAtom);

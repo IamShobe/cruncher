@@ -2,9 +2,9 @@ import { Input, InputGroup } from "@chakra-ui/react";
 import { useAtom } from "jotai";
 import { forwardRef, useImperativeHandle, useRef } from "react";
 import { LuHighlighter } from "react-icons/lu";
-import { highlightItemQueryAtom } from "~core/search.ts";
-import { Shortcut } from "~components/ui/shortcut.tsx";
-import { searcherShortcuts } from "~core/keymaps.tsx";
+import { highlightItemQueryAtom } from "~core/search";
+import { Shortcut } from "~components/ui/shortcut";
+import { searcherShortcuts } from "~core/keymaps";
 
 export type HighlighterRef = {
   focus: () => void;

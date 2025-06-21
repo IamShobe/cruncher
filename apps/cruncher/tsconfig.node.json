@@ -9,17 +9,21 @@
     "baseUrl": ".",
     "outDir": "dist",
     "moduleResolution": "nodenext",
+    "isolatedModules": true,
     "moduleDetection": "force",
     "resolveJsonModule": true,
     "paths": {
       "~lib/*": [
-        "./src/lib/*"
+        "./src/processes/server/lib/*"
       ],
     },
     "strict": true
   },
   "include": [
-    "./src/**/*"
+    "./src/**/*",
+    "../server/src/lib",
+    "../server/src/config",
+    "../../packages/adapters/coralogix/src"
   ],
   "exclude": [
     "./src/processes/frontend/**/*"

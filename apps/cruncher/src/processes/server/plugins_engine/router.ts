@@ -4,7 +4,7 @@ import {
   QueryTask,
   SearchProfileRef,
   TaskRef,
-} from "src/processes/server/engineV2/types";
+} from "../engineV2/types";
 import z from "zod/v4";
 import { appGeneralSettings, setupPluginsFromConfig } from "./config";
 import { QueryBatchDone, QueryJobUpdated, UrlNavigation } from "./protocolOut";

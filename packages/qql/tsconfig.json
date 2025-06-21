@@ -1,7 +1,7 @@
 {
     "compilerOptions": {
         "target": "ESNext",
-        "module": "nodenext",
+        "module": "esnext",
         "skipLibCheck": true,
         "allowJs": true,
         "esModuleInterop": true,
@@ -9,7 +9,7 @@
         "sourceMap": true,
         "baseUrl": ".",
         "outDir": "dist",
-        "moduleResolution": "nodenext",
+        "moduleResolution": "bundler",
         "resolveJsonModule": true,
         "strict": true,
         "rootDir": "src",

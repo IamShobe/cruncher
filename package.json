@@ -2,7 +2,7 @@
   "name": "cruncher-monorepo",
   "private": true,
   "version": "",
-  "packageManager": "pnpm@8.9.0",
+  "packageManager": "pnpm@10.12.1",
   "description": "Cruncher monorepo.",
   "pnpm": {
     "onlyBuiltDependencies": [
@@ -16,7 +16,8 @@
   },
   "scripts": {
     "start": "pnpm run -F @cruncher/app start",
-    "build": "pnpm run --recursive --filter \"./packages/**\" build"
+    "build": "pnpm run --recursive --filter \"./packages/**\" build",
+    "clean": "find . -name 'node_modules' -type d -prune -exec rm -rf '{}' +"
   },
   "keywords": [],
   "author": {

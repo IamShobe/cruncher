@@ -1,13 +1,12 @@
 import { applyWSSHandler } from "@trpc/server/adapters/ws";
-import log from "electron-log/main";
 import { EventEmitter } from "node:events";
 import { WebSocketServer } from "ws";
 import { ExternalAuthProvider } from "@cruncher/adapter-utils";
 import { createSignal } from "@cruncher/utils";
-import * as docker from "@cruncher/adapter-docker";
-import * as grafana from "@cruncher/adapter-grafana-loki-browser";
-import * as local from "@cruncher/adapter-mock";
-import * as coralogix from "@cruncher/adapter-coralogix";
+import docker from "@cruncher/adapter-docker";
+import loki from "@cruncher/adapter-grafana-loki-browser";
+import mock from "@cruncher/adapter-mock";
+import coralogix from "@cruncher/adapter-coralogix";
 import { Engine } from "./engineV2/engine";
 import {
   DefaultExternalAuthProvider,
@@ -16,11 +15,13 @@ import {
 import { appRouter } from "./plugins_engine/router";
 import { createContext } from "./plugins_engine/trpc";
 import { IPCMessage } from "./types";
-
-process.title = "cruncher-server";
+import log from "electron-log/main";
+export type { AppRouter } from "./plugins_engine/router_messages";
 
 log.initialize();
 Object.assign(console, log.functions);
+
+process.title = "cruncher-server";
 
 const eventEmitter = new EventEmitter();
 
@@ -98,10 +99,10 @@ const initializeServer = async (authProvider: ExternalAuthProvider) => {
   //   messageSender = serverContainer;
 
   // TODO: dynamically load supported plugins
-  engineV2.registerPlugin(grafana.adapter);
-  engineV2.registerPlugin(local.adapter);
-  engineV2.registerPlugin(docker.adapter);
-  engineV2.registerPlugin(coralogix.adapter);
+  engineV2.registerPlugin(loki);
+  engineV2.registerPlugin(mock);
+  engineV2.registerPlugin(docker);
+  engineV2.registerPlugin(coralogix);
 
   //   const routes = await getRoutes(engineV2);
   //   await setupEngine(serverContainer, routes);
@@ -119,16 +120,16 @@ console.log("Server process started, waiting for IPC messages...");
 // If this file is run directly, start the server and listen for IPC messages
 if (require.main === module) {
   (async () => {
-    if (process.parentPort === undefined) {
+    if (!("parentPort" in process)) {
       await initializeServer(new DefaultExternalAuthProvider());
     } else {
-      process.parentPort?.on("message", async (e) => {
+      (process.parentPort as EventEmitter)?.on("message", async (e) => {
         const [port] = e.ports;
         const serverData = await initializeServer(
           new ElectronExternalAuthProvider(port),
         );
 
-        port.on("message", (e) => {
+        port.on("message", (e: any) => {
           const msg = e.data as IPCMessage;
           if (!msg || typeof msg !== "object" || !("type" in msg)) return;
           if (msg.type === "authResult") {

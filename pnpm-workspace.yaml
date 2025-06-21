@@ -3,6 +3,3 @@ packages:
   - docs/
   - packages/*
   - packages/adapters/*
-linkWorkspacePackages: true
-hoistPattern:
-  - "*electron*"

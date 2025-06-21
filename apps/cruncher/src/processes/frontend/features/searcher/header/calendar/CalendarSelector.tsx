@@ -6,8 +6,8 @@ import {
   DayProps,
   NavProps,
 } from "react-day-picker";
-import { isTimeNow } from "~lib/dateUtils.ts";
-import { dateRangeAtom } from "~core/store/dateState.ts";
+import { isTimeNow } from "src/processes/server/lib/dateUtils";
+import { dateRangeAtom } from "~core/store/dateState";
 
 import { IconButton } from "@chakra-ui/react";
 import { css } from "@emotion/react";

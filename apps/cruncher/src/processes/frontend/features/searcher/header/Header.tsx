@@ -1,8 +1,8 @@
-import { Collapsible, Field } from "@chakra-ui/react";
+import { Collapsible, Field, Menu } from "@chakra-ui/react";
 import styled from "@emotion/styled";
 import type React from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
-import { ProgressBar, ProgressRoot } from "~components/ui/progress.tsx";
+import { ProgressBar, ProgressRoot } from "~components/ui/progress";
 
 import {
   Box,
@@ -29,25 +29,19 @@ import {
   LuSearchX,
   LuSigma,
 } from "react-icons/lu";
-import { SearchProfileRef } from "../../../../server/engineV2/types.ts";
-import {
-  MenuContent,
-  MenuItem,
-  MenuRoot,
-  MenuTrigger,
-} from "~components/ui/menu.tsx";
-import { Shortcut } from "~components/ui/shortcut.tsx";
-import { Tooltip } from "~components/ui/tooltip.tsx";
-import { DateType } from "~lib/dateUtils.ts";
-import { DateSelector, isDateSelectorOpenAtom } from "./calendar/DateSelector.tsx";
-import { SettingsDrawer } from "~features/searcher/header/settings-drawer/Drawer.tsx";
-import { Editor } from "./Editor.tsx";
+import { SearchProfileRef } from "../../../../server/engineV2/types";
+import { Shortcut } from "~components/ui/shortcut";
+import { Tooltip } from "~components/ui/tooltip";
+import { DateType } from "~lib/dateUtils";
+import { DateSelector, isDateSelectorOpenAtom } from "./calendar/DateSelector";
+import { SettingsDrawer } from "~features/searcher/header/settings-drawer/Drawer";
+import { Editor } from "./Editor";
 import {
   createShortcutsHandler,
   headerShortcuts,
   searcherShortcuts,
-} from "../../../core/keymaps.tsx";
-import { notifySuccess } from "../../../core/notifyError.tsx";
+} from "../../../core/keymaps";
+import { notifySuccess } from "../../../core/notifyError";
 import {
   FormValues,
   isHeaderOpenAtom,
@@ -62,12 +56,21 @@ import {
   useQueryActions,
   useRunQuery,
   useSelectedSearchProfile,
-} from "../../../core/search.ts";
-import { ApplicationStore, useApplicationStore } from "../../../core/store/appStore.ts";
-import { endFullDateAtom, startFullDateAtom } from "../../../core/store/dateState.ts";
-import { jobMetadataAtom, searchQueryAtom } from "../../../core/store/queryState.ts";
-import { Timer } from "./Timer.tsx";
-import { MiniIconButton } from "~components/presets/IconButton.tsx";
+} from "../../../core/search";
+import {
+  ApplicationStore,
+  useApplicationStore,
+} from "../../../core/store/appStore";
+import {
+  endFullDateAtom,
+  startFullDateAtom,
+} from "../../../core/store/dateState";
+import {
+  jobMetadataAtom,
+  searchQueryAtom,
+} from "../../../core/store/queryState";
+import { Timer } from "./Timer";
+import { MiniIconButton } from "~components/presets/IconButton";
 
 const StyledHeader = styled.form`
   display: flex;
@@ -534,28 +537,32 @@ export const ExportButton: React.FC<{
     downloadFile(filename, jsonValue.payload, jsonValue.contentType);
   };
   return (
-    <MenuRoot lazyMount unmountOnExit>
-      <MenuTrigger disabled={isDisabled}>
+    <Menu.Root lazyMount unmountOnExit>
+      <Menu.Trigger disabled={isDisabled}>
         <MiniIconButton tooltip="Export" as="div" disabled={isDisabled}>
           <CiExport />
         </MiniIconButton>
-      </MenuTrigger>
-      <MenuContent>
-        <MenuItem value="json-copy" cursor="pointer" onClick={copyJson}>
+      </Menu.Trigger>
+      <Menu.Content>
+        <Menu.Item value="json-copy" cursor="pointer" onClick={copyJson}>
           <LuClipboardCopy /> Copy JSON
-        </MenuItem>
-        <MenuItem value="csv-copy" cursor="pointer" onClick={copyCsv}>
+        </Menu.Item>
+        <Menu.Item value="csv-copy" cursor="pointer" onClick={copyCsv}>
           <LuClipboardCopy /> Copy CSV
-        </MenuItem>
+        </Menu.Item>
         <MenuSeparator />
-        <MenuItem value="json-download" cursor="pointer" onClick={downloadJson}>
+        <Menu.Item
+          value="json-download"
+          cursor="pointer"
+          onClick={downloadJson}
+        >
           <LuDownload /> Download JSON
-        </MenuItem>
-        <MenuItem value="csv-download" cursor="pointer" onClick={downloadCsv}>
+        </Menu.Item>
+        <Menu.Item value="csv-download" cursor="pointer" onClick={downloadCsv}>
           <LuDownload /> Download CSV
-        </MenuItem>
-      </MenuContent>
-    </MenuRoot>
+        </Menu.Item>
+      </Menu.Content>
+    </Menu.Root>
   );
 };
 

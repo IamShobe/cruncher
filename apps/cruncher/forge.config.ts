@@ -1,39 +1,37 @@
-import { MakerDeb } from '@electron-forge/maker-deb';
-import { MakerRpm } from '@electron-forge/maker-rpm';
-import { MakerSquirrel } from '@electron-forge/maker-squirrel';
-import { MakerZIP } from '@electron-forge/maker-zip';
-import { FusesPlugin } from '@electron-forge/plugin-fuses';
-import { VitePlugin } from '@electron-forge/plugin-vite';
-import type { ForgeConfig } from '@electron-forge/shared-types';
-import { FuseV1Options, FuseVersion } from '@electron/fuses';
+import { MakerDeb } from "@electron-forge/maker-deb";
+import { MakerRpm } from "@electron-forge/maker-rpm";
+import { MakerSquirrel } from "@electron-forge/maker-squirrel";
+import { MakerZIP } from "@electron-forge/maker-zip";
+import { FusesPlugin } from "@electron-forge/plugin-fuses";
+import { VitePlugin } from "@electron-forge/plugin-vite";
+import type { ForgeConfig } from "@electron-forge/shared-types";
+import { FuseV1Options, FuseVersion } from "@electron/fuses";
 
 const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
-    icon: 'src/icons/mac/icon.icns',
-    extraResource: [
-      'src/icons/mac/icon.icns',
-    ],
+    icon: "src/icons/mac/icon.icns",
+    extraResource: ["src/icons/mac/icon.icns"],
     protocols: [
       {
-        name: 'Cruncher Protocol',
-        schemes: ['cruncher'],
-      }
+        name: "Cruncher Protocol",
+        schemes: ["cruncher"],
+      },
     ],
   },
   rebuildConfig: {},
   makers: [
     new MakerSquirrel({}),
-    new MakerZIP({}, ['darwin']),
+    new MakerZIP({}, ["darwin"]),
     new MakerRpm({
       options: {
-        mimeType: ['x-scheme-handler/cruncher'],
-      }
+        mimeType: ["x-scheme-handler/cruncher"],
+      },
     }),
     new MakerDeb({
       options: {
-        mimeType: ['x-scheme-handler/cruncher'],
-      }
+        mimeType: ["x-scheme-handler/cruncher"],
+      },
     }),
   ],
   plugins: [
@@ -43,24 +41,24 @@ const config: ForgeConfig = {
       build: [
         {
           // `entry` is just an alias for `build.lib.entry` in the corresponding file of `config`.
-          entry: 'src/processes/main/main.ts',
-          config: 'vite.main.config.mts',
-          target: 'main',
+          entry: "src/processes/main/main.ts",
+          config: "vite.main.config.mts",
+          target: "main",
         },
         {
-          entry: 'src/processes/main/preload.ts',
-          config: 'vite.preload.config.mts',
-          target: 'preload',
+          entry: "src/processes/main/preload.ts",
+          config: "vite.preload.config.mts",
+          target: "preload",
         },
         {
-          entry: 'src/processes/server/main.ts',
-          config: 'vite.server.config.mts',
-        }
+          entry: "src/processes/server/main.ts",
+          config: "vite.server.config.mts",
+        },
       ],
       renderer: [
         {
-          name: 'main_window',
-          config: 'vite.renderer.config.mts',
+          name: "main_window",
+          config: "vite.renderer.config.mts",
         },
       ],
     }),
@@ -78,15 +76,15 @@ const config: ForgeConfig = {
   ],
   publishers: [
     {
-      name: '@electron-forge/publisher-github',
+      name: "@electron-forge/publisher-github",
       config: {
         repository: {
-          owner: 'IamShobe',
-          name: 'cruncher'
+          owner: "IamShobe",
+          name: "cruncher",
         },
-      }
-    }
-  ]
+      },
+    },
+  ],
 };
 
 export default config;

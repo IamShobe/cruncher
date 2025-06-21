@@ -1,7 +1,6 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "useDefineForClassFields": true,
     "lib": [
       "ES2022",
       "DOM",
@@ -11,7 +10,7 @@
     "skipLibCheck": true,
     "paths": {
       "~lib/*": [
-        "./src/lib/*"
+        "./src/processes/server/lib/*"
       ],
       "~*": [
         "./src/processes/frontend/*"
@@ -19,10 +18,7 @@
     },
     "baseUrl": ".",
     /* Bundler mode */
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
-    "isolatedModules": true,
-    "moduleDetection": "force",
+    "moduleResolution": "Bundler",
     "noEmit": true,
     "jsx": "react-jsx",
     "jsxImportSource": "@emotion/react",

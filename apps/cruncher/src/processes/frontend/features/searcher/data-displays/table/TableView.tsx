@@ -2,14 +2,14 @@ import { Table } from "@chakra-ui/react";
 import { useAtomValue } from "jotai";
 import React, { useMemo } from "react";
 import { TableComponents, TableVirtuoso } from "react-virtuoso";
-import { useTableDataInfiniteQuery } from "~core/api.ts";
-import { jobMetadataAtom } from "~core/store/queryState.ts";
+import { useTableDataInfiniteQuery } from "~core/api";
+import { jobMetadataAtom } from "~core/store/queryState";
 import {
   asDisplayString,
   ProcessedData,
 } from "@cruncher/adapter-utils/logTypes";
-import { highlightText } from "~core/utils/highlight.tsx";
-import { highlightItemQueryAtom } from "~core/search.ts";
+import { highlightText } from "~core/utils/highlight";
+import { highlightItemQueryAtom } from "~core/search";
 
 export type TableViewProps = {};
 

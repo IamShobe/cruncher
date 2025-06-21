@@ -101,7 +101,7 @@ export class GrafanaController implements QueryProvider {
     url: string,
     options: RequestInitModified = {},
     retryAmount: number = 0,
-  ): ReturnType<typeof fetch> => {
+  ): Promise<ReturnType<typeof fetch>> => {
     if (retryAmount > 2) {
       throw new Error("Failed to authenticate after multiple attempts");
     }
@@ -187,7 +187,7 @@ export class GrafanaController implements QueryProvider {
       );
     }
 
-    const data = await response.json();
+    const data: any = await response.json();
 
     if (data.results.A.status != 200) {
       throw new Error("Failed to execute query");
@@ -199,14 +199,14 @@ export class GrafanaController implements QueryProvider {
   private _getLabels = async () => {
     const url = `${this.url}/api/datasources/uid/${this.uid}/resources/labels`;
     const response = await this._fetchWrapper(url);
-    const resp = await response.json();
+    const resp: any = await response.json();
     return resp.data as string[];
   };
 
   private _getLabelValues = async (label: string) => {
     const url = `${this.url}/api/datasources/uid/${this.uid}/resources/label/${label}/values`;
     const response = await this._fetchWrapper(url);
-    const resp = await response.json();
+    const resp: any = await response.json();
     return resp.data as string[];
   };
 

@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { getCruncherRoot } from "~core/utils/shadowUtils.ts";
+import { getCruncherRoot } from "~core/utils/shadowUtils";
 
 export function useOutsideDetector(onOutsideClick = () => {}) {
   const ref = React.useRef<HTMLDivElement>(null);

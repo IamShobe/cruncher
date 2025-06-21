@@ -44,4 +44,4 @@ const adapter: Adapter = {
   },
 };
 
-export { adapter };
+export default adapter;

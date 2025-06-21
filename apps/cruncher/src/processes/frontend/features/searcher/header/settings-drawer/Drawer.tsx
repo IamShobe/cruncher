@@ -6,7 +6,7 @@ import {
   Portal,
 } from "@chakra-ui/react";
 import { LuSettings } from "react-icons/lu";
-import { Tooltip } from "~components/presets/Tooltip.tsx";
+import { Tooltip } from "~components/presets/Tooltip";
 
 export const SettingsDrawer = () => {
   return (

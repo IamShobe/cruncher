@@ -4,17 +4,24 @@ import styled from "@emotion/styled";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useEffect, useState } from "react";
 import { LuChartArea, LuLogs, LuTable } from "react-icons/lu";
-import { isDateSelectorOpenAtom } from "~features/searcher/header/calendar/DateSelector.tsx";
-import { queryEditorAtom } from "~features/searcher/header/Editor.tsx";
+import { isDateSelectorOpenAtom } from "~features/searcher/header/calendar/DateSelector";
+import { queryEditorAtom } from "~features/searcher/header/Editor";
 import DataLog from "~features/searcher/data-displays/events/DataLog";
-import Header from "~features/searcher/header/Header.tsx";
+import Header from "~features/searcher/header/Header";
 import { searcherShortcuts, useShortcuts } from "~core/keymaps";
-import { QueryState, useQueryActions, useQueryExecutedEffect } from "~core/search";
-import { jobMetadataAtom, viewSelectedForQueryAtom } from "~core/store/queryState";
+import {
+  QueryState,
+  useQueryActions,
+  useQueryExecutedEffect,
+} from "~core/search";
+import {
+  jobMetadataAtom,
+  viewSelectedForQueryAtom,
+} from "~core/store/queryState";
 import { TableView } from "~features/searcher/data-displays/table/TableView";
-import { EventsHistogram } from "~features/searcher/data-displays/events/EventsHistogram.tsx";
+import { EventsHistogram } from "~features/searcher/data-displays/events/EventsHistogram";
 import { ViewChart } from "~features/searcher/data-displays/view/ViewChart";
-import { TabsLineButtons } from "~features/searcher/TabsLineButtons.tsx";
+import { TabsLineButtons } from "~features/searcher/TabsLineButtons";
 
 const MainContainer = styled.section`
   flex: 1;
@@ -43,7 +50,6 @@ export const Searcher: React.FC<SearcherProps> = () => {
   const queryActions = useQueryActions();
   const setDateSelectorIsOpen = useSetAtom(isDateSelectorOpenAtom);
 
-
   const [viewSelectedForQuery, setViewSelectedForQuery] = useAtom(
     viewSelectedForQueryAtom,
   );
@@ -67,7 +73,6 @@ export const Searcher: React.FC<SearcherProps> = () => {
       setSelectedTab("table");
     }
   }, [jobStatus, viewSelectedForQuery]);
-
 
   useShortcuts(searcherShortcuts, (shortcut) => {
     switch (shortcut) {

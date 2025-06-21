@@ -12,7 +12,7 @@ import {
 } from "src/processes/server/engineV2/types";
 import { AppRouter } from "src/processes/server/plugins_engine/router_messages";
 import { ProcessedData } from "@cruncher/adapter-utils/logTypes";
-import { DisplayResults } from "~lib/displayTypes";
+import { DisplayResults } from "src/processes/server/lib/displayTypes";
 import { removeJobQueries } from "./api";
 
 export type QueryOptions = {

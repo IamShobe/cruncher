@@ -1,6 +1,6 @@
 import { sub } from "date-fns";
 import { expect, test } from "vitest";
-import * as mockedData from "@cruncher/adapter-mock";
+import mockedData from "@cruncher/adapter-mock";
 import { ExternalAuthProvider } from "@cruncher/adapter-utils";
 import { Engine } from "./engine";
 import { InstanceRef, SearchProfileRef } from "./types";
@@ -11,7 +11,7 @@ test("engine register plugin", () => {
   } satisfies ExternalAuthProvider;
 
   const engine = new Engine(externalAuthProvider);
-  engine.registerPlugin(mockedData.adapter);
+  engine.registerPlugin(mockedData);
 
   expect(engine.getSupportedPlugins().length).toBe(1);
   expect(engine.getSupportedPlugins()[0].ref).toBe("mocked_data");
@@ -23,7 +23,7 @@ test("engine initialize plugin", () => {
   } satisfies ExternalAuthProvider;
 
   const engine = new Engine(externalAuthProvider);
-  engine.registerPlugin(mockedData.adapter);
+  engine.registerPlugin(mockedData);
 
   const plugins = engine.getSupportedPlugins();
   expect(plugins.length).toBe(1);
@@ -46,7 +46,7 @@ test("engine initialize profile", () => {
   } satisfies ExternalAuthProvider;
 
   const engine = new Engine(externalAuthProvider);
-  engine.registerPlugin(mockedData.adapter);
+  engine.registerPlugin(mockedData);
 
   const plugins = engine.getSupportedPlugins();
   expect(plugins.length).toBe(1);
@@ -72,7 +72,7 @@ test("engine query", async () => {
   } satisfies ExternalAuthProvider;
 
   const engine = new Engine(externalAuthProvider);
-  engine.registerPlugin(mockedData.adapter);
+  engine.registerPlugin(mockedData);
 
   const plugins = engine.getSupportedPlugins();
   expect(plugins.length).toBe(1);

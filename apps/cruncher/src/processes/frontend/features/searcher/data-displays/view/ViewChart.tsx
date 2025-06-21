@@ -12,14 +12,11 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { useViewDataQuery } from "~core/api.ts";
-import {
-  actualEndTimeAtom,
-  actualStartTimeAtom,
-} from "~core/store/dateState.ts";
+import { useViewDataQuery } from "~core/api";
+import { actualEndTimeAtom, actualStartTimeAtom } from "~core/store/dateState";
 import { formatDataTimeShort } from "@cruncher/adapter-utils/formatters";
 import { toJsonObject } from "@cruncher/adapter-utils/logTypes";
-import { Bucket } from "~lib/displayTypes.ts";
+import { Bucket } from "~lib/displayTypes";
 
 const LIMIT = 10000;
 

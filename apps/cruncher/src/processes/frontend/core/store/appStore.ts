@@ -197,7 +197,8 @@ export const appStore = createStore<ApplicationStore>((set, get) => ({
   isShortcutsShown: false,
   setIsShortcutsShown: (value: boolean | ((prev: boolean) => boolean)) => {
     set((state) => ({
-      isShortcutsShown: typeof value === "boolean" ? value : value(state.isShortcutsShown),
+      isShortcutsShown:
+        typeof value === "boolean" ? value : value(state.isShortcutsShown),
     }));
   },
 }));

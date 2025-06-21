@@ -2,6 +2,7 @@
   "name": "@cruncher/adapter-grafana-loki-browser",
   "version": "0.1.0",
   "description": "Grafana Loki browser adapter for Cruncher.",
+  "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
@@ -38,6 +39,7 @@
   },
   "devDependencies": {
     "typescript": "^5.8.3",
-    "@types/regex-escape": "^3.4.1"
+    "@types/regex-escape": "^3.4.1",
+    "@types/node": "^24.0.3"
   }
 }

@@ -2,6 +2,7 @@
   "name": "@cruncher/adapter-docker",
   "version": "0.1.0",
   "description": "Docker adapter for Cruncher.",
+  "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {

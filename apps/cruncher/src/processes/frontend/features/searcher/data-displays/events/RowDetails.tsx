@@ -1,4 +1,4 @@
-import { Box, IconButton } from "@chakra-ui/react";
+import { Box, IconButton, Menu } from "@chakra-ui/react";
 import { css } from "@emotion/react";
 import { useAtomValue, useSetAtom } from "jotai";
 import React, { useMemo } from "react";
@@ -8,18 +8,12 @@ import {
   LuEllipsisVertical,
 } from "react-icons/lu";
 import {
-  MenuContent,
-  MenuItem,
-  MenuRoot,
-  MenuTrigger,
-} from "~components/ui/menu.tsx";
-import {
   asDisplayString,
   Field,
   ProcessedData,
 } from "@cruncher/adapter-utils/logTypes";
-import { searchQueryAtom } from "~core/store/queryState.ts";
-import { useIsIndexOpen } from "./state.ts";
+import { searchQueryAtom } from "~core/store/queryState";
+import { useIsIndexOpen } from "./state";
 
 import { CiCalendarDate } from "react-icons/ci";
 import { GrStatusUnknown } from "react-icons/gr";
@@ -30,8 +24,8 @@ import {
   VscSymbolNumeric,
   VscSymbolString,
 } from "react-icons/vsc";
-import { highlightItemQueryAtom } from "~core/search.ts";
-import { highlightText } from "~core/utils/highlight.tsx";
+import { highlightItemQueryAtom } from "~core/search";
+import { highlightText } from "~core/utils/highlight";
 
 type DataRowProps = {
   rowKey: string;
@@ -167,14 +161,14 @@ export const RowDetail: React.FC<DataRowProps> = ({ rowKey, rowValue }) => {
                         </PopoverBody>
                       </PopoverContent>
                     </PopoverRoot>*/}
-      <MenuRoot lazyMount unmountOnExit>
-        <MenuTrigger asChild>
+      <Menu.Root lazyMount unmountOnExit>
+        <Menu.Trigger asChild>
           <IconButton size={"2xs"} variant="ghost">
             <LuEllipsisVertical />
           </IconButton>
-        </MenuTrigger>
-        <MenuContent>
-          <MenuItem
+        </Menu.Trigger>
+        <Menu.Content>
+          <Menu.Item
             value="copy-value"
             onClick={() => {
               navigator.clipboard.writeText(asDisplayString(rowValue));
@@ -183,9 +177,9 @@ export const RowDetail: React.FC<DataRowProps> = ({ rowKey, rowValue }) => {
           >
             <LuClipboardCopy />
             <Box flex="1">Copy Value</Box>
-          </MenuItem>
-        </MenuContent>
-      </MenuRoot>
+          </Menu.Item>
+        </Menu.Content>
+      </Menu.Root>
     </div>
   );
 };

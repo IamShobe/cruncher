@@ -7,11 +7,11 @@ import { VscAdd, VscClose } from "react-icons/vsc";
 import { createSignal } from "@cruncher/utils";
 import { useMount } from "react-use";
 import { MiniIconButton } from "~components/presets/IconButton";
-import { parseDate } from "~lib/dateUtils";
+import { parseDate } from "src/processes/server/lib/dateUtils";
 import { debounceInitialize, Signal } from "@cruncher/utils";
 import { Searcher } from "./Searcher";
-import { searcherGlobalShortcuts, useShortcuts } from "~core/keymaps.tsx";
-import { notifyError } from "~core/notifyError.tsx";
+import { searcherGlobalShortcuts, useShortcuts } from "~core/keymaps";
+import { notifyError } from "~core/notifyError";
 import {
   appStoreAtom,
   lastRanJobAtom,
@@ -19,14 +19,14 @@ import {
   selectedSearchProfileAtom,
   selectedSearchProfileIndexAtom,
   useUrlNavigation,
-} from "~core/search.ts";
-import { appStore } from "~core/store/appStore.ts";
-import { endFullDateAtom, startFullDateAtom } from "~core/store/dateState.ts";
+} from "~core/search";
+import { appStore } from "~core/store/appStore";
+import { endFullDateAtom, startFullDateAtom } from "~core/store/dateState";
 import {
   QuerySpecificContext,
   searchQueryAtom,
   tabNameAtom,
-} from "~core/store/queryState.ts";
+} from "~core/store/queryState";
 
 const createNewTab = (label?: string) => {
   const store = createStore();

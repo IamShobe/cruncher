@@ -5,9 +5,9 @@ import { useAtomValue, useSetAtom } from "jotai";
 import React, { useMemo } from "react";
 import { formatDataTime } from "@cruncher/adapter-utils/formatters";
 import { asDateField, ProcessedData } from "@cruncher/adapter-utils/logTypes";
-import { openIndexesAtom, useIsIndexOpen } from "./state.ts";
-import { highlightItemQueryAtom } from "~core/search.ts";
-import { highlightText } from "~core/utils/highlight.tsx";
+import { openIndexesAtom, useIsIndexOpen } from "./state";
+import { highlightItemQueryAtom } from "~core/search";
+import { highlightText } from "~core/utils/highlight";
 
 type DataRowProps = {
   row: ProcessedData;

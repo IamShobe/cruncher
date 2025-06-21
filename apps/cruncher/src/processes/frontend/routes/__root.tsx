@@ -11,7 +11,7 @@ import { Toaster } from "~components/ui/toaster";
 import { ApplicationProvider } from "~core/ApplicationProvider";
 import { queryClient } from "~core/client";
 import { globalShortcuts, useShortcuts } from "~core/keymaps";
-import { Shortcuts } from "~features/shortcuts/Shortcuts.tsx";
+import { Shortcuts } from "~features/shortcuts/Shortcuts";
 import { SideMenu } from "~features/SideMenu";
 import {
   useApplicationStore,

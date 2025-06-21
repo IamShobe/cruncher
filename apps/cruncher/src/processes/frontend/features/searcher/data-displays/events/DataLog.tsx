@@ -4,11 +4,11 @@ import { defaultRangeExtractor, useVirtualizer } from "@tanstack/react-virtual";
 import { atom, useSetAtom } from "jotai";
 import type React from "react";
 import { useCallback, useEffect, useRef } from "react";
-import { useLogsInfiniteQuery } from "~core/api.ts";
+import { useLogsInfiniteQuery } from "~core/api";
 import { asDateField } from "@cruncher/adapter-utils/logTypes";
-import DataRow from "./Row.tsx";
-import { RowDetails } from "./RowDetails.tsx";
-import { rangeInViewAtom, useIsIndexOpen } from "./state.ts";
+import DataRow from "./Row";
+import { RowDetails } from "./RowDetails";
+import { rangeInViewAtom, useIsIndexOpen } from "./state";
 
 export const scrollToIndexAtom = atom<(index: number) => void>();
 
