@@ -8,7 +8,9 @@
     "onlyBuiltDependencies": [
       "electron",
       "electron-winstaller",
-      "sharp"
+      "sharp",
+      "bufferutil",
+      "nx"
     ]
   },
   "repository": {
