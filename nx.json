@@ -33,7 +33,8 @@
       "cache": true
     },
     "test": {
-      "cache": false
+      "cache": false,
+      "dependsOn": ["^build"]
     },
     "format": {
       "cache": true
