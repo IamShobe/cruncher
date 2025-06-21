@@ -1,3 +1,9 @@
+## 1.6.3 (2025-06-21)
+
+### 🩹 Fixes
+
+- modify package json ([45877ba](https://github.com/IamShobe/cruncher/commit/45877ba))
+
 ## 1.6.2 (2025-06-21)
 
 ### 🧱 Updated Dependencies
