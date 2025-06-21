@@ -1,3 +1,9 @@
+## 1.6.4 (2025-06-21)
+
+### 🩹 Fixes
+
+- fix release name ([ff8e5ef](https://github.com/IamShobe/cruncher/commit/ff8e5ef))
+
 ## 1.6.3 (2025-06-21)
 
 ### 🩹 Fixes
