@@ -1,3 +1,14 @@
+## 0.2.4 (2025-06-21)
+
+### 🩹 Fixes
+
+- created new standard for adapters - and new codegen for it ([#15](https://github.com/IamShobe/cruncher/pull/15))
+
+### 🧱 Updated Dependencies
+
+- Updated @cruncher/utils to 0.2.4
+- Updated @cruncher/qql to 0.2.4
+
 ## 0.2.3 (2025-06-21)
 
 ### 🩹 Fixes

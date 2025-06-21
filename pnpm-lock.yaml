@@ -534,25 +534,6 @@ importers:
         specifier: ^3.2.4
         version: 3.2.4(@types/debug@4.1.12)(@types/node@24.0.3)(@vitest/ui@3.2.4)(jiti@2.4.2)(jsdom@22.1.0(bufferutil@4.0.9)(utf-8-validate@6.0.5))(less@4.3.0)(terser@5.43.1)(tsx@4.20.3)(yaml@2.8.0)
 
-  packages/adapters/test-adapter:
-    dependencies:
-      '@cruncher/adapter-utils':
-        specifier: workspace:*
-        version: link:../utils
-      '@cruncher/qql':
-        specifier: workspace:*
-        version: link:../../qql
-      zod:
-        specifier: ^3.25.67
-        version: 3.25.67
-    devDependencies:
-      typescript:
-        specifier: ^5.8.3
-        version: 5.8.3
-      vitest:
-        specifier: ^3.2.4
-        version: 3.2.4(@types/debug@4.1.12)(@types/node@24.0.3)(@vitest/ui@3.2.4)(jiti@2.4.2)(jsdom@22.1.0(bufferutil@4.0.9)(utf-8-validate@6.0.5))(less@4.3.0)(terser@5.43.1)(tsx@4.20.3)(yaml@2.8.0)
-
   packages/adapters/utils:
     dependencies:
       '@cruncher/qql':

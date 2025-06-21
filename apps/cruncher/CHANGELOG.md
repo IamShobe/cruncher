@@ -1,3 +1,15 @@
+## 1.6.9 (2025-06-21)
+
+### 🧱 Updated Dependencies
+
+- Updated @cruncher/adapter-grafana-loki-browser to 0.2.4
+- Updated @cruncher/adapters-mock to 0.2.4
+- Updated @cruncher/adapter-coralogix to 0.2.4
+- Updated @cruncher/adapter-docker to 0.2.4
+- Updated @cruncher/adapters-utils to 0.2.4
+- Updated @cruncher/utils to 0.2.4
+- Updated @cruncher/qql to 0.2.4
+
 ## 1.6.8 (2025-06-21)
 
 ### 🩹 Fixes

@@ -1,6 +1,6 @@
 {
   "name": "@cruncher/adapter-docker",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Docker adapter for Cruncher.",
   "type": "module",
   "publishConfig": {
