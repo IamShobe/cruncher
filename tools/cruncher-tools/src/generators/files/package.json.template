@@ -1,7 +1,7 @@
 {
-  "name": "@cruncher/adapter-mock",
-  "version": "0.2.3",
-  "description": "Mocked data adapter for Cruncher.",
+  "name": "@cruncher/<%= name %>",
+  "version": "0.0.1",
+  "description": "",
   "publishConfig": {
     "access": "public"
   },
@@ -28,12 +28,8 @@
     "cruncher",
     "qql",
     "query-language",
-    "mocked-data",
     "adapter"
   ],
-  "author": {
-    "name": "Elran Shefer"
-  },
   "license": "GPL-3.0-only",
   "dependencies": {
     "@cruncher/adapter-utils": "workspace:*",

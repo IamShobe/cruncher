@@ -1,0 +1,9 @@
+{
+  "generators": {
+    "adapter-generator": {
+      "factory": "./src/generators/adapter-generator",
+      "schema": "./src/generators/schema.json",
+      "description": "adapter-generator generator"
+    }
+  }
+}

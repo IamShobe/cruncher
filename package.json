@@ -28,6 +28,7 @@
     "format:check": "nx run-many -t format:check",
     "test": "nx run-many -t test",
     "clean": "find . -name 'node_modules' -type d -prune -exec rm -rf '{}' +",
+    "new-adapter": "pnpx nx generate cruncher-tools:adapter-generator",
     "prepare-pr": "nx release plan",
     "release": "pnpm dlx nx release",
     "push-all": "git push && git push --tags"
@@ -42,10 +43,12 @@
     "@nx/eslint": "21.2.1",
     "@nx/eslint-plugin": "21.2.1",
     "@nx/js": "^21.2.1",
+    "@nx/plugin": "21.2.1",
     "@nx/vite": "21.2.1",
     "@nx/web": "21.2.1",
     "@release-it/bumper": "^7.0.5",
     "@swc-node/register": "~1.9.1",
+    "@swc/cli": "~0.6.0",
     "@swc/core": "~1.5.7",
     "@swc/helpers": "~0.5.11",
     "@types/node": "18.16.9",
@@ -69,8 +72,10 @@
     "vite-plugin-dts": "~4.5.0",
     "vitest": "^3.0.0"
   },
-  "dependencies": {},
   "nx": {
     "includedScripts": []
+  },
+  "dependencies": {
+    "@nx/devkit": "21.2.1"
   }
 }

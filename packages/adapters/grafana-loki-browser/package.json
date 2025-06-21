@@ -27,7 +27,7 @@
     "cruncher",
     "qql",
     "query-language",
-    "coralogix",
+    "grafana-loki",
     "adapter"
   ],
   "author": {

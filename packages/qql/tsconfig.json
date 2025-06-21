@@ -1,21 +1,9 @@
 {
+    "extends": "../../tsconfig.modules.json",
     "compilerOptions": {
-        "target": "ESNext",
-        "module": "esnext",
-        "skipLibCheck": true,
-        "allowJs": true,
-        "esModuleInterop": true,
-        "noImplicitAny": true,
-        "sourceMap": true,
         "baseUrl": ".",
         "outDir": "dist",
-        "moduleResolution": "bundler",
-        "resolveJsonModule": true,
-        "strict": true,
-        "rootDir": "src",
-        "composite": true,
-        "declaration": true,
-        "declarationMap": true
+        "rootDir": "src"
     },
     "include": [
         "src/**/*"
