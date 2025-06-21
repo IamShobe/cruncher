@@ -1,3 +1,9 @@
+## 1.6.6 (2025-06-21)
+
+### 🩹 Fixes
+
+- test release ([c240830](https://github.com/IamShobe/cruncher/commit/c240830))
+
 ## 1.6.5 (2025-06-21)
 
 ### 🩹 Fixes
