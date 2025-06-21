@@ -20,6 +20,7 @@
     "serve:docs": "pnpm run -F ./docs serve",
     "build": "nx run-many -t build",
     "publish": "nx run @cruncher/app:publish",
+    "package": "nx run @cruncher/app:package",
     "format": "nx run-many -t format",
     "format:check": "nx run-many -t format:check",
     "test": "nx run-many -t test",
