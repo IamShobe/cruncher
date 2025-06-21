@@ -20,8 +20,7 @@
     "start:docs": "pnpm run -F ./docs start",
     "build": "pnpm run --recursive --filter \"./packages/**\" build",
     "publish": "pnpm run build && pnpm run -F @cruncher/app publish",
-    "clean": "find . -name 'node_modules' -type d -prune -exec rm -rf '{}' +",
-    "release": "npm run release --workspaces && release-it"
+    "clean": "find . -name 'node_modules' -type d -prune -exec rm -rf '{}' +"
   },
   "keywords": [],
   "author": {

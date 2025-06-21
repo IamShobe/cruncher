@@ -21,8 +21,7 @@
     "lint:fix": "eslint src/ --fix",
     "test": "nx vite:test run",
     "format": "prettier --write src/",
-    "build:server": "vite build --config vite.server.config.mts",
-    "release": "release-it"
+    "build:server": "vite build --config vite.server.config.mts"
   },
   "keywords": [],
   "author": {

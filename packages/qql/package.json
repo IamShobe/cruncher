@@ -27,8 +27,7 @@
   "scripts": {
     "build": "tsc --project tsconfig.json",
     "test": "nx vite:test run",
-    "prepublishOnly": "npm run build",
-    "release": "release-it"
+    "prepublishOnly": "npm run build"
   },
   "keywords": [
     "cruncher",

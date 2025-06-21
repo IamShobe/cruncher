@@ -17,8 +17,7 @@
   ],
   "scripts": {
     "build": "tsc --project tsconfig.json",
-    "prepublishOnly": "npm run build",
-    "release": "release-it"
+    "prepublishOnly": "npm run build"
   },
   "keywords": [
     "cruncher",
