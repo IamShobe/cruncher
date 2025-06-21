@@ -4,7 +4,12 @@
     "versionPlans": true,
     "projectsRelationship": "independent",
     "changelog": {
-      "projectChangelogs": true
+      "projectChangelogs": {
+        "renderOptions": {
+          "authors": false,
+          "applyUsernameToAuthors": false
+        }
+      }
     }
   },
   "targetDefaults": {
