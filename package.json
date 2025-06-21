@@ -1,7 +1,7 @@
 {
   "name": "cruncher-monorepo",
   "private": true,
-  "version": "1.5.0",
+  "version": "",
   "packageManager": "pnpm@10.12.1",
   "description": "Cruncher monorepo.",
   "pnpm": {

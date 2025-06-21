@@ -4,7 +4,6 @@
     "versionPlans": true,
     "projectsRelationship": "independent",
     "changelog": {
-      "workspaceChangelog": true,
       "projectChangelogs": true
     }
   },
