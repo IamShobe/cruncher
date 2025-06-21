@@ -1,4 +1,3 @@
-
 // Utility to highlight search term in a string
 export function highlightText(text: string, searchTerm?: string) {
   if (!searchTerm) return text;

@@ -9,18 +9,15 @@
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/index.js",
-      "require": "./dist/index.js",
+      "default": "./dist/index.js",
       "types": "./dist/index.d.ts"
     },
     "./grammar": {
-      "import": "./dist/grammar.js",
-      "require": "./dist/grammar.js",
+      "default": "./dist/grammar.js",
       "types": "./dist/grammar.d.ts"
     },
     "./searchTree": {
-      "import": "./dist/searchTree.js",
-      "require": "./dist/searchTree.js",
+      "default": "./dist/searchTree.js",
       "types": "./dist/searchTree.d.ts"
     }
   },
@@ -29,7 +26,9 @@
   ],
   "scripts": {
     "build": "tsc --project tsconfig.json",
-    "test": "nx vite:test run",
+    "test": "nx vite:test",
+    "format": "prettier --write src/",
+    "format:check": "prettier --check src/",
     "prepublishOnly": "npm run build"
   },
   "keywords": [

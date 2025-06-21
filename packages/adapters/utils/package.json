@@ -10,18 +10,15 @@
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/index.js",
-      "require": "./dist/index.js",
+      "default": "./dist/index.js",
       "types": "./dist/index.d.ts"
     },
     "./formatters": {
-      "import": "./dist/formatters.js",
-      "require": "./dist/formatters.js",
+      "default": "./dist/formatters.js",
       "types": "./dist/formatters.d.ts"
     },
     "./logTypes": {
-      "import": "./dist/logTypes.js",
-      "require": "./dist/logTypes.js",
+      "default": "./dist/logTypes.js",
       "types": "./dist/logTypes.d.ts"
     }
   },
@@ -30,6 +27,8 @@
   ],
   "scripts": {
     "build": "tsc --project tsconfig.json",
+    "format": "prettier --write src/",
+    "format:check": "prettier --check src/",
     "prepublishOnly": "npm run build"
   },
   "keywords": [

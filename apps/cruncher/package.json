@@ -1,6 +1,7 @@
 {
   "name": "cruncher",
   "productName": "cruncher",
+  "type": "module",
   "version": "1.6.6",
   "private": true,
   "description": "Cruncher main application - a tool for analyzing and processing data efficiently.",
@@ -20,8 +21,9 @@
     "publish": "electron-forge publish",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
-    "test": "nx vite:test run",
+    "test": "nx vite:test",
     "format": "prettier --write src/",
+    "format:check": "prettier --check src/",
     "build:server": "vite build --config vite.server.config.mts"
   },
   "keywords": [],
