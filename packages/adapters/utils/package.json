@@ -1,0 +1,53 @@
+{
+  "name": "@cruncher/adapter-utils",
+  "version": "0.1.0",
+  "description": "Utility functions for Cruncher adapters.",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./formatters": {
+      "import": "./dist/formatters.js",
+      "require": "./dist/formatters.js",
+      "types": "./dist/formatters.d.ts"
+    },
+    "./logTypes": {
+      "import": "./dist/logTypes.js",
+      "require": "./dist/logTypes.js",
+      "types": "./dist/logTypes.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "cruncher",
+    "qql",
+    "query-language",
+    "coralogix",
+    "adapter"
+  ],
+  "author": {
+    "name": "Elran Shefer"
+  },
+  "license": "GPL-3.0-only",
+  "dependencies": {
+    "@cruncher/qql": "workspace:*",
+    "@cruncher/utils": "workspace:*",
+    "date-fns": "^4.1.0",
+    "zod": "^3.25.67",
+    "@date-fns/utc": "^2.1.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  }
+}

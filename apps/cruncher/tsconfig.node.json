@@ -1,0 +1,31 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "nodenext",
+    "skipLibCheck": true,
+    "allowJs": true,
+    "esModuleInterop": true,
+    "sourceMap": true,
+    "baseUrl": ".",
+    "outDir": "dist",
+    "moduleResolution": "nodenext",
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "resolveJsonModule": true,
+    "paths": {
+      "~lib/*": [
+        "./src/processes/server/lib/*"
+      ],
+    },
+    "strict": true
+  },
+  "include": [
+    "./src/**/*",
+    "../server/src/lib",
+    "../server/src/config",
+    "../../packages/adapters/coralogix/src"
+  ],
+  "exclude": [
+    "./src/processes/frontend/**/*"
+  ]
+}

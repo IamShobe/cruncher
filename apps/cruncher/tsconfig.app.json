@@ -1,0 +1,38 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "paths": {
+      "~lib/*": [
+        "./src/processes/server/lib/*"
+      ],
+      "~*": [
+        "./src/processes/frontend/*"
+      ],
+    },
+    "baseUrl": ".",
+    /* Bundler mode */
+    "moduleResolution": "Bundler",
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "jsxImportSource": "@emotion/react",
+    "typeRoots": [
+      "./dist/index.d.ts"
+    ],
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": [
+    "./src/processes/frontend/**/*",
+    "./src/processes/server/plugins_engine/router_messages.d.ts",
+  ],
+}

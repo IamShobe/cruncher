@@ -1,0 +1,29 @@
+{
+  "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "targetDefaults": {
+    "package": {
+      "outputs": [
+        "{projectRoot}/out"
+      ],
+      "cache": true
+    },
+    "make": {
+      "outputs": [
+        "{projectRoot}/make"
+      ],
+      "cache": true
+    },
+    "generate-routes": {
+      "cache": true
+    },
+    "lint": {
+      "cache": true
+    },
+    "test": {
+      "cache": true
+    },
+    "format": {
+      "cache": true
+    }
+  }
+}

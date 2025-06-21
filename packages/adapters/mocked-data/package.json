@@ -1,0 +1,41 @@
+{
+  "name": "@cruncher/adapter-mock",
+  "version": "0.1.0",
+  "description": "Mocked data adapter for Cruncher.",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "cruncher",
+    "qql",
+    "query-language",
+    "coralogix",
+    "adapter"
+  ],
+  "author": {
+    "name": "Elran Shefer"
+  },
+  "license": "GPL-3.0-only",
+  "dependencies": {
+    "zod": "^3.25.67",
+    "@cruncher/qql": "workspace:*",
+    "@cruncher/adapter-utils": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  }
+}

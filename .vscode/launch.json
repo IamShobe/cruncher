@@ -13,7 +13,7 @@
         // "foo",
         // "bar"
       ],
-      "cwd": "${workspaceFolder}",
+      "cwd": "${workspaceFolder}/apps/cruncher/",
       "console": "integratedTerminal"
     }
   ]

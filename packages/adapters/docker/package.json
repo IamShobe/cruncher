@@ -1,0 +1,44 @@
+{
+  "name": "@cruncher/adapter-docker",
+  "version": "0.1.0",
+  "description": "Docker adapter for Cruncher.",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "cruncher",
+    "qql",
+    "query-language",
+    "coralogix",
+    "adapter"
+  ],
+  "author": {
+    "name": "Elran Shefer"
+  },
+  "license": "GPL-3.0-only",
+  "dependencies": {
+    "zod": "^3.25.67",
+    "ansicolor": "^2.0.3",
+    "merge-k-sorted-arrays": "^2.1.0",
+    "@cruncher/qql": "workspace:*",
+    "@cruncher/adapter-utils": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3",
+    "@types/node": "^24.0.3"
+  }
+}

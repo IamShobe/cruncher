@@ -1,0 +1,45 @@
+{
+  "name": "@cruncher/adapter-grafana-loki-browser",
+  "version": "0.1.0",
+  "description": "Grafana Loki browser adapter for Cruncher.",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "cruncher",
+    "qql",
+    "query-language",
+    "coralogix",
+    "adapter"
+  ],
+  "author": {
+    "name": "Elran Shefer"
+  },
+  "license": "GPL-3.0-only",
+  "dependencies": {
+    "zod": "^3.25.67",
+    "@cruncher/qql": "workspace:*",
+    "regex-escape": "^3.4.11",
+    "async-mutex": "^0.5.0",
+    "@cruncher/adapter-utils": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3",
+    "@types/regex-escape": "^3.4.1",
+    "@types/node": "^24.0.3"
+  }
+}
