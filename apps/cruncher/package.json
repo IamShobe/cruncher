@@ -10,8 +10,8 @@
     "directory": "apps/cruncher"
   },
   "scripts": {
-    "start": "pnpm run watch-routes & electron-forge start",
-    "start:inspect": "pnpm run watch-routes & electron-forge start --inspect-electron",
+    "serve": "pnpm run watch-routes & electron-forge start",
+    "serve:inspect": "pnpm run watch-routes & electron-forge start --inspect-electron",
     "package": "pnpm run generate-routes && electron-forge package",
     "make": "pnpm run generate-routes && electron-forge make",
     "generate-routes": "tsr generate",

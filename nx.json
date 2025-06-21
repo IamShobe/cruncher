@@ -40,6 +40,9 @@
     },
     "format": {
       "cache": true
+    },
+    "serve": {
+      "cache": false
     }
   },
   "plugins": [

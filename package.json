@@ -16,9 +16,9 @@
     "url": "https://github.com/IamShobe/cruncher.git"
   },
   "scripts": {
-    "start": "pnpm run -F @cruncher/app start",
-    "start:docs": "pnpm run -F ./docs start",
-    "build": "pnpm run --recursive --filter \"./packages/**\" build",
+    "serve": "nx run @cruncher/app:serve",
+    "serve:docs": "pnpm run -F ./docs serve",
+    "build": "nx run-many -t build",
     "publish": "pnpm run build && pnpm run -F @cruncher/app publish",
     "clean": "find . -name 'node_modules' -type d -prune -exec rm -rf '{}' +"
   },
@@ -41,6 +41,5 @@
     "vite": "^6.0.0",
     "vitest": "^3.0.0"
   },
-  "nx": {},
   "dependencies": {}
 }
