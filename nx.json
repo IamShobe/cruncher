@@ -1,7 +1,7 @@
 {
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
   "release": {
-    "projects": ["*", "!cruncher-monorepo", "@cruncher/app"],
+    "projects": ["*", "!docs-cruncher", "!cruncher-monorepo", "@cruncher/app"],
     "versionPlans": true,
     "projectsRelationship": "independent",
     "changelog": {
@@ -10,9 +10,6 @@
           "authors": false,
           "applyUsernameToAuthors": false
         }
-      },
-      "workspaceChangelog": {
-        "createRelease": "github"
       }
     },
     "version": {

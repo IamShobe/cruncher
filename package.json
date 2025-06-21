@@ -20,7 +20,8 @@
     "serve:docs": "pnpm run -F ./docs serve",
     "build": "nx run-many -t build",
     "publish": "pnpm run build && pnpm run -F @cruncher/app publish",
-    "clean": "find . -name 'node_modules' -type d -prune -exec rm -rf '{}' +"
+    "clean": "find . -name 'node_modules' -type d -prune -exec rm -rf '{}' +",
+    "prepare-pr": "nx release plan"
   },
   "keywords": [],
   "author": {

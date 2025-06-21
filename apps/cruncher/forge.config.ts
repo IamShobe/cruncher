@@ -10,6 +10,7 @@ import { FuseV1Options, FuseVersion } from "@electron/fuses";
 const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
+    executableName: "cruncher",
     icon: "src/icons/mac/icon.icns",
     extraResource: ["src/icons/mac/icon.icns"],
     protocols: [
