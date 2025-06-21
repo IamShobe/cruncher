@@ -20,7 +20,7 @@
     "publish": "electron-forge publish",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
-    "test": "nx vite:test run",
+    "test": "nx vite:test",
     "format": "prettier --write src/",
     "build:server": "vite build --config vite.server.config.mts"
   },
