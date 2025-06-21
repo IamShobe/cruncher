@@ -129,7 +129,7 @@ export const debounceInitialize = <T, R>(
   fn: (...args: T[]) => Promise<R>,
   delay: number,
 ): ((...args: T[]) => Promise<R>) => {
-  let timeoutId: number;
+  let timeoutId: number | NodeJS.Timeout;
   return (...args: T[]) => {
     clearTimeout(timeoutId);
     return new Promise<R>((resolve, reject) => {

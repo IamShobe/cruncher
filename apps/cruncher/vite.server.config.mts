@@ -19,7 +19,7 @@ export default defineConfig({
   ],
   build: {
     // target: "node22",
-    lib:{
+    lib: {
       entry: resolve(__dirname, "src/processes/server/main.ts"),
       name: "main-server",
       formats: ["cjs"],
@@ -27,7 +27,7 @@ export default defineConfig({
     },
     sourcemap: true,
     rollupOptions: {
-      external: ["node:process", "node:events", "child_process", "ws"],
+      external: ["node:process", "node:events", "child_process"],
     },
   },
 });

@@ -120,45 +120,57 @@ console.log("Server process started, waiting for IPC messages...");
 // If this file is run directly, start the server and listen for IPC messages
 if (require.main === module) {
   (async () => {
-    if (!("parentPort" in process)) {
-      await initializeServer(new DefaultExternalAuthProvider());
-    } else {
-      (process.parentPort as EventEmitter)?.on("message", async (e) => {
-        const [port] = e.ports;
-        const serverData = await initializeServer(
-          new ElectronExternalAuthProvider(port),
-        );
+    try {
+      if (!("parentPort" in process)) {
+        await initializeServer(new DefaultExternalAuthProvider());
+      } else {
+        (process.parentPort as EventEmitter)?.on("message", async (e) => {
+          const [port] = e.ports;
+          const serverData = await initializeServer(
+            new ElectronExternalAuthProvider(port),
+          );
 
-        port.on("message", (e: any) => {
-          const msg = e.data as IPCMessage;
-          if (!msg || typeof msg !== "object" || !("type" in msg)) return;
-          if (msg.type === "authResult") {
-            // safety check for authResult - don't handle it here!
-            return;
-          }
+          console.log("Server is online!");
 
-          const handlers = {
-            getPort: () => {
-              console.log("Received getPort message, port is", serverData.port);
-              port.postMessage({ type: "port", port: serverData.port });
-            },
-            navigateUrl: (msg: IPCMessage) => {
-              if (typeof msg.url === "string")
-                sendUrlNavigationMessage(msg.url);
-            },
-          } as const;
+          port.on("message", (e: Electron.MessageEvent) => {
+            const msg = e.data as IPCMessage;
+            if (!msg || typeof msg !== "object" || !("type" in msg)) return;
+            if (msg.type === "authResult") {
+              // safety check for authResult - don't handle it here!
+              return;
+            }
 
-          if (!(msg.type in handlers)) {
-            return;
-          }
+            const handlers = {
+              getPort: () => {
+                console.log(
+                  "Received getPort message, port is",
+                  serverData.port,
+                );
+                port.postMessage({ type: "port", port: serverData.port });
+              },
+              navigateUrl: (msg: IPCMessage) => {
+                if (typeof msg.url === "string")
+                  sendUrlNavigationMessage(msg.url);
+              },
+            } as const;
 
-          console.log(`Received IPC message: ${msg.type}`, msg);
-          const handler = handlers[msg.type as keyof typeof handlers];
-          handler(msg);
+            if (!(msg.type in handlers)) {
+              return;
+            }
+
+            console.log(`Received IPC message: ${msg.type}`, msg);
+            const handler = handlers[msg.type as keyof typeof handlers];
+            handler(msg);
+          });
+          port.start();
+          console.log("Port started, sending ready message...");
+          port.postMessage({ type: "ready", port: serverData.port });
+          console.log("Ready message sent, server is initialized.");
         });
-        port.start();
-        port.postMessage({ type: "ready", port: serverData.port });
-      });
+      }
+    } catch (error) {
+      console.error("Error initializing server:", error);
+      process.exit(1);
     }
   })();
 }
