@@ -1,17 +1,29 @@
 {
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "release": {
+    "versionPlans": true,
+    "projectsRelationship": "independent",
+    "changelog": {
+      "workspaceChangelog": true,
+      "projectChangelogs": true
+    }
+  },
   "targetDefaults": {
+    "build": {
+      "dependsOn": ["^build"]
+    },
     "package": {
-      "outputs": [
-        "{projectRoot}/out"
-      ],
+      "outputs": ["{projectRoot}/out"],
+      "dependsOn": ["^build"],
       "cache": true
     },
     "make": {
-      "outputs": [
-        "{projectRoot}/make"
-      ],
+      "outputs": ["{projectRoot}/make"],
+      "dependsOn": ["^build"],
       "cache": true
+    },
+    "publish": {
+      "dependsOn": ["^build"]
     },
     "generate-routes": {
       "cache": true
@@ -25,5 +37,21 @@
     "format": {
       "cache": true
     }
-  }
+  },
+  "plugins": [
+    {
+      "plugin": "@nx/vite/plugin",
+      "options": {
+        "buildTargetName": "build",
+        "testTargetName": "vite:test",
+        "serveTargetName": "serve",
+        "devTargetName": "dev",
+        "previewTargetName": "preview",
+        "serveStaticTargetName": "serve-static",
+        "typecheckTargetName": "typecheck",
+        "buildDepsTargetName": "build-deps",
+        "watchDepsTargetName": "watch-deps"
+      }
+    }
+  ]
 }

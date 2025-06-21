@@ -19,9 +19,10 @@
     "publish": "electron-forge publish",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
-    "test": "vitest run",
+    "test": "nx vite:test run",
     "format": "prettier --write src/",
-    "build:server": "vite build --config vite.server.config.mts"
+    "build:server": "vite build --config vite.server.config.mts",
+    "release": "release-it"
   },
   "keywords": [],
   "author": {

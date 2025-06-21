@@ -107,3 +107,6 @@ cruncher.config.yaml
 .github/instructions/nx.instructions.md
 
 .idea/
+
+vite.config.*.timestamp*
+vitest.config.*.timestamp*
