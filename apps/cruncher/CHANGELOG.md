@@ -1,3 +1,19 @@
+## 1.6.7 (2025-06-21)
+
+### 🩹 Fixes
+
+- Update ci stuff ([#13](https://github.com/IamShobe/cruncher/pull/13))
+
+### 🧱 Updated Dependencies
+
+- Updated @cruncher/adapter-grafana-loki-browser to 0.2.2
+- Updated @cruncher/adapters-mock to 0.2.2
+- Updated @cruncher/adapter-coralogix to 0.2.2
+- Updated @cruncher/adapter-docker to 0.2.2
+- Updated @cruncher/adapters-utils to 0.2.2
+- Updated @cruncher/utils to 0.2.3
+- Updated @cruncher/qql to 0.2.3
+
 ## 1.6.6 (2025-06-21)
 
 ### 🩹 Fixes

@@ -1,3 +1,9 @@
+## 0.2.3 (2025-06-21)
+
+### 🩹 Fixes
+
+- Update ci stuff ([#13](https://github.com/IamShobe/cruncher/pull/13))
+
 ## 0.2.2 (2025-06-21)
 
 ### 🩹 Fixes
