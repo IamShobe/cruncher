@@ -29,6 +29,7 @@
     "test": "nx run-many -t test",
     "clean": "find . -name 'node_modules' -type d -prune -exec rm -rf '{}' +",
     "prepare-pr": "nx release plan",
+    "release": "pnpm dlx nx release",
     "push-all": "git push && git push --tags"
   },
   "keywords": [],
