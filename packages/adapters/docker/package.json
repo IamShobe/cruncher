@@ -3,6 +3,9 @@
   "version": "0.2.0",
   "description": "Docker adapter for Cruncher.",
   "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {

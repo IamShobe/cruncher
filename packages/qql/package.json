@@ -2,6 +2,9 @@
   "name": "@cruncher/qql",
   "version": "0.2.0",
   "description": "QQL query language for Cruncher platform.",
+  "publishConfig": {
+    "access": "public"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {

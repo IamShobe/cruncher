@@ -2,6 +2,9 @@
   "name": "@cruncher/adapter-utils",
   "version": "0.2.0",
   "description": "Utility functions for Cruncher adapters.",
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

@@ -2,6 +2,7 @@
   "name": "@cruncher/app",
   "productName": "cruncher",
   "version": "1.6.0",
+  "private": true,
   "description": "Cruncher is a tool for analyzing and processing data efficiently.",
   "main": ".vite/build/main.js",
   "repository": {
@@ -10,8 +11,8 @@
     "directory": "apps/cruncher"
   },
   "scripts": {
-    "serve": "pnpm run watch-routes & electron-forge start",
-    "serve:inspect": "pnpm run watch-routes & electron-forge start --inspect-electron",
+    "serve": "electron-forge start",
+    "serve:inspect": "electron-forge start --inspect-electron",
     "package": "pnpm run generate-routes && electron-forge package",
     "make": "pnpm run generate-routes && electron-forge make",
     "generate-routes": "tsr generate",

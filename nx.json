@@ -1,6 +1,7 @@
 {
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
   "release": {
+    "projects": ["packages/*", "@cruncher/app"],
     "versionPlans": true,
     "projectsRelationship": "independent",
     "changelog": {
@@ -9,7 +10,14 @@
           "authors": false,
           "applyUsernameToAuthors": false
         }
+      },
+      "workspaceChangelog": {
+        "createRelease": "github"
       }
+    },
+    "version": {
+      "preVersionCommand": "pnpm dlx nx run-many -t build",
+      "conventionalCommits": true
     }
   },
   "targetDefaults": {
@@ -21,16 +29,8 @@
       "dependsOn": ["^build"],
       "cache": true
     },
-    "make": {
-      "outputs": ["{projectRoot}/make"],
-      "dependsOn": ["^build"],
-      "cache": true
-    },
     "publish": {
       "dependsOn": ["^build"]
-    },
-    "generate-routes": {
-      "cache": true
     },
     "lint": {
       "cache": true
@@ -43,6 +43,11 @@
     },
     "serve": {
       "cache": false
+    },
+    "@nx/js:tsc": {
+      "cache": true,
+      "dependsOn": ["^build"],
+      "inputs": ["default", "^default"]
     }
   },
   "plugins": [
@@ -58,6 +63,12 @@
         "typecheckTargetName": "typecheck",
         "buildDepsTargetName": "build-deps",
         "watchDepsTargetName": "watch-deps"
+      }
+    },
+    {
+      "plugin": "@nx/eslint/plugin",
+      "options": {
+        "targetName": "eslint:lint"
       }
     }
   ]
