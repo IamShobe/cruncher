@@ -6,11 +6,17 @@
   "description": "Cruncher monorepo.",
   "pnpm": {
     "onlyBuiltDependencies": [
+      "@swc/core",
+      "bufferutil",
+      "core-js",
       "electron",
       "electron-winstaller",
+      "esbuild",
+      "msgpackr-extract",
+      "nx",
       "sharp",
-      "bufferutil",
-      "nx"
+      "unrs-resolver",
+      "utf-8-validate"
     ]
   },
   "repository": {
