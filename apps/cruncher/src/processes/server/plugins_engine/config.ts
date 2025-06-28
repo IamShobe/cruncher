@@ -1,16 +1,17 @@
 import fs from "node:fs";
-import { CruncherConfigSchema } from "../config/schema";
+import { CruncherConfig, CruncherConfigSchema } from "../config/schema";
 import { Engine } from "../engineV2/engine";
 import { InstanceRef, SearchProfileRef } from "../engineV2/types";
 import YAML from "yaml";
 import { PluginRef } from "@cruncher/adapter-utils";
 import z from "zod/v4";
+import { getConfigDirPath } from "~lib/config";
+import { resolve } from "node:path";
 
 const configFilePath = "cruncher.config.yaml";
 
 // file should be in ~/.config/cruncher/cruncher.config.yaml
-
-const defaultConfigFilePath = `${process.env.HOME}/.config/cruncher/${configFilePath}`;
+const defaultConfigFilePath = resolve(getConfigDirPath(), configFilePath);
 
 export type AppGeneralSettings = {
   configFilePath: string;
@@ -20,10 +21,9 @@ export const appGeneralSettings: AppGeneralSettings = {
   configFilePath: defaultConfigFilePath,
 };
 
-export const setupPluginsFromConfig = (
+export const readConfig = (
   appGeneralSettings: AppGeneralSettings,
-  engineV2: Engine,
-) => {
+): CruncherConfig => {
   // load default plugins from cruncher.config.yaml file
 
   // read file content
@@ -31,7 +31,9 @@ export const setupPluginsFromConfig = (
     console.warn(
       `Configuration file not found at ${appGeneralSettings.configFilePath}`,
     );
-    return;
+    return {
+      connectors: [],
+    };
   }
 
   const fileContent = fs.readFileSync(
@@ -50,8 +52,16 @@ export const setupPluginsFromConfig = (
     );
   }
 
+  return validated.data;
+};
+
+export const setupPluginsFromConfig = (
+  appGeneralSettings: AppGeneralSettings,
+  engineV2: Engine,
+) => {
+  const config = readConfig(appGeneralSettings);
   engineV2.reset();
-  for (const plugin of validated.data.connectors) {
+  for (const plugin of config.connectors) {
     try {
       const pluginInstance = engineV2.initializePlugin(
         plugin.type as PluginRef,
@@ -66,7 +76,7 @@ export const setupPluginsFromConfig = (
     }
   }
 
-  const profiles = validated.data.profiles ?? {};
+  const profiles = config.profiles ?? {};
   for (const [profileName, profileSpec] of Object.entries(profiles)) {
     try {
       const profileRef = profileName as SearchProfileRef;

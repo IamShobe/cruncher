@@ -13,7 +13,17 @@ export const ProfilesSchema = z.record(
   }),
 );
 
+export const CruncherLokiConfigSchema = z.object({
+  listenPort: z.number().optional().default(43100), // Optional port for Loki
+  enabled: z.boolean().optional().default(false), // Optional flag to enable/disable Loki
+});
+
+export type CruncherLokiConfig = z.infer<typeof CruncherLokiConfigSchema>;
+
 export const CruncherConfigSchema = z.object({
+  loki: CruncherLokiConfigSchema.optional(), // Optional Loki configuration
   profiles: ProfilesSchema.optional(),
   connectors: z.array(ConnectorConfigSchema),
 });
+
+export type CruncherConfig = z.infer<typeof CruncherConfigSchema>;

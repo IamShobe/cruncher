@@ -12,7 +12,8 @@ import {
 } from "@cruncher/adapter-utils/logTypes";
 import { ControllerIndexParam, Search } from "@cruncher/qql/grammar";
 import { buildQuery, LIMIT } from "./query";
-import { Frame, GrafanaLabelFilter, QueryResponse } from "./types";
+import { Frame, QueryResponse } from "./types";
+import { LokiLabelFilter } from "@cruncher/adapter-loki/query";
 
 // request mutex to prevent multiple requests at the same time
 const mutex = new Mutex();
@@ -93,7 +94,7 @@ export class GrafanaController implements QueryProvider {
     private context: AdapterContext,
     private url: string,
     private uid: string,
-    private filter: GrafanaLabelFilter[],
+    private filter: LokiLabelFilter[],
     private filterExtensions?: string[],
   ) {}
 

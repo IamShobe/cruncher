@@ -78,6 +78,7 @@
     "@cruncher/adapter-coralogix": "workspace:*",
     "@cruncher/adapter-docker": "workspace:*",
     "@cruncher/adapter-grafana-loki-browser": "workspace:*",
+    "@cruncher/adapter-loki": "workspace:*",
     "@cruncher/adapter-mock": "workspace:*",
     "@cruncher/adapter-utils": "workspace:*",
     "@cruncher/qql": "workspace:*",
@@ -133,8 +134,11 @@
     "update-electron-app": "^3.1.1",
     "utf-8-validate": "^6.0.5",
     "uuid": "^11.1.0",
+    "winston": "^3.17.0",
+    "winston-daily-rotate-file": "^5.0.0",
     "ws": "^8.18.2",
     "yaml": "^2.8.0",
+    "yauzl": "^3.2.0",
     "zod": "^3.25.67",
     "zustand": "^5.0.5"
   }

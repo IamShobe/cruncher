@@ -1,5 +1,5 @@
 {
-  "name": "@cruncher/adapter-<%= name %>",
+  "name": "@cruncher/adapter-loki",
   "version": "0.0.1",
   "description": "",
   "publishConfig": {
@@ -12,6 +12,10 @@
     ".": {
       "default": "./dist/index.js",
       "types": "./dist/index.d.ts"
+    },
+    "./query": {
+      "default": "./dist/query.js",
+      "types": "./dist/query.d.ts"
     }
   },
   "files": [
@@ -34,6 +38,8 @@
   "dependencies": {
     "@cruncher/adapter-utils": "workspace:*",
     "@cruncher/qql": "workspace:*",
+    "@types/regex-escape": "^3.4.1",
+    "regex-escape": "^3.4.11",
     "zod": "^3.25.67"
   },
   "devDependencies": {
