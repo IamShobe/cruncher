@@ -1,3 +1,14 @@
+## 0.2.5 (2025-06-28)
+
+### 🩹 Fixes
+
+- Support loki adapter ([#16](https://github.com/IamShobe/cruncher/pull/16))
+- fixes to allow better reslience ([#16](https://github.com/IamShobe/cruncher/pull/16))
+
+### 🧱 Updated Dependencies
+
+- Updated @cruncher/adapter-loki to 0.1.0
+
 ## 0.2.4 (2025-06-21)
 
 ### 🩹 Fixes

@@ -1,3 +1,9 @@
+## 0.2.5 (2025-06-28)
+
+### 🩹 Fixes
+
+- fixes to allow better reslience ([#16](https://github.com/IamShobe/cruncher/pull/16))
+
 ## 0.2.4 (2025-06-21)
 
 ### 🩹 Fixes

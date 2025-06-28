@@ -1,3 +1,15 @@
+## 1.7.0 (2025-06-28)
+
+### 🚀 Features
+
+- Support loki adapter ([#16](https://github.com/IamShobe/cruncher/pull/16))
+
+### 🧱 Updated Dependencies
+
+- Updated @cruncher/adapter-grafana-loki-browser to 0.2.5
+- Updated @cruncher/adapter-docker to 0.2.5
+- Updated @cruncher/adapter-loki to 0.1.0
+
 ## 1.6.9 (2025-06-21)
 
 ### 🧱 Updated Dependencies
