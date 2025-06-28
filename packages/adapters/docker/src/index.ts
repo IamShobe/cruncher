@@ -3,6 +3,7 @@ import { Adapter, newPluginRef, QueryProvider } from "@cruncher/adapter-utils";
 import { DockerController } from "./controller";
 
 const paramsSchema = z.object({
+  binaryLocation: z.string().default("docker"),
   dockerHost: z.string().default("unix:///var/run/docker.sock"),
   containerFilter: z.string().optional(),
   streams: z.array(z.enum(["stdout", "stderr"])).default(["stdout", "stderr"]),

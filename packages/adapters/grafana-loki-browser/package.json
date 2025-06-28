@@ -39,7 +39,8 @@
     "@cruncher/qql": "workspace:*",
     "regex-escape": "^3.4.11",
     "async-mutex": "^0.5.0",
-    "@cruncher/adapter-utils": "workspace:*"
+    "@cruncher/adapter-utils": "workspace:*",
+    "@cruncher/adapter-loki": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.8.3",

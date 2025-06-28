@@ -4,7 +4,8 @@ import { WebSocketServer } from "ws";
 import { ExternalAuthProvider } from "@cruncher/adapter-utils";
 import { createSignal } from "@cruncher/utils";
 import docker from "@cruncher/adapter-docker";
-import loki from "@cruncher/adapter-grafana-loki-browser";
+import loki from "@cruncher/adapter-loki";
+import grafanaLokiBrowser from "@cruncher/adapter-grafana-loki-browser";
 import mock from "@cruncher/adapter-mock";
 import coralogix from "@cruncher/adapter-coralogix";
 import { Engine } from "./engineV2/engine";
@@ -16,6 +17,8 @@ import { appRouter } from "./plugins_engine/router";
 import { createContext } from "./plugins_engine/trpc";
 import { IPCMessage } from "./types";
 import log from "electron-log/main";
+import { init as initLoki } from "./loki/runner";
+import { appGeneralSettings, readConfig } from "./plugins_engine/config";
 export type { AppRouter } from "./plugins_engine/router_messages";
 
 log.initialize();
@@ -88,6 +91,10 @@ const startServer = async (engineV2: Engine, eventEmitter: EventEmitter) => {
 };
 
 const initializeServer = async (authProvider: ExternalAuthProvider) => {
+  const config = readConfig(appGeneralSettings);
+  initLoki(config.loki).catch((error) => {
+    console.error("Failed to initialize Loki:", error);
+  });
   console.log("Initializing server...");
   // get free port
   //   serverContainer = await getServer();
@@ -100,6 +107,7 @@ const initializeServer = async (authProvider: ExternalAuthProvider) => {
 
   // TODO: dynamically load supported plugins
   engineV2.registerPlugin(loki);
+  engineV2.registerPlugin(grafanaLokiBrowser);
   engineV2.registerPlugin(mock);
   engineV2.registerPlugin(docker);
   engineV2.registerPlugin(coralogix);

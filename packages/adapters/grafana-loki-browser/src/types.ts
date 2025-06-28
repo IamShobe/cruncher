@@ -30,9 +30,3 @@ export type Results = {
 export type QueryResponse = {
   results: Results;
 };
-
-export type GrafanaLabelFilter = {
-  key: string;
-  operator: string;
-  value: string;
-};

@@ -12,7 +12,8 @@ import {
 } from "@cruncher/adapter-utils/logTypes";
 import { ControllerIndexParam, Search } from "@cruncher/qql/grammar";
 import { buildQuery, LIMIT } from "./query";
-import { Frame, GrafanaLabelFilter } from "./types";
+import { Frame, QueryResponse } from "./types";
+import { LokiLabelFilter } from "@cruncher/adapter-loki/query";
 
 // request mutex to prevent multiple requests at the same time
 const mutex = new Mutex();
@@ -93,7 +94,7 @@ export class GrafanaController implements QueryProvider {
     private context: AdapterContext,
     private url: string,
     private uid: string,
-    private filter: GrafanaLabelFilter[],
+    private filter: LokiLabelFilter[],
     private filterExtensions?: string[],
   ) {}
 
@@ -187,7 +188,7 @@ export class GrafanaController implements QueryProvider {
       );
     }
 
-    const data: any = await response.json();
+    const data: QueryResponse = await response.json();
 
     if (data.results.A.status != 200) {
       throw new Error("Failed to execute query");

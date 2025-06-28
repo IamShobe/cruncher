@@ -5,6 +5,7 @@ packages:
   - packages/adapters/*
   - docs/
   - apps/*
+  - tools/*
 
 ignoredBuiltDependencies:
   - sharp

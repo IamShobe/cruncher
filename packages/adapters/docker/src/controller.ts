@@ -17,6 +17,10 @@ import {
 } from "@cruncher/qql/searchTree";
 import { DockerLogPatterns, DockerParams } from ".";
 
+const env = Object.assign({}, process.env, {
+  PATH: "/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin", // include docker location
+});
+
 const DEFAULT_DOCKER_HOST = "unix:///var/run/docker.sock";
 
 // Dynamic log parsing utilities
@@ -96,7 +100,9 @@ export class DockerController implements QueryProvider {
         args.unshift("-H", this.params.dockerHost);
       }
 
-      const dockerProcess = spawn("docker", args);
+      const dockerProcess = spawn(this.params.binaryLocation, args, {
+        env: env,
+      });
       let output = "";
       let errorOutput = "";
 
@@ -200,7 +206,9 @@ export class DockerController implements QueryProvider {
       args.push(container.id);
 
       //TODO: allow editing the command
-      const dockerProcess = spawn("docker", args);
+      const dockerProcess = spawn(this.params.binaryLocation, args, {
+        env: env,
+      });
       const logs: DockerLogEntry[] = [];
 
       const processLogLine = (line: string, stream: Stream) => {

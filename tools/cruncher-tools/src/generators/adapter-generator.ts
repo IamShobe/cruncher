@@ -12,7 +12,7 @@ export async function adapterGeneratorGenerator(
   options: AdapterGeneratorGeneratorSchema,
 ) {
   const projectRoot = `packages/adapters/${options.name}`;
-  addProjectConfiguration(tree, options.name, {
+  addProjectConfiguration(tree, `@cruncher/adapter-${options.name}`, {
     root: projectRoot,
     projectType: "library",
     sourceRoot: `${projectRoot}/src`,
