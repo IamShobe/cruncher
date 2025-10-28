@@ -362,8 +362,9 @@ const Not = createToken({
 });
 const In = createToken({
   name: "In",
-  pattern: matchBooleanExpressionContext(/^in/),
+  pattern: matchBooleanExpressionContext(/^in(?:(?= )|$)/),
   line_breaks: false,
+  longer_alt: Identifier,
 });
 
 const True = createToken({

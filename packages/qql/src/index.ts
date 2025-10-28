@@ -21,6 +21,7 @@ export class QQLParserError extends Error {
 
 export const allData = (input: string) => {
   const lexer = QQLLexer.tokenize(input);
+  console.log("Test");
 
   const parser = new QQLParser();
   parser.input = lexer.tokens;

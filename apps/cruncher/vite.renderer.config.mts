@@ -19,5 +19,17 @@ export default defineConfig({
   ],
   resolve: {
     extensions: [".mjs", ".js", ".ts", ".jsx", ".tsx"],
+    preserveSymlinks: true,
+  },
+  server: {
+    watch: {
+      ignored: ["!**/node_modules/@cruncher/**"],
+    },
+    hmr: {
+      overlay: true,
+    },
+  },
+  optimizeDeps: {
+    exclude: ["@cruncher/*"],
   },
 });

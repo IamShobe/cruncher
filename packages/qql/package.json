@@ -1,6 +1,7 @@
 {
   "name": "@cruncher/qql",
   "version": "0.2.4",
+  "type": "module",
   "description": "QQL query language for Cruncher platform.",
   "publishConfig": {
     "access": "public"
