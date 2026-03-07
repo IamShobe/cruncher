@@ -8,27 +8,22 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PACKAGE_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-SRC_DIR="$PACKAGE_DIR/src"
-GENERATED_DIR="$SRC_DIR/generated"
+SYNTAX_DIR="$PACKAGE_DIR/src/syntax"
 ANTLR="$PACKAGE_DIR/node_modules/.bin/antlr4ng"
 
-ANTLR_FLAGS="-Dlanguage=TypeScript -visitor -no-listener"
+ANTLR_FLAGS="-Dlanguage=TypeScript -visitor -no-listener -Xexact-output-dir"
 
-echo "Cleaning $GENERATED_DIR..."
-rm -rf "$GENERATED_DIR"
-mkdir -p "$GENERATED_DIR"
+# Grammar files and generated output all live flat in src/syntax/.
+# ANTLR writes QQLLexer.tokens next to QQLLexer.g4 so tokenVocab lookup
+# for QQL.g4 works without any copying.
+echo "Cleaning generated files in $SYNTAX_DIR..."
+rm -f "$SYNTAX_DIR"/*.ts "$SYNTAX_DIR"/*.interp "$SYNTAX_DIR"/*.tokens
 
 echo "Generating lexer grammar (QQLLexer.g4)..."
-"$ANTLR" $ANTLR_FLAGS -o "$GENERATED_DIR" "$SRC_DIR/QQLLexer.g4"
-
-# tokenVocab lookup: ANTLR4 looks for the .tokens file in the grammar file's
-# own directory, so copy it there temporarily.
-cp "$GENERATED_DIR/QQLLexer.tokens" "$SRC_DIR/QQLLexer.tokens"
+"$ANTLR" $ANTLR_FLAGS -o "$SYNTAX_DIR" "$SYNTAX_DIR/QQLLexer.g4"
 
 echo "Generating parser grammar (QQL.g4)..."
-"$ANTLR" $ANTLR_FLAGS -o "$GENERATED_DIR" "$SRC_DIR/QQL.g4"
-
-rm -f "$SRC_DIR/QQLLexer.tokens"
+"$ANTLR" $ANTLR_FLAGS -o "$SYNTAX_DIR" "$SYNTAX_DIR/QQL.g4"
 
 echo "Done. Generated files:"
-ls "$GENERATED_DIR"
+ls "$SYNTAX_DIR"

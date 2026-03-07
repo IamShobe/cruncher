@@ -49,7 +49,7 @@ import type {
   TableColumn,
   UnitExpression,
 } from "./types";
-import * as Parser from "./generated/QQL";
+import * as Parser from "./syntax/QQL";
 
 /**
  * Helper function to convert child context to string value

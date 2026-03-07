@@ -4,7 +4,7 @@
 
 import { AbstractParseTreeVisitor, ParserRuleContext, TerminalNode } from "antlr4ng";
 import type { HighlightData, HighlightType } from "./types";
-import * as Parser from "./generated/QQL";
+import * as Parser from "./syntax/QQL";
 
 const KEYWORDS = new Set([
   "table",

@@ -1,4 +1,4 @@
-// Generated from /Users/elran777/git/IamShobe/cruncher/packages/qql/src/QQL.g4 by ANTLR 4.13.1
+// Generated from /Users/elran777/git/IamShobe/cruncher/packages/qql/src/syntax/QQL.g4 by ANTLR 4.13.1
 
 import { AbstractParseTreeVisitor } from "antlr4ng";
 

@@ -3,8 +3,8 @@
  */
 
 import * as antlr from "antlr4ng";
-import { QQLLexer as AntlrQLLexer } from "./generated/QQLLexer";
-import { QQL as AntlrQQLParser } from "./generated/QQL";
+import { QQLLexer as AntlrQLLexer } from "./syntax/QQLLexer";
+import { QQL as AntlrQQLParser } from "./syntax/QQL";
 import { ASTBuilder } from "./ASTBuilder";
 import { HighlightCollector } from "./HighlightCollector";
 import { SuggestionCollector } from "./SuggestionCollector";

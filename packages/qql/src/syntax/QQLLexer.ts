@@ -1,4 +1,4 @@
-// Generated from /Users/elran777/git/IamShobe/cruncher/packages/qql/src/QQLLexer.g4 by ANTLR 4.13.1
+// Generated from /Users/elran777/git/IamShobe/cruncher/packages/qql/src/syntax/QQLLexer.g4 by ANTLR 4.13.1
 
 import * as antlr from "antlr4ng";
 import { Token } from "antlr4ng";

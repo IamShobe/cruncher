@@ -1,6 +1,6 @@
 import * as antlr from "antlr4ng";
-import { QQLLexer } from "./generated/QQLLexer";
-import { QQL } from "./generated/QQL";
+import { QQLLexer } from "./syntax/QQLLexer";
+import { QQL } from "./syntax/QQL";
 import { ASTBuilder } from "./ASTBuilder";
 import { HighlightCollector } from "./HighlightCollector";
 import { SuggestionCollector } from "./SuggestionCollector";

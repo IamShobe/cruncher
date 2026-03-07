@@ -4,7 +4,7 @@
 
 import { AbstractParseTreeVisitor, CommonTokenStream } from "antlr4ng";
 import type { SuggestionData } from "./types";
-import { QQLLexer } from "./generated/QQLLexer";
+import { QQLLexer } from "./syntax/QQLLexer";
 
 const PIPELINE_KEYWORDS = ["table", "stats", "regex", "sort", "where", "timechart", "eval", "unpack"];
 
