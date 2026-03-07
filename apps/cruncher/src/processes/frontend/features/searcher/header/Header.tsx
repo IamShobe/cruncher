@@ -538,8 +538,8 @@ export const ExportButton: React.FC<{
   };
   return (
     <Menu.Root lazyMount unmountOnExit>
-      <Menu.Trigger disabled={isDisabled}>
-        <MiniIconButton tooltip="Export" as="div" disabled={isDisabled}>
+      <Menu.Trigger asChild disabled={isDisabled}>
+        <MiniIconButton tooltip="Export" disabled={isDisabled}>
           <CiExport />
         </MiniIconButton>
       </Menu.Trigger>

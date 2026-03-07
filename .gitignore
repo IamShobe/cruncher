@@ -110,3 +110,4 @@ cruncher.config.yaml
 
 vite.config.*.timestamp*
 vitest.config.*.timestamp*
+.turbo/

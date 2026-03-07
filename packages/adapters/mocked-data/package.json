@@ -20,8 +20,8 @@
   "scripts": {
     "build": "tsc --project tsconfig.json",
     "test": "vitest run",
-    "format": "prettier --write src/",
-    "format:check": "prettier --check src/",
+    "format": "oxfmt src/",
+    "format:check": "oxfmt --check src/",
     "prepublishOnly": "npm run build"
   },
   "keywords": [

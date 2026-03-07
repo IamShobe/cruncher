@@ -92,10 +92,12 @@ export const AutoCompleter = ({
                 padding: 0.2rem 0.6rem;
                 display: flex;
                 gap: 5px;
-                ${hoveredItem === index &&
-                css`
-                  background-color: #686;
-                `}
+                ${
+                  hoveredItem === index &&
+                  css`
+                    background-color: #686;
+                  `
+                }
               `}
               key={index}
             >

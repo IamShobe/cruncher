@@ -327,12 +327,12 @@ const DisplayTab: React.FC<{
       css={css`
         padding: 0.5rem;
         color: ${selectedTab === index ? "white" : "gray"};
-        background-color: ${selectedTab === index
-          ? "rgba(255, 255, 255, 0.1)"
-          : "transparent"};
-        border-top: ${selectedTab === index
-          ? "4px solid #3182ce"
-          : "4px solid transparent"};
+        background-color: ${
+          selectedTab === index ? "rgba(255, 255, 255, 0.1)" : "transparent"
+        };
+        border-top: ${
+          selectedTab === index ? "4px solid #3182ce" : "4px solid transparent"
+        };
         cursor: pointer;
         display: flex;
         align-items: center;
