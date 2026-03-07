@@ -1,0 +1,263 @@
+#!/usr/bin/env bash
+# Fake kubectl binary for testing @cruncher/adapter-k8s
+# Parses enough of the kubectl CLI surface to satisfy the adapter.
+
+set -euo pipefail
+
+# ── helpers ────────────────────────────────────────────────────────────────────
+
+now_iso() {
+  # RFC3339Nano timestamp, optionally offset by $1 seconds (negative = past)
+  local offset="${1:-0}"
+  if [[ "$(uname)" == "Darwin" ]]; then
+    date -u -v"${offset}S" "+%Y-%m-%dT%H:%M:%S.000000000Z" 2>/dev/null \
+      || date -u "+%Y-%m-%dT%H:%M:%S.000000000Z"
+  else
+    date -u -d "${offset} seconds" "+%Y-%m-%dT%H:%M:%S.000000000Z" 2>/dev/null \
+      || date -u "+%Y-%m-%dT%H:%M:%S.000000000Z"
+  fi
+}
+
+# ── argument parsing ────────────────────────────────────────────────────────────
+
+NAMESPACE="default"
+SUBCOMMAND=""
+RESOURCE=""
+POD_NAME=""
+CONTAINER=""
+OUTPUT_FORMAT=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --context) shift; shift ;;            # ignore context
+    -n|--namespace) NAMESPACE="$2"; shift; shift ;;
+    -o|--output) OUTPUT_FORMAT="$2"; shift; shift ;;
+    -c) CONTAINER="$2"; shift; shift ;;
+    --timestamps|--since-time=*|--since=*) shift ;;   # ignore, return all logs
+    get|logs) SUBCOMMAND="$1"; shift ;;
+    pods) RESOURCE="pods"; shift ;;
+    *) POD_NAME="$1"; shift ;;
+  esac
+done
+
+# ── get pods ───────────────────────────────────────────────────────────────────
+
+if [[ "$SUBCOMMAND" == "get" && "$RESOURCE" == "pods" ]]; then
+  CREATED="$(now_iso -3600)"
+
+  cat <<EOF
+{
+  "apiVersion": "v1",
+  "kind": "PodList",
+  "items": [
+    {
+      "metadata": {
+        "name": "frontend-7d9f8b6c4-xk2pq",
+        "namespace": "${NAMESPACE}",
+        "labels": {"app": "frontend", "version": "v2.1.0"}
+      },
+      "spec": {
+        "containers": [
+          {"name": "nginx"},
+          {"name": "config-reloader"}
+        ]
+      },
+      "status": {"phase": "Running"}
+    },
+    {
+      "metadata": {
+        "name": "backend-5c8d7f9b4-mn3rs",
+        "namespace": "${NAMESPACE}",
+        "labels": {"app": "backend", "version": "v1.4.2"}
+      },
+      "spec": {
+        "containers": [
+          {"name": "api"}
+        ]
+      },
+      "status": {"phase": "Running"}
+    },
+    {
+      "metadata": {
+        "name": "worker-6b4f8c9d2-pq7vw",
+        "namespace": "${NAMESPACE}",
+        "labels": {"app": "worker", "version": "v1.4.2"}
+      },
+      "spec": {
+        "containers": [
+          {"name": "worker"},
+          {"name": "sidecar-logger"}
+        ]
+      },
+      "status": {"phase": "Running"}
+    },
+    {
+      "metadata": {
+        "name": "redis-0",
+        "namespace": "${NAMESPACE}",
+        "labels": {"app": "redis"}
+      },
+      "spec": {
+        "containers": [
+          {"name": "redis"}
+        ]
+      },
+      "status": {"phase": "Running"}
+    },
+    {
+      "metadata": {
+        "name": "db-migrator-j8k9x",
+        "namespace": "${NAMESPACE}",
+        "labels": {"app": "db-migrator"}
+      },
+      "spec": {
+        "containers": [
+          {"name": "migrator"}
+        ]
+      },
+      "status": {"phase": "Succeeded"}
+    }
+  ]
+}
+EOF
+  exit 0
+fi
+
+# ── logs ───────────────────────────────────────────────────────────────────────
+
+if [[ "$SUBCOMMAND" == "logs" ]]; then
+  case "${POD_NAME}" in
+
+    frontend-*)
+      case "${CONTAINER}" in
+        nginx)
+          cat <<EOF
+$(now_iso -900) 10.0.0.5 - - [$(date -u '+%d/%b/%Y:%H:%M:%S +0000')] "GET /api/health HTTP/1.1" 200 42 "-" "kube-probe/1.28"
+$(now_iso -850) 10.0.1.12 - - [$(date -u '+%d/%b/%Y:%H:%M:%S +0000')] "GET / HTTP/1.1" 200 4321 "https://example.com/" "Mozilla/5.0"
+$(now_iso -800) 10.0.1.13 - - [$(date -u '+%d/%b/%Y:%H:%M:%S +0000')] "POST /api/search HTTP/1.1" 200 987 "-" "Mozilla/5.0"
+$(now_iso -750) 10.0.0.5 - - [$(date -u '+%d/%b/%Y:%H:%M:%S +0000')] "GET /api/health HTTP/1.1" 200 42 "-" "kube-probe/1.28"
+$(now_iso -700) 10.0.1.14 - - [$(date -u '+%d/%b/%Y:%H:%M:%S +0000')] "GET /static/app.js HTTP/1.1" 304 0 "-" "Mozilla/5.0"
+$(now_iso -600) 10.0.1.15 - - [$(date -u '+%d/%b/%Y:%H:%M:%S +0000')] "GET /api/user/profile HTTP/1.1" 401 85 "-" "curl/7.88.0"
+$(now_iso -500) 10.0.1.15 - - [$(date -u '+%d/%b/%Y:%H:%M:%S +0000')] "POST /api/auth/login HTTP/1.1" 200 312 "-" "curl/7.88.0"
+$(now_iso -400) 10.0.1.15 - - [$(date -u '+%d/%b/%Y:%H:%M:%S +0000')] "GET /api/user/profile HTTP/1.1" 200 587 "-" "curl/7.88.0"
+$(now_iso -300) 10.0.0.5 - - [$(date -u '+%d/%b/%Y:%H:%M:%S +0000')] "GET /api/health HTTP/1.1" 200 42 "-" "kube-probe/1.28"
+$(now_iso -200) 10.0.1.16 - - [$(date -u '+%d/%b/%Y:%H:%M:%S +0000')] "DELETE /api/user/42 HTTP/1.1" 403 61 "-" "Mozilla/5.0"
+$(now_iso -60)  10.0.0.5 - - [$(date -u '+%d/%b/%Y:%H:%M:%S +0000')] "GET /api/health HTTP/1.1" 200 42 "-" "kube-probe/1.28"
+EOF
+          ;;
+        config-reloader)
+          cat <<EOF
+$(now_iso -3500) {"level":"info","ts":"$(now_iso -3500)","msg":"Starting config reloader","version":"v0.67.0"}
+$(now_iso -3490) {"level":"info","ts":"$(now_iso -3490)","msg":"Watching config files","paths":["/etc/nginx/nginx.conf"]}
+$(now_iso -1800) {"level":"info","ts":"$(now_iso -1800)","msg":"Config file changed, triggering reload","file":"/etc/nginx/nginx.conf"}
+$(now_iso -1798) {"level":"info","ts":"$(now_iso -1798)","msg":"Reload complete","duration_ms":47}
+$(now_iso -120)  {"level":"debug","ts":"$(now_iso -120)","msg":"Health check passed"}
+EOF
+          ;;
+      esac
+      ;;
+
+    backend-*)
+      case "${CONTAINER}" in
+        api)
+          cat <<EOF
+$(now_iso -950) {"level":"info","time":"$(now_iso -950)","msg":"Server started","port":8080,"env":"production"}
+$(now_iso -900) {"level":"info","time":"$(now_iso -900)","msg":"Connected to database","host":"postgres-svc:5432","latency_ms":12}
+$(now_iso -850) {"level":"info","time":"$(now_iso -850)","msg":"Request","method":"GET","path":"/api/health","status":200,"latency_ms":1}
+$(now_iso -800) {"level":"info","time":"$(now_iso -800)","msg":"Request","method":"GET","path":"/api/users","status":200,"latency_ms":23}
+$(now_iso -750) {"level":"warn","time":"$(now_iso -750)","msg":"Slow query detected","query":"SELECT * FROM events","duration_ms":320,"threshold_ms":300}
+$(now_iso -700) {"level":"info","time":"$(now_iso -700)","msg":"Request","method":"POST","path":"/api/search","status":200,"latency_ms":45}
+$(now_iso -600) {"level":"error","time":"$(now_iso -600)","msg":"Database connection lost","error":"dial tcp: connection refused","retrying":true}
+$(now_iso -595) {"level":"info","time":"$(now_iso -595)","msg":"Database reconnected","attempt":2}
+$(now_iso -500) {"level":"info","time":"$(now_iso -500)","msg":"Request","method":"GET","path":"/api/health","status":200,"latency_ms":1}
+$(now_iso -400) {"level":"info","time":"$(now_iso -400)","msg":"Request","method":"DELETE","path":"/api/user/42","status":403,"latency_ms":8}
+$(now_iso -300) {"level":"warn","time":"$(now_iso -300)","msg":"High memory usage","used_mb":412,"limit_mb":512}
+$(now_iso -200) {"level":"info","time":"$(now_iso -200)","msg":"Request","method":"POST","path":"/api/events","status":201,"latency_ms":12}
+$(now_iso -100) {"level":"info","time":"$(now_iso -100)","msg":"Request","method":"GET","path":"/api/health","status":200,"latency_ms":1}
+$(now_iso -30)  {"level":"info","time":"$(now_iso -30)","msg":"Metrics collected","goroutines":48,"heap_mb":187}
+EOF
+          ;;
+      esac
+      ;;
+
+    worker-*)
+      case "${CONTAINER}" in
+        worker)
+          cat <<EOF
+$(now_iso -1000) {"level":"info","ts":"$(now_iso -1000)","msg":"Worker started","queues":["default","priority","emails"]}
+$(now_iso -950)  {"level":"info","ts":"$(now_iso -950)","msg":"Job started","id":"job_a1b2c3","type":"send_email","queue":"emails"}
+$(now_iso -940)  {"level":"info","ts":"$(now_iso -940)","msg":"Job completed","id":"job_a1b2c3","duration_ms":87}
+$(now_iso -800)  {"level":"info","ts":"$(now_iso -800)","msg":"Job started","id":"job_d4e5f6","type":"generate_report","queue":"default"}
+$(now_iso -720)  {"level":"warn","ts":"$(now_iso -720)","msg":"Job slow","id":"job_d4e5f6","elapsed_ms":5000}
+$(now_iso -700)  {"level":"info","ts":"$(now_iso -700)","msg":"Job completed","id":"job_d4e5f6","duration_ms":6200}
+$(now_iso -600)  {"level":"error","ts":"$(now_iso -600)","msg":"Job failed","id":"job_g7h8i9","type":"send_webhook","error":"connection timeout","retries":3}
+$(now_iso -598)  {"level":"info","ts":"$(now_iso -598)","msg":"Job requeued","id":"job_g7h8i9","next_attempt_in":"30s"}
+$(now_iso -400)  {"level":"info","ts":"$(now_iso -400)","msg":"Job started","id":"job_j1k2l3","type":"cleanup_old_events","queue":"default"}
+$(now_iso -360)  {"level":"info","ts":"$(now_iso -360)","msg":"Job completed","id":"job_j1k2l3","deleted_rows":4821,"duration_ms":38000}
+$(now_iso -200)  {"level":"info","ts":"$(now_iso -200)","msg":"Queue poll","queues":{"default":0,"priority":1,"emails":0}}
+$(now_iso -50)   {"level":"info","ts":"$(now_iso -50)","msg":"Job started","id":"job_m4n5o6","type":"send_email","queue":"priority"}
+EOF
+          ;;
+        sidecar-logger)
+          cat <<EOF
+$(now_iso -1000) [sidecar] tailing /var/log/worker/worker.log
+$(now_iso -950)  [sidecar] flushed 1 log entry to Loki
+$(now_iso -940)  [sidecar] flushed 1 log entry to Loki
+$(now_iso -800)  [sidecar] flushed 1 log entry to Loki
+$(now_iso -300)  [sidecar] WARNING: Loki push latency high (>500ms)
+$(now_iso -200)  [sidecar] flushed 3 log entries to Loki
+$(now_iso -50)   [sidecar] flushed 1 log entry to Loki
+EOF
+          ;;
+      esac
+      ;;
+
+    redis-0)
+      case "${CONTAINER}" in
+        redis)
+          cat <<EOF
+$(now_iso -3600) 1:M $(date -u '+%d %b %Y %H:%M:%S.000') * oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
+$(now_iso -3598) 1:M $(date -u '+%d %b %Y %H:%M:%S.000') * Redis version=7.2.3, bits=64, commit=00000000, modified=0, pid=1
+$(now_iso -3595) 1:M $(date -u '+%d %b %Y %H:%M:%S.000') * Server initialized
+$(now_iso -3594) 1:M $(date -u '+%d %b %Y %H:%M:%S.000') * Ready to accept connections tcp
+$(now_iso -1800) 1:M $(date -u '+%d %b %Y %H:%M:%S.000') * 100 changes in 300 seconds. Saving...
+$(now_iso -1798) 1:M $(date -u '+%d %b %Y %H:%M:%S.000') * Background saving started by pid 12
+$(now_iso -1795) 12:C $(date -u '+%d %b %Y %H:%M:%S.000') * DB saved on disk
+$(now_iso -1794) 1:M $(date -u '+%d %b %Y %H:%M:%S.000') * Background saving terminated with success
+$(now_iso -600)  1:M $(date -u '+%d %b %Y %H:%M:%S.000') # WARNING: 32 clients connected out of 100 max clients
+$(now_iso -300)  1:M $(date -u '+%d %b %Y %H:%M:%S.000') * 100 changes in 300 seconds. Saving...
+$(now_iso -298)  1:M $(date -u '+%d %b %Y %H:%M:%S.000') * Background saving started by pid 23
+$(now_iso -295)  1:M $(date -u '+%d %b %Y %H:%M:%S.000') * DB saved on disk
+EOF
+          ;;
+      esac
+      ;;
+
+    db-migrator-*)
+      case "${CONTAINER}" in
+        migrator)
+          cat <<EOF
+$(now_iso -3400) [migrator] Starting database migrations
+$(now_iso -3398) [migrator] Current schema version: 42
+$(now_iso -3395) [migrator] Applying migration 043_add_events_index.sql
+$(now_iso -3380) [migrator] Migration 043 applied in 15.2s
+$(now_iso -3379) [migrator] Applying migration 044_add_user_preferences.sql
+$(now_iso -3378) [migrator] Migration 044 applied in 0.3s
+$(now_iso -3377) [migrator] All migrations applied. Schema version: 44
+$(now_iso -3376) [migrator] Exiting with code 0
+EOF
+          ;;
+      esac
+      ;;
+
+    *)
+      echo "Error from server: pods \"${POD_NAME}\" not found" >&2
+      exit 1
+      ;;
+  esac
+
+  exit 0
+fi
+
+echo "fake-kubectl: unsupported command: ${SUBCOMMAND}" >&2
+exit 1

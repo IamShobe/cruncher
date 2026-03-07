@@ -1,0 +1,15 @@
+profiles:
+  default:
+    connectors: [k8s-sample]
+
+connectors:
+  - name: k8s-sample
+    type: k8s
+    params:
+      context: k3d-cruncher-test
+      namespace: default
+      logPatterns:
+        - name: json-logs
+          pattern: '^\{.*\}$'
+          applyToAll: true
+          messageFieldName: msg

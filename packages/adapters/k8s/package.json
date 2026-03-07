@@ -1,0 +1,53 @@
+{
+  "name": "@cruncher/adapter-k8s",
+  "version": "0.1.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/IamShobe/cruncher"
+  },
+  "description": "Kubernetes adapter for Cruncher.",
+  "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "default": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "format": "oxfmt src/",
+    "format:check": "oxfmt --check src/",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "cruncher",
+    "qql",
+    "query-language",
+    "kubernetes",
+    "k8s",
+    "adapter"
+  ],
+  "author": {
+    "name": "Elran Shefer"
+  },
+  "license": "GPL-3.0-only",
+  "dependencies": {
+    "@cruncher/adapter-utils": "workspace:*",
+    "@cruncher/qql": "workspace:*",
+    "ansicolor": "^2.0.3",
+    "merge-k-sorted-arrays": "^2.1.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^25.3.5",
+    "typescript": "^5.9.3"
+  }
+}

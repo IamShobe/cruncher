@@ -77,6 +77,9 @@ importers:
       '@cruncher/adapter-grafana-loki-browser':
         specifier: workspace:*
         version: link:../../packages/adapters/grafana-loki-browser
+      '@cruncher/adapter-k8s':
+        specifier: workspace:*
+        version: link:../../packages/adapters/k8s
       '@cruncher/adapter-loki':
         specifier: workspace:*
         version: link:../../packages/adapters/loki
@@ -450,6 +453,31 @@ importers:
       '@types/regex-escape':
         specifier: ^3.4.1
         version: 3.4.1
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
+  packages/adapters/k8s:
+    dependencies:
+      '@cruncher/adapter-utils':
+        specifier: workspace:*
+        version: link:../utils
+      '@cruncher/qql':
+        specifier: workspace:*
+        version: link:../../qql
+      ansicolor:
+        specifier: ^2.0.3
+        version: 2.0.3
+      merge-k-sorted-arrays:
+        specifier: ^2.1.0
+        version: 2.1.0
+      zod:
+        specifier: ^4.3.6
+        version: 4.3.6
+    devDependencies:
+      '@types/node':
+        specifier: ^25.3.5
+        version: 25.3.5
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -10728,7 +10756,7 @@ snapshots:
 
   '@types/sax@1.2.7':
     dependencies:
-      '@types/node': 17.0.45
+      '@types/node': 25.3.5
 
   '@types/triple-beam@1.3.5': {}
 

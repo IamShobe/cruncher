@@ -4,6 +4,7 @@ import { WebSocketServer } from "ws";
 import { ExternalAuthProvider } from "@cruncher/adapter-utils";
 import { createSignal } from "@cruncher/utils";
 import docker from "@cruncher/adapter-docker";
+import k8s from "@cruncher/adapter-k8s";
 import loki from "@cruncher/adapter-loki";
 import grafanaLokiBrowser from "@cruncher/adapter-grafana-loki-browser";
 import mock from "@cruncher/adapter-mock";
@@ -117,6 +118,7 @@ const initializeServer = async (authProvider: ExternalAuthProvider) => {
   engineV2.registerPlugin(grafanaLokiBrowser);
   engineV2.registerPlugin(mock);
   engineV2.registerPlugin(docker);
+  engineV2.registerPlugin(k8s);
   engineV2.registerPlugin(coralogix);
 
   //   const routes = await getRoutes(engineV2);
