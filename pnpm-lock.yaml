@@ -8,6 +8,9 @@ importers:
 
   .:
     devDependencies:
+      '@changesets/changelog-github':
+        specifier: ^0.6.0
+        version: 0.6.0(encoding@0.1.13)
       '@changesets/cli':
         specifier: ^2.30.0
         version: 2.30.0(@types/node@25.3.5)
@@ -724,6 +727,9 @@ packages:
   '@changesets/changelog-git@0.2.1':
     resolution: {integrity: sha512-x/xEleCFLH28c3bQeQIyeZf8lFXyDFVn1SgcBiR2Tw/r4IAWlk1fzxCEZ6NxQAjF2Nwtczoen3OA2qR+UawQ8Q==}
 
+  '@changesets/changelog-github@0.6.0':
+    resolution: {integrity: sha512-wA2/y4hR/A1K411cCT75rz0d46Iezxp1WYRFoFJDIUpkQ6oDBAIUiU7BZkDCmYgz0NBl94X1lgcZO+mHoiHnFg==}
+
   '@changesets/cli@2.30.0':
     resolution: {integrity: sha512-5D3Nk2JPqMI1wK25pEymeWRSlSMdo5QOGlyfrKg0AOufrUcjEE3RQgaCpHoBiM31CSNrtSgdJ0U6zL1rLDDfBA==}
     hasBin: true
@@ -736,6 +742,9 @@ packages:
 
   '@changesets/get-dependents-graph@2.1.3':
     resolution: {integrity: sha512-gphr+v0mv2I3Oxt19VdWRRUxq3sseyUpX9DaHpTUmLj92Y10AGy+XOtV+kbM6L/fDcpx7/ISDFK6T8A/P3lOdQ==}
+
+  '@changesets/get-github-info@0.8.0':
+    resolution: {integrity: sha512-cRnC+xdF0JIik7coko3iUP9qbnfi1iJQ3sAa6dE+Tx3+ET8bjFEm63PA4WEohgjYcmsOikPHWzPsMWWiZmntOQ==}
 
   '@changesets/get-release-plan@4.0.15':
     resolution: {integrity: sha512-Q04ZaRPuEVZtA+auOYgFaVQQSA98dXiVe/yFaZfY7hoSmQICHGvP0TF4u3EDNHWmmCS4ekA/XSpKlSM2PyTS2g==}
@@ -4054,6 +4063,9 @@ packages:
     resolution: {integrity: sha512-23XHcCF+coGYevirZceTVD7NdJOqVn+49IHyxgszm+JIiHLoB2TkmPtsYkNWT1pvRSGkc35L6NHs0yHkN2SumA==}
     engines: {node: ^20.19.0 || ^22.12.0 || >=24.0.0}
 
+  dataloader@1.4.0:
+    resolution: {integrity: sha512-68s5jYdlvasItOJnCuI2Q9s4q98g0pCyL3HrcKJu8KNugUl8ahgmZYg38ysLTgQjjXX3H8CJLkAvWrclWfcalw==}
+
   date-fns-jalali@4.1.0-0:
     resolution: {integrity: sha512-hTIP/z+t+qKwBDcmmsnmjWTduxCg+5KfdqWQvb2X/8C9+knYY6epN/pfxdDuyVlSVeFz0sM5eEfwIUQ70U4ckg==}
 
@@ -4219,6 +4231,10 @@ packages:
   dotenv@16.4.7:
     resolution: {integrity: sha512-47qPchRCykZC03FhkYAhrvwU4xDBFIj1QPqaarj6mdM/hgUzfPHcpkHJOn3mJAufFeeAxAzeGsr5X0M4k6fLZQ==}
     engines: {node: '>=12'}
+
+  dotenv@8.6.0:
+    resolution: {integrity: sha512-IrPdXQsk2BbzvCBGBOTmmSH5SodmqZNt4ERAZDmW4CT+tL8VtvinqywuANaFu4bOMWki16nqf0e4oC0QIaDr/g==}
+    engines: {node: '>=10'}
 
   dset@3.1.4:
     resolution: {integrity: sha512-2QF/g9/zTaPDc3BjNcVTGoBbXBgYfMTTceLaYcFJ/W9kggFUkhxD/hMEeuLKbugyef9SqAx8cpgwlIP/jinUTA==}
@@ -8448,6 +8464,14 @@ snapshots:
     dependencies:
       '@changesets/types': 6.1.0
 
+  '@changesets/changelog-github@0.6.0(encoding@0.1.13)':
+    dependencies:
+      '@changesets/get-github-info': 0.8.0(encoding@0.1.13)
+      '@changesets/types': 6.1.0
+      dotenv: 8.6.0
+    transitivePeerDependencies:
+      - encoding
+
   '@changesets/cli@2.30.0(@types/node@25.3.5)':
     dependencies:
       '@changesets/apply-release-plan': 7.1.0
@@ -8500,6 +8524,13 @@ snapshots:
       '@manypkg/get-packages': 1.1.3
       picocolors: 1.1.1
       semver: 7.7.4
+
+  '@changesets/get-github-info@0.8.0(encoding@0.1.13)':
+    dependencies:
+      dataloader: 1.4.0
+      node-fetch: 2.7.0(encoding@0.1.13)
+    transitivePeerDependencies:
+      - encoding
 
   '@changesets/get-release-plan@4.0.15':
     dependencies:
@@ -12500,6 +12531,8 @@ snapshots:
     transitivePeerDependencies:
       - '@noble/hashes'
 
+  dataloader@1.4.0: {}
+
   date-fns-jalali@4.1.0-0: {}
 
   date-fns@4.1.0: {}
@@ -12629,6 +12662,8 @@ snapshots:
       dotenv: 16.4.7
 
   dotenv@16.4.7: {}
+
+  dotenv@8.6.0: {}
 
   dset@3.1.4: {}
 

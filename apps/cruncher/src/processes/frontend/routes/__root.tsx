@@ -26,7 +26,7 @@ const Wrapper = styled.div`
   flex: 1;
   display: flex;
   min-width: 0;
-  height: 100%;
+  min-height: 0;
   position: relative;
   background-color: rgb(17, 18, 23);
 `;
@@ -40,6 +40,31 @@ export const Route = createRootRoute({
         flex-direction: column;
       `}
     >
+      <div
+        css={css`
+          height: 34px;
+          flex-shrink: 0;
+          background-color: rgb(22, 23, 29);
+          -webkit-app-region: drag;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        `}
+      >
+        <span
+          css={css`
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            color: rgba(255, 255, 255, 0.35);
+            text-transform: uppercase;
+            -webkit-app-region: drag;
+            user-select: none;
+          `}
+        >
+          Cruncher
+        </span>
+      </div>
       <QueryClientProvider client={queryClient}>
         <Provider>
           <Toaster />

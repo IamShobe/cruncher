@@ -37,6 +37,8 @@
     "clean": "find . -name 'node_modules' -type d -prune -exec rm -rf '{}' +",
     "local-registry": "verdaccio --config .verdaccio/config.yml --listen 4873",
     "prepare-pr": "changeset",
+    "changeset-version": "changeset version && pnpm install --lockfile-only",
+    "changeset-publish": "turbo run build --filter='./packages/**' && changeset publish",
     "release": "changeset version && pnpm install --lockfile-only && changeset publish",
     "push-all": "git push && git push --tags"
   },
@@ -46,6 +48,7 @@
   },
   "license": "GPL-3.0-only",
   "devDependencies": {
+    "@changesets/changelog-github": "^0.6.0",
     "@changesets/cli": "^2.30.0",
     "@types/node": "25.3.5",
     "@vitest/coverage-v8": "^4.0.18",

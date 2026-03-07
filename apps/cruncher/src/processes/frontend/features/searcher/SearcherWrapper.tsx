@@ -45,8 +45,8 @@ type Tab = {
   key: string;
 };
 
-const tabsAtom = atom<Tab[]>([createNewTab()]);
-const selectedAtom = atom(0);
+export const tabsAtom = atom<Tab[]>([createNewTab()]);
+export const selectedAtom = atom(0);
 
 export const useTabs = () => {
   const [tabs, setTabs] = useAtom(tabsAtom);
@@ -244,7 +244,6 @@ export const SearcherWrapper = () => {
 
   const selectedTabInfo = tabs[selectedTab];
 
-  // Tab bar rendering
   return (
     <Box
       flex={1}
@@ -257,20 +256,23 @@ export const SearcherWrapper = () => {
       <div
         css={css`
           padding: 0;
-          overflow-x: scroll;
+          overflow-x: auto;
           overflow-y: hidden;
           box-sizing: border-box;
           width: 100%;
-          gap: 0;
+          height: 36px;
+          flex-shrink: 0;
+          background-color: rgb(22, 23, 29);
+          -webkit-app-region: drag;
           &::-webkit-scrollbar {
-            height: 4px;
+            height: 2px;
           }
           &::-webkit-scrollbar-thumb {
             background-color: rgba(255, 255, 255, 0.3);
           }
         `}
       >
-        <Stack direction="row" gap={0} alignItems="center">
+        <Stack direction="row" gap={0} alignItems="stretch" height="100%">
           {tabs.map((tab, index) => (
             <DisplayTab key={tab.key} tab={tab} index={index} />
           ))}
@@ -282,7 +284,11 @@ export const SearcherWrapper = () => {
               const created = addTab();
               setSelectedTab(created.index);
             }}
-            margin={2}
+            margin={1}
+            css={css`
+              -webkit-app-region: no-drag;
+              align-self: center;
+            `}
           >
             <VscAdd />
           </MiniIconButton>
@@ -299,7 +305,7 @@ export const SearcherWrapper = () => {
   );
 };
 
-const DisplayTab: React.FC<{
+export const DisplayTab: React.FC<{
   tab: Tab;
   index: number;
 }> = ({ tab, index }) => {
@@ -323,15 +329,16 @@ const DisplayTab: React.FC<{
   return (
     <Stack
       direction="row"
+      alignItems="center"
       key={tab.key}
       css={css`
-        padding: 0.5rem;
-        color: ${selectedTab === index ? "white" : "gray"};
+        padding: 0 0.35rem;
+        color: ${selectedTab === index ? "white" : "rgba(255,255,255,0.45)"};
         background-color: ${
-          selectedTab === index ? "rgba(255, 255, 255, 0.1)" : "transparent"
+          selectedTab === index ? "rgba(255, 255, 255, 0.07)" : "transparent"
         };
-        border-top: ${
-          selectedTab === index ? "4px solid #3182ce" : "4px solid transparent"
+        border-bottom: ${
+          selectedTab === index ? "2px solid #3182ce" : "2px solid transparent"
         };
         cursor: pointer;
         display: flex;
@@ -339,25 +346,25 @@ const DisplayTab: React.FC<{
         justify-content: center;
         flex-shrink: 0;
         min-width: 0;
-        gap: 0.5rem;
-        border-radius: 0;
-        transition: background-color 0.2s ease-in-out;
+        gap: 0.4rem;
+        border-radius: ${index === 0 ? "0 6px 0 0" : "6px 6px 0 0"};
+        font-size: 0.8rem;
+        -webkit-app-region: no-drag;
+        transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out;
         &:focus,
         &:focus-visible {
           outline: none;
-          background-color: rgba(255, 255, 255, 0.1);
+          background-color: rgba(255, 255, 255, 0.07);
         }
         &:focus-visible {
           box-shadow: 0 0 0 2px rgba(49, 130, 206, 0.6);
         }
-        &:active {
-          background-color: rgba(255, 255, 255, 0.2);
-        }
+        &:hover,
         &:active,
         &:focus,
-        &:focus-visible,
-        &:hover {
+        &:focus-visible {
           background-color: rgba(255, 255, 255, 0.1);
+          color: rgba(255, 255, 255, 0.8);
         }
       `}
       onClick={() => setSelectedTab(index)}
@@ -397,6 +404,13 @@ const DisplayTab: React.FC<{
         tooltipShortcut={searcherGlobalShortcuts.getAlias("close-tab")}
         aria-label="Close tab"
         variant="ghost"
+        css={css`
+          width: 16px;
+          height: 16px;
+          min-width: 16px;
+          min-height: 16px;
+          font-size: 0.65rem;
+        `}
         onClick={(e) => {
           e.stopPropagation();
           setEditingTabKey(null);
