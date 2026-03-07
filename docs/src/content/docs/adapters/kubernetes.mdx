@@ -1,0 +1,112 @@
+---
+title: Kubernetes
+description: How to use Cruncher with Kubernetes via kubectl.
+sidebar:
+    badge:
+        text: New
+        variant: tip
+---
+import { Code } from '@astrojs/starlight/components';
+import code1 from './examples/k8s.cruncher.config.yaml?raw';
+import code2 from './examples/k8s-patterns.cruncher.config.yaml?raw';
+import ParamItem from '../../../components/ParamItem.astro';
+
+import { Badge } from '@astrojs/starlight/components';
+
+<Badge text="k8s" />
+
+Fetches pod logs using the `kubectl` CLI. Requires `kubectl` to be installed and configured on the machine running Cruncher.
+
+## Params
+
+<ParamItem label="binaryLocation" type="string">
+    Path to the `kubectl` binary. Defaults to `"kubectl"` (resolved from `PATH`).
+</ParamItem>
+
+<ParamItem label="context" type="string">
+    The kubectl context to use (e.g. `my-cluster`). If omitted, the current context in `~/.kube/config` is used.
+</ParamItem>
+
+<ParamItem label="namespace" type="string">
+    The Kubernetes namespace to query. Defaults to `"default"`.
+</ParamItem>
+
+<ParamItem label="podFilter" type="string">
+    A substring filter applied to pod names when listing pods. Only pods whose name contains this string will be shown and queried.
+</ParamItem>
+
+<ParamItem label="podOverride" type="object">
+    Per-pod overrides. Keyed by pod name.
+
+    - `messageFieldName` - The field to use as the display message for that pod's logs. Useful when a pod emits JSON logs with a non-standard message key.
+
+    <br />
+    **Example:**
+    ```yaml
+    podOverride:
+      my-pod-7d9f8b6c4-xk2pq:
+        messageFieldName: message
+    ```
+</ParamItem>
+
+<ParamItem label="logPatterns" type="array">
+    A list of regex patterns used to extract structured fields from log lines.
+    <br/>
+    Each entry has the form:
+    ```yaml
+    - name: <pattern_name>
+      pattern: <regex>
+      applyTo: [pod-name]
+      exclude: [pod-name]
+      applyToAll: false
+      messageFieldName: <field_name>
+    ```
+    <br/>
+    - `name` - A human-readable name for this pattern.
+    - `pattern` - A regex with named capture groups (e.g. `(?P<level>[^ ]+)`). Captured groups become log fields.
+    - `applyTo` - List of pod names to apply this pattern to.
+    - `exclude` - List of pod names to exclude from this pattern.
+    - `applyToAll` - If `true`, applies to all pods regardless of `applyTo`.
+    - `messageFieldName` - Which captured field to use as the display message.
+</ParamItem>
+
+## Output Fields
+
+Each log entry emits the following fields:
+
+| Field | Description |
+|---|---|
+| `_time` | Timestamp of the log line |
+| `_raw` | Original log line (with ANSI codes) |
+| `ansi_free_line` | Log line with ANSI codes stripped |
+| `pod` | Pod name |
+| `podNamespace` | Kubernetes namespace |
+| `container` | Container name within the pod |
+| `phase` | Pod phase (`Running`, `Succeeded`, etc.) |
+| *(captured groups)* | Any named capture groups from `logPatterns` |
+
+## Controller Params
+
+The following dropdowns are available in the Cruncher UI to filter results:
+
+| Param | Description |
+|---|---|
+| `pod` | Filter by pod name |
+| `namespace` | Filter by namespace |
+| `container` | Filter by container name |
+| `phase` | Filter by pod phase |
+
+## Notes
+
+- `kubectl logs` does not support `--until-time`, so the `toTime` bound is enforced in-process by filtering log timestamps after fetching.
+- Multi-container pods: each container is queried independently and results are merged in timestamp order.
+
+## Examples
+
+### Minimal Configuration
+
+<Code code={code1} lang="yaml" title="cruncher.config.yaml" />
+
+### Config with log patterns
+
+<Code code={code2} lang="yaml" title="cruncher.config.yaml" />

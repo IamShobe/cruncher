@@ -1,0 +1,27 @@
+profiles:
+  default:
+    connectors: [k8s]
+
+connectors:
+  - name: k8s
+    type: k8s
+    params:
+      context: my-cluster # kubectl context name
+      namespace: production
+      podFilter: backend # only show pods whose name contains "backend"
+
+      podOverride:
+        backend-7d9f8b6c4-xk2pq: # a pod with JSON logs using "message" as the text field
+          messageFieldName: message
+
+      logPatterns:
+        - name: json-logs
+          pattern: '^\{.*\}$'
+          applyToAll: true # parse JSON fields from all pods
+          messageFieldName: msg
+
+        - name: nginx-access
+          pattern: '^(?P<client_ip>[^ ]+) - - \[(?P<time>[^\]]+)\] "(?P<method>[A-Z]+) (?P<path>[^ ]+) [^"]+" (?P<status>\d+) (?P<bytes>\d+)'
+          applyTo:
+            - frontend-864b9c5d5d-plbhd # apply only to this pod
+          messageFieldName: path

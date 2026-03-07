@@ -1,0 +1,8 @@
+profiles:
+  default:
+    connectors: [k8s]
+
+connectors:
+  - name: k8s
+    type: k8s
+    params: {}
