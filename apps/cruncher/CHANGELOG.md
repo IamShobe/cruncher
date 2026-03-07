@@ -1,3 +1,17 @@
+## 1.7.1
+
+### Patch Changes
+
+- Updated dependencies [[`c2b248c`](https://github.com/IamShobe/cruncher/commit/c2b248c10816d9f184654d78db9087771521789f)]:
+  - @cruncher/qql@0.3.0
+  - @cruncher/utils@0.3.0
+  - @cruncher/adapter-coralogix@0.3.0
+  - @cruncher/adapter-docker@0.3.0
+  - @cruncher/adapter-grafana-loki-browser@0.3.0
+  - @cruncher/adapter-loki@0.2.0
+  - @cruncher/adapter-mock@0.3.0
+  - @cruncher/adapter-utils@0.3.0
+
 ## 1.7.0 (2025-06-28)
 
 ### 🚀 Features
