@@ -4,11 +4,13 @@ description: Displays the results of the pipeline as a table, allowing you to se
 ---
 
 import CommandCard from '/src/components/CommandCard.astro';
+import QQLCode from '/src/components/QQLCode.astro';
 
 <CommandCard
   name="table"
   description="Display results as a table, selecting and ordering specific fields."
-  syntax="table field1 [as alias1], field2 [as alias2], ..."
+  syntax="| table field1 [as alias1], field2 [as alias2], ..."
+  example="| table timestamp as time, level, message"
   output="table"
 />
 
@@ -26,8 +28,6 @@ The `table` command displays the results of the pipeline as a table, allowing yo
 
 ## Example
 
-```
-... | table timestamp as time, message, level as severity
-```
+<QQLCode code={`| table timestamp as time, message, level as severity`} />
 
 This displays the `timestamp` field as `time`, the `message` field, and the `level` field as `severity` in the output table.

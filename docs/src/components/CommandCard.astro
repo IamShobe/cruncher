@@ -1,12 +1,15 @@
 ---
+import QQLCode from './QQLCode.astro';
+
 interface Props {
   name: string;
   description: string;
   syntax: string;
+  example?: string;
   output?: 'table' | 'timechart' | 'logs' | 'none';
 }
 
-const { name, description, syntax, output = 'none' } = Astro.props;
+const { name, description, syntax, example, output = 'none' } = Astro.props;
 
 const outputColors: Record<string, { bg: string; text: string }> = {
   table: { bg: 'rgb(59, 130, 246)', text: 'Table' },
@@ -36,6 +39,13 @@ const { bg, text } = outputColors[output] || outputColors.none;
     <label>Syntax</label>
     <code>{syntax}</code>
   </div>
+
+  {example && (
+    <div class="command-example">
+      <label>Example</label>
+      <QQLCode code={example} />
+    </div>
+  )}
 
   <slot />
 </div>
@@ -90,17 +100,16 @@ const { bg, text } = outputColors[output] || outputColors.none;
     color: var(--sl-color-gray-2);
   }
 
-  .command-syntax {
+  .command-syntax,
+  .command-example {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
     margin-bottom: 1.25rem;
-    padding: 1rem;
-    background: var(--sl-color-gray-7);
-    border-radius: 6px;
   }
 
-  .command-syntax label {
+  .command-syntax label,
+  .command-example label {
     font-size: 0.75rem;
     font-weight: 600;
     text-transform: uppercase;
@@ -109,17 +118,25 @@ const { bg, text } = outputColors[output] || outputColors.none;
   }
 
   .command-syntax code {
-    background: var(--sl-color-bg);
+    background: var(--sl-color-gray-7);
     padding: 0.5rem 0.75rem;
     border-radius: 4px;
     font-size: 0.85rem;
-    overflow-x: auto;
     word-break: break-word;
+    white-space: pre-wrap;
   }
 
   @media (max-width: 640px) {
     .command-header h2 {
       font-size: 1.25rem;
     }
+  }
+</style>
+
+<style is:global>
+  /* Remove the default vertical margin from QQLCode when used inside a CommandCard */
+  .command-syntax .qql-code,
+  .command-example .qql-code {
+    margin: 0;
   }
 </style>

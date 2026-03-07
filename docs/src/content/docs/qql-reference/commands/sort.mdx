@@ -4,11 +4,13 @@ description: Sorts records by one or more fields in ascending or descending orde
 ---
 
 import CommandCard from '/src/components/CommandCard.astro';
+import QQLCode from '/src/components/QQLCode.astro';
 
 <CommandCard
   name="sort"
   description="Order records by one or more fields in ascending or descending order."
-  syntax="sort FIELD_NAME [asc|desc], ..."
+  syntax="| sort FIELD_NAME [asc|desc], ..."
+  example="| sort timestamp desc, user asc"
   output="logs"
 />
 
@@ -27,8 +29,6 @@ The `sort` command orders records by one or more fields, in ascending or descend
 
 ## Example
 
-```
-sort -timestamp, user
-```
+<QQLCode code={`| sort timestamp desc, user asc`} />
 
-This sorts results by `timestamp` descending, then by `user` ascending`.
+This sorts results by `timestamp` descending, then by `user` ascending.

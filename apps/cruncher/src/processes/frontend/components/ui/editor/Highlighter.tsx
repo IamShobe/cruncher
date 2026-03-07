@@ -1,8 +1,6 @@
 import styled from "@emotion/styled";
 import React, { useMemo } from "react";
 import { token } from "../system";
-import { HoverCard, Text } from "@chakra-ui/react";
-import { Portal } from "~components/ui/portal";
 
 const StyledPre = styled.pre`
   pointer-events: none;
@@ -131,7 +129,7 @@ const typeToStyle = (type: string) => {
 
 type TooltipContent = { label: string; description: string };
 
-const getTooltipContent = (type: string, metadata?: string): TooltipContent | null => {
+export const getTooltipContent = (type: string, metadata?: string): TooltipContent | null => {
   switch (type) {
     case "keyword":
       return { label: "Keyword", description: "QQL language keyword" };
@@ -169,10 +167,7 @@ const getTooltipContent = (type: string, metadata?: string): TooltipContent | nu
 };
 
 const TokenSpan = styled.span`
-  pointer-events: auto;
-  &:not([data-token-type="error"]):hover {
-    text-decoration: underline;
-  }
+  pointer-events: none;
 `;
 
 const GhostSpan = styled.span`
@@ -180,7 +175,10 @@ const GhostSpan = styled.span`
   pointer-events: none;
 `;
 
-const renderChunks = (text: string, highlightData: HighlightData[]) => {
+const renderChunks = (
+  text: string,
+  highlightData: HighlightData[],
+) => {
   const nodes = splitTextToChunks(text, highlightData).map<React.ReactNode>(
     (chunk, index) => {
       if (typeof chunk === "string") {
@@ -192,49 +190,16 @@ const renderChunks = (text: string, highlightData: HighlightData[]) => {
       }
 
       const style = typeToStyle(chunk.type);
-      const content = getTooltipContent(chunk.type, chunk.metadata);
-
-      if (!content) {
-        return (
-          <TokenSpan key={index} style={style} data-token-type={chunk.type}>
-            {chunk.value}
-          </TokenSpan>
-        );
-      }
 
       return (
-        <HoverCard.Root
+        <TokenSpan
           key={index}
-          openDelay={150}
-          closeDelay={200}
-          lazyMount
-          unmountOnExit
+          style={style}
+          data-token-type={chunk.type}
+          data-token-metadata={chunk.metadata}
         >
-          <HoverCard.Trigger asChild>
-            <TokenSpan style={style} data-token-type={chunk.type}>
-              {chunk.value}
-            </TokenSpan>
-          </HoverCard.Trigger>
-          <Portal>
-            <HoverCard.Positioner>
-              <HoverCard.Content maxWidth="260px">
-                <HoverCard.Arrow />
-                <Text
-                  fontSize="xs"
-                  fontWeight="semibold"
-                  textTransform="uppercase"
-                  letterSpacing="wider"
-                  color="fg.muted"
-                >
-                  {content.label}
-                </Text>
-                <Text fontSize="sm" color="fg" mt="1">
-                  {content.description}
-                </Text>
-              </HoverCard.Content>
-            </HoverCard.Positioner>
-          </Portal>
-        </HoverCard.Root>
+          {chunk.value}
+        </TokenSpan>
       );
     },
   );

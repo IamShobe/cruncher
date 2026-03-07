@@ -25,7 +25,8 @@
   .datatype-list,
   .command-card,
   .config-field,
-  .param-item
+  .param-item,
+  .qql-code
 ) {
   margin-top: 1.5rem !important;
   margin-bottom: 1.5rem !important;

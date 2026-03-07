@@ -17,9 +17,31 @@ export type Suggestion = {
   toPosition?: number;
 };
 
+const SUGGESTION_PRIORITY: Partial<Record<Suggestion["type"], number>> = {
+  keyword: 0,
+  function: 1,
+  param: 2,
+  controllerParam: 3,
+  variable: 4,
+};
+
+export const compareSuggestions = (a: Suggestion, b: Suggestion): number => {
+  const pa = SUGGESTION_PRIORITY[a.type] ?? 99;
+  const pb = SUGGESTION_PRIORITY[b.type] ?? 99;
+  return pa - pb;
+};
+
 export type AutoCompleterProps = {
   suggestions: Suggestion[];
   hoveredItem?: number;
+};
+
+const SUGGESTION_COLOR: Record<Suggestion["type"], string> = {
+  keyword: token("colors.syntax.keyword"),
+  function: token("colors.syntax.function"),
+  variable: token("colors.syntax.column"),
+  param: token("colors.syntax.param"),
+  controllerParam: token("colors.syntax.param"),
 };
 
 const getSuggestionIcon = (suggestion: Suggestion) => {
@@ -37,20 +59,6 @@ const getSuggestionIcon = (suggestion: Suggestion) => {
   }
 };
 
-const compareTypes = (
-  suggestionA: Suggestion,
-  suggestionB: Suggestion,
-  type: string,
-) => {
-  if (suggestionA.type === type && suggestionB.type !== type) {
-    return -1;
-  }
-  if (suggestionA.type !== type && suggestionB.type === type) {
-    return 1;
-  }
-
-  return 0;
-};
 
 export const AutoCompleter = ({
   suggestions,
@@ -89,15 +97,6 @@ export const AutoCompleter = ({
         maxH={100}
       >
         {suggestions
-          .sort((a, b) => {
-            // keyword should be shown first then functions
-            const keywordFirst = compareTypes(a, b, "keyword");
-            if (keywordFirst !== 0) return keywordFirst;
-            const functionFirst = compareTypes(a, b, "function");
-            if (functionFirst !== 0) return functionFirst;
-
-            return 0;
-          })
           .map((suggestion, index) => (
             <span
               css={css`
@@ -117,6 +116,7 @@ export const AutoCompleter = ({
               <span
                 css={css`
                   flex-shrink: 0;
+                  color: ${SUGGESTION_COLOR[suggestion.type]};
                 `}
               >
                 {getSuggestionIcon(suggestion)}

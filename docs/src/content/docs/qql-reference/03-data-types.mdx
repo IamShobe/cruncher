@@ -9,6 +9,70 @@ Data adapters assign types to extracted fields. Understanding these types helps 
 
 <DataTypeList2 />
 
+## Literal Syntax
+
+| Type | Syntax | Example |
+|------|--------|---------|
+| String | Double quotes | `"hello world"` |
+| Number | Bare numeric literal | `42`, `3.14` |
+| Boolean | Bare keyword | `true`, `false` |
+| Regex | Backticks | `` `^Error:.*` `` |
+| Column name with spaces | Single quotes | `'user name'` |
+| Null | Bare keyword | `null` |
+
+Single-quoted strings (`'...'`) are **column name references**, not string values. Use them when a field name contains spaces, dots, or reserved words:
+
+```qql
+where 'user name' == "alice"
+eval 'http.status' = status
+```
+
+Backtick strings are **regex literals** and are only valid in positions that accept a regex (e.g., `match()`, controller param values, `regex` command):
+
+```qql
+where match(message, `^Error:.*`)
+namespace=`^prod-.*`
+```
+
+## Null Handling
+
+Missing fields are represented as `null`. Null propagates through arithmetic and comparisons:
+
+- `null + 5` → `null`
+- `null == "x"` → `false` (not an error)
+- `null == null` → `true`
+
+Use `isNull()` and `isNotNull()` in `where` to explicitly test for missing values:
+
+```qql
+where isNotNull(user)
+where isNull(optional_field)
+```
+
+## Type Coercion
+
+QQL does not implicitly coerce types across categories. Arithmetic on a string field produces `null`:
+
+```qql
+eval result = stringField / 1000   // → null if stringField is a string
+```
+
+To convert types, use the appropriate `eval` functions (e.g., `toNumber()`, `toString()`):
+
+```qql
+eval duration_ms = toNumber(duration_str)
+eval duration_sec = duration_ms / 1000
+```
+
+## Type Inference
+
+Adapters assign types to fields at ingestion time. The type assigned depends on the adapter and the underlying data:
+
+- JSON fields with numeric values become `number`.
+- JSON fields with `true`/`false` become `boolean`.
+- Everything else defaults to `string`.
+- Nested JSON objects become the `object` type and can be flattened with `unpack`.
+
 ## Type Conversion in Queries
 
 When you evaluate expressions, result types depend on the operands:
@@ -17,4 +81,35 @@ When you evaluate expressions, result types depend on the operands:
 eval duration_sec = duration / 1000
 ```
 
-If `duration` is a number, `duration_sec` is also a number. Missing fields become `null`.
+If `duration` is a number, `duration_sec` is also a number. If `duration` is a string, `duration_sec` will be `null`.
+
+```qql
+eval label = "status: " + status
+```
+
+String concatenation with `+` works when both sides are strings. If `status` is a number it will be coerced to string automatically in this context.
+
+## Types in `where` Expressions
+
+Comparisons are type-aware:
+
+```qql
+where duration > 1000        // numeric comparison
+where level == "error"       // string equality
+where is_active == true      // boolean comparison
+where match(msg, `^Err`)     // regex test on string field
+```
+
+Comparing a string field with a number (e.g., `stringField > 1000`) will not match any records because the types differ.
+
+## Types in `stats` and `timechart`
+
+Aggregation functions require numeric fields:
+
+- `sum(field)`, `avg(field)`, `min(field)`, `max(field)` — field must be numeric; `null` values are ignored.
+- `count()` — works on any type; counts non-null records.
+
+```qql
+| stats avg(duration) by service     // duration must be numeric
+| stats count() by level             // level can be any type
+```

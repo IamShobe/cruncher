@@ -672,7 +672,10 @@ export class Engine {
           options.columnSelected,
         ),
       sort: (_context, currentData, options) =>
-        processSort(currentData, options.columns),
+        processSort(
+          currentData,
+          options.columns.map((c) => ({ name: c.column, order: c.order })),
+        ),
       stats: (_context, currentData, options) =>
         processStats(currentData, options.aggregationFunctions, options.groupby),
       table: (_context, currentData, options) =>

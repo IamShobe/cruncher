@@ -4,11 +4,13 @@ description: Perform aggregations over your data using the stats command in QQL.
 ---
 
 import CommandCard from '/src/components/CommandCard.astro';
+import QQLCode from '/src/components/QQLCode.astro';
 
 <CommandCard
   name="stats"
   description="Perform aggregations over your data, optionally grouped by one or more fields."
-  syntax="stats [agg1(field1) as alias1, ...] [by groupField1, groupField2, ...]"
+  syntax="| stats [agg1(field1) as alias1, ...] [by groupField1, groupField2, ...]"
+  example="| stats count() as total, avg(duration) as avg_dur by service"
   output="table"
 />
 
@@ -38,8 +40,6 @@ The `stats` command supports the following patterns:
 
 ## Example
 
-```
-stats count() as total, avg(duration) as avg_duration, first(user) as first_user by status
-```
+<QQLCode code={`| stats count() as total, avg(duration) as avg_duration, first(user) as first_user by status`} />
 
 This counts all records, calculates the average `duration`, and returns the first `user` for each `status` group.

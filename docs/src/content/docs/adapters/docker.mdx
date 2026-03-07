@@ -17,6 +17,12 @@ import { Badge } from '@astrojs/starlight/components';
 
 ## Params
 
+<ParamItem label="binaryLocation" type="string" default="docker">
+    Path to the Docker binary. Override this if `docker` is not on your `PATH` or you want to use a specific version.
+    ```yaml
+    binaryLocation: /usr/local/bin/docker
+    ```
+</ParamItem>
 <ParamItem label="dockerHost" type="string">
     The docker host url to use for docker commands.
 </ParamItem>

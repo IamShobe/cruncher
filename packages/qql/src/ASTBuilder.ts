@@ -73,10 +73,6 @@ function extractIdentifierValue(ctx: Parser.IdentifierOrStringContext | null | u
   const squotString = ctx.SQUOT_STRING();
   if (squotString) return parseSingleQuotedString(squotString.getText());
 
-  // keyword used as an identifier (e.g. column named "table" or "by")
-  const kw = ctx.keyword();
-  if (kw) return kw.getText();
-
   return ctx.getText();
 }
 
@@ -241,13 +237,11 @@ export class ASTBuilder extends AbstractParseTreeVisitor<QueryNode> {
     const floats = ctx.FLOAT();
     const ints = ctx.INTEGER();
     const litStrs = ctx.literalString();
-    const keywords = ctx.keyword();
 
     let idIdx = 0;
     let floatIdx = 0;
     let intIdx = 0;
     let strIdx = 0;
-    let kwIdx = 0;
 
     // Parse in order of appearance in the grammar
     for (let i = 0; i < ctx.getChildCount(); i++) {
@@ -273,10 +267,6 @@ export class ASTBuilder extends AbstractParseTreeVisitor<QueryNode> {
       } else if (litStrs && strIdx < litStrs.length && litStrs[strIdx].getText() === childText) {
         tokens.push(this.visitLiteralString(litStrs[strIdx]).value);
         strIdx++;
-      } else if (keywords && kwIdx < keywords.length && keywords[kwIdx].getText() === childText) {
-        // keyword used as a plain search word (e.g. searching for "as" or "table")
-        tokens.push(keywords[kwIdx].getText());
-        kwIdx++;
       }
     }
 
@@ -796,12 +786,6 @@ export class ASTBuilder extends AbstractParseTreeVisitor<QueryNode> {
       return {
         type: "columnRef" as const,
         columnName: ctx.IDENTIFIER()!.getText(),
-      };
-    } else if (ctx.keyword()) {
-      // keyword used as a column reference (e.g. `where table == "foo"`)
-      return {
-        type: "columnRef" as const,
-        columnName: ctx.keyword()!.getText(),
       };
     } else if (ctx.literalBoolean()) {
       return this.visitLiteralBoolean(ctx.literalBoolean()!);

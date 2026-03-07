@@ -285,6 +285,46 @@ test("support for regex command with field= column specifier", () => {
   });
 });
 
+test("sort - explicit asc modifier", () => {
+  expect(parse(`| sort column1 asc`)).toMatchObject({
+    pipeline: [
+      {
+        type: "sort",
+        columns: [{ column: "column1", order: "asc" }],
+      },
+    ],
+  });
+});
+
+test("sort - explicit asc on multiple columns", () => {
+  expect(parse(`| sort col1 asc, col2 asc`)).toMatchObject({
+    pipeline: [
+      {
+        type: "sort",
+        columns: [
+          { column: "col1", order: "asc" },
+          { column: "col2", order: "asc" },
+        ],
+      },
+    ],
+  });
+});
+
+test("sort - mixed asc and desc", () => {
+  expect(parse(`| sort col1 asc, col2 desc, col3`)).toMatchObject({
+    pipeline: [
+      {
+        type: "sort",
+        columns: [
+          { column: "col1", order: "asc" },
+          { column: "col2", order: "desc" },
+          { column: "col3", order: "asc" },
+        ],
+      },
+    ],
+  });
+});
+
 test("support for sort command", () => {
   expect(parse(`hello world | sort column1`)).toMatchObject({
     type: "query",
@@ -557,6 +597,134 @@ test("support timechart group by", () => {
           },
         ],
         groupby: ["category"],
+      },
+    ],
+  });
+});
+
+// In SORT_MODE: asc/desc are keywords, so they can't be column names.
+// Keywords from OTHER modes are plain identifiers in sort mode.
+test("sort - 'by' (stats keyword) used as column name", () => {
+  expect(parse(`| sort by`)).toMatchObject({
+    pipeline: [
+      {
+        type: "sort",
+        columns: [{ column: "by", order: "asc" }],
+      },
+    ],
+  });
+});
+
+test("sort - 'span' (timechart keyword) used as column name", () => {
+  expect(parse(`| sort span`)).toMatchObject({
+    pipeline: [
+      {
+        type: "sort",
+        columns: [{ column: "span", order: "asc" }],
+      },
+    ],
+  });
+});
+
+test("sort - 'if' (eval keyword) used as column name", () => {
+  expect(parse(`| sort if`)).toMatchObject({
+    pipeline: [
+      {
+        type: "sort",
+        columns: [{ column: "if", order: "asc" }],
+      },
+    ],
+  });
+});
+
+test("sort - 'if' column sorted descending", () => {
+  expect(parse(`| sort if desc`)).toMatchObject({
+    pipeline: [
+      {
+        type: "sort",
+        columns: [{ column: "if", order: "desc" }],
+      },
+    ],
+  });
+});
+
+test("sort - multiple columns including keyword-named columns", () => {
+  expect(parse(`| sort span asc, by desc`)).toMatchObject({
+    pipeline: [
+      {
+        type: "sort",
+        columns: [
+          { column: "span", order: "asc" },
+          { column: "by", order: "desc" },
+        ],
+      },
+    ],
+  });
+});
+
+test("timechart - all params combined", () => {
+  expect(
+    parse(`| timechart count() span 5m timeCol timestamp maxGroups 10`),
+  ).toMatchObject({
+    pipeline: [
+      {
+        type: "timechart",
+        aggregationFunctions: [{ function: "count" }],
+        params: { span: "5m", timeCol: "timestamp", maxGroups: 10 },
+      },
+    ],
+  });
+});
+
+test("timechart - all params with groupby", () => {
+  expect(
+    parse(`| timechart count() span 1h maxGroups 5 by service`),
+  ).toMatchObject({
+    pipeline: [
+      {
+        type: "timechart",
+        aggregationFunctions: [{ function: "count" }],
+        params: { span: "1h", maxGroups: 5 },
+        groupby: ["service"],
+      },
+    ],
+  });
+});
+
+test("timechart - span used as identifier in table", () => {
+  expect(parse(`| table span, timeCol, maxGroups`)).toMatchObject({
+    pipeline: [
+      {
+        type: "table",
+        columns: [
+          { column: "span", alias: undefined },
+          { column: "timeCol", alias: undefined },
+          { column: "maxGroups", alias: undefined },
+        ],
+      },
+    ],
+  });
+});
+
+// In STATS_MODE: by/as are keywords. Keywords from other modes are identifiers.
+test("stats - 'span' (timechart keyword) used as group-by column name", () => {
+  expect(parse(`| stats count() by span`)).toMatchObject({
+    pipeline: [
+      {
+        type: "stats",
+        aggregationFunctions: [{ function: "count" }],
+        groupby: ["span"],
+      },
+    ],
+  });
+});
+
+test("stats - 'if' (eval keyword) used as agg function alias", () => {
+  expect(parse(`| stats count() as if`)).toMatchObject({
+    pipeline: [
+      {
+        type: "stats",
+        aggregationFunctions: [{ function: "count", alias: "if" }],
       },
     ],
   });

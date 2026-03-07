@@ -4,11 +4,13 @@ description: The eval command in QQL allows you to create or modify fields by ev
 ---
 
 import CommandCard from '/src/components/CommandCard.astro';
+import QQLCode from '/src/components/QQLCode.astro';
 
 <CommandCard
   name="eval"
   description="Create or modify fields by evaluating expressions for each record."
-  syntax="eval newField = expression"
+  syntax="| eval newField = expression"
+  example="| eval duration_sec = duration / 1000"
   output="none"
 />
 
@@ -36,32 +38,26 @@ You can use arithmetic, logical, and conditional expressions, as well as functio
 
 ## Examples
 
-```
-eval duration_sec = duration / 1000
-```
-This creates a `duration_sec` field.
+<QQLCode code={`| eval duration_sec = duration / 1000`} />
 
-```
-eval is_error = (status == "error")
-```
-This creates a boolean field `is_error` that is true if `status` is `error`.
+This creates a `duration_sec` field by dividing `duration` by 1000.
 
-```
-eval user_lower = lower(user)
-```
+<QQLCode code={`| eval is_error = (status == "error")`} />
+
+This creates a boolean field `is_error` that is `true` when `status` equals `"error"`.
+
+<QQLCode code={`| eval user_lower = lower(user)`} />
+
 This creates a new field `user_lower` with the lowercase value of `user`.
 
-```
-eval error_type = if(status == "error", "critical", "normal")
-```
+<QQLCode code={`| eval error_type = if(status == "error", "critical", "normal")`} />
+
 This creates a new field `error_type` based on the value of `status`.
 
-```
-eval match_found = match(message, "^Error:.*")
-```
-This creates a boolean field `match_found` that is true if `message` matches the regex pattern.
+<QQLCode code={'| eval match_found = match(message, `^Error:.*`)'} />
 
-```
-eval group = case(status == "error", "A", status == "warn", "B", "C")
-```
-This creates a new field `group` with value "A" if `status` is `error`, "B" if `status` is `warn`, and "C" otherwise.
+This creates a boolean field `match_found` that is `true` when `message` matches the regex.
+
+<QQLCode code={`| eval group = case(status == "error", "A", status == "warn", "B", "C")`} />
+
+This creates a field `group` with value `"A"` for errors, `"B"` for warnings, and `"C"` otherwise.

@@ -23,6 +23,7 @@ import type { ValueChangeDetails } from "node_modules/@chakra-ui/react/dist/type
 import { useMemo } from "react";
 import { CiExport } from "react-icons/ci";
 import {
+  LuBug,
   LuClipboardCopy,
   LuDownload,
   LuLink,
@@ -68,6 +69,7 @@ import {
 } from "../../../core/store/dateState";
 import {
   jobMetadataAtom,
+  queryDataAtom,
   searchQueryAtom,
 } from "../../../core/store/queryState";
 import { Timer } from "./Timer";
@@ -262,8 +264,36 @@ const MiniButtons = () => {
     <Stack gap={0.5} direction="row" alignItems="center" p={0.5}>
       <ExportButton />
       <CopyShareLinkButton />
+      <CopyAllItemsButton />
       <SettingsDrawer />
     </Stack>
+  );
+};
+
+const CopyAllItemsButton: React.FC = () => {
+  const queryData = useAtomValue(queryDataAtom);
+
+  const copyAst = async () => {
+    const json = JSON.stringify(queryData.ast, null, 2);
+    await navigator.clipboard.writeText(json);
+    notifySuccess("AST copied to clipboard");
+  };
+
+  return (
+    <Tooltip
+      content={<span>Copy AST (debug)</span>}
+      showArrow
+      positioning={{ placement: "bottom" }}
+    >
+      <IconButton
+        aria-label="Copy AST (debug)"
+        size="2xs"
+        variant="ghost"
+        onClick={copyAst}
+      >
+        <LuBug />
+      </IconButton>
+    </Tooltip>
   );
 };
 

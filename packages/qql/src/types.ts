@@ -17,6 +17,7 @@ export type HighlightType =
 
 export type HighlightData = {
   type: HighlightType;
+  metadata?: string;
   token: {
     startOffset: number;
     endOffset: number | undefined;

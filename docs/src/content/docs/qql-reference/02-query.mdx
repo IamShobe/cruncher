@@ -7,30 +7,78 @@ sidebar:
 
 Cruncher uses QQL (Quick Query Language) to let you query, filter, and transform your data efficiently. A QQL query is composed of several parts:
 
+- **Datasource** (optional): An `@name` token that scopes the query to a specific adapter.
 - **Controller parameters** (controllerParams): Special key-value pairs at the start of the query that act as filters for the underlying data adapter, enabling more efficient data retrieval.
 - **Search expression**: A free-text or structured search to filter records.
 - **Pipeline commands**: A sequence of commands (like `where`, `stats`, `table`, etc.) to further process and shape your results.
 
-## Controller Parameters (controllerParams)
+## Datasource Selection
 
-Controller parameters are written at the beginning of your query, before the main search or pipeline. They use the syntax:
+When multiple adapters are configured, you can scope a query to a specific one by placing an `@datasource-name` token at the very start of the query:
 
 ```
-key="value"
+@datasource-name <rest of query>
 ```
 
-- `key`: The name of the controller parameter (must match a label or field supported by the adapter).
-- `value`: The value to filter by (usually a string or number).
-
-Controller parameters are sent directly to the adapter backend, allowing it to filter data as early as possible. This can greatly improve query performance, especially on large datasets, by reducing the amount of data that needs to be loaded and processed.
+- The name must match the adapter identifier as configured in your `cruncher.config.yaml`.
+- When omitted, the query runs against the currently selected adapter in the UI.
 
 ### Example
 
 ```
-user="alice" environment="prod" error="true" | where duration > 1000 | table timestamp, message
+@docker error | where level == "error"
 ```
 
-In this example, `user`, `environment`, and `error` are controller parameters. The adapter will use these to filter records before any further processing happens in Cruncher.
+Runs the query against the `docker` adapter only, filtering for records containing "error" where the `level` field equals `"error"`.
+
+```
+@my-loki-prod | where service == "api" | stats count() by status
+```
+
+Scopes the query to the `my-loki-prod` adapter and aggregates by status code.
+
+## Controller Parameters (controllerParams)
+
+Controller parameters are written at the beginning of your query, before the main search or pipeline. They support equality, exclusion, and regex matching:
+
+| Syntax | Meaning |
+|--------|---------|
+| `key="value"` | Include only records where `key` equals `value` |
+| `key!="value"` | Exclude records where `key` equals `value` |
+| `` key=`pattern` `` | Include records where `key` matches the regex `pattern` |
+| `` key!=`pattern` `` | Exclude records where `key` matches the regex `pattern` |
+
+- `key`: The name of the controller parameter (must match a label or field supported by the adapter).
+- `value`: A double-quoted string literal.
+- `pattern`: A backtick-wrapped regular expression.
+
+Controller parameters are sent directly to the adapter backend, allowing it to filter data as early as possible. This can greatly improve query performance, especially on large datasets, by reducing the amount of data that needs to be loaded and processed.
+
+### Examples
+
+```
+user="alice" environment="prod" | where duration > 1000 | table timestamp, message
+```
+
+Include only records where `user` is `alice` and `environment` is `prod`.
+
+```
+environment!="dev" | stats count() by service
+```
+
+Exclude records from the `dev` environment.
+
+```qql
+namespace=`^prod-.*` | where level == "error"
+```
+
+Include records where `namespace` matches the regex `^prod-.*`.
+
+```qql
+namespace!=`^test-.*` | stats count() by service
+```
+
+Exclude records where `namespace` matches `^test-.*`.
 
 ## Search Expressions
 
@@ -96,6 +144,18 @@ where 'user name' == "alice"
 This matches records where the column named `user name` is exactly "alice".
 
 Always use double quotes for string values, single quotes for column names with special characters, and backticks for regex patterns in your QQL queries.
+
+## Comments
+
+QQL supports single-line comments starting with `//`. Everything from `//` to the end of the line is ignored by the parser.
+
+```
+// Filter to recent errors only
+@docker | where level == "error" // only errors
+    | stats count() by service
+```
+
+Comments can appear anywhere in the query — at the start, inline after a command, or on their own line. They are useful for annotating complex queries.
 
 ## Query Structure
 

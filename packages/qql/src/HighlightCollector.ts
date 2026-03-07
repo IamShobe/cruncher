@@ -38,9 +38,10 @@ export class HighlightCollector extends AbstractParseTreeVisitor<void> {
     return this.highlightData;
   }
 
-  private addHighlight(type: HighlightType, startOffset: number, endOffset: number | undefined) {
+  private addHighlight(type: HighlightType, startOffset: number, endOffset: number | undefined, metadata?: string) {
     this.highlightData.push({
       type,
+      metadata,
       token: {
         startOffset,
         endOffset,
@@ -48,10 +49,10 @@ export class HighlightCollector extends AbstractParseTreeVisitor<void> {
     });
   }
 
-  private highlightTerminal(terminal: TerminalNode | null | undefined, type: HighlightType) {
+  private highlightTerminal(terminal: TerminalNode | null | undefined, type: HighlightType, metadata?: string) {
     if (!terminal) return;
     const symbol = terminal.getSymbol();
-    this.addHighlight(type, symbol.start ?? 0, symbol.stop ?? 0);
+    this.addHighlight(type, symbol.start ?? 0, symbol.stop ?? 0, metadata);
   }
 
   // For parser rule contexts, .start/.stop are Token objects.

@@ -1,0 +1,167 @@
+---
+/**
+ * QQLCode — render a read-only, syntax-highlighted QQL snippet.
+ *
+ * Uses @cruncher/qql's allData() at build time to produce static HTML spans.
+ * No client-side JavaScript is needed.
+ *
+ * Usage in MDX:
+ *   import QQLCode from '/src/components/QQLCode.astro';
+ *   <QQLCode code="@docker | where level == 'error' | stats count() by service" />
+ *
+ *   Multi-line:
+ *   <QQLCode code={`// comment\n@docker error\n  | where level == "error"`} />
+ */
+import { allData } from "@cruncher/qql";
+
+interface Props {
+  code: string;
+}
+
+const { code } = Astro.props;
+
+const { highlight } = allData(code);
+
+// Sort by start offset, filter out entries with invalid ranges.
+const sorted = [...highlight]
+  .filter(
+    (h) =>
+      h.token.startOffset !== undefined &&
+      !Number.isNaN(h.token.startOffset) &&
+      h.token.endOffset !== undefined &&
+      !Number.isNaN(h.token.endOffset),
+  )
+  .sort((a, b) => a.token.startOffset - b.token.startOffset);
+
+// Split the raw code string into plain-text and typed chunks.
+type Chunk = { text: string; type: string | null };
+const chunks: Chunk[] = [];
+let pos = 0;
+
+for (const h of sorted) {
+  const start = h.token.startOffset;
+  const end = h.token.endOffset as number;
+
+  // Skip overlapping spans (can happen on error-recovery tokens).
+  if (start < pos) continue;
+
+  // Plain text before this token.
+  if (pos < start) {
+    chunks.push({ text: code.slice(pos, start), type: null });
+  }
+
+  chunks.push({ text: code.slice(start, end + 1), type: h.type });
+  pos = end + 1;
+}
+
+// Remaining plain text after the last token.
+if (pos < code.length) {
+  chunks.push({ text: code.slice(pos), type: null });
+}
+
+// Build the inner HTML string (safe — we only escape user code, not class names).
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+let innerHtml = "";
+for (const { text, type } of chunks) {
+  const escaped = escapeHtml(text);
+  if (type) {
+    innerHtml += `<span class="qql-${type}">${escaped}</span>`;
+  } else {
+    innerHtml += escaped;
+  }
+}
+---
+
+<pre class="qql-code not-content"><code set:html={innerHtml}></code></pre>
+
+<style is:global>
+  /* ── Token color variables ───────────────────────────────────────────────── */
+
+  /* Dark mode (Starlight default) — derived from the Midnight app theme */
+  :root {
+    --qql-keyword:    #a78bfa;
+    --qql-column:     #34d399;
+    --qql-string:     #f87171;
+    --qql-function:   #c084fc;
+    --qql-boolean:    #fbbf24;
+    --qql-number:     #fb923c;
+    --qql-operator:   #f472b6;
+    --qql-regex:      #22d3ee;
+    --qql-param:      #38bdf8;
+    --qql-index:      #2dd4bf;
+    --qql-pipe:       #fde68a;
+    --qql-comment:    #6b7280;
+    --qql-datasource: #818cf8;
+    --qql-default:    #c9d1d9;
+  }
+
+  /* Light mode overrides — saturated but readable on white */
+  :root[data-theme="light"] {
+    --qql-keyword:    #7c3aed;
+    --qql-column:     #059669;
+    --qql-string:     #dc2626;
+    --qql-function:   #9333ea;
+    --qql-boolean:    #d97706;
+    --qql-number:     #ea580c;
+    --qql-operator:   #db2777;
+    --qql-regex:      #0891b2;
+    --qql-param:      #0284c7;
+    --qql-index:      #0f766e;
+    --qql-pipe:       #b45309;
+    --qql-comment:    #6b7280;
+    --qql-datasource: #4338ca;
+    --qql-default:    #24292f;
+  }
+
+  /* ── Pre / code block chrome ─────────────────────────────────────────────── */
+
+  .qql-code {
+    background: var(--sl-color-bg-inline-code, #1a1b27);
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 6px;
+    padding: 0.875rem 1.25rem;
+    font-family: var(--sl-font-mono, monospace);
+    font-size: 0.875rem;
+    line-height: 1.65;
+    margin: 1rem 0;
+    tab-size: 2;
+    white-space: pre-wrap !important;
+    word-break: break-all !important;
+    overflow-wrap: break-word !important;
+    overflow: visible !important;
+  }
+
+  .qql-code code {
+    background: none;
+    padding: 0;
+    font-size: inherit;
+    font-family: inherit;
+    color: var(--qql-default);
+    white-space: inherit !important;
+    word-break: inherit !important;
+    overflow-wrap: inherit !important;
+  }
+
+  /* ── Token colour classes ────────────────────────────────────────────────── */
+
+  .qql-keyword        { color: var(--qql-keyword); }
+  .qql-column         { color: var(--qql-column); }
+  .qql-string         { color: var(--qql-string); }
+  .qql-function       { color: var(--qql-function); }
+  .qql-booleanFunction { color: var(--qql-boolean); }
+  .qql-number         { color: var(--qql-number); }
+  .qql-operator       { color: var(--qql-operator); }
+  .qql-regex          { color: var(--qql-regex); }
+  .qql-param          { color: var(--qql-param); }
+  .qql-index          { color: var(--qql-index); }
+  .qql-pipe           { color: var(--qql-pipe); }
+  .qql-comment        { color: var(--qql-comment); font-style: italic; }
+  .qql-datasource     { color: var(--qql-datasource); }
+  .qql-identifier     { color: var(--qql-default); }
+</style>

@@ -4,11 +4,13 @@ description: Extract values from a field using a regular expression and create n
 ---
 
 import CommandCard from '/src/components/CommandCard.astro';
+import QQLCode from '/src/components/QQLCode.astro';
 
 <CommandCard
   name="regex"
   description="Extract values from a field using a regular expression and create new fields from captured groups."
-  syntax='regex [field="<FIELD_NAME>"] `<PATTERN>`'
+  syntax='| regex [field="<FIELD_NAME>"] `<PATTERN>`'
+  example={'| regex field="message" `(?<user>\\w+) logged in`'}
   output="logs"
 />
 
@@ -26,8 +28,6 @@ The `regex` command extracts values from a field using a regular expression and 
 
 ## Example
 
-```
-regex field="message" `(?<user>\\w+) logged in from (?<ip>\\d+\\.\\d+\\.\\d+\\.\\d+)`
-```
+<QQLCode code={'| regex field="message" `(?<user>\\w+) logged in from (?<ip>\\d+\\.\\d+\\.\\d+\\.\\d+)`'} />
 
 This extracts `user` and `ip` from the `message` field.

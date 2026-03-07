@@ -40,7 +40,7 @@ searchFactor
   ;
 
 searchLiteral
-  : (IDENTIFIER | FLOAT | INTEGER | literalString | keyword)+
+  : (IDENTIFIER | FLOAT | INTEGER | literalString)+
   ;
 
 pipelineCommand
@@ -192,7 +192,6 @@ factor
   | FLOAT
   | INTEGER
   | IDENTIFIER
-  | keyword
   | literalBoolean
   ;
 
@@ -214,15 +213,4 @@ identifierOrString
   : IDENTIFIER
   | DQUOT_STRING
   | SQUOT_STRING
-  | keyword
-  ;
-
-// Command keywords — only meaningful immediately after a pipe.
-// Safe to allow as column/field names everywhere else because they never
-// appear in expression positions (comparisons, groupby clauses, etc.).
-// Expression-level keywords (BY, AS, IN, ASC, DESC, SPAN, TIMECOL, MAXGROUPS,
-// IF, CASE) are intentionally excluded: they have specific infix/postfix roles
-// that create LL ambiguities when also allowed as identifiers.
-keyword
-  : TABLE | STATS | WHERE | SORT | EVAL | REGEX | FIELD | TIMECHART | UNPACK
   ;

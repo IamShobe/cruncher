@@ -1,10 +1,11 @@
 import styled from "@emotion/styled";
 import { token } from "../system";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState, CSSProperties } from "react";
 import { createPortal } from "react-dom";
+import { Popover, Portal, Text } from "@chakra-ui/react";
 
-import { AutoCompleter, Suggestion } from "./AutoCompleter";
-import { HighlightData, TextHighlighter } from "./Highlighter";
+import { AutoCompleter, compareSuggestions, Suggestion } from "./AutoCompleter";
+import { HighlightData, TextHighlighter, getTooltipContent } from "./Highlighter";
 import { Coordinates, getCaretCoordinates } from "./getCoordinates";
 
 const EditorWrapper = styled.div`
@@ -61,11 +62,11 @@ const EditorWrapper = styled.div`
   }
 
   & pre {
-    z-index: 2;
+    z-index: 1;
   }
 
   & textarea {
-    z-index: 1;
+    z-index: 2;
   }
 `;
 
@@ -165,16 +166,18 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
         results.add(suggestion);
       }
 
-      return Array.from(results).filter((suggestion) => {
-        if (!writtenWord) return true;
-        // For quoted values like `"main"`, match the inner text when the user
-        // hasn't typed the opening quote yet, or the full value when they have.
-        const valueToMatch =
-          suggestion.value.startsWith('"') && !writtenWord.startsWith('"')
-            ? suggestion.value.slice(1, -1)
-            : suggestion.value;
-        return valueToMatch.startsWith(writtenWord);
-      });
+      return Array.from(results)
+        .filter((suggestion) => {
+          if (!writtenWord) return true;
+          // For quoted values like `"main"`, match the inner text when the user
+          // hasn't typed the opening quote yet, or the full value when they have.
+          const valueToMatch =
+            suggestion.value.startsWith('"') && !writtenWord.startsWith('"')
+              ? suggestion.value.slice(1, -1)
+              : suggestion.value;
+          return valueToMatch.startsWith(writtenWord);
+        })
+        .sort(compareSuggestions);
     }, [suggestions, cursorPosition, writtenWord]);
 
     const acceptCompletion = () => {
@@ -240,6 +243,86 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
       return { text: ghost, offset: cursorPosition };
     }, [isCompleterOpen, filteredSuggestions, hoveredCompletionItem, writtenWord, cursorPosition]);
 
+    const [popoverOpen, setPopoverOpen] = useState(false);
+    const [tokenContent, setTokenContent] = useState<{
+      label: string;
+      description: string;
+    } | null>(null);
+    const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
+    const closeTimerRef = useRef<ReturnType<typeof setTimeout>>();
+    const openTimerRef = useRef<ReturnType<typeof setTimeout>>();
+
+    useEffect(() => () => {
+      clearTimeout(closeTimerRef.current);
+      clearTimeout(openTimerRef.current);
+    }, []);
+
+    const anchorStyle = useMemo((): CSSProperties => {
+      if (!anchorRect) return { position: "fixed", width: 0, height: 0, top: 0, left: 0, pointerEvents: "none", opacity: 0 };
+      return {
+        position: "fixed",
+        left: anchorRect.left,
+        top: anchorRect.top,
+        width: anchorRect.width,
+        height: anchorRect.height,
+        pointerEvents: "none",
+        opacity: 0,
+      };
+    }, [anchorRect]);
+
+    const scheduleClose = useCallback(() => {
+      closeTimerRef.current = setTimeout(() => setPopoverOpen(false), 400);
+    }, []);
+
+    const cancelClose = useCallback(() => {
+      clearTimeout(closeTimerRef.current);
+    }, []);
+
+    const cancelOpen = useCallback(() => {
+      clearTimeout(openTimerRef.current);
+    }, []);
+
+    const handleMouseMove = useCallback(
+      (e: React.MouseEvent<HTMLTextAreaElement>) => {
+        if (!preElement.current) return;
+        const spans =
+          preElement.current.querySelectorAll<HTMLElement>("[data-token-type]");
+        for (const span of spans) {
+          const rect = span.getBoundingClientRect();
+          if (
+            e.clientX >= rect.left &&
+            e.clientX <= rect.right &&
+            e.clientY >= rect.top &&
+            e.clientY <= rect.bottom
+          ) {
+            const type = span.getAttribute("data-token-type") ?? "";
+            const metadata =
+              span.getAttribute("data-token-metadata") ?? undefined;
+            const content = getTooltipContent(type, metadata);
+            if (content) {
+              cancelClose();
+              const isSameToken =
+                anchorRect?.left === rect.left && anchorRect?.top === rect.top;
+              if (!isSameToken || !popoverOpen) {
+                cancelOpen();
+                setAnchorRect(rect);
+                setTokenContent(content);
+                openTimerRef.current = setTimeout(() => setPopoverOpen(true), 700);
+              }
+            } else {
+              cancelOpen();
+            }
+            return;
+          }
+        }
+        // Mouse is over a non-token area inside the textarea — cancel any
+        // pending open but leave an already-open popover alone so the user
+        // can move toward it without it closing.
+        cancelOpen();
+      },
+      [cancelClose, cancelOpen, popoverOpen, anchorRect],
+    );
+
     const syncScroll = () => {
       if (!referenceElement || !preElement.current) return;
 
@@ -250,7 +333,7 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
     return (
       <EditorWrapper>
         <TextareaCustom
-          placeholder="Type your query here..."
+          placeholder={ghostTextInfo ? "" : "Type your query here..."}
           value={value}
           ref={setReferenceElement}
           data-1p-ignore="disabled"
@@ -306,6 +389,8 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
 
             setCursorPosition(e.currentTarget.selectionStart);
           }}
+          onMouseMove={handleMouseMove}
+          onMouseLeave={() => { cancelOpen(); scheduleClose(); }}
           onInput={() => {
             syncScroll();
           }}
@@ -362,6 +447,46 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
             </div>,
             popperRoot,
           )}
+        <Popover.Root
+          open={popoverOpen}
+          onOpenChange={({ open }) => setPopoverOpen(open)}
+          positioning={{ placement: "bottom" }}
+          closeOnInteractOutside={false}
+          lazyMount
+          unmountOnExit
+        >
+          <Popover.Trigger asChild>
+            <div style={anchorStyle} />
+          </Popover.Trigger>
+          <Portal container={{ current: popperRoot as HTMLElement | null }}>
+            <Popover.Positioner>
+              <Popover.Content
+                onMouseEnter={cancelClose}
+                onMouseLeave={scheduleClose}
+              >
+                <Popover.Arrow />
+                <Popover.Body>
+                  {tokenContent && (
+                    <>
+                      <Text
+                        fontSize="xs"
+                        fontWeight="semibold"
+                        textTransform="uppercase"
+                        letterSpacing="wider"
+                        color="fg.muted"
+                      >
+                        {tokenContent.label}
+                      </Text>
+                      <Text fontSize="sm" color="fg" mt="1">
+                        {tokenContent.description}
+                      </Text>
+                    </>
+                  )}
+                </Popover.Body>
+              </Popover.Content>
+            </Popover.Positioner>
+          </Portal>
+        </Popover.Root>
       </EditorWrapper>
     );
   },

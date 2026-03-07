@@ -603,6 +603,148 @@ test("support for parenthesisCalcExpression in eval", () => {
   });
 });
 
+test("eval if - no else branch", () => {
+  const result = parse(`| eval col = if(x == 1, "yes")`);
+  expect(result).toMatchObject({
+    pipeline: [
+      {
+        type: "eval",
+        variableName: "col",
+        expression: {
+          type: "functionExpression",
+          functionName: "if",
+          condition: {
+            type: "logicalExpression",
+            left: {
+              type: "unitExpression",
+              value: {
+                type: "comparisonExpression",
+                left: { type: "columnRef", columnName: "x" },
+                operator: "==",
+                right: { type: "number", value: 1 },
+              },
+            },
+          },
+          then: { type: "calcExpression" },
+          else: undefined,
+        },
+      },
+    ],
+  });
+});
+
+// In EVAL_MODE: if/case are keywords so can't be used as variable names.
+// Keywords from other modes are plain identifiers in eval mode.
+test("eval - 'span' (timechart keyword) as lhs variable name", () => {
+  const result = parse(`| eval span = x + 1`);
+  expect(result).toMatchObject({
+    pipeline: [
+      {
+        type: "eval",
+        variableName: "span",
+        expression: { type: "calcExpression" },
+      },
+    ],
+  });
+});
+
+test("eval - 'asc' (sort keyword) as lhs variable name", () => {
+  const result = parse(`| eval asc = x + 1`);
+  expect(result).toMatchObject({
+    pipeline: [
+      {
+        type: "eval",
+        variableName: "asc",
+        expression: { type: "calcExpression" },
+      },
+    ],
+  });
+});
+
+test("eval - 'by' (stats keyword) as lhs variable name", () => {
+  const result = parse(`| eval by = x + 1`);
+  expect(result).toMatchObject({
+    pipeline: [
+      {
+        type: "eval",
+        variableName: "by",
+        expression: { type: "calcExpression" },
+      },
+    ],
+  });
+});
+
+test("where - if keyword as column name", () => {
+  const result = parse(`| where if == 1`);
+  expect(result).toMatchObject({
+    pipeline: [
+      {
+        type: "where",
+        expression: {
+          type: "logicalExpression",
+          left: {
+            type: "unitExpression",
+            value: {
+              type: "comparisonExpression",
+              left: { type: "columnRef", columnName: "if" },
+              operator: "==",
+              right: { type: "number", value: 1 },
+            },
+          },
+        },
+      },
+    ],
+  });
+});
+
+test("where - case keyword as column name", () => {
+  const result = parse(`| where case == "foo"`);
+  expect(result).toMatchObject({
+    pipeline: [
+      {
+        type: "where",
+        expression: {
+          type: "logicalExpression",
+          left: {
+            type: "unitExpression",
+            value: {
+              type: "comparisonExpression",
+              left: { type: "columnRef", columnName: "case" },
+              operator: "==",
+              right: { type: "string", value: "foo" },
+            },
+          },
+        },
+      },
+    ],
+  });
+});
+
+test("where - in keyword as column name via function", () => {
+  const result = parse(`| where status in ["active", "pending"]`);
+  expect(result).toMatchObject({
+    pipeline: [
+      {
+        type: "where",
+        expression: {
+          type: "logicalExpression",
+          left: {
+            type: "unitExpression",
+            value: {
+              type: "inArrayExpression",
+              left: { type: "columnRef", columnName: "status" },
+              right: [
+                { type: "string", value: "active" },
+                { type: "string", value: "pending" },
+              ],
+            },
+          },
+        },
+      },
+    ],
+  });
+});
+
 test.each([["=="], ["!="], [">"], ["<"], [">="], ["<="]])(
   "test where command operators %s",
   (operator) => {

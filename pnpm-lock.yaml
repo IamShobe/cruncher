@@ -372,6 +372,9 @@ importers:
       '@astrojs/starlight':
         specifier: ^0.37.7
         version: 0.37.7(astro@5.18.0(@types/node@25.3.5)(jiti@2.6.1)(less@4.5.1)(rollup@4.59.0)(terser@5.46.0)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2))
+      '@cruncher/qql':
+        specifier: workspace:*
+        version: link:../packages/qql
       astro:
         specifier: ^5.18.0
         version: 5.18.0(@types/node@25.3.5)(jiti@2.6.1)(less@4.5.1)(rollup@4.59.0)(terser@5.46.0)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)

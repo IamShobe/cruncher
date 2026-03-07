@@ -63,13 +63,13 @@ export const processSort = (
           return bNumber - aNumber;
         }
       } else if (aValue.type === "boolean" && bValue.type === "boolean") {
-        const aBoolean = aValue.value;
-        const bBoolean = bValue.value;
+        const aNum = aValue.value ? 1 : 0;
+        const bNum = bValue.value ? 1 : 0;
 
         if (rule.order === "asc") {
-          return aBoolean ? -1 : 1;
+          return aNum - bNum;
         } else {
-          return bBoolean ? -1 : 1;
+          return bNum - aNum;
         }
       } else if (aValue.type === "array" && bValue.type === "array") {
         const aArray = aValue.value;

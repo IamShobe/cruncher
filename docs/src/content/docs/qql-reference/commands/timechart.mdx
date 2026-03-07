@@ -4,11 +4,13 @@ description: Create time series visualizations with the `timechart` command in Q
 ---
 
 import CommandCard from '/src/components/CommandCard.astro';
+import QQLCode from '/src/components/QQLCode.astro';
 
 <CommandCard
   name="timechart"
   description="Create a time series visualization by aggregating data into time buckets with flexible grouping."
-  syntax="timechart [span=interval] [timeCol=field] [maxGroups=N] [agg(field) [as alias], ...] [by groupField1, ...]"
+  syntax="| timechart [span=interval] [timeCol=field] [maxGroups=N] [agg(field) [as alias], ...] [by groupField1, ...]"
+  example="| timechart span=5m count() as total by service"
   output="timechart"
 />
 
@@ -16,11 +18,26 @@ The `timechart` command creates a time series visualization by aggregating data 
 
 ## Parameters
 
-- `span=interval`: (Optional) Bucket size for the time axis (e.g., `1m`, `5m`, `1h`).
+- `span=interval`: (Optional) Bucket size for the time axis (e.g., `1m`, `5m`, `1h`). See [Span Format](#span-format) below.
 - `timeCol=field`: (Optional) The field to use as the time axis (default is usually `timestamp`).
 - `maxGroups=N`: (Optional) Maximum number of groups to display (limits cardinality).
 - `agg(field) [as alias]`: Aggregation function (e.g., `count()`, `sum(field)`, `avg(field)`) optionally renamed with `as`.
 - `by groupField1, ...`: (Optional) Group results by one or more fields.
+
+## Span Format
+
+The `span` value is a number followed by a time unit suffix:
+
+| Suffix | Unit | Example |
+|--------|------|---------|
+| `s` | Seconds | `30s` |
+| `m` | Minutes | `5m`, `15m` |
+| `h` | Hours | `1h`, `6h` |
+| `d` | Days | `1d`, `7d` |
+
+Examples: `span=30s`, `span=5m`, `span=1h`, `span=7d`.
+
+When `span` is omitted, the bucket size is chosen automatically based on the selected time range.
 
 ## Usage
 
@@ -30,8 +47,6 @@ The `timechart` command creates a time series visualization by aggregating data 
 
 ## Example
 
-```
-timechart span=5m timeCol=event_time maxGroups=10 count() as total, avg(duration) as avg_duration by status 
-```
+<QQLCode code={`| timechart span=5m timeCol=event_time maxGroups=10 count() as total, avg(duration) as avg_duration by status`} />
 
 This creates a time series of event counts and average duration per `status` in 5-minute intervals, using `event_time` as the time axis, and limits to 10 groups.
