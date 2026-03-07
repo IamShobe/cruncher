@@ -39,8 +39,10 @@
     "prepare-pr": "changeset",
     "changeset-version": "changeset version && pnpm install --lockfile-only",
     "changeset-publish": "turbo run build --filter='./packages/**' && changeset publish",
+    "release:local": "bash scripts/release-local.sh",
     "release": "changeset version && pnpm install --lockfile-only && changeset publish",
-    "push-all": "git push && git push --tags"
+    "push-all": "git push && git push --tags",
+    "local-registry:clear": "rm -rf tmp/local-registry/storage"
   },
   "keywords": [],
   "author": {
