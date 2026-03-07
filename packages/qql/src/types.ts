@@ -121,7 +121,8 @@ export type FunctionArg =
   | FactorType
   | RegexLiteral
   | LogicalExpression
-  | FunctionExpression;
+  | FunctionExpression
+  | CalcExpression;
 
 export type FunctionExpression = {
   type: "functionExpression";

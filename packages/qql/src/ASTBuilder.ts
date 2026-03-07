@@ -627,8 +627,18 @@ export class ASTBuilder extends AbstractParseTreeVisitor<QueryNode> {
   };
 
   visitFunctionArg = (ctx: Parser.FunctionArgContext): FunctionArg => {
-    if (ctx.factor()) {
-      return this.visitFactor(ctx.factor()!);
+    if (ctx.calcExpression()) {
+      const calcExpr = this.visitCalcExpression(ctx.calcExpression()!);
+      // Unwrap simple calc expressions (just a factor, no arithmetic operators)
+      // so that plain column references and literals pass through as FactorType,
+      // maintaining backwards compatibility with processFieldValue consumers.
+      if (!calcExpr.tail && !calcExpr.left.tail) {
+        const unit = calcExpr.left.left;
+        if (unit.value.type !== "calcExpression") {
+          return unit.value as FactorType;
+        }
+      }
+      return calcExpr;
     } else if (ctx.regexLiteral()) {
       return this.visitRegexLiteral(ctx.regexLiteral()!);
     } else if (ctx.logicalExpression()) {

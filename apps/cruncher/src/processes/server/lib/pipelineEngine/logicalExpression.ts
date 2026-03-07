@@ -420,6 +420,14 @@ function processFieldValue(context: Context, field: FunctionArg): Field {
     case "functionExpression":
       return processFunctionExpression(field, context);
 
+    case "calcExpression":
+      // CalcExpression args should have been pre-resolved by eval.ts before
+      // reaching here. If this is hit it means arithmetic was used in a context
+      // that does not support it (e.g. inside a where-filter function).
+      throw new Error(
+        "Arithmetic expression used as a function argument outside of eval context",
+      );
+
     default:
       return processFactor(field, context);
   }

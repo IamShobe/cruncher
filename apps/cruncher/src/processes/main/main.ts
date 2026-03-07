@@ -275,6 +275,10 @@ const ready = async () => {
     }
   });
 
+  ipcMain.handle("openExternal", (_event, url: string) => {
+    shell.openExternal(url);
+  });
+
   createWindow();
 };
 

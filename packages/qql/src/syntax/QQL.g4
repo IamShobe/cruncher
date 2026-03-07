@@ -142,7 +142,7 @@ functionArgs
   ;
 
 functionArg
-  : factor
+  : calcExpression
   | regexLiteral
   | logicalExpression
   | functionExpression

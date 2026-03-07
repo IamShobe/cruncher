@@ -487,15 +487,12 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
                         {tokenContent.docsUrl && (
                           <Tooltip text="Open documentation" openDelay={400}>
                             <IconButton
-                              as="a"
-                              href={tokenContent.docsUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
                               aria-label="Open documentation"
                               size="2xs"
                               variant="ghost"
                               colorPalette="blue"
                               ms="auto"
+                              onClick={() => window.electronAPI.openExternal(tokenContent.docsUrl!)}
                             >
                               <Icon as={LuExternalLink} />
                             </IconButton>

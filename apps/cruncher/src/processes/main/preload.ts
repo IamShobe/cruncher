@@ -14,6 +14,9 @@ export const electronAPI = {
       isDev: boolean;
     }>;
   },
+  openExternal: (url: string) => {
+    ipcRenderer.invoke("openExternal", url);
+  },
 };
 
 contextBridge.exposeInMainWorld("electronAPI", electronAPI);

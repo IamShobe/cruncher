@@ -745,6 +745,61 @@ test("where - in keyword as column name via function", () => {
   });
 });
 
+// ─── Arithmetic inside function arguments (regression test) ──────────────────
+
+test("eval - function with calc expression arg: ceil(duration_ms / 1000)", () => {
+  const result = parse(`| eval rounded_duration = ceil(duration_ms / 1000)`);
+  expect(result.pipeline).toHaveLength(1);
+  const cmd = result.pipeline[0] as any;
+  expect(cmd.type).toBe("eval");
+  expect(cmd.variableName).toBe("rounded_duration");
+  expect(cmd.expression.type).toBe("functionExpression");
+  expect(cmd.expression.functionName).toBe("ceil");
+  expect(cmd.expression.args).toHaveLength(1);
+  // The argument is a calcExpression for `duration_ms / 1000`
+  const arg = cmd.expression.args[0];
+  expect(arg.type).toBe("calcExpression");
+  expect(arg.left.left.value).toMatchObject({
+    type: "columnRef",
+    columnName: "duration_ms",
+  });
+  expect(arg.left.tail).toHaveLength(1);
+  expect(arg.left.tail[0]).toMatchObject({
+    type: "calcTermAction",
+    operator: "/",
+    right: { type: "calculateUnit", value: { type: "number", value: 1000 } },
+  });
+});
+
+test("eval - function with multiplication arg: floor(rate * 100)", () => {
+  const result = parse(`| eval pct = floor(rate * 100)`);
+  const cmd = result.pipeline[0] as any;
+  expect(cmd.expression.functionName).toBe("floor");
+  const arg = cmd.expression.args[0];
+  expect(arg.type).toBe("calcExpression");
+  expect(arg.left.tail[0].operator).toBe("*");
+});
+
+test("eval - function with addition arg: abs(a + b)", () => {
+  const result = parse(`| eval out = abs(a + b)`);
+  const cmd = result.pipeline[0] as any;
+  expect(cmd.expression.functionName).toBe("abs");
+  const arg = cmd.expression.args[0];
+  expect(arg.type).toBe("calcExpression");
+  expect(arg.tail[0].operator).toBe("+");
+});
+
+test("eval - simple column ref arg still works after grammar change: ceil(x)", () => {
+  const result = parse(`| eval out = ceil(x)`);
+  const cmd = result.pipeline[0] as any;
+  expect(cmd.expression.functionName).toBe("ceil");
+  // A simple column reference should unwrap to FactorType, not CalcExpression
+  expect(cmd.expression.args[0]).toMatchObject({
+    type: "columnRef",
+    columnName: "x",
+  });
+});
+
 test.each([["=="], ["!="], [">"], ["<"], [">="], ["<="]])(
   "test where command operators %s",
   (operator) => {

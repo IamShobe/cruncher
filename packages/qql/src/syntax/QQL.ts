@@ -1608,7 +1608,7 @@ export class QQL extends antlr.Parser {
                 this.enterOuterAlt(localContext, 1);
                 {
                 this.state = 340;
-                this.factor();
+                this.calcExpression();
                 }
                 break;
             case 2:
@@ -2314,7 +2314,7 @@ export class QQL extends antlr.Parser {
         3,60,30,0,328,327,1,0,0,0,328,329,1,0,0,0,329,330,1,0,0,0,330,331,
         5,4,0,0,331,59,1,0,0,0,332,337,3,62,31,0,333,334,5,2,0,0,334,336,
         3,62,31,0,335,333,1,0,0,0,336,339,1,0,0,0,337,335,1,0,0,0,337,338,
-        1,0,0,0,338,61,1,0,0,0,339,337,1,0,0,0,340,345,3,80,40,0,341,345,
+        1,0,0,0,338,61,1,0,0,0,339,337,1,0,0,0,340,345,3,70,35,0,341,345,
         3,86,43,0,342,345,3,46,23,0,343,345,3,58,29,0,344,340,1,0,0,0,344,
         341,1,0,0,0,344,342,1,0,0,0,344,343,1,0,0,0,345,63,1,0,0,0,346,351,
         3,66,33,0,347,351,3,58,29,0,348,351,3,46,23,0,349,351,3,70,35,0,
@@ -3400,8 +3400,8 @@ export class FunctionArgContext extends antlr.ParserRuleContext {
     public constructor(parent: antlr.ParserRuleContext | null, invokingState: number) {
         super(parent, invokingState);
     }
-    public factor(): FactorContext | null {
-        return this.getRuleContext(0, FactorContext);
+    public calcExpression(): CalcExpressionContext | null {
+        return this.getRuleContext(0, CalcExpressionContext);
     }
     public regexLiteral(): RegexLiteralContext | null {
         return this.getRuleContext(0, RegexLiteralContext);
