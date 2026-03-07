@@ -166,13 +166,14 @@ export class SuggestionCollector extends AbstractParseTreeVisitor<void> {
     const pos = this.getNextTokenPosition(ctx.STATS?.());
     this.addSuggestion({ type: "function", fromPosition: pos, disabled: false });
 
-    // Only suggest "by" once at least one aggregation function with a real
-    // IDENTIFIER token has been entered (ANTLR error-recovery can produce
-    // phantom aggregationFunction contexts even for bare "| stats ")
+    const aggFuncs: any[] = ctx.aggregationFunction?.() || [];
+    for (const agg of aggFuncs) this.visitAggregationFunction(agg);
+
+    // Only suggest "by" once the last agg function is fully closed (has both
+    // LPAREN and RPAREN) — avoids suggesting "by" while still inside "count("
     if (!ctx.BY?.()) {
-      const aggFuncs: any[] = ctx.aggregationFunction?.() || [];
       const lastAgg = aggFuncs.length > 0 ? aggFuncs[aggFuncs.length - 1] : null;
-      if (lastAgg?.LPAREN?.()) {
+      if (lastAgg?.LPAREN?.() && lastAgg?.RPAREN?.()) {
         const byPos = this.getNextTokenPosition(lastAgg);
         this.addSuggestion({ type: "keywords", keywords: ["by"], fromPosition: byPos, disabled: false });
       }
@@ -215,16 +216,21 @@ export class SuggestionCollector extends AbstractParseTreeVisitor<void> {
     this.addSuggestion({ type: "function", fromPosition: pos, disabled: false });
 
     const aggFuncs: any[] = ctx.aggregationFunction?.() || [];
+    for (const agg of aggFuncs) this.visitAggregationFunction(agg);
+
     if (aggFuncs.length > 0) {
       const lastAgg = aggFuncs[aggFuncs.length - 1];
-      const paramPos = this.getNextTokenPosition(lastAgg);
-      this.addSuggestion({ type: "params", keywords: ["span", "timeCol", "maxGroups"], fromPosition: paramPos, disabled: false });
+      // Only suggest params/by after the agg function is fully closed
+      if (lastAgg?.RPAREN?.()) {
+        const paramPos = this.getNextTokenPosition(lastAgg);
+        this.addSuggestion({ type: "params", keywords: ["span", "timeCol", "maxGroups"], fromPosition: paramPos, disabled: false });
 
-      if (!ctx.BY?.()) {
-        const params: any[] = ctx.timechartParams?.() || [];
-        const last = params.length > 0 ? params[params.length - 1] : lastAgg;
-        const byPos = this.getNextTokenPosition(last);
-        this.addSuggestion({ type: "keywords", keywords: ["by"], fromPosition: byPos, disabled: false });
+        if (!ctx.BY?.()) {
+          const params: any[] = ctx.timechartParams?.() || [];
+          const last = params.length > 0 ? params[params.length - 1] : lastAgg;
+          const byPos = this.getNextTokenPosition(last);
+          this.addSuggestion({ type: "keywords", keywords: ["by"], fromPosition: byPos, disabled: false });
+        }
       }
     }
   };
@@ -283,7 +289,15 @@ export class SuggestionCollector extends AbstractParseTreeVisitor<void> {
   visitEvalFunctionArg = (_ctx: any) => {};
   visitEvalFunction = (_ctx: any) => {};
   visitCaseThen = (_ctx: any) => {};
-  visitAggregationFunction = (_ctx: any) => {};
+  visitAggregationFunction = (ctx: any) => {
+    const lparen = ctx.LPAREN?.();
+    if (lparen) {
+      const fromPos = this.getNextTokenPosition(lparen);
+      // Bound to the closing paren so column suggestions disappear after ')'
+      const rparenStop: number | undefined = ctx.RPAREN?.()?.getSymbol?.()?.stop;
+      this.addSuggestion({ type: "column", fromPosition: fromPos, toPosition: rparenStop, disabled: false });
+    }
+  };
   visitGroupby = (_ctx: any) => {};
   visitSortColumn = (_ctx: any) => {};
   visitTableColumn = (_ctx: any) => {};

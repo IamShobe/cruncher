@@ -199,3 +199,34 @@ test("| table col |: second pipe gives keywords at correct position", () => {
   expect(second).toBeDefined();
   expect(second!.fromPosition).toBe(13);
 });
+
+// ─── Aggregation function args ────────────────────────────────────────────────
+
+test("| stats count(: suggests column inside function args", () => {
+  // "| stats count(" → LPAREN at 13 (stop=13), fromPosition should be 14
+  const sug = getSuggestions("| stats count(");
+  expect(types(sug)).toContain("column");
+  const col = sug.find((s) => s.type === "column" && s.fromPosition === 14);
+  expect(col).toBeDefined();
+});
+
+test("| stats count(col): column suggestion is bounded by closing paren", () => {
+  // "| stats count(col)" → RPAREN at 17 (stop=17), toPosition should be 17
+  const sug = getSuggestions("| stats count(col)");
+  const col = sug.find((s) => s.type === "column" && (s as any).fromPosition === 14);
+  expect(col).toBeDefined();
+  expect((col as any).toPosition).toBe(17);
+});
+
+test("| table asd t: pipeline keywords not suggested at column position", () => {
+  // "| table asd t" → TABLE stops at 6, pipeline keywords toPosition=6
+  // The cursor at position 12 (typing 't') is past toPosition, so no pipeline kw shown
+  const sug = getSuggestions("| table asd t");
+  const allPipelineKw = sug.filter(
+    (s) => s.type === "keywords" && (s as any).keywords?.includes("table"),
+  ) as Extract<SuggestionData, { type: "keywords" }>[];
+  // There is one keywords suggestion but it has a toPosition <= 6
+  expect(allPipelineKw.length).toBe(1);
+  expect(allPipelineKw[0].toPosition).toBeDefined();
+  expect(allPipelineKw[0].toPosition!).toBeLessThanOrEqual(6);
+});

@@ -131,6 +131,7 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
 
     const [hoveredCompletionItem, setHoveredCompletionItem] =
       useState<number>(0);
+    const [hasInteractedWithMenu, setHasInteractedWithMenu] = useState(false);
 
     const writtenWord = useMemo(() => {
       const text = value.slice(0, cursorPosition);
@@ -178,6 +179,7 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
       }, 0);
 
       setIsCompleterOpen(false);
+      setHasInteractedWithMenu(false);
     };
 
     const advanceHoveredItem = () => {
@@ -228,6 +230,7 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
             // if key is esc - close completer
             if (e.key === "Escape") {
               setIsCompleterOpen(false);
+              setHasInteractedWithMenu(false);
             }
             if (e.key === " " && e.ctrlKey) {
               setIsCompleterOpen(true);
@@ -241,13 +244,15 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
               // if open and down arrow - move selection down
               if (e.key === "ArrowDown") {
                 e.preventDefault();
+                setHasInteractedWithMenu(true);
                 advanceHoveredItem();
               } else if (e.key === "ArrowUp") {
                 e.preventDefault();
+                setHasInteractedWithMenu(true);
                 retreatHoveredItem();
               }
 
-              if (e.key === "Enter") {
+              if (e.key === "Enter" && hasInteractedWithMenu) {
                 e.preventDefault();
                 acceptCompletion();
               }
@@ -289,6 +294,7 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
             setCursorPosition(e.currentTarget.selectionStart);
             setIsCompleterOpen(isCharAdded);
             setHoveredCompletionItem(0);
+            setHasInteractedWithMenu(false);
 
             setPos(
               getCaretCoordinates(
