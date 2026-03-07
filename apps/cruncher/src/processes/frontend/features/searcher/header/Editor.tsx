@@ -145,7 +145,7 @@ export const Editor = ({ value, onChange }: EditorProps) => {
       (error: QQLParserErrorDetail) => {
         return {
           type: "error",
-          message: error.message,
+          metadata: error.message,
           token: {
             startOffset: error.token.startOffset,
             endOffset: error.token.endOffset,

@@ -149,6 +149,11 @@ export type LiteralNumber = {
   value: number;
 };
 
+export type LiteralFloat = {
+  type: "float";
+  value: number;
+};
+
 export type ColumnRef = {
   type: "columnRef";
   columnName: string;
@@ -168,6 +173,7 @@ export type FactorType =
   | LiteralString
   | LiteralBoolean
   | LiteralNumber
+  | LiteralFloat
   | ColumnRef;
 
 export type ComparisonExpression = {

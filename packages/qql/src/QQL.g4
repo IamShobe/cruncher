@@ -1,10 +1,11 @@
 /**
- * QQL (Quick Query Language) - ANTLR4 Grammar
- *
- * A domain-specific query language for Cruncher platform.
+ * QQL (Quick Query Language) — parser grammar.
+ * Lexer vocabulary is defined in QQLLexer.g4.
  */
 
-grammar QQL;
+parser grammar QQL;
+
+options { tokenVocab = QQLLexer; }
 
 // ==================== PARSER RULES ====================
 
@@ -39,7 +40,7 @@ searchFactor
   ;
 
 searchLiteral
-  : (IDENTIFIER | INTEGER | literalString)+
+  : (IDENTIFIER | FLOAT | INTEGER | literalString)+
   ;
 
 pipelineCommand
@@ -87,7 +88,7 @@ evalExpression
   ;
 
 regexCmd
-  : REGEX FIELD regexLiteral
+  : REGEX (FIELD EQUAL identifierOrString)? regexLiteral
   ;
 
 timechartCmd
@@ -188,6 +189,7 @@ calculateUnit
 
 factor
   : literalString
+  | FLOAT
   | INTEGER
   | IDENTIFIER
   | literalBoolean
@@ -211,224 +213,4 @@ identifierOrString
   : IDENTIFIER
   | DQUOT_STRING
   | SQUOT_STRING
-  ;
-
-// ==================== LEXER RULES ====================
-
-// Keywords - must come before IDENTIFIER
-TABLE
-  : 'table'
-  ;
-
-STATS
-  : 'stats'
-  ;
-
-WHERE
-  : 'where'
-  ;
-
-SORT
-  : 'sort'
-  ;
-
-EVAL
-  : 'eval'
-  ;
-
-REGEX
-  : 'regex'
-  ;
-
-TIMECHART
-  : 'timechart'
-  ;
-
-UNPACK
-  : 'unpack'
-  ;
-
-AS
-  : 'as'
-  ;
-
-BY
-  : 'by'
-  ;
-
-SPAN
-  : 'span'
-  ;
-
-TIMECOL
-  : 'timeCol'
-  ;
-
-MAXGROUPS
-  : 'maxGroups'
-  ;
-
-FIELD
-  : 'field'
-  ;
-
-ASC
-  : 'asc'
-  ;
-
-DESC
-  : 'desc'
-  ;
-
-IN
-  : 'in'
-  ;
-
-TRUE
-  : 'true'
-  ;
-
-FALSE
-  : 'false'
-  ;
-
-IF
-  : 'if'
-  ;
-
-CASE
-  : 'case'
-  ;
-
-ELSE
-  : 'else'
-  ;
-
-SEARCH_AND
-  : 'AND'
-  ;
-
-SEARCH_OR
-  : 'OR'
-  ;
-
-// Operators and punctuation
-PIPE
-  : '|'
-  ;
-
-COMMA
-  : ','
-  ;
-
-LPAREN
-  : '('
-  ;
-
-RPAREN
-  : ')'
-  ;
-
-LBRACKET
-  : '['
-  ;
-
-RBRACKET
-  : ']'
-  ;
-
-EQUAL
-  : '='
-  ;
-
-EQUAL_EQUAL
-  : '=='
-  ;
-
-NOT_EQUAL
-  : '!='
-  ;
-
-GREATER_EQUAL
-  : '>='
-  ;
-
-LESS_EQUAL
-  : '<='
-  ;
-
-GREATER_THAN
-  : '>'
-  ;
-
-LESS_THAN
-  : '<'
-  ;
-
-AND
-  : '&&'
-  ;
-
-OR
-  : '||'
-  ;
-
-NOT
-  : '!'
-  ;
-
-PLUS
-  : '+'
-  ;
-
-MINUS
-  : '-'
-  ;
-
-MULTIPLY
-  : '*'
-  ;
-
-DIVIDE
-  : '/'
-  ;
-
-SEARCH_PARAM_NEQ
-  : '!='
-  ;
-
-AT_DATASOURCE
-  : '@' [a-zA-Z_] [0-9a-zA-Z_-]*
-  ;
-
-// String literals (newlines allowed)
-DQUOT_STRING
-  : '"' (~[\\"] | '\\' .)* '"'
-  ;
-
-SQUOT_STRING
-  : '\'' (~[\\'] | '\\' .)* '\''
-  ;
-
-REGEX_PATTERN
-  : '`' (~[`\\] | '\\' .)* '`'
-  ;
-
-// Number
-INTEGER
-  : '0' | [1-9] [0-9]*
-  ;
-
-// Identifier (must be after keywords)
-IDENTIFIER
-  : [0-9a-zA-Z_] [0-9a-zA-Z_-]*
-  ;
-
-// Whitespace and comments
-WS
-  : [ \t\r\n]+ -> skip
-  ;
-
-COMMENT
-  : '//' ~[\r\n]* -> channel(HIDDEN)
   ;

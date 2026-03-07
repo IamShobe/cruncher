@@ -1,6 +1,6 @@
 import * as antlr from "antlr4ng";
-import { QQLLexer } from "./generated/src/QQLLexer";
-import { QQLParser } from "./generated/src/QQLParser";
+import { QQLLexer } from "./generated/QQLLexer";
+import { QQL } from "./generated/QQL";
 import { ASTBuilder } from "./ASTBuilder";
 import { HighlightCollector } from "./HighlightCollector";
 import { SuggestionCollector } from "./SuggestionCollector";
@@ -16,7 +16,7 @@ export interface QQLLexError {
   token: { startOffset: number; endOffset: number | undefined };
 }
 
-export type { QQLParserErrorDetail } from "./types";
+export type { QQLParserErrorDetail, LiteralFloat } from "./types";
 
 export class QQLLexingError extends Error {
   constructor(
@@ -47,7 +47,7 @@ export const allData = (input: string): AllDataResult => {
   const inputStream = new antlr.CharStreamImpl(input);
   const lexer = new QQLLexer(inputStream);
   const tokenStream = new antlr.CommonTokenStream(lexer);
-  const parser = new QQLParser(tokenStream);
+  const parser = new QQL(tokenStream);
 
   // Collect errors silently (suppress default stderr output)
   const lexerErrors: QQLLexError[] = [];
@@ -151,7 +151,7 @@ export const parse = (input: string) => {
   lexer.addErrorListener(makeErrorListener(lexErrors));
 
   const tokenStream = new antlr.CommonTokenStream(lexer);
-  const parser = new QQLParser(tokenStream);
+  const parser = new QQL(tokenStream);
 
   const parseErrors: QQLParserErrorDetail[] = [];
   parser.removeErrorListeners();

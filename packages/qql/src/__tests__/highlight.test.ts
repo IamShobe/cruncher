@@ -208,12 +208,25 @@ test("highlight | stats with function, as, and by", () => {
 
 // ─── Regex command highlights ─────────────────────────────────────────────────
 
-test("highlight | regex field `pattern`", () => {
-  expect(getHighlights("| regex field `pattern`")).toEqual([
+test("highlight | regex field=col `pattern`", () => {
+  // "| regex field=col `pattern`"
+  //  0123456789...
+  // pipe:0  regex:2-6  field:8-12  =:13  col:14-16  `pattern`:18-26
+  expect(getHighlights("| regex field=col `pattern`")).toEqual([
     { type: "pipe", startOffset: 0, endOffset: 0 },
     { type: "keyword", startOffset: 2, endOffset: 6 },
     { type: "keyword", startOffset: 8, endOffset: 12 },
-    { type: "regex", startOffset: 14, endOffset: 22 },
+    { type: "operator", startOffset: 13, endOffset: 13 },
+    { type: "column", startOffset: 14, endOffset: 16 },
+    { type: "regex", startOffset: 18, endOffset: 26 },
+  ]);
+});
+
+test("highlight | regex `pattern` (no field)", () => {
+  expect(getHighlights("| regex `pattern`")).toEqual([
+    { type: "pipe", startOffset: 0, endOffset: 0 },
+    { type: "keyword", startOffset: 2, endOffset: 6 },
+    { type: "regex", startOffset: 8, endOffset: 16 },
   ]);
 });
 

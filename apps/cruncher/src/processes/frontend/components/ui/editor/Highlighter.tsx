@@ -8,6 +8,7 @@ const StyledPre = styled.pre`
 
 export type HighlightData = {
   type: string;
+  metadata?: string;
   token: {
     startOffset: number;
     endOffset: number | undefined;
@@ -22,6 +23,7 @@ export type HighlighterProps = {
 type HighlightedText = {
   type: string;
   value: string;
+  metadata?: string;
 };
 
 export const splitTextToChunks = (
@@ -60,6 +62,7 @@ export const splitTextToChunks = (
     result.push({
       type: data.type,
       value: text.slice(startOffset, (endOffset ?? startOffset) + 1),
+      metadata: data.metadata,
     });
 
     // Update the current index to the end of the token
@@ -132,7 +135,12 @@ const renderChunks = (text: string, highlightData: HighlightData[]) => {
       const style = typeToStyle(chunk.type);
 
       return (
-        <span key={index} style={style}>
+        <span
+          key={index}
+          style={style}
+          data-token-type={chunk.type}
+          data-token-meta={chunk.metadata}
+        >
           {chunk.value}
         </span>
       );

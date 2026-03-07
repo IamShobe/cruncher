@@ -3,8 +3,8 @@
  */
 
 import * as antlr from "antlr4ng";
-import { QQLLexer as AntlrQLLexer } from "./generated/src/QQLLexer";
-import { QQLParser as AntlrQQLParser } from "./generated/src/QQLParser";
+import { QQLLexer as AntlrQLLexer } from "./generated/QQLLexer";
+import { QQL as AntlrQQLParser } from "./generated/QQL";
 import { ASTBuilder } from "./ASTBuilder";
 import { HighlightCollector } from "./HighlightCollector";
 import { SuggestionCollector } from "./SuggestionCollector";
@@ -19,8 +19,8 @@ export class QQLLexer {
     const tokens = lexer.getAllTokens();
 
     const mappedTokens = tokens
-      .filter(t => t.type !== -1) // Skip EOF
-      .map(t => ({
+      .filter((t: antlr.Token) => t.type !== -1) // Skip EOF
+      .map((t: antlr.Token) => ({
         image: t.text || "",
         tokenType: t.type,
         startOffset: t.start ?? 0,
@@ -36,8 +36,8 @@ export class QQLLexer {
       errors: [],
       groups: {
         singleLineComments: tokens
-          .filter(t => t.channel === 1) // HIDDEN channel
-          .map(t => ({
+          .filter((t: antlr.Token) => t.channel === 1) // HIDDEN channel
+          .map((t: antlr.Token) => ({
             image: t.text || "",
             startOffset: t.start ?? 0,
             endOffset: t.stop ?? 0,
@@ -150,6 +150,7 @@ export type {
   NotExpression,
   LiteralString,
   LiteralNumber,
+  LiteralFloat,
   ColumnRef,
   LiteralBoolean,
   RegexLiteral,

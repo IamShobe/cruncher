@@ -4,7 +4,7 @@
 
 import { AbstractParseTreeVisitor, CommonTokenStream } from "antlr4ng";
 import type { SuggestionData } from "./types";
-import { QQLLexer } from "./generated/src/QQLLexer";
+import { QQLLexer } from "./generated/QQLLexer";
 
 const PIPELINE_KEYWORDS = ["table", "stats", "regex", "sort", "where", "timechart", "eval", "unpack"];
 
@@ -169,9 +169,14 @@ export class SuggestionCollector extends AbstractParseTreeVisitor<void> {
     const aggFuncs: any[] = ctx.aggregationFunction?.() || [];
     for (const agg of aggFuncs) this.visitAggregationFunction(agg);
 
-    // Only suggest "by" once the last agg function is fully closed (has both
-    // LPAREN and RPAREN) — avoids suggesting "by" while still inside "count("
-    if (!ctx.BY?.()) {
+    if (ctx.BY?.()) {
+      // Suggest groupby columns right after the BY keyword
+      const byPos = this.getNextTokenPosition(ctx.BY?.());
+      this.addSuggestion({ type: "column", fromPosition: byPos, disabled: false });
+      const groupbyCtx = ctx.groupby?.();
+      if (groupbyCtx) this.visitGroupby(groupbyCtx);
+    } else {
+      // Only suggest "by" once the last agg function is fully closed
       const lastAgg = aggFuncs.length > 0 ? aggFuncs[aggFuncs.length - 1] : null;
       if (lastAgg?.LPAREN?.() && lastAgg?.RPAREN?.()) {
         const byPos = this.getNextTokenPosition(lastAgg);
@@ -192,6 +197,7 @@ export class SuggestionCollector extends AbstractParseTreeVisitor<void> {
   visitSortCmd = (ctx: any) => {
     const pos = this.getNextTokenPosition(ctx.SORT?.());
     this.addSuggestion({ type: "column", fromPosition: pos, disabled: false });
+    for (const col of (ctx.sortColumn?.() || [])) this.visitSortColumn(col);
   };
 
   visitEvalCmd = (ctx: any) => {
@@ -202,12 +208,12 @@ export class SuggestionCollector extends AbstractParseTreeVisitor<void> {
 
   visitRegexCmd = (ctx: any) => {
     const pos = this.getNextTokenPosition(ctx.REGEX?.());
-    this.addSuggestion({ type: "keywords", keywords: ["field"], fromPosition: pos, disabled: false });
+    this.addSuggestion({ type: "keywords", keywords: ["field="], fromPosition: pos, disabled: false });
 
-    const field = ctx.FIELD?.();
-    if (field) {
-      const fieldPos = this.getNextTokenPosition(field);
-      this.addSuggestion({ type: "column", fromPosition: fieldPos, disabled: false });
+    const eq = ctx.EQUAL?.();
+    if (eq) {
+      const colPos = this.getNextTokenPosition(eq);
+      this.addSuggestion({ type: "column", fromPosition: colPos, disabled: false });
     }
   };
 
@@ -225,7 +231,12 @@ export class SuggestionCollector extends AbstractParseTreeVisitor<void> {
         const paramPos = this.getNextTokenPosition(lastAgg);
         this.addSuggestion({ type: "params", keywords: ["span", "timeCol", "maxGroups"], fromPosition: paramPos, disabled: false });
 
-        if (!ctx.BY?.()) {
+        if (ctx.BY?.()) {
+          const byPos = this.getNextTokenPosition(ctx.BY?.());
+          this.addSuggestion({ type: "column", fromPosition: byPos, disabled: false });
+          const groupbyCtx = ctx.groupby?.();
+          if (groupbyCtx) this.visitGroupby(groupbyCtx);
+        } else {
           const params: any[] = ctx.timechartParams?.() || [];
           const last = params.length > 0 ? params[params.length - 1] : lastAgg;
           const byPos = this.getNextTokenPosition(last);
@@ -266,7 +277,20 @@ export class SuggestionCollector extends AbstractParseTreeVisitor<void> {
 
   visitInArrayExpression = (_ctx: any) => {};
 
-  visitComparisonExpression = (_ctx: any) => {};
+  visitComparisonExpression = (ctx: any) => {
+    // After the comparison operator, suggest columns for the RHS
+    const op =
+      ctx.EQUAL_EQUAL?.() ??
+      ctx.NOT_EQUAL?.() ??
+      ctx.GREATER_EQUAL?.() ??
+      ctx.LESS_EQUAL?.() ??
+      ctx.GREATER_THAN?.() ??
+      ctx.LESS_THAN?.();
+    if (op) {
+      const pos = this.getNextTokenPosition(op);
+      this.addSuggestion({ type: "column", fromPosition: pos, disabled: false });
+    }
+  };
 
   visitFunctionExpression = (ctx: any) => {
     // Suggest column names as arguments to the function (not agg-function names)
@@ -285,7 +309,15 @@ export class SuggestionCollector extends AbstractParseTreeVisitor<void> {
 
   visitFunctionArg = (_ctx: any) => {};
 
-  visitEvalExpression = (_ctx: any) => {};
+  visitEvalExpression = (ctx: any) => {
+    // After the '=' sign, suggest columns and boolean functions for the RHS
+    const eq = ctx.EQUAL?.();
+    if (eq) {
+      const pos = this.getNextTokenPosition(eq);
+      this.addSuggestion({ type: "column", fromPosition: pos, disabled: false });
+      this.addSuggestion({ type: "booleanFunction", fromPosition: pos, disabled: false });
+    }
+  };
   visitEvalFunctionArg = (_ctx: any) => {};
   visitEvalFunction = (_ctx: any) => {};
   visitCaseThen = (_ctx: any) => {};
@@ -298,8 +330,23 @@ export class SuggestionCollector extends AbstractParseTreeVisitor<void> {
       this.addSuggestion({ type: "column", fromPosition: fromPos, toPosition: rparenStop, disabled: false });
     }
   };
-  visitGroupby = (_ctx: any) => {};
-  visitSortColumn = (_ctx: any) => {};
+  visitGroupby = (ctx: any) => {
+    // After each comma in the groupby list, suggest another column
+    for (const comma of (ctx.COMMA?.() || [])) {
+      const pos = this.getNextTokenPosition(comma);
+      this.addSuggestion({ type: "column", fromPosition: pos, disabled: false });
+    }
+  };
+  visitSortColumn = (ctx: any) => {
+    // After the column name, suggest asc/desc if neither is present yet
+    if (!ctx.ASC?.() && !ctx.DESC?.()) {
+      const idCtx = ctx.identifierOrString?.();
+      if (idCtx) {
+        const fromPos = this.getNextTokenPosition(idCtx);
+        this.addSuggestion({ type: "keywords", keywords: ["asc", "desc"], fromPosition: fromPos, disabled: false });
+      }
+    }
+  };
   visitTableColumn = (_ctx: any) => {};
   visitTimechartParams = (_ctx: any) => {};
 

@@ -82,7 +82,7 @@ test("| stats: no 'by' keyword suggested before any agg function is typed", () =
   expect(byKw).toBeUndefined();
 });
 
-test("| stats count(col): suggests 'by' keyword after agg function", () => {
+test("| stats count(col): suggests 'by' keyword after closed agg function", () => {
   // "| stats count(col) " → count(col) ends at pos 17 (')' stop=17), fromPosition=18
   const sug = getSuggestions("| stats count(col) ");
   const byKw = sug.find(
@@ -90,6 +90,14 @@ test("| stats count(col): suggests 'by' keyword after agg function", () => {
   ) as Extract<SuggestionData, { type: "keywords" }> | undefined;
   expect(byKw).toBeDefined();
   expect(byKw!.fromPosition).toBe(18);
+});
+
+test("| stats count(: no 'by' while inside open function args", () => {
+  const sug = getSuggestions("| stats count(");
+  const byKw = sug.find(
+    (s) => s.type === "keywords" && (s as any).keywords?.includes("by"),
+  );
+  expect(byKw).toBeUndefined();
 });
 
 test("| stats count(col) by: no 'by' keyword once BY is present", () => {
@@ -155,21 +163,22 @@ test("| eval: suggests column even with no expression yet", () => {
 
 // ─── regex ────────────────────────────────────────────────────────────────────
 
-test("| regex: suggests 'field' keyword", () => {
-  expect(types(getSuggestions("| regex "))).toContain("keywords");
+test("| regex: suggests 'field=' keyword after regex", () => {
+  // "| regex " → REGEX at 2-6 (stop=6), fromPosition should be 7
   const sug = getSuggestions("| regex ");
   const kw = sug.find(
-    (s) => s.type === "keywords" && (s as any).keywords?.includes("field"),
+    (s) => s.type === "keywords" && (s as any).keywords?.includes("field="),
   );
   expect(kw).toBeDefined();
+  expect(kw!.fromPosition).toBe(7);
 });
 
-test("| regex field: suggests column after FIELD keyword", () => {
-  // "| regex field " → FIELD at 8-12 (stop=12), fromPosition should be 13
-  const sug = getSuggestions("| regex field ");
+test("| regex field=: suggests column after '=' sign", () => {
+  // "| regex field=" → '=' at 13 (stop=13), fromPosition should be 14
+  const sug = getSuggestions("| regex field=");
   expect(types(sug)).toContain("column");
   const col = sug.find((s) => s.type === "column")!;
-  expect(col.fromPosition).toBe(13);
+  expect(col.fromPosition).toBe(14);
 });
 
 // ─── unpack ───────────────────────────────────────────────────────────────────
@@ -229,4 +238,72 @@ test("| table asd t: pipeline keywords not suggested at column position", () => 
   expect(allPipelineKw.length).toBe(1);
   expect(allPipelineKw[0].toPosition).toBeDefined();
   expect(allPipelineKw[0].toPosition!).toBeLessThanOrEqual(6);
+});
+
+// ─── by clause (stats / timechart) ───────────────────────────────────────────
+
+test("| stats count(col) by: suggests column after by keyword", () => {
+  // "| stats count(col) by " → BY at 19-20 (stop=20), fromPosition=21
+  const sug = getSuggestions("| stats count(col) by ");
+  expect(types(sug)).toContain("column");
+  const col = sug.find((s) => s.type === "column" && s.fromPosition === 21);
+  expect(col).toBeDefined();
+});
+
+test("| stats count(col) by t: no 'by' keyword (already typed)", () => {
+  const sug = getSuggestions("| stats count(col) by t");
+  const byKw = sug.find(
+    (s) => s.type === "keywords" && (s as any).keywords?.includes("by"),
+  );
+  expect(byKw).toBeUndefined();
+});
+
+test("| stats count(col) by t, : suggests column after comma in groupby", () => {
+  const sug = getSuggestions("| stats count(col) by t, ");
+  const colAfterComma = sug.filter(
+    (s) => s.type === "column" && s.fromPosition > 21,
+  );
+  expect(colAfterComma.length).toBeGreaterThan(0);
+});
+
+// ─── sort asc/desc ────────────────────────────────────────────────────────────
+
+test("| sort col: suggests asc and desc after column name", () => {
+  // "| sort col " → col at 7-9 (stop=9), fromPosition=10
+  const sug = getSuggestions("| sort col ");
+  const kw = sug.find(
+    (s) => s.type === "keywords" && (s as any).keywords?.includes("asc"),
+  ) as Extract<SuggestionData, { type: "keywords" }> | undefined;
+  expect(kw).toBeDefined();
+  expect(kw!.keywords).toContain("desc");
+  expect(kw!.fromPosition).toBe(10);
+});
+
+test("| sort col asc: no asc/desc once direction is already typed", () => {
+  const sug = getSuggestions("| sort col asc ");
+  const kw = sug.find(
+    (s) => s.type === "keywords" && (s as any).keywords?.includes("asc"),
+  );
+  expect(kw).toBeUndefined();
+});
+
+// ─── where comparison RHS ─────────────────────────────────────────────────────
+
+test("| where col == : suggests column for RHS", () => {
+  // "| where col == " → == at 12-13 (stop=13), fromPosition=14
+  const sug = getSuggestions("| where col == ");
+  const col = sug.find((s) => s.type === "column" && s.fromPosition === 14);
+  expect(col).toBeDefined();
+});
+
+// ─── eval RHS ─────────────────────────────────────────────────────────────────
+
+test("| eval x = : suggests column and booleanFunction for RHS", () => {
+  // "| eval x = " → = at 9 (stop=9), fromPosition=10
+  const sug = getSuggestions("| eval x = ");
+  const t = types(sug);
+  expect(t).toContain("column");
+  expect(t).toContain("booleanFunction");
+  const col = sug.find((s) => s.type === "column" && s.fromPosition === 10);
+  expect(col).toBeDefined();
 });

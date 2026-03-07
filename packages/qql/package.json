@@ -29,8 +29,8 @@
     "dist"
   ],
   "scripts": {
-    "generate": "antlr4ng -Dlanguage=TypeScript -visitor -no-listener -o src/generated src/QQL.g4",
-    "build": "antlr4ng -Dlanguage=TypeScript -visitor -no-listener -o src/generated src/QQL.g4 && tsc --project tsconfig.json",
+    "generate": "bash scripts/generate.sh",
+    "build": "bash scripts/generate.sh && tsc --project tsconfig.json",
     "test": "vitest run",
     "format": "oxfmt src/",
     "format:check": "oxfmt --check src/",

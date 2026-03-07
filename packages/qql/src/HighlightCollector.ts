@@ -4,7 +4,7 @@
 
 import { AbstractParseTreeVisitor, ParserRuleContext, TerminalNode } from "antlr4ng";
 import type { HighlightData, HighlightType } from "./types";
-import * as Parser from "./generated/src/QQLParser";
+import * as Parser from "./generated/QQL";
 
 const KEYWORDS = new Set([
   "table",
@@ -20,7 +20,6 @@ const KEYWORDS = new Set([
   "span",
   "timeCol",
   "maxGroups",
-  "field",
   "asc",
   "desc",
   "in",
@@ -28,7 +27,6 @@ const KEYWORDS = new Set([
   "false",
   "if",
   "case",
-  "else",
   "and",
   "or",
 ]);
@@ -72,7 +70,7 @@ export class HighlightCollector extends AbstractParseTreeVisitor<void> {
     // Skip error-recovery synthetic tokens (ANTLR4 produces stop < start for missing tokens)
     if (stop !== undefined && stop < start) return;
     const text = ctx.getText();
-    const type: HighlightType = text.startsWith('"') || text.startsWith("'") ? "string" : "column";
+    const type: HighlightType = text.startsWith('"') ? "string" : "column";
     this.addHighlight(type, start, stop);
   }
 
@@ -136,6 +134,13 @@ export class HighlightCollector extends AbstractParseTreeVisitor<void> {
       const sym = id.getSymbol()!;
       if (sym) {
         this.addHighlight("identifier", sym.start ?? 0, sym.stop);
+      }
+    }
+
+    for (const float of ctx.FLOAT()) {
+      const sym = float.getSymbol()!;
+      if (sym) {
+        this.addHighlight("number", sym.start ?? 0, sym.stop);
       }
     }
 
@@ -302,7 +307,11 @@ export class HighlightCollector extends AbstractParseTreeVisitor<void> {
   visitRegexCmd = (ctx: Parser.RegexCmdContext) => {
     this.highlightTerminal(ctx.REGEX(), "keyword");
     this.highlightTerminal(ctx.FIELD(), "keyword");
-    this.visitChildren(ctx);
+    this.highlightTerminal(ctx.EQUAL(), "operator");
+    const identCtx = ctx.identifierOrString();
+    if (identCtx) this.highlightIdOrStr(identCtx);
+    const regexLitCtx = ctx.regexLiteral();
+    if (regexLitCtx) this.visitRegexLiteral(regexLitCtx);
   };
 
   visitTimechartCmd = (ctx: Parser.TimechartCmdContext) => {
@@ -528,6 +537,12 @@ export class HighlightCollector extends AbstractParseTreeVisitor<void> {
   };
 
   visitFactor = (ctx: Parser.FactorContext) => {
+    const floatToken = ctx.FLOAT();
+    if (floatToken) {
+      const sym = floatToken.getSymbol();
+      if (sym) this.addHighlight("number", sym.start ?? 0, sym.stop);
+      return;
+    }
     const intToken = ctx.INTEGER();
     if (intToken) {
       const sym = intToken.getSymbol();

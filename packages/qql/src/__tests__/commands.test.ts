@@ -210,8 +210,8 @@ test("support for stats group by", () => {
   });
 });
 
-test("support for regex command", () => {
-  expect(parse("hello world | regex field `test.+`")).toMatchObject({
+test("support for regex command (no column)", () => {
+  expect(parse("hello world | regex `test.+`")).toMatchObject({
     type: "query",
     dataSources: [],
     controllerParams: [],
@@ -225,7 +225,7 @@ test("support for regex command", () => {
     pipeline: [
       {
         type: "regex",
-        field: "field",
+        columnSelected: undefined,
         pattern: {
           type: "regex",
           pattern: "test.+",
@@ -236,7 +236,7 @@ test("support for regex command", () => {
 });
 
 test("support for regex - escaping", () => {
-  expect(parse("hello world | regex field `test\\`escaped`")).toMatchObject({
+  expect(parse("hello world | regex `test\\`escaped`")).toMatchObject({
     type: "query",
     dataSources: [],
     controllerParams: [],
@@ -250,7 +250,7 @@ test("support for regex - escaping", () => {
     pipeline: [
       {
         type: "regex",
-        field: "field",
+        columnSelected: undefined,
         pattern: {
           type: "regex",
           pattern: "test`escaped",
@@ -260,8 +260,8 @@ test("support for regex - escaping", () => {
   });
 });
 
-test("support for regex command with column", () => {
-  expect(parse("hello world | regex field `^[0-9]+$`")).toMatchObject({
+test("support for regex command with field= column specifier", () => {
+  expect(parse("hello world | regex field=message `^[0-9]+$`")).toMatchObject({
     type: "query",
     dataSources: [],
     controllerParams: [],
@@ -275,7 +275,7 @@ test("support for regex command with column", () => {
     pipeline: [
       {
         type: "regex",
-        field: "field",
+        columnSelected: "message",
         pattern: {
           type: "regex",
           pattern: "^[0-9]+$",
@@ -477,6 +477,63 @@ test("support timechart timeCol param", () => {
         },
       ],
     });
+});
+
+test("regex command with field= and quoted column", () => {
+  expect(parse('hello world | regex field="my.field" `^ERROR`')).toMatchObject({
+    pipeline: [
+      {
+        type: "regex",
+        columnSelected: "my.field",
+        pattern: { type: "regex", pattern: "^ERROR" },
+      },
+    ],
+  });
+});
+
+test("regex command with field= and dot-notation column", () => {
+  expect(parse("hello world | regex field=kubernetes.pod_name `^web`")).toMatchObject({
+    pipeline: [
+      {
+        type: "regex",
+        columnSelected: "kubernetes.pod_name",
+        pattern: { type: "regex", pattern: "^web" },
+      },
+    ],
+  });
+});
+
+test("table command with dot-notation column", () => {
+  expect(parse("hello world | table kubernetes.pod_name")).toMatchObject({
+    pipeline: [
+      {
+        type: "table",
+        columns: [{ column: "kubernetes.pod_name", alias: undefined }],
+      },
+    ],
+  });
+});
+
+test("where command with FLOAT comparison", () => {
+  expect(parse("hello world | where score == 3.14")).toMatchObject({
+    pipeline: [
+      {
+        type: "where",
+        expression: {
+          type: "logicalExpression",
+          left: {
+            type: "unitExpression",
+            value: {
+              type: "comparisonExpression",
+              left: { type: "columnRef", columnName: "score" },
+              operator: "==",
+              right: { type: "float", value: 3.14 },
+            },
+          },
+        },
+      },
+    ],
+  });
 });
 
 test("support timechart group by", () => {

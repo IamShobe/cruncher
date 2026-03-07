@@ -1,6 +1,6 @@
 import styled from "@emotion/styled";
 import { token } from "../system";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { AutoCompleter, Suggestion } from "./AutoCompleter";
@@ -60,6 +60,78 @@ const EditorWrapper = styled.div`
     --focus-ring-color: var(--chakra-colors-color-palette-focus-ring);
   }
 `;
+
+const TokenTooltipPopup = styled.div`
+  position: fixed;
+  background-color: ${token("colors.bg")};
+  border: 1px solid ${token("colors.border")};
+  border-radius: ${token("radii.md")};
+  padding: ${token("spacing.2")} ${token("spacing.3")};
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  pointer-events: none;
+  z-index: 1001;
+  max-width: 240px;
+`;
+
+const TokenTooltipType = styled.div`
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: ${token("colors.fg.muted")};
+`;
+
+const TokenTooltipDescription = styled.div`
+  font-size: 0.8rem;
+  color: ${token("colors.fg")};
+  margin-top: ${token("spacing.1")};
+`;
+
+type TooltipContent = { label: string; description: string };
+
+const getTooltipContent = (type: string, metadata?: string): TooltipContent | null => {
+  switch (type) {
+    case "keyword":
+      return { label: "Keyword", description: "QQL language keyword" };
+    case "column":
+      return { label: "Column", description: "Reference to a field or column" };
+    case "string":
+      return { label: "String", description: "String literal value" };
+    case "function":
+      return { label: "Function", description: "Aggregation or transformation function" };
+    case "booleanFunction":
+      return { label: "Boolean Function", description: "Function returning a boolean" };
+    case "number":
+      return { label: "Number", description: "Numeric literal value" };
+    case "operator":
+      return { label: "Operator", description: "Comparison or logical operator" };
+    case "regex":
+      return { label: "Regex", description: "Regular expression pattern" };
+    case "error":
+      return { label: "Syntax Error", description: metadata ?? "Unexpected token" };
+    case "param":
+      return { label: "Parameter", description: "Query parameter name" };
+    case "index":
+      return { label: "Index Value", description: "Parameter or index value" };
+    case "pipe":
+      return { label: "Pipeline", description: "Separates pipeline commands" };
+    case "datasource":
+      return { label: "Datasource", description: "Data source selector" };
+    case "identifier":
+      return { label: "Identifier", description: "Field or token identifier" };
+    case "comment":
+      return { label: "Comment", description: "Ignored by the parser" };
+    default:
+      return null;
+  }
+};
+
+type HoveredToken = {
+  type: string;
+  metadata?: string;
+  tokenCenterX: number;
+  tokenBottom: number;
+};
 
 const TextareaCustom = styled.textarea`
   color: transparent;
@@ -128,6 +200,52 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
 
     const [cursorPosition, setCursorPosition] = useState(value.length);
     const [isCompleterOpen, setIsCompleterOpen] = useState(false);
+    const [hoveredToken, setHoveredToken] = useState<HoveredToken | null>(null);
+    const tooltipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    const handleMouseMove = useCallback(
+      (e: React.MouseEvent<HTMLTextAreaElement>) => {
+        if (!preElement.current) {
+          setHoveredToken(null);
+          return;
+        }
+        const { clientX, clientY } = e;
+        const spans =
+          preElement.current.querySelectorAll<HTMLElement>(
+            "span[data-token-type]",
+          );
+        for (const span of spans) {
+          const rect = span.getBoundingClientRect();
+          if (
+            clientX >= rect.left &&
+            clientX <= rect.right &&
+            clientY >= rect.top &&
+            clientY <= rect.bottom
+          ) {
+            const type = span.dataset.tokenType!;
+            const metadata = span.dataset.tokenMeta;
+            if (tooltipTimerRef.current) clearTimeout(tooltipTimerRef.current);
+            tooltipTimerRef.current = setTimeout(() => {
+              setHoveredToken({
+                type,
+                metadata,
+                tokenCenterX: rect.left + rect.width / 2,
+                tokenBottom: rect.bottom,
+              });
+            }, 400);
+            return;
+          }
+        }
+        if (tooltipTimerRef.current) clearTimeout(tooltipTimerRef.current);
+        setHoveredToken(null);
+      },
+      [],
+    );
+
+    const handleMouseLeave = useCallback(() => {
+      if (tooltipTimerRef.current) clearTimeout(tooltipTimerRef.current);
+      setHoveredToken(null);
+    }, []);
 
     const [hoveredCompletionItem, setHoveredCompletionItem] =
       useState<number>(0);
@@ -273,6 +391,8 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
 
             setCursorPosition(e.currentTarget.selectionStart);
           }}
+          onMouseMove={handleMouseMove}
+          onMouseLeave={handleMouseLeave}
           onInput={() => {
             syncScroll();
           }}
@@ -315,6 +435,28 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
             </div>,
             popperRoot,
           )}
+        {hoveredToken &&
+          popperRoot &&
+          (() => {
+            const content = getTooltipContent(
+              hoveredToken.type,
+              hoveredToken.metadata,
+            );
+            if (!content) return null;
+            return createPortal(
+              <TokenTooltipPopup
+                style={{
+                  left: hoveredToken.tokenCenterX,
+                  top: hoveredToken.tokenBottom + 4,
+                  transform: "translateX(-50%)",
+                }}
+              >
+                <TokenTooltipType>{content.label}</TokenTooltipType>
+                <TokenTooltipDescription>{content.description}</TokenTooltipDescription>
+              </TokenTooltipPopup>,
+              popperRoot,
+            );
+          })()}
       </EditorWrapper>
     );
   },

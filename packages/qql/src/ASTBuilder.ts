@@ -33,6 +33,7 @@ import type {
   FunctionExpression,
   InArrayExpression,
   LiteralBoolean,
+  LiteralFloat,
   LiteralNumber,
   LiteralString,
   LogicalExpression,
@@ -48,7 +49,7 @@ import type {
   TableColumn,
   UnitExpression,
 } from "./types";
-import * as Parser from "./generated/src/QQLParser";
+import * as Parser from "./generated/QQL";
 
 /**
  * Helper function to convert child context to string value
@@ -235,10 +236,12 @@ export class ASTBuilder extends AbstractParseTreeVisitor<any> {
     const tokens: (string | number)[] = [];
 
     const ids = ctx.IDENTIFIER();
+    const floats = ctx.FLOAT();
     const ints = ctx.INTEGER();
     const litStrs = ctx.literalString();
 
     let idIdx = 0;
+    let floatIdx = 0;
     let intIdx = 0;
     let strIdx = 0;
 
@@ -257,6 +260,9 @@ export class ASTBuilder extends AbstractParseTreeVisitor<any> {
       if (ids && idIdx < ids.length && ids[idIdx].getText() === childText) {
         tokens.push(ids[idIdx].getText());
         idIdx++;
+      } else if (floats && floatIdx < floats.length && floats[floatIdx].getText() === childText) {
+        tokens.push(parseFloat(floats[floatIdx].getText()));
+        floatIdx++;
       } else if (ints && intIdx < ints.length && ints[intIdx].getText() === childText) {
         tokens.push(parseInt(ints[intIdx].getText(), 10));
         intIdx++;
@@ -428,18 +434,15 @@ export class ASTBuilder extends AbstractParseTreeVisitor<any> {
   };
 
   visitRegexCmd = (ctx: Parser.RegexCmdContext) => {
-    const field = "field";
+    // Syntax: REGEX (FIELD EQUAL identifierOrString)? regexLiteral
+    const identCtx = ctx.identifierOrString();
+    const columnSelected = identCtx ? extractIdentifierValue(identCtx) : undefined;
     const regexLiteralCtx = ctx.regexLiteral();
     if (!regexLiteralCtx) {
-      return { type: "regex" as const, field, pattern: null as any };
+      return { type: "regex" as const, columnSelected, pattern: null as any };
     }
     const pattern = this.visitRegexLiteral(regexLiteralCtx);
-
-    return {
-      type: "regex" as const,
-      field,
-      pattern,
-    };
+    return { type: "regex" as const, columnSelected, pattern };
   };
 
   visitTimechartCmd = (ctx: Parser.TimechartCmdContext) => {
@@ -769,6 +772,12 @@ export class ASTBuilder extends AbstractParseTreeVisitor<any> {
   visitFactor = (ctx: Parser.FactorContext): FactorType => {
     if (ctx.literalString()) {
       return this.visitLiteralString(ctx.literalString()!);
+    } else if (ctx.FLOAT()) {
+      const value = parseFloat(ctx.FLOAT()!.getText());
+      return {
+        type: "float" as const,
+        value,
+      };
     } else if (ctx.INTEGER()) {
       const value = parseInt(ctx.INTEGER()!.getText(), 10);
       return {
