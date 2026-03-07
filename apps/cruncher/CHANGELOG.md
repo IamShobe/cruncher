@@ -1,3 +1,21 @@
+## 1.8.0
+
+### Minor Changes
+
+- [`c46201a`](https://github.com/IamShobe/cruncher/commit/c46201a76b728383513c7e919432a63e3aa0a7ed) Thanks [@IamShobe](https://github.com/IamShobe)! - Add multi-theme support (Midnight, Nord, Dracula, Catppuccin Mocha) with theme picker in Settings → General. Theme preference is persisted via localStorage and applied via CSS variable overrides scoped to the shadow DOM.
+
+### Patch Changes
+
+- Updated dependencies [[`111ec6b`](https://github.com/IamShobe/cruncher/commit/111ec6b488abbec0cf95c3b9df9726155edd5dad), [`3cd20aa`](https://github.com/IamShobe/cruncher/commit/3cd20aadc4ac3e9a70f15ed542a78e7a36c58059)]:
+  - @cruncher/adapter-k8s@0.2.0
+  - @cruncher/qql@0.3.1
+  - @cruncher/adapter-coralogix@0.3.1
+  - @cruncher/adapter-docker@0.3.1
+  - @cruncher/adapter-grafana-loki-browser@0.3.1
+  - @cruncher/adapter-loki@0.2.1
+  - @cruncher/adapter-mock@0.3.1
+  - @cruncher/adapter-utils@0.3.1
+
 ## 1.7.1
 
 ### Patch Changes
