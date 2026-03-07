@@ -1,0 +1,189 @@
+---
+title: Themes
+description: Available colour themes and how to configure them in Cruncher.
+---
+import ThemePalette from '../../../components/ThemePalette.astro';
+
+Cruncher ships with four built-in dark colour themes. The active theme is stored in your config file and applied across the entire UI — the editor, log rows, charts, and syntax highlighting all react automatically.
+
+## Setting the Theme
+
+Add (or update) the `ui.theme` key in `~/.config/cruncher/cruncher.config.yaml`:
+
+```yaml
+ui:
+  theme: nord
+```
+
+You can also change the theme at runtime from **Settings → General** without editing the file manually — the selection is written back to the config file immediately.
+
+Restart is **not** required; the change takes effect as soon as you save via the UI.
+
+## Available Themes
+
+### Midnight *(default)*
+
+```yaml
+ui:
+  theme: midnight
+```
+
+A deep blue-black base with indigo accents. Default when `ui.theme` is not set.
+
+<ThemePalette
+  bg="#0d0e14"
+  bgSubtle="#13141f"
+  bgMuted="#1a1b27"
+  bgEmphasized="#21223a"
+  fg="#e2e8f0"
+  fgMuted="#8892a4"
+  fgSubtle="#4a5568"
+  border="#252638"
+  accent="#6366f1"
+  accentMuted="#818cf8"
+  accentSubtle="rgba(99,102,241,0.15)"
+  syntaxKeyword="#a78bfa"
+  syntaxColumn="#34d399"
+  syntaxString="#f87171"
+  syntaxFunction="#c084fc"
+  syntaxBoolean="#fbbf24"
+  syntaxParam="#38bdf8"
+  syntaxComment="#6b7280"
+  logDefault="#2caf00"
+  logError="#b91f1f"
+  logWarn="#ae9e21"
+  highlightMark="#ffe066"
+  highlightMarkText="#1a1b27"
+/>
+
+---
+
+### Nord
+
+```yaml
+ui:
+  theme: nord
+```
+
+Cool Nordic tones inspired by the [Nord colour palette](https://www.nordtheme.com/). Blue-grey backgrounds with a teal/frost accent.
+
+<ThemePalette
+  bg="#2e3440"
+  bgSubtle="#3b4252"
+  bgMuted="#434c5e"
+  bgEmphasized="#4c566a"
+  fg="#eceff4"
+  fgMuted="#d8dee9"
+  fgSubtle="#81a1c1"
+  border="#434c5e"
+  accent="#88c0d0"
+  accentMuted="#81a1c1"
+  accentSubtle="rgba(136,192,208,0.15)"
+  syntaxKeyword="#81a1c1"
+  syntaxColumn="#8fbcbb"
+  syntaxString="#a3be8c"
+  syntaxFunction="#88c0d0"
+  syntaxBoolean="#ebcb8b"
+  syntaxParam="#b48ead"
+  syntaxComment="#616e88"
+  logDefault="#a3be8c"
+  logError="#bf616a"
+  logWarn="#ebcb8b"
+  highlightMark="#ebcb8b"
+  highlightMarkText="#2e3440"
+/>
+
+---
+
+### Dracula
+
+```yaml
+ui:
+  theme: dracula
+```
+
+The classic [Dracula](https://draculatheme.com/) dark theme with a purple accent and vivid syntax colours.
+
+<ThemePalette
+  bg="#282a36"
+  bgSubtle="#343746"
+  bgMuted="#383a4a"
+  bgEmphasized="#44475a"
+  fg="#f8f8f2"
+  fgMuted="#b0b8c5"
+  fgSubtle="#6272a4"
+  border="#44475a"
+  accent="#bd93f9"
+  accentMuted="#cba8fb"
+  accentSubtle="rgba(189,147,249,0.15)"
+  syntaxKeyword="#ff79c6"
+  syntaxColumn="#50fa7b"
+  syntaxString="#f1fa8c"
+  syntaxFunction="#8be9fd"
+  syntaxBoolean="#ffb86c"
+  syntaxParam="#50fa7b"
+  syntaxComment="#6272a4"
+  logDefault="#50fa7b"
+  logError="#ff5555"
+  logWarn="#ffb86c"
+  highlightMark="#f1fa8c"
+  highlightMarkText="#282a36"
+/>
+
+---
+
+### Catppuccin Mocha
+
+```yaml
+ui:
+  theme: catppuccin
+```
+
+Soft pastel dark tones from the [Catppuccin Mocha](https://github.com/catppuccin/catppuccin) palette, with a mauve accent.
+
+<ThemePalette
+  bg="#1e1e2e"
+  bgSubtle="#181825"
+  bgMuted="#313244"
+  bgEmphasized="#45475a"
+  fg="#cdd6f4"
+  fgMuted="#a6adc8"
+  fgSubtle="#7f849c"
+  border="#45475a"
+  accent="#cba6f7"
+  accentMuted="#d0b8ff"
+  accentSubtle="rgba(203,166,247,0.15)"
+  syntaxKeyword="#cba6f7"
+  syntaxColumn="#89dceb"
+  syntaxString="#a6e3a1"
+  syntaxFunction="#89b4fa"
+  syntaxBoolean="#fab387"
+  syntaxParam="#f38ba8"
+  syntaxComment="#6c7086"
+  logDefault="#a6e3a1"
+  logError="#f38ba8"
+  logWarn="#fab387"
+  highlightMark="#f9e2af"
+  highlightMarkText="#1e1e2e"
+/>
+
+---
+
+## Full Example Config
+
+```yaml
+ui:
+  theme: catppuccin
+
+profiles:
+  default:
+    connectors: [main]
+
+connectors:
+  - type: grafana_browser
+    name: main
+    params:
+      grafanaUrl: https://grafana.example.com
+      uid: my-loki-uid
+```
+

@@ -55,6 +55,21 @@ Cruncher supports the concept of profiles, allowing you to define multiple sets 
 - The `default` profile is used automatically when starting Cruncher.
 - You can switch profiles to quickly inside the Cruncher platform.
 
+## UI Settings
+
+The optional `ui` section controls appearance preferences:
+
+```yaml
+ui:
+  theme: nord   # midnight | nord | dracula | catppuccin
+```
+
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+| `theme` | string | `midnight` | The colour theme used across the entire UI. |
+
+See the [Themes documentation](/getting-started/06-themes) for a full description of each theme.
+
 <Aside type="tip">
 - Use profiles to easily switch between production, development, or test data sources without editing your main config file each time.
 - You can define multiple connectors in the same config file.

@@ -6,7 +6,7 @@ import YAML from "yaml";
 import { PluginRef } from "@cruncher/adapter-utils";
 import z from "zod/v4";
 import { getConfigDirPath } from "~lib/config";
-import { resolve } from "node:path";
+import { resolve, dirname } from "node:path";
 
 const configFilePath = "cruncher.config.yaml";
 
@@ -15,10 +15,12 @@ const defaultConfigFilePath = resolve(getConfigDirPath(), configFilePath);
 
 export type AppGeneralSettings = {
   configFilePath: string;
+  theme: string;
 };
 
 export const appGeneralSettings: AppGeneralSettings = {
   configFilePath: defaultConfigFilePath,
+  theme: "midnight",
 };
 
 export const readConfig = (
@@ -53,6 +55,16 @@ export const readConfig = (
   }
 
   return validated.data;
+};
+
+export const writeConfig = (
+  appGeneralSettings: AppGeneralSettings,
+  updater: (config: CruncherConfig) => CruncherConfig,
+): void => {
+  const current = readConfig(appGeneralSettings);
+  const updated = updater(current);
+  fs.mkdirSync(dirname(appGeneralSettings.configFilePath), { recursive: true });
+  fs.writeFileSync(appGeneralSettings.configFilePath, YAML.stringify(updated), "utf8");
 };
 
 export const setupPluginsFromConfig = (

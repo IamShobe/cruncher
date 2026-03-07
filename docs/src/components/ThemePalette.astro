@@ -1,0 +1,117 @@
+---
+import ColorSwatch from './ColorSwatch.astro';
+type SwatchEntry = { label: string; color: string };
+
+type Props = {
+  bg: string;
+  bgSubtle: string;
+  bgMuted: string;
+  bgEmphasized: string;
+  fg: string;
+  fgMuted: string;
+  fgSubtle: string;
+  border: string;
+  accent: string;
+  accentMuted: string;
+  accentSubtle: string;
+  syntaxKeyword: string;
+  syntaxColumn: string;
+  syntaxString: string;
+  syntaxFunction: string;
+  syntaxBoolean: string;
+  syntaxParam: string;
+  syntaxComment: string;
+  logDefault: string;
+  logError: string;
+  logWarn: string;
+  highlightMark: string;
+  highlightMarkText: string;
+};
+
+const p = Astro.props;
+
+const groups: { title: string; swatches: SwatchEntry[] }[] = [
+  {
+    title: "Surfaces",
+    swatches: [
+      { label: "bg",              color: p.bg },
+      { label: "bg.subtle",       color: p.bgSubtle },
+      { label: "bg.muted",        color: p.bgMuted },
+      { label: "bg.emphasized",   color: p.bgEmphasized },
+      { label: "fg",              color: p.fg },
+      { label: "fg.muted",        color: p.fgMuted },
+      { label: "fg.subtle",       color: p.fgSubtle },
+      { label: "border",          color: p.border },
+      { label: "accent",          color: p.accent },
+      { label: "accent.muted",    color: p.accentMuted },
+      { label: "accent.subtle",   color: p.accentSubtle },
+    ],
+  },
+  {
+    title: "Syntax",
+    swatches: [
+      { label: "keyword",  color: p.syntaxKeyword },
+      { label: "column",   color: p.syntaxColumn },
+      { label: "string",   color: p.syntaxString },
+      { label: "function", color: p.syntaxFunction },
+      { label: "boolean",  color: p.syntaxBoolean },
+      { label: "param",    color: p.syntaxParam },
+      { label: "comment",  color: p.syntaxComment },
+    ],
+  },
+  {
+    title: "Log levels",
+    swatches: [
+      { label: "default", color: p.logDefault },
+      { label: "error",   color: p.logError },
+      { label: "warn",    color: p.logWarn },
+    ],
+  },
+  {
+    title: "Search highlight",
+    swatches: [
+      { label: "mark",      color: p.highlightMark },
+      { label: "mark text", color: p.highlightMarkText },
+    ],
+  },
+];
+---
+
+<div class="palette">
+  {groups.map((group) => (
+    <div class="group">
+      <div class="group-title">{group.title}</div>
+      <div class="swatches">
+        {group.swatches.map((s) => (
+          <ColorSwatch color={s.color} label={s.label} />
+        ))}
+      </div>
+    </div>
+  ))}
+</div>
+
+<style>
+  .palette {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem 2rem;
+    margin: 0;
+    align-items: flex-start;
+  }
+  .group {
+    margin: 0;
+  }
+  .group-title {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--sl-color-gray-3);
+    margin: 0 0 0.35rem;
+  }
+  .swatches {
+    display: flex;
+    flex-direction: row;
+    gap: 3px;
+  }
+</style>

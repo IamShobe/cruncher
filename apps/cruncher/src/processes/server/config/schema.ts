@@ -20,10 +20,20 @@ export const CruncherLokiConfigSchema = z.object({
 
 export type CruncherLokiConfig = z.infer<typeof CruncherLokiConfigSchema>;
 
+export const UIConfigSchema = z.object({
+  theme: z
+    .enum(["midnight", "nord", "dracula", "catppuccin"])
+    .optional()
+    .default("midnight"),
+});
+
+export type UIConfig = z.infer<typeof UIConfigSchema>;
+
 export const CruncherConfigSchema = z.object({
   loki: CruncherLokiConfigSchema.optional(), // Optional Loki configuration
   profiles: ProfilesSchema.optional(),
   connectors: z.array(ConnectorConfigSchema),
+  ui: UIConfigSchema.optional(),
 });
 
 export type CruncherConfig = z.infer<typeof CruncherConfigSchema>;

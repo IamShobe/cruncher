@@ -6,7 +6,7 @@ import {
   TaskRef,
 } from "../engineV2/types";
 import z from "zod/v4";
-import { appGeneralSettings, setupPluginsFromConfig } from "./config";
+import { appGeneralSettings, setupPluginsFromConfig, writeConfig, readConfig } from "./config";
 import { QueryBatchDone, QueryJobUpdated, UrlNavigation } from "./protocolOut";
 import { publicProcedure, router } from "./trpc";
 
@@ -141,8 +141,25 @@ export const appRouter = router({
       console.log(`Hello, ${input.name}!`);
     }),
   getGeneralSettings: publicProcedure.query(async () => {
-    return appGeneralSettings;
+    const config = readConfig(appGeneralSettings);
+    return {
+      ...appGeneralSettings,
+      theme: config.ui?.theme ?? "midnight",
+    };
   }),
+  setTheme: publicProcedure
+    .input(
+      z.object({
+        theme: z.enum(["midnight", "nord", "dracula", "catppuccin"]),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      writeConfig(appGeneralSettings, (config) => ({
+        ...config,
+        ui: { ...config.ui, theme: input.theme },
+      }));
+      return { success: true };
+    }),
   exportTableResults: publicProcedure
     .input(
       z.object({

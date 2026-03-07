@@ -145,6 +145,7 @@ export const Searcher: React.FC<SearcherProps> = () => {
           flex={1}
           display={"flex"}
           flexDirection={"column"}
+          p={0}
         >
           <EventsHistogram />
           <DataLog />
@@ -155,10 +156,11 @@ export const Searcher: React.FC<SearcherProps> = () => {
           flex={1}
           display={"flex"}
           flexDirection={"column"}
+          p={0}
         >
           {hasTableView && <TableView />}
         </Tabs.Content>
-        <Tabs.Content value="view" minH="0" flex={1} overflow={"auto"}>
+        <Tabs.Content value="view" minH="0" flex={1} overflow={"auto"} p={0}>
           <ViewChart />
         </Tabs.Content>
       </Tabs.Root>

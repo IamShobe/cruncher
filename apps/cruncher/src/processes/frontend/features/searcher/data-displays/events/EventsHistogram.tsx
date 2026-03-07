@@ -117,6 +117,7 @@ export const EventsHistogram = () => {
             content={
               <CustomTooltip leftArea={refAreaLeft} rightArea={refAreaRight} />
             }
+            cursor={{ fill: token("colors.bg.emphasized"), opacity: 0.5 }}
           />
           <Bar
             yAxisId="1"
@@ -142,7 +143,10 @@ export const EventsHistogram = () => {
               yAxisId="1"
               x1={refAreaLeft}
               x2={refAreaRight}
-              strokeOpacity={0.3}
+              fill={token("colors.accent")}
+              stroke={token("colors.accent.muted")}
+              fillOpacity={0.15}
+              strokeOpacity={0.4}
             />
           ) : null}
         </BarChart>

@@ -50,6 +50,12 @@ export class ApiController {
     return await this.connection.getGeneralSettings.query();
   };
 
+  setTheme = async (theme: string) => {
+    return await this.connection.setTheme.mutate({
+      theme: theme as "midnight" | "nord" | "dracula" | "catppuccin",
+    });
+  };
+
   getControllerParams = async (
     pluginInstanceRef: InstanceRef,
   ): Promise<Record<string, string[]>> => {
