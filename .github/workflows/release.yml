@@ -52,6 +52,7 @@ jobs:
           publish: pnpm run changeset-publish
           commit: "chore(release): version packages"
           title: "chore(release): version packages"
+          createGithubReleases: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Empty string (not omitted) lets npm fall back to OIDC trusted publishing.
