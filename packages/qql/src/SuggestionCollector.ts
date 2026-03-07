@@ -201,8 +201,34 @@ export class SuggestionCollector extends AbstractParseTreeVisitor<void> {
   };
 
   visitTableCmd = (ctx: any) => {
-    const pos = this.getNextTokenPosition(ctx.TABLE?.());
-    this.addSuggestion({ type: "column", fromPosition: pos, disabled: false });
+    const tableKwPos = this.getNextTokenPosition(ctx.TABLE?.());
+    this.addSuggestion({ type: "column", fromPosition: tableKwPos, disabled: false });
+
+    const tableColumns: any[] = ctx.tableColumn?.() || [];
+    const commas: any[] = ctx.COMMA?.() || [];
+
+    for (let i = 0; i < tableColumns.length; i++) {
+      const colCtx = tableColumns[i];
+      const hasAs = !!colCtx.AS?.();
+      const idOrStrings = colCtx.identifierOrString?.() || [];
+
+      // After the column name, suggest "as" if no alias has been typed yet.
+      // Stop at the next comma so "as" doesn't bleed into the next column entry.
+      // Guard against error-recovered phantom tokens (their position won't be
+      // past the TABLE keyword) so "as" is never suggested on a bare `| table`.
+      if (idOrStrings.length > 0 && !hasAs) {
+        const afterColumnPos = this.getNextTokenPosition(idOrStrings[0]);
+        if (afterColumnPos <= tableKwPos) continue;
+        const nextCommaStart: number | undefined = commas[i]?.getSymbol?.()?.start;
+        this.addSuggestion({
+          type: "keywords",
+          keywords: ["as"],
+          fromPosition: afterColumnPos,
+          toPosition: nextCommaStart,
+          disabled: false,
+        });
+      }
+    }
   };
 
   visitStatsCmd = (ctx: any) => {

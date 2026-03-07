@@ -83,9 +83,17 @@ export type TableColumn = {
   alias: string | undefined;
 };
 
-export type AggregationFunction = {
+// Argument inside an aggregation function. May be a plain field name
+// (e.g. `avg(latency)`) or a single-level nested function call (e.g. `avg(abs(latency))`).
+export type AggFunctionArg = {
   function: string;
   column: string | undefined;
+};
+
+export type AggregationFunction = {
+  function: string;
+  column: string | undefined;          // plain field name arg, e.g. `avg(latency)`
+  columnExpression: AggFunctionArg | undefined; // nested function arg, e.g. `avg(abs(latency))`
   alias: string | undefined;
 };
 
@@ -114,7 +122,8 @@ export type UnitExpression = {
     | ComparisonExpression
     | NotExpression
     | FunctionExpression
-    | LogicalExpression;
+    | LogicalExpression
+    | FactorType; // bare factor used as a truthy boolean, e.g. `if(field, ...)`
 };
 
 export type FunctionArg =
@@ -176,7 +185,8 @@ export type FactorType =
   | LiteralBoolean
   | LiteralNumber
   | LiteralFloat
-  | ColumnRef;
+  | ColumnRef
+  | FunctionExpression; // e.g. lower(x) used as a comparison operand
 
 export type ComparisonExpression = {
   type: "comparisonExpression";

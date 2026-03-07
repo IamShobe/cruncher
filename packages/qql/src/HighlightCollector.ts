@@ -215,10 +215,19 @@ export class HighlightCollector extends AbstractParseTreeVisitor<void> {
     if (idOrStrs.length > 0) {
       // First identifierOrString is the function name
       this.addHighlight("function", this.ctxStart(idOrStrs[0]), this.ctxStop(idOrStrs[0]));
+    }
 
-      // Second (if exists) is the column argument
-      if (idOrStrs.length > 1) {
-        this.highlightIdOrStr(idOrStrs[1]);
+    // Column argument is now inside the aggFunctionArg sub-rule
+    const aggArg = ctx.aggFunctionArg?.();
+    if (aggArg) {
+      const argIds = aggArg.identifierOrString();
+      if (argIds.length > 0) {
+        // First id is the column name (or inner function name if nested)
+        this.highlightIdOrStr(argIds[0]);
+      }
+      if (aggArg.LPAREN?.() && argIds.length > 1) {
+        // Nested function: highlight the inner column arg too
+        this.highlightIdOrStr(argIds[1]);
       }
     }
 

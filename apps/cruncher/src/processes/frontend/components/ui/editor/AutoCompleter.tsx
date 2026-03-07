@@ -1,14 +1,12 @@
-import { Card } from "@chakra-ui/react";
-import { css } from "@emotion/react";
-import { token } from "../system";
+import { Badge, Box, Card, HStack, Icon, Text } from "@chakra-ui/react";
 import { useEffect, useRef } from "react";
-import { AiOutlineFunction } from "react-icons/ai";
 import {
-  VscSymbolKeyword,
-  VscSymbolNamespace,
-  VscSymbolParameter,
-  VscSymbolVariable,
-} from "react-icons/vsc";
+  LuCode,
+  LuSettings2,
+  LuSquareFunction,
+  LuTag,
+  LuWrench,
+} from "react-icons/lu";
 
 export type Suggestion = {
   type: "keyword" | "function" | "variable" | "param" | "controllerParam";
@@ -36,95 +34,81 @@ export type AutoCompleterProps = {
   hoveredItem?: number;
 };
 
-const SUGGESTION_COLOR: Record<Suggestion["type"], string> = {
-  keyword: token("colors.syntax.keyword"),
-  function: token("colors.syntax.function"),
-  variable: token("colors.syntax.column"),
-  param: token("colors.syntax.param"),
-  controllerParam: token("colors.syntax.param"),
+type SuggestionMeta = {
+  icon: React.ElementType;
+  colorPalette: string;
+  label: string;
 };
 
-const getSuggestionIcon = (suggestion: Suggestion) => {
-  switch (suggestion.type) {
-    case "keyword":
-      return <VscSymbolKeyword />;
-    case "function":
-      return <AiOutlineFunction />;
-    case "variable":
-      return <VscSymbolVariable />;
-    case "param":
-      return <VscSymbolParameter />;
-    case "controllerParam":
-      return <VscSymbolNamespace />;
-  }
+const SUGGESTION_META: Record<Suggestion["type"], SuggestionMeta> = {
+  keyword:         { icon: LuCode,           colorPalette: "purple", label: "keyword" },
+  function:        { icon: LuSquareFunction,  colorPalette: "blue",   label: "fn" },
+  variable:        { icon: LuTag,             colorPalette: "green",  label: "field" },
+  param:           { icon: LuSettings2,       colorPalette: "orange", label: "param" },
+  controllerParam: { icon: LuWrench,          colorPalette: "orange", label: "param" },
 };
-
 
 export const AutoCompleter = ({
   suggestions,
   hoveredItem,
 }: AutoCompleterProps) => {
   const scrollerRef = useRef<HTMLDivElement>(null);
-  // scroll to hovered item
+
   useEffect(() => {
     if (!scrollerRef.current || hoveredItem === undefined) return;
-
     const element = scrollerRef.current.children[hoveredItem];
     if (!element) return;
-    element.scrollIntoView();
+    element.scrollIntoView({ block: "nearest" });
   }, [hoveredItem]);
 
-  if (suggestions.length === 0) {
-    return null;
-  }
+  if (suggestions.length === 0) return null;
 
   return (
     <Card.Root
-      width="200px"
+      minW="180px"
+      maxW="280px"
       overflow="hidden"
-      zIndex={1}
-      bg="bg.muted"
+      bg="bg"
       borderWidth="1px"
       borderColor="border"
-      color="fg"
+      shadow="lg"
     >
-      <Card.Body
-        ref={scrollerRef}
-        padding="0"
-        fontSize="sm"
-        lineHeight={1}
-        overflow="auto"
-        maxH={100}
-      >
-        {suggestions
-          .map((suggestion, index) => (
-            <span
-              css={css`
-                padding: 0.2rem 0.6rem;
-                display: flex;
-                gap: 5px;
-                ${
-                  hoveredItem === index &&
-                  css`
-                    background-color: ${token("colors.accent.subtle")};
-                    color: ${token("colors.accent.muted")};
-                  `
-                }
-              `}
+      <Box ref={scrollerRef} p="1" overflow="auto" maxH="140px">
+        {suggestions.map((suggestion, index) => {
+          const meta = SUGGESTION_META[suggestion.type];
+          const isActive = hoveredItem === index;
+          return (
+            <HStack
               key={index}
+              px="2"
+              py="1"
+              gap="2"
+              borderRadius="sm"
+              bg={isActive ? "colorPalette.subtle" : "transparent"}
+              colorPalette={isActive ? meta.colorPalette : undefined}
+              align="center"
             >
-              <span
-                css={css`
-                  flex-shrink: 0;
-                  color: ${SUGGESTION_COLOR[suggestion.type]};
-                `}
+              <Icon
+                as={meta.icon}
+                boxSize="3"
+                color={`${meta.colorPalette}.fg`}
+                flexShrink={0}
+              />
+              <Text fontSize="xs" fontFamily="mono" flex={1} truncate lineHeight="1">
+                {suggestion.value}
+              </Text>
+              <Badge
+                size="xs"
+                variant="subtle"
+                colorPalette={meta.colorPalette}
+                flexShrink={0}
               >
-                {getSuggestionIcon(suggestion)}
-              </span>
-              {suggestion.value}
-            </span>
-          ))}
-      </Card.Body>
+                {meta.label}
+              </Badge>
+            </HStack>
+          );
+        })}
+      </Box>
     </Card.Root>
   );
 };

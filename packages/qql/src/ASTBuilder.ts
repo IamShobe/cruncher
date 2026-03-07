@@ -11,6 +11,7 @@ import {
 } from "./helpers";
 import type { QQLParserErrorDetail } from "./types";
 import type {
+  AggFunctionArg,
   AggregationFunction,
   AndExpression,
   CalcAction,
@@ -202,15 +203,28 @@ export class ASTBuilder extends AbstractParseTreeVisitor<QueryNode> {
   };
 
   visitSearchTail = (ctx: Parser.SearchTailContext): SearchAND | SearchOR => {
+    if (ctx.searchFactor()) {
+      // Implicit AND: `(a OR b) moreFactor` — treat trailing factor as implicit AND
+      const factor = this.visitSearchFactor(ctx.searchFactor()!);
+      return {
+        type: "and" as const,
+        right: {
+          type: "search" as const,
+          left: factor,
+          right: undefined,
+        },
+      };
+    }
+    const right = this.visitSearch(ctx.search()!);
     if (ctx.SEARCH_AND()) {
       return {
         type: "and" as const,
-        right: this.visitSearch(ctx.search()),
+        right,
       };
     } else {
       return {
         type: "or" as const,
-        right: this.visitSearch(ctx.search()),
+        right,
       };
     }
   };
@@ -346,28 +360,36 @@ export class ASTBuilder extends AbstractParseTreeVisitor<QueryNode> {
     const hasAs = !!ctx.AS?.();
 
     let columnName: string | undefined;
+    let columnExpression: AggFunctionArg | undefined;
     let alias: string | undefined;
 
-    if (hasParens && hasAs) {
-      if (idOrStrings.length > 2) {
-        // e.g. count(col) as alias — idOrStrings: [func, col, alias]
-        columnName = extractIdentifierValue(idOrStrings[1]);
-        alias = extractIdentifierValue(idOrStrings[2]);
-      } else {
-        // e.g. count() as alias — idOrStrings: [func, alias]
-        alias = idOrStrings.length > 1 ? extractIdentifierValue(idOrStrings[1]) : undefined;
+    if (hasAs) {
+      // Alias is always the last identifierOrString
+      alias = extractIdentifierValue(idOrStrings[idOrStrings.length - 1]);
+    }
+
+    if (hasParens) {
+      const aggArgCtx = ctx.aggFunctionArg?.();
+      if (aggArgCtx) {
+        const argIds = aggArgCtx.identifierOrString();
+        if (aggArgCtx.LPAREN?.()) {
+          // Nested function call: avg(abs(field))
+          columnExpression = {
+            function: extractIdentifierValue(argIds[0]),
+            column: argIds.length > 1 ? extractIdentifierValue(argIds[1]) : undefined,
+          };
+        } else {
+          // Plain field name: avg(field)
+          columnName = extractIdentifierValue(argIds[0]);
+        }
       }
-    } else if (hasParens) {
-      // e.g. count(col) — idOrStrings: [func, col?]
-      columnName = idOrStrings.length > 1 ? extractIdentifierValue(idOrStrings[1]) : undefined;
-    } else if (hasAs) {
-      // e.g. count as alias — idOrStrings: [func, alias]
-      alias = idOrStrings.length > 1 ? extractIdentifierValue(idOrStrings[1]) : undefined;
+      // else: no arg — e.g. count()
     }
 
     return {
       function: functionName,
       column: columnName,
+      columnExpression,
       alias,
     };
   };
@@ -559,6 +581,9 @@ export class ASTBuilder extends AbstractParseTreeVisitor<QueryNode> {
     } else if (ctx.logicalExpression()) {
       // If it's a parenthesized logical expression, visit it directly
       return this.visitLogicalExpression(ctx.logicalExpression()!);
+    } else if (ctx.factor()) {
+      // Bare factor used as a truthy boolean, e.g. `if(boolField, ...)` or `where isActive`
+      return this.visitFactor(ctx.factor()!);
     }
     this.addError("Unknown unit expression type", ctx);
     return { type: "comparisonExpression" as const, left: { type: "columnRef" as const, columnName: "" }, operator: "==", right: { type: "columnRef" as const, columnName: "" } };
@@ -792,6 +817,9 @@ export class ASTBuilder extends AbstractParseTreeVisitor<QueryNode> {
         type: "number" as const,
         value,
       };
+    } else if (ctx.functionExpression()) {
+      // Function call used as a comparison operand, e.g. `lower(x)` in `lower(x) == "error"`
+      return this.visitFunctionExpression(ctx.functionExpression()!);
     } else if (ctx.IDENTIFIER()) {
       return {
         type: "columnRef" as const,

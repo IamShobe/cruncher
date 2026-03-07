@@ -84,6 +84,45 @@ test("| table col: column suggestion still present (for next column)", () => {
   expect(types(getSuggestions("| table col "))).toContain("column");
 });
 
+test("| table (no column yet): does not suggest 'as'", () => {
+  const sug = getSuggestions("| table ");
+  const kw = sug.filter(
+    (s) => s.type === "keywords" && (s as any).keywords?.includes("as"),
+  );
+  expect(kw.length).toBe(0);
+});
+
+test("| table col: suggests 'as' keyword after a column name", () => {
+  const sug = getSuggestions("| table col ");
+  const kw = sug.filter(
+    (s) => s.type === "keywords" && (s as any).keywords?.includes("as"),
+  );
+  expect(kw.length).toBeGreaterThan(0);
+});
+
+test("| table col as alias: does not suggest 'as' when alias already present", () => {
+  const sug = getSuggestions("| table col as alias ");
+  const kw = sug.filter(
+    (s) => s.type === "keywords" && (s as any).keywords?.includes("as"),
+  );
+  expect(kw.length).toBe(0);
+});
+
+test("| table col, col2: 'as' not suggested after comma (only columns)", () => {
+  // Cursor is past the comma — "as" suggestion for col1 should be bounded by the comma
+  const sug = getSuggestions("| table col, col2 ");
+  const kw = sug.filter(
+    (s) => s.type === "keywords" && (s as any).keywords?.includes("as"),
+  ) as Extract<SuggestionData, { type: "keywords" }>[];
+  // Any "as" suggestions should have a toPosition <= the comma's position
+  // so they don't appear when cursor is past the comma
+  const commaPos = "| table col".length; // position of ','
+  for (const k of kw) {
+    expect(k.toPosition).toBeDefined();
+    expect(k.toPosition!).toBeLessThanOrEqual(commaPos);
+  }
+});
+
 // ─── stats ────────────────────────────────────────────────────────────────────
 
 test("| stats: suggests function", () => {

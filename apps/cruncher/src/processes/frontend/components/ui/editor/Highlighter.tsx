@@ -257,7 +257,7 @@ export const getTooltipContent = (type: string, metadata?: string): TooltipConte
     case "identifier":
       return { icon: LuTag, label: "Identifier", description: "A bare word used as a field name or search token." };
     case "comment":
-      return { icon: LuCode2, label: "Comment", description: "Ignored by the parser. Use // to start a comment." };
+      return { icon: LuCode, label: "Comment", description: "Ignored by the parser. Use // to start a comment." };
     default:
       return null;
   }

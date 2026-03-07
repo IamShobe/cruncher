@@ -269,3 +269,50 @@ test("highlight | timechart maxGroups=5 has number token", () => {
   expect(numberHighlight).toBeDefined();
   expect(numberHighlight).toMatchObject({ type: "number", startOffset: 22, endOffset: 22 });
 });
+
+// ─── Comment highlights ───────────────────────────────────────────────────────
+
+test("highlight inline comment after table command", () => {
+  // "| table // this is a comment"
+  //  0123456789012345678901234567
+  const highlights = getHighlights("| table // this is a comment");
+  const commentHighlight = highlights.find((h) => h.type === "comment");
+  expect(commentHighlight).toBeDefined();
+  expect(commentHighlight).toMatchObject({ type: "comment", startOffset: 8, endOffset: 27 });
+});
+
+test("highlight inline comment after table with columns", () => {
+  const highlights = getHighlights("| table col1, col2 // filter columns");
+  expect(highlights.filter((h) => h.type === "comment")).toHaveLength(1);
+  const commentHighlight = highlights.find((h) => h.type === "comment");
+  expect(commentHighlight).toMatchObject({ type: "comment", startOffset: 19, endOffset: 35 });
+});
+
+test("highlight comment in default mode (preamble)", () => {
+  const highlights = getHighlights("// top-level comment");
+  expect(highlights.filter((h) => h.type === "comment")).toHaveLength(1);
+  expect(highlights[0]).toMatchObject({ type: "comment", startOffset: 0, endOffset: 19 });
+});
+
+test("highlight inline comment after where command", () => {
+  const highlights = getHighlights("| where x == 1 // only keep x=1");
+  const commentHighlight = highlights.find((h) => h.type === "comment");
+  expect(commentHighlight).toBeDefined();
+  expect(commentHighlight).toMatchObject({ type: "comment", startOffset: 15, endOffset: 31 });
+});
+
+test("highlight inline comment after sort command", () => {
+  const highlights = getHighlights("| sort ts desc // newest first");
+  const commentHighlight = highlights.find((h) => h.type === "comment");
+  expect(commentHighlight).toBeDefined();
+  expect(commentHighlight?.startOffset).toBe(15);
+});
+
+test("comment highlight does not interfere with other highlights", () => {
+  const highlights = getHighlights("| table col // my comment");
+  const types = highlights.map((h) => h.type);
+  expect(types).toContain("pipe");
+  expect(types).toContain("keyword");
+  expect(types).toContain("column");
+  expect(types).toContain("comment");
+});

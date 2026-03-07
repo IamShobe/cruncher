@@ -252,6 +252,12 @@ if (isDev()) {
 
 const ready = async () => {
   if (!serverProcess) startServerProcess();
+
+  // Register handlers that don't depend on the server immediately
+  ipcMain.handle("openExternal", (_event, url: string) => {
+    shell.openExternal(url);
+  });
+
   console.log("Waiting for server process to be ready...");
   await serverReady;
 
@@ -273,10 +279,6 @@ const ready = async () => {
     } catch {
       return { tag: "unknown", isDev: isDev() };
     }
-  });
-
-  ipcMain.handle("openExternal", (_event, url: string) => {
-    shell.openExternal(url);
   });
 
   createWindow();

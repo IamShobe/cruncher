@@ -135,7 +135,7 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
         position: "fixed",
         left: rect.left + pos.left,
         top: rect.top + pos.top + 20,
-        zIndex: 1000,
+        zIndex: 9999,
       };
     }, [referenceElement, pos]);
 
@@ -252,11 +252,13 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
     const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
     const closeTimerRef = useRef<ReturnType<typeof setTimeout>>();
     const openTimerRef = useRef<ReturnType<typeof setTimeout>>();
+    const lastShiftPressRef = useRef<number>(0);
 
     useEffect(() => () => {
       clearTimeout(closeTimerRef.current);
       clearTimeout(openTimerRef.current);
     }, []);
+
 
     const anchorStyle = useMemo((): CSSProperties => {
       if (!anchorRect) return { position: "fixed", width: 0, height: 0, top: 0, left: 0, pointerEvents: "none", opacity: 0 };
@@ -357,6 +359,52 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
             if (e.key === " " && e.ctrlKey) {
               setIsCompleterOpen(true);
             }
+
+            if (e.key === "Shift") {
+              const now = Date.now();
+              if (now - lastShiftPressRef.current < 500) {
+                lastShiftPressRef.current = 0;
+                e.preventDefault();
+                const cursor = e.currentTarget.selectionStart;
+                // Exact match first; fall back to nearest token to the left,
+                // then nearest token to the right.
+                const sorted = [...highlightData].sort(
+                  (a, b) => a.token.startOffset - b.token.startOffset,
+                );
+                const token =
+                  sorted.find(
+                    (h) =>
+                      cursor >= h.token.startOffset &&
+                      cursor <= (h.token.endOffset ?? h.token.startOffset),
+                  ) ??
+                  [...sorted]
+                    .reverse()
+                    .find((h) => h.token.startOffset < cursor) ??
+                  sorted.find((h) => h.token.startOffset > cursor);
+                if (token) {
+                  const content = getTooltipContent(token.type, token.metadata);
+                  if (content && referenceElement) {
+                    const caretPos = getCaretCoordinates(referenceElement, cursor);
+                    const textareaRect = referenceElement.getBoundingClientRect();
+                    const rect = new DOMRect(
+                      textareaRect.left + caretPos.left - referenceElement.scrollLeft,
+                      textareaRect.top + caretPos.top - referenceElement.scrollTop,
+                      1,
+                      caretPos.height,
+                    );
+                    cancelOpen();
+                    cancelClose();
+                    setAnchorRect(rect);
+                    setTokenContent(content);
+                    setPopoverOpen(true);
+                    closeTimerRef.current = setTimeout(() => setPopoverOpen(false), 8000);
+                  }
+                }
+              } else {
+                lastShiftPressRef.current = now;
+              }
+            }
+
             // if key is Tab - disable default behavior
             if (e.key === "Tab") {
               e.preventDefault();
@@ -458,6 +506,7 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
           onOpenChange={({ open }) => setPopoverOpen(open)}
           positioning={{ placement: "bottom" }}
           closeOnInteractOutside={false}
+          initialFocusEl={() => referenceElement}
           lazyMount
           unmountOnExit
         >

@@ -16,6 +16,7 @@ import { TableCmdContext } from "./QQL.js";
 import { TableColumnContext } from "./QQL.js";
 import { StatsCmdContext } from "./QQL.js";
 import { AggregationFunctionContext } from "./QQL.js";
+import { AggFunctionArgContext } from "./QQL.js";
 import { GroupbyContext } from "./QQL.js";
 import { WhereCmdContext } from "./QQL.js";
 import { SortCmdContext } from "./QQL.js";
@@ -136,6 +137,12 @@ export class QQLVisitor<Result> extends AbstractParseTreeVisitor<Result> {
      * @return the visitor result
      */
     visitAggregationFunction?: (ctx: AggregationFunctionContext) => Result;
+    /**
+     * Visit a parse tree produced by `QQL.aggFunctionArg`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitAggFunctionArg?: (ctx: AggFunctionArgContext) => Result;
     /**
      * Visit a parse tree produced by `QQL.groupby`.
      * @param ctx the parse tree

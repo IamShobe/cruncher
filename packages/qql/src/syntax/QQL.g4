@@ -28,6 +28,7 @@ search
 searchTail
   : SEARCH_AND search
   | SEARCH_OR search
+  | searchFactor  // implicit AND: `(a OR b) more_terms`
   ;
 
 searchTerm
@@ -60,7 +61,13 @@ statsCmd
   ;
 
 aggregationFunction
-  : identifierOrString (LPAREN identifierOrString? RPAREN)? (AS identifierOrString)?
+  : identifierOrString (LPAREN aggFunctionArg? RPAREN)? (AS identifierOrString)?
+  ;
+
+// Argument inside an aggregation function: plain field or one level of function nesting.
+// e.g. `avg(latency)` or `avg(abs(latency))`
+aggFunctionArg
+  : identifierOrString (LPAREN identifierOrString? RPAREN)?
   ;
 
 groupby
@@ -91,14 +98,16 @@ regexCmd
   : REGEX (FIELD EQUAL identifierOrString)? regexLiteral
   ;
 
+// timechartCmd allows params to appear before, after, or between aggregations.
+// The `=` separator in params is optional: `span 5m` and `span=5m` are both valid.
 timechartCmd
-  : TIMECHART aggregationFunction (COMMA? aggregationFunction)* timechartParams* (BY groupby)?
+  : TIMECHART timechartParams* aggregationFunction (COMMA? (aggregationFunction | timechartParams))* timechartParams* (BY groupby)?
   ;
 
 timechartParams
-  : SPAN identifierOrString
-  | TIMECOL identifierOrString
-  | MAXGROUPS INTEGER
+  : SPAN EQUAL? identifierOrString
+  | TIMECOL EQUAL? identifierOrString
+  | MAXGROUPS EQUAL? INTEGER
   ;
 
 unpackCmd
@@ -119,6 +128,7 @@ logicalTail
 unitExpression
   : (inArrayExpression | comparisonExpression | notExpression | functionExpression)
   | LPAREN logicalExpression RPAREN
+  | factor  // bare factor as truthy boolean, e.g. `if(fieldName, ...)` or `where boolField`
   ;
 
 notExpression
@@ -148,11 +158,14 @@ functionArg
   | functionExpression
   ;
 
+// calcExpression must come before logicalExpression so that simple literals
+// (strings, numbers, column refs) are treated as calc values rather than
+// bare-factor logical expressions when the two alternatives are ambiguous.
 evalFunctionArg
   : evalFunction
   | functionExpression
-  | logicalExpression
   | calcExpression
+  | logicalExpression
   ;
 
 evalFunction
@@ -191,6 +204,7 @@ factor
   : literalString
   | FLOAT
   | INTEGER
+  | functionExpression  // e.g. lower(x) used as operand in comparison
   | IDENTIFIER
   | literalBoolean
   ;

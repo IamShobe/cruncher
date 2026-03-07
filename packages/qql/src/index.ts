@@ -101,7 +101,21 @@ export const allData = (input: string): AllDataResult => {
 
     const highlightCollector = new HighlightCollector();
     highlightCollector.visit(parseTree);
-    const highlight = highlightCollector.getHighlightData();
+    const visitorHighlights = highlightCollector.getHighlightData();
+
+    // Comments are on the HIDDEN channel — not visited by the tree visitor.
+    // Scan all buffered tokens and emit a "comment" highlight for each one.
+    const commentHighlights: HighlightData[] = tokenStream.tokens
+      .filter((t) => t.channel !== 0 && t.type !== antlr.Token.EOF)
+      .map((t) => ({
+        type: "comment" as const,
+        token: {
+          startOffset: t.start ?? 0,
+          endOffset: t.stop ?? undefined,
+        },
+      }));
+
+    const highlight = [...visitorHighlights, ...commentHighlights];
 
     const suggestionCollector = new SuggestionCollector(tokenStream);
     suggestionCollector.visit(parseTree);

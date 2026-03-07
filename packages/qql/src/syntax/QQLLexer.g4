@@ -223,6 +223,8 @@ TC_PIPE   : '|'             -> type(PIPE),         mode(COMMAND_MODE) ;
 TC_COMMA  : ','             -> type(COMMA) ;
 TC_LPAREN : '('             -> type(LPAREN) ;
 TC_RPAREN : ')'             -> type(RPAREN) ;
+// '=' used in optional `span=5m` / `timeCol=field` / `maxGroups=N` syntax
+TC_EQ     : '='             -> type(EQUAL) ;
 TC_FLOAT  : ID_CHAR+ '.' [0-9]+ -> type(FLOAT) ;
 TC_INT    : ('0' | [1-9][0-9]*) -> type(INTEGER) ;
 TC_DQSTR  : '"'  DQBODY '"'  -> type(DQUOT_STRING) ;
