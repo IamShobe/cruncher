@@ -125,10 +125,25 @@ export class SuggestionCollector extends AbstractParseTreeVisitor<void> {
     if (pipeStop >= 0) this.coveredPipePositions.add(pipeStop);
 
     const pos = pipeStop + 1;
+
+    // Bound the suggestion to the command keyword's stop so it doesn't
+    // bleed into positions where the user is typing command arguments
+    const cmdKw =
+      ctx.tableCmd?.()?.TABLE?.() ??
+      ctx.statsCmd?.()?.STATS?.() ??
+      ctx.whereCmd?.()?.WHERE?.() ??
+      ctx.sortCmd?.()?.SORT?.() ??
+      ctx.evalCmd?.()?.EVAL?.() ??
+      ctx.regexCmd?.()?.REGEX?.() ??
+      ctx.timechartCmd?.()?.TIMECHART?.() ??
+      ctx.unpackCmd?.()?.UNPACK?.();
+    const cmdKwStop: number | undefined = cmdKw?.getSymbol?.()?.stop;
+
     this.addSuggestion({
       type: "keywords",
       keywords: PIPELINE_KEYWORDS,
       fromPosition: pos,
+      toPosition: cmdKwStop != null ? cmdKwStop : undefined,
       disabled: false,
     });
 
@@ -151,11 +166,13 @@ export class SuggestionCollector extends AbstractParseTreeVisitor<void> {
     const pos = this.getNextTokenPosition(ctx.STATS?.());
     this.addSuggestion({ type: "function", fromPosition: pos, disabled: false });
 
-    // Only suggest "by" once at least one aggregation function has been entered
+    // Only suggest "by" once at least one aggregation function with a real
+    // IDENTIFIER token has been entered (ANTLR error-recovery can produce
+    // phantom aggregationFunction contexts even for bare "| stats ")
     if (!ctx.BY?.()) {
       const aggFuncs: any[] = ctx.aggregationFunction?.() || [];
-      if (aggFuncs.length > 0) {
-        const lastAgg = aggFuncs[aggFuncs.length - 1];
+      const lastAgg = aggFuncs.length > 0 ? aggFuncs[aggFuncs.length - 1] : null;
+      if (lastAgg?.LPAREN?.()) {
         const byPos = this.getNextTokenPosition(lastAgg);
         this.addSuggestion({ type: "keywords", keywords: ["by"], fromPosition: byPos, disabled: false });
       }

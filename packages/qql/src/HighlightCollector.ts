@@ -291,7 +291,7 @@ export class HighlightCollector extends AbstractParseTreeVisitor<void> {
     this.highlightIdOrStr(ctx.identifierOrString());
 
     const eq = ctx.EQUAL();
-    const sym = eq.getSymbol();
+    const sym = eq?.getSymbol();
     if (sym) {
       this.addHighlight("operator", sym.start ?? 0, sym.stop);
     }

@@ -410,8 +410,15 @@ export class ASTBuilder extends AbstractParseTreeVisitor<any> {
 
   visitEvalCmd = (ctx: Parser.EvalCmdContext) => {
     const exprCtx = ctx.evalExpression();
+    if (!exprCtx) {
+      return { type: "eval" as const, variableName: "", expression: null as any };
+    }
     const variableName = extractIdentifierValue(exprCtx.identifierOrString());
-    const expression = this.visitEvalFunctionArg(exprCtx.evalFunctionArg());
+    const evalFuncArgCtx = exprCtx.evalFunctionArg();
+    if (!evalFuncArgCtx) {
+      return { type: "eval" as const, variableName, expression: null as any };
+    }
+    const expression = this.visitEvalFunctionArg(evalFuncArgCtx);
 
     return {
       type: "eval" as const,
@@ -421,9 +428,12 @@ export class ASTBuilder extends AbstractParseTreeVisitor<any> {
   };
 
   visitRegexCmd = (ctx: Parser.RegexCmdContext) => {
-    // The field is always "field" (the FIELD keyword)
     const field = "field";
-    const pattern = this.visitRegexLiteral(ctx.regexLiteral());
+    const regexLiteralCtx = ctx.regexLiteral();
+    if (!regexLiteralCtx) {
+      return { type: "regex" as const, field, pattern: null as any };
+    }
+    const pattern = this.visitRegexLiteral(regexLiteralCtx);
 
     return {
       type: "regex" as const,

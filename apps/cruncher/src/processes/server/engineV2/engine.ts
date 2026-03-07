@@ -674,14 +674,14 @@ export class Engine {
       sort: (_context, currentData, options) =>
         processSort(currentData, options.columns),
       stats: (_context, currentData, options) =>
-        processStats(currentData, options.columns, options.groupBy),
+        processStats(currentData, options.aggregationFunctions, options.groupby),
       table: (_context, currentData, options) =>
         processTable(currentData, options.columns),
       timechart: (context, currentData, options) =>
         processTimeChart(
           currentData,
-          options.columns,
-          options.groupBy,
+          options.aggregationFunctions,
+          options.groupby,
           context.startTime,
           context.endTime,
           options.params,
