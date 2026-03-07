@@ -1,13 +1,8 @@
 import { expect, test } from "vitest";
-import { QQLLexer, QQLParser } from "../grammar";
+import { parse, QQLParserError } from "../index";
 
 test("support eval assignment", () => {
-  const parser = new QQLParser();
-
-  const lexer = QQLLexer.tokenize(`hello world | eval column1 = column2`);
-  expect(lexer.errors).toEqual([]);
-  parser.input = lexer.tokens;
-  const result = parser.query();
+  const result = parse(`hello world | eval column1 = column2`);
 
   expect(result).toMatchObject({
     dataSources: [],
@@ -42,12 +37,7 @@ test("support eval assignment", () => {
 });
 
 test("support eval calculation", () => {
-  const parser = new QQLParser();
-
-  const lexer = QQLLexer.tokenize(`hello world | eval column1 = column2 + 1`);
-  expect(lexer.errors).toEqual([]);
-  parser.input = lexer.tokens;
-  const result = parser.query();
+  const result = parse(`hello world | eval column1 = column2 + 1`);
 
   expect(result).toMatchObject({
     dataSources: [],
@@ -98,14 +88,8 @@ test("support eval calculation", () => {
 });
 
 test("support eval calculation with multiple operators", () => {
-  const parser = new QQLParser();
 
-  const lexer = QQLLexer.tokenize(
-    `hello world | eval column1 = column2 + 1 - 2 * 3 / 4`,
-  );
-  expect(lexer.errors).toEqual([]);
-  parser.input = lexer.tokens;
-  const result = parser.query();
+  const result = parse(`hello world | eval column1 = column2 + 1 - 2 * 3 / 4`);
 
   expect(result).toMatchObject({
     dataSources: [],
@@ -194,14 +178,8 @@ test("support eval calculation with multiple operators", () => {
 });
 
 test("support eval command", () => {
-  const parser = new QQLParser();
 
-  const lexer = QQLLexer.tokenize(
-    `hello world | eval column1 = if(column2 == 1, 1, 0)`,
-  );
-  expect(lexer.errors).toEqual([]);
-  parser.input = lexer.tokens;
-  const result = parser.query();
+  const result = parse(`hello world | eval column1 = if(column2 == 1, 1, 0)`);
 
   expect(result).toMatchObject({
     dataSources: [],
@@ -272,12 +250,7 @@ test("support eval command", () => {
 });
 
 test("support for where command function", () => {
-  const parser = new QQLParser();
-
-  const lexer = QQLLexer.tokenize(`hello world | where isNotNull(column1)`);
-  expect(lexer.errors).toEqual([]);
-  parser.input = lexer.tokens;
-  const result = parser.query();
+  const result = parse(`hello world | where isNotNull(column1)`);
   expect(result).toMatchObject({
     dataSources: [],
     controllerParams: [],
@@ -317,14 +290,8 @@ test.each([
   ["&&", "andExpression"],
   ["||", "orExpression"],
 ])("support for where command logical operators %s", (operator, type) => {
-  const parser = new QQLParser();
 
-  const lexer = QQLLexer.tokenize(
-    `hello world | where column1 == 1 ${operator} column2 == 2`,
-  );
-  expect(lexer.errors).toEqual([]);
-  parser.input = lexer.tokens;
-  const result = parser.query();
+  const result = parse(`hello world | where column1 == 1 ${operator} column2 == 2`);
   expect(result).toMatchObject({
     dataSources: [],
     controllerParams: [],
@@ -384,14 +351,8 @@ test.each([
 });
 
 test("support for where command complex and", () => {
-  const parser = new QQLParser();
 
-  const lexer = QQLLexer.tokenize(
-    `hello world | where column1 == 1 && column2 == 2`,
-  );
-  expect(lexer.errors).toEqual([]);
-  parser.input = lexer.tokens;
-  const result = parser.query();
+  const result = parse(`hello world | where column1 == 1 && column2 == 2`);
   expect(result).toMatchObject({
     dataSources: [],
     controllerParams: [],
@@ -451,12 +412,7 @@ test("support for where command complex and", () => {
 });
 
 test("support for where notExpression", () => {
-  const parser = new QQLParser();
-
-  const lexer = QQLLexer.tokenize(`hello world | where !isNull(column1)`);
-  expect(lexer.errors).toEqual([]);
-  parser.input = lexer.tokens;
-  const result = parser.query();
+  const result = parse(`hello world | where !isNull(column1)`);
   expect(result).toMatchObject({
     pipeline: [
       {
@@ -485,12 +441,7 @@ test("support for where notExpression", () => {
 });
 
 test("support for where inArrayStatement", () => {
-  const parser = new QQLParser();
-
-  const lexer = QQLLexer.tokenize(`hello world | where status in ["a", "b"]`);
-  expect(lexer.errors).toEqual([]);
-  parser.input = lexer.tokens;
-  const result = parser.query();
+  const result = parse(`hello world | where status in ["a", "b"]`);
   expect(result).toMatchObject({
     pipeline: [
       {
@@ -516,14 +467,8 @@ test("support for where inArrayStatement", () => {
 });
 
 test("support for eval case function", () => {
-  const parser = new QQLParser();
 
-  const lexer = QQLLexer.tokenize(
-    `hello world | eval s = case(x > 1, "big", "small")`,
-  );
-  expect(lexer.errors).toEqual([]);
-  parser.input = lexer.tokens;
-  const result = parser.query();
+  const result = parse(`hello world | eval s = case(x > 1, "big", "small")`);
   expect(result).toMatchObject({
     pipeline: [
       {
@@ -559,14 +504,8 @@ test("support for eval case function", () => {
 });
 
 test("support for where parenthesisExpression", () => {
-  const parser = new QQLParser();
 
-  const lexer = QQLLexer.tokenize(
-    `hello world | where (col1 == 1 && col2 == 2)`,
-  );
-  expect(lexer.errors).toEqual([]);
-  parser.input = lexer.tokens;
-  const result = parser.query();
+  const result = parse(`hello world | where (col1 == 1 && col2 == 2)`);
   expect(result).toMatchObject({
     pipeline: [
       {
@@ -611,12 +550,7 @@ test("support for where parenthesisExpression", () => {
 });
 
 test("support for parenthesisCalcExpression in eval", () => {
-  const parser = new QQLParser();
-
-  const lexer = QQLLexer.tokenize(`hello world | eval x = (2 + 3) * 4`);
-  expect(lexer.errors).toEqual([]);
-  parser.input = lexer.tokens;
-  const result = parser.query();
+  const result = parse(`hello world | eval x = (2 + 3) * 4`);
   expect(result).toMatchObject({
     pipeline: [
       {
@@ -672,14 +606,8 @@ test("support for parenthesisCalcExpression in eval", () => {
 test.each([["=="], ["!="], [">"], ["<"], [">="], ["<="]])(
   "test where command operators %s",
   (operator) => {
-    const parser = new QQLParser();
 
-    const lexer = QQLLexer.tokenize(
-      `hello world | where column1 ${operator} 1`,
-    );
-    expect(lexer.errors).toEqual([]);
-    parser.input = lexer.tokens;
-    const result = parser.query();
+    const result = parse(`hello world | where column1 ${operator} 1`);
     expect(result).toMatchObject({
       dataSources: [],
       controllerParams: [],

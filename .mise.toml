@@ -1,3 +1,4 @@
 [tools]
+java = "latest"
 node = "lts"
 pnpm = "latest"

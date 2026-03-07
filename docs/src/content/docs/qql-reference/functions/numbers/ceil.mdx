@@ -3,16 +3,56 @@ title: ceil
 description: Round a number up to the nearest integer.
 ---
 
-The `ceil` function rounds the input number up to the nearest integer.
+import FunctionCard from '../../../../../components/FunctionCard.astro';
 
-## Usage
+<FunctionCard
+  name="ceil"
+  category="number"
+  signature="ceil(number) → number"
+  returnType="number"
+  returnDescription="The smallest integer greater than or equal to the input; null if input is null"
+  description="Round up to the nearest integer (toward positive infinity)"
+/>
+
+The `ceil` function rounds the input number **up** to the nearest integer (ceiling function).
+
+## Signature
 
 ```
-ceil(field)
+ceil(number) → number
 ```
 
-**Example:**
+## Parameters
+
+| Name | Type | Description |
+|------|------|-------------|
+| `number` | number | The input number |
+
+## Returns
+
+`number` — The smallest integer greater than or equal to `number`. Returns `null` if input is `null`.
+
+## Edge Cases
+
+- If `number` is `null`, returns `null`
+- `ceil(3.0)` returns `3` (already an integer)
+- `ceil(3.1)` returns `4`
+- `ceil(-2.9)` returns `-2` (rounds toward positive infinity, not toward zero)
+- `ceil(0)` returns `0`
+
+## Examples
+
+```qql
+eval min_pages = ceil(total_bytes / page_size)
 ```
-eval ceil_duration = ceil(duration)
+Calculates minimum number of pages needed to store a file.
+
+```qql
+eval rounded_duration = ceil(duration_ms / 1000)
 ```
-This creates a new field `ceil_duration` with the value of `duration` rounded up.
+Rounds up duration in milliseconds to the nearest second.
+
+```qql
+stats sum(ceil(cost))
+```
+Calculates total cost with each item rounded up.

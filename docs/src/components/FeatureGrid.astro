@@ -1,0 +1,110 @@
+---
+interface Feature {
+  title: string;
+  description: string;
+  icon?: string;
+}
+
+interface Props {
+  features: Feature[];
+  columns?: 2 | 3 | 4;
+  title?: string;
+}
+
+const { features, columns = 3, title } = Astro.props;
+---
+
+<div class="feature-grid-container">
+  {title && <h3 class="grid-title">{title}</h3>}
+
+  <div class="feature-grid" style={`--columns: ${columns}`}>
+    {features.map((feature) => (
+      <div class="feature-box">
+        {feature.icon && <div class="feature-icon">{feature.icon}</div>}
+        <h4>{feature.title}</h4>
+        <p>{feature.description}</p>
+      </div>
+    ))}
+  </div>
+</div>
+
+<style>
+  .feature-grid-container {
+    margin: 2rem 0 !important;
+  }
+
+  .grid-title {
+    margin: 0 0 1.5rem 0 !important;
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+
+  .feature-grid {
+    display: grid;
+    grid-template-columns: repeat(var(--columns, 3), 1fr);
+    gap: 1.5rem;
+  }
+
+  .feature-box {
+    padding: 1.5rem;
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--sl-color-bg-panel) 0%, transparent 100%);
+    transition: all 0.3s ease;
+    text-align: center;
+  }
+
+  .feature-box:hover {
+    border-color: var(--sl-color-accent);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+  }
+
+  .feature-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    display: inline-block;
+  }
+
+  .feature-box h4 {
+    margin: 0 0 0.75rem 0;
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  .feature-box p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--sl-color-gray-2);
+    line-height: 1.5;
+  }
+
+  @media (max-width: 1024px) {
+    .feature-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 640px) {
+    .feature-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .feature-box {
+      padding: 1rem;
+    }
+
+    .feature-icon {
+      font-size: 2rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .feature-box h4 {
+      font-size: 0.9rem;
+    }
+
+    .feature-box p {
+      font-size: 0.85rem;
+    }
+  }
+</style>

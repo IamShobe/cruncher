@@ -3,16 +3,48 @@ title: startsWith
 description: Check if a string starts with a prefix.
 ---
 
-The `startsWith` function returns true if the first argument starts with the second argument.
+import FunctionCard from '../../../../../components/FunctionCard.astro';
 
-## Usage
+<FunctionCard
+  name="startsWith"
+  category="boolean"
+  signature="startsWith(string, prefix) → boolean"
+  returnType="boolean"
+  returnDescription="true if string starts with prefix, false otherwise; null if either input is null"
+  description="Check if a string begins with the given prefix as a case-sensitive match"
+/>
 
-```
-startsWith(field, "prefix")
-```
+## Parameters
 
-**Example:**
-```
+| Name | Type | Description |
+|------|------|-------------|
+| `string` | string | The string to check |
+| `prefix` | string | The prefix to match |
+
+## Returns
+
+`boolean` — `true` if `string` starts with `prefix` (case-sensitive), `false` otherwise.
+
+## Edge Cases
+
+- If `string` is `null`, returns `null`
+- If `prefix` is `null`, returns `null`
+- Empty prefix `""` matches any string (returns `true`)
+- Search is **case-sensitive**: `startsWith("Production", "prod")` returns `false`
+
+## Examples
+
+```qql
 where startsWith(message, "Error:")
 ```
-This matches records where the `message` field starts with "Error:".
+Matches records where `message` starts with "Error:".
+
+```qql
+eval is_api_call = startsWith(request_path, "/api/")
+```
+Creates a boolean field `is_api_call` that is `true` if `request_path` starts with "/api/".
+
+```qql
+where startsWith(hostname, "prod-")
+```
+Filters to production hostnames only.

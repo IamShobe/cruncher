@@ -1,0 +1,54 @@
+---
+title: Keyboard Shortcuts
+description: Complete keyboard shortcuts reference for Cruncher.
+---
+
+import KeyboardShortcuts from '../../../components/KeyboardShortcuts.astro';
+
+Cruncher provides keyboard shortcuts for power users to quickly navigate and control the application. This page documents all available shortcuts.
+
+## Global Shortcuts
+
+<KeyboardShortcuts
+  title="Shortcuts that work anywhere in Cruncher"
+  shortcuts={[
+    { action: "Toggle Shortcuts Help", mac: "⌘ + /", windows: "Ctrl + /", description: "Show this shortcuts reference" },
+    { action: "Create New Tab", mac: "⌘ + T", windows: "Ctrl + T", description: "Open a new search tab" },
+    { action: "Close Tab", mac: "⌘ + W", windows: "Ctrl + W", description: "Close the current tab" }
+  ]}
+/>
+
+## Search/Query Shortcuts
+
+<KeyboardShortcuts
+  title="Shortcuts for query and search"
+  shortcuts={[
+    { action: "Focus Query Editor", mac: "⌥ + Q", windows: "Alt + Q", description: "Jump to the query editor" },
+    { action: "Open Time Range", mac: "⌥ + T", windows: "Alt + T", description: "Open the time range picker" },
+    { action: "Re-evaluate Pipeline", mac: "⇧ + Enter", windows: "Shift + Enter", description: "Run pipeline (fast)" },
+    { action: "Full Search", mac: "⌘ + ⇧ + Enter", windows: "Ctrl + Shift + Enter", description: "Full search (may reset time)" }
+  ]}
+/>
+
+## UI Control Shortcuts
+
+<KeyboardShortcuts
+  title="Control the search interface"
+  shortcuts={[
+    { action: "Copy Share Link", mac: "⌘ + ⇧ + C", windows: "Ctrl + Shift + C", description: "Copy shareable query link" },
+    { action: "Toggle Until Now", mac: "⌘ + N", windows: "Ctrl + N", description: "Include logs up to now" },
+    { action: "Toggle Header", mac: "⌘ + H", windows: "Ctrl + H", description: "Show/hide search header" },
+    { action: "Focus Highlighter", mac: "⌘ + F", windows: "Ctrl + F", description: "Open text highlighter" }
+  ]}
+/>
+
+## Tips
+
+- **Re-evaluate vs Full Search**: Use `Shift+Enter` to quickly re-evaluate your pipeline after modifying a command. Use `Cmd+Shift+Enter` to perform a full search (which may reset the time range).
+- **Query Editor Focus**: Press `Alt+Q` to quickly jump to the query editor if you're in another part of the UI.
+- **Time Range**: Press `Alt+T` to open the time range picker without typing.
+- **Share Queries**: Use `Cmd+Shift+C` to copy a shareable link to your current search.
+
+---
+
+All shortcuts are available directly in Cruncher by pressing **⌘ + /** (Mac) or **Ctrl + /** (Windows).

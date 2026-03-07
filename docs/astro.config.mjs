@@ -17,7 +17,7 @@ export default defineConfig({
         { icon: "github", label: "GitHub", href: "https://github.com/IamShobe/cruncher" },
       ],
       favicon: "./src/assets/favicon.ico",
-      customCss: ["./src/assets/landing.css"],
+      customCss: ["./src/assets/landing.css", "./src/assets/component-overrides.css"],
       sidebar: [
         {
           label: "Getting Started",
@@ -48,7 +48,24 @@ export default defineConfig({
             },
             {
               label: "Functions",
-              autogenerate: { directory: "qql-reference/functions" },
+              items: [
+                {
+                  label: "Booleans",
+                  autogenerate: { directory: "qql-reference/functions/booleans" },
+                },
+                {
+                  label: "Numbers",
+                  autogenerate: { directory: "qql-reference/functions/numbers" },
+                },
+                {
+                  label: "Strings",
+                  autogenerate: { directory: "qql-reference/functions/strings" },
+                },
+                {
+                  label: "Conditional",
+                  autogenerate: { directory: "qql-reference/functions/conditional" },
+                },
+              ],
             },
           ],
           // autogenerate: { directory: "qql-reference" },

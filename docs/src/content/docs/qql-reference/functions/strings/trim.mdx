@@ -3,16 +3,54 @@ title: trim
 description: Remove whitespace from both ends of a string.
 ---
 
-The `trim` function removes whitespace from the beginning and end of the input string.
+import FunctionCard from '../../../../../components/FunctionCard.astro';
 
-## Usage
+<FunctionCard
+  name="trim"
+  category="string"
+  signature="trim(string) → string"
+  description="Remove leading and trailing whitespace from a string"
+/>
+
+The `trim` function removes whitespace (spaces, tabs, newlines, etc.) from the beginning and end of the input string.
+
+## Signature
 
 ```
-trim(field)
+trim(string) → string
 ```
 
-**Example:**
-```
+## Parameters
+
+| Name | Type | Description |
+|------|------|-------------|
+| `string` | string | The input string |
+
+## Returns
+
+`string` — The input string with leading and trailing whitespace removed. Returns `null` if input is `null`.
+
+## Edge Cases
+
+- If `string` is `null`, returns `null`
+- Only removes leading and trailing whitespace; internal whitespace is preserved
+- `trim("")` returns `""`
+- `trim("  hello  ")` returns `"hello"`
+- Whitespace includes spaces, tabs (`\t`), newlines (`\n`), carriage returns (`\r`), etc.
+
+## Examples
+
+```qql
 eval clean_message = trim(message)
 ```
-This creates a new field `clean_message` with leading and trailing whitespace removed from `message`.
+Removes leading/trailing whitespace from `message`, useful for data cleanup.
+
+```qql
+where trim(user_input) != ""
+```
+Filters to non-empty user input (after removing whitespace).
+
+```qql
+eval normalized_tag = lower(trim(tag))
+```
+Normalizes tags by trimming whitespace and converting to lowercase.

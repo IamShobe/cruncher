@@ -3,16 +3,48 @@ title: contains
 description: Check if a string contains a substring.
 ---
 
-The `contains` function returns true if the first argument contains the second argument as a substring.
+import FunctionCard from '../../../../../components/FunctionCard.astro';
 
-## Usage
+<FunctionCard
+  name="contains"
+  category="boolean"
+  signature="contains(string, substring) → boolean"
+  returnType="boolean"
+  returnDescription="true if string contains substring, false otherwise; null if either input is null"
+  description="Check if a string contains a substring as a case-sensitive match"
+/>
 
-```
-contains(field, "substring")
-```
+## Parameters
 
-**Example:**
-```
+| Name | Type | Description |
+|------|------|-------------|
+| `string` | string | The string to search in |
+| `substring` | string | The substring to find |
+
+## Returns
+
+`boolean` — `true` if `string` contains `substring` (case-sensitive), `false` otherwise.
+
+## Edge Cases
+
+- If `string` is `null`, returns `null`
+- If `substring` is `null`, returns `null`
+- Empty substring `""` matches any string (returns `true`)
+- Search is **case-sensitive**: `contains("Error", "error")` returns `false`
+
+## Examples
+
+```qql
 where contains(message, "error")
 ```
-This matches records where the `message` field contains the substring "error".
+Matches records where the `message` field contains "error".
+
+```qql
+eval has_timeout = contains(error_message, "timeout")
+```
+Creates a boolean field `has_timeout` that is `true` if `error_message` contains "timeout".
+
+```qql
+eval is_json = contains(raw_log, "{")
+```
+Detects if `raw_log` contains JSON (looks for opening brace).

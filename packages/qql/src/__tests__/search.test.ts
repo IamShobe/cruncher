@@ -1,13 +1,8 @@
 import { expect, test } from "vitest";
-import { QQLLexer, QQLParser } from "../grammar";
+import { parse } from "../index";
 
 test("parser hello world", () => {
-  const parser = new QQLParser();
-
-  const lexer = QQLLexer.tokenize("hello world this is awesome");
-  expect(lexer.errors).toEqual([]);
-  parser.input = lexer.tokens;
-  expect(parser.query().search).toEqual({
+  expect(parse("hello world this is awesome").search).toEqual({
     type: "search",
     left: {
       type: "searchLiteral",
@@ -17,12 +12,7 @@ test("parser hello world", () => {
 });
 
 test("search term with or statements", () => {
-  const parser = new QQLParser();
-
-  const lexer = QQLLexer.tokenize("hello world OR something");
-  expect(lexer.errors).toEqual([]);
-  parser.input = lexer.tokens;
-  expect(parser.query().search).toEqual({
+  expect(parse("hello world OR something").search).toEqual({
     type: "search",
     left: {
       type: "searchLiteral",
@@ -42,15 +32,9 @@ test("search term with or statements", () => {
 });
 
 test("search term with or and and statements complex", () => {
-  const parser = new QQLParser();
-
-  const lexer = QQLLexer.tokenize(
+  expect(parse(
     "(hello world OR something) AND (another OR statement)",
-  );
-  expect(lexer.errors).toEqual([]);
-  parser.input = lexer.tokens;
-
-  expect(parser.query().search).toEqual({
+  ).search).toEqual({
     type: "search",
     left: {
       type: "search",
@@ -96,12 +80,7 @@ test("search term with or and and statements complex", () => {
 });
 
 test("string", () => {
-  const parser = new QQLParser();
-
-  const lexer = QQLLexer.tokenize(`"hello world" token2 token3`);
-  expect(lexer.errors).toEqual([]);
-  parser.input = lexer.tokens;
-  expect(parser.query().search).toEqual({
+  expect(parse(`"hello world" token2 token3`).search).toEqual({
     type: "search",
     left: {
       type: "searchLiteral",
@@ -111,12 +90,7 @@ test("string", () => {
 });
 
 test("integer", () => {
-  const parser = new QQLParser();
-
-  const lexer = QQLLexer.tokenize(`123 token`);
-  expect(lexer.errors).toEqual([]);
-  parser.input = lexer.tokens;
-  expect(parser.query().search).toEqual({
+  expect(parse(`123 token`).search).toEqual({
     type: "search",
     left: {
       type: "searchLiteral",
@@ -126,12 +100,7 @@ test("integer", () => {
 });
 
 test("multiple strings", () => {
-  const parser = new QQLParser();
-
-  const lexer = QQLLexer.tokenize(`"hello world" token2 "token3 hey there"`);
-  expect(lexer.errors).toEqual([]);
-  parser.input = lexer.tokens;
-  expect(parser.query().search).toEqual({
+  expect(parse(`"hello world" token2 "token3 hey there"`).search).toEqual({
     type: "search",
     left: {
       type: "searchLiteral",
@@ -141,12 +110,7 @@ test("multiple strings", () => {
 });
 
 test("nested strings", () => {
-  const parser = new QQLParser();
-
-  const lexer = QQLLexer.tokenize(`"hello world \\"nested\\" string" token2`);
-  expect(lexer.errors).toEqual([]);
-  parser.input = lexer.tokens;
-  expect(parser.query().search).toEqual({
+  expect(parse(`"hello world \\"nested\\" string" token2`).search).toEqual({
     type: "search",
     left: {
       type: "searchLiteral",
@@ -156,12 +120,7 @@ test("nested strings", () => {
 });
 
 test("strings with newlines", () => {
-  const parser = new QQLParser();
-
-  const lexer = QQLLexer.tokenize(`"hello world \nsomething" token2`);
-  expect(lexer.errors).toEqual([]);
-  parser.input = lexer.tokens;
-  expect(parser.query().search).toEqual({
+  expect(parse(`"hello world \nsomething" token2`).search).toEqual({
     type: "search",
     left: {
       type: "searchLiteral",
@@ -171,12 +130,7 @@ test("strings with newlines", () => {
 });
 
 test("parsing uuid as string", () => {
-  const parser = new QQLParser();
-
-  const lexer = QQLLexer.tokenize(`hello 76e191f8-8ab6-4db7-9895-c1b6d188106c`);
-  expect(lexer.errors).toEqual([]);
-  parser.input = lexer.tokens;
-  expect(parser.query()).toMatchObject({
+  expect(parse(`hello 76e191f8-8ab6-4db7-9895-c1b6d188106c`)).toMatchObject({
     type: "query",
     dataSources: [],
     controllerParams: [],

@@ -3,16 +3,56 @@ title: floor
 description: Round a number down to the nearest integer.
 ---
 
-The `floor` function rounds the input number down to the nearest integer.
+import FunctionCard from '../../../../../components/FunctionCard.astro';
 
-## Usage
+<FunctionCard
+  name="floor"
+  category="number"
+  signature="floor(number) → number"
+  returnType="number"
+  returnDescription="The largest integer less than or equal to the input; null if input is null"
+  description="Round down to the nearest integer (toward negative infinity)"
+/>
+
+The `floor` function rounds the input number **down** to the nearest integer (floor function).
+
+## Signature
 
 ```
-floor(field)
+floor(number) → number
 ```
 
-**Example:**
+## Parameters
+
+| Name | Type | Description |
+|------|------|-------------|
+| `number` | number | The input number |
+
+## Returns
+
+`number` — The largest integer less than or equal to `number`. Returns `null` if input is `null`.
+
+## Edge Cases
+
+- If `number` is `null`, returns `null`
+- `floor(3.0)` returns `3` (already an integer)
+- `floor(3.9)` returns `3`
+- `floor(-2.1)` returns `-3` (rounds toward negative infinity, not toward zero)
+- `floor(0)` returns `0`
+
+## Examples
+
+```qql
+eval hours = floor(duration_seconds / 3600)
 ```
-eval floor_duration = floor(duration)
+Calculates how many complete hours in a duration.
+
+```qql
+eval request_batch = floor(request_id / 100)
 ```
-This creates a new field `floor_duration` with the value of `duration` rounded down.
+Groups requests into batches of 100.
+
+```qql
+stats sum(floor(cost))
+```
+Calculates total cost with each item rounded down.

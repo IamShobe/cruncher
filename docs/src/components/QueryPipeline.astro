@@ -1,0 +1,129 @@
+---
+interface Stage {
+  label: string;
+  description: string;
+  icon?: string;
+}
+
+interface Props {
+  stages: Stage[];
+  title?: string;
+}
+
+const { stages, title } = Astro.props;
+---
+
+<div class="pipeline-container">
+  {title && <h3 class="pipeline-title">{title}</h3>}
+
+  <div class="pipeline">
+    {stages.map((stage, index) => (
+      <>
+        <div class="pipeline-stage">
+          <div class="stage-icon">{stage.icon || '⚙️'}</div>
+          <div class="stage-content">
+            <h4>{stage.label}</h4>
+            <p>{stage.description}</p>
+          </div>
+        </div>
+        {index < stages.length - 1 && (
+          <div class="pipeline-arrow">
+            <svg viewBox="0 0 20 20" fill="currentColor">
+              <path d="M10.5 1.5v16M15 12l-4.5 4.5-4.5-4.5" />
+            </svg>
+          </div>
+        )}
+      </>
+    ))}
+  </div>
+</div>
+
+<style>
+  .pipeline-container {
+    margin: 2rem 0 !important;
+  }
+
+  .pipeline-title {
+    margin: 0 0 1.5rem 0 !important;
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+
+  .pipeline {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .pipeline-stage {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem;
+    background: linear-gradient(135deg, var(--sl-color-accent-low) 0%, transparent 100%);
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 6px;
+    align-items: flex-start;
+  }
+
+  .stage-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    background: var(--sl-color-gray-7);
+    border-radius: 6px;
+  }
+
+  .stage-content {
+    flex: 1;
+  }
+
+  .stage-content h4 {
+    margin: 0 0 0.25rem 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+
+  .stage-content p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--sl-color-gray-2);
+    line-height: 1.4;
+  }
+
+  .pipeline-arrow {
+    display: flex;
+    justify-content: center;
+    padding: 0.25rem 0;
+    color: var(--sl-color-accent);
+  }
+
+  .pipeline-arrow svg {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+
+  @media (max-width: 768px) {
+    .pipeline-stage {
+      gap: 0.75rem;
+      padding: 0.75rem;
+    }
+
+    .stage-icon {
+      width: 2rem;
+      height: 2rem;
+      font-size: 1.25rem;
+    }
+
+    .stage-content h4 {
+      font-size: 0.875rem;
+    }
+
+    .stage-content p {
+      font-size: 0.75rem;
+    }
+  }
+</style>

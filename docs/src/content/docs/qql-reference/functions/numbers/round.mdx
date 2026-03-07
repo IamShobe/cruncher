@@ -3,16 +3,57 @@ title: round
 description: Round a number to the nearest integer.
 ---
 
-The `round` function rounds the input number to the nearest integer.
+import FunctionCard from '../../../../../components/FunctionCard.astro';
 
-## Usage
+<FunctionCard
+  name="round"
+  category="number"
+  signature="round(number) → number"
+  returnType="number"
+  returnDescription="The input rounded to the nearest integer; null if input is null"
+  description="Round to the nearest integer (half rounds up)"
+/>
+
+The `round` function rounds the input number to the **nearest integer**.
+
+## Signature
 
 ```
-round(field)
+round(number) → number
 ```
 
-**Example:**
+## Parameters
+
+| Name | Type | Description |
+|------|------|-------------|
+| `number` | number | The input number |
+
+## Returns
+
+`number` — `number` rounded to the nearest integer. Returns `null` if input is `null`.
+
+## Edge Cases
+
+- If `number` is `null`, returns `null`
+- `round(3.0)` returns `3` (already an integer)
+- `round(3.5)` returns `4` (rounds half up)
+- `round(3.4)` returns `3`
+- `round(-2.5)` returns `-2` (rounds half up toward positive infinity)
+- `round(0)` returns `0`
+
+## Examples
+
+```qql
+eval rounded_duration = round(duration_ms / 1000)
 ```
-eval rounded_duration = round(duration)
+Rounds duration in milliseconds to the nearest second.
+
+```qql
+eval percentile_rounded = round(percentile)
 ```
-This creates a new field `rounded_duration` with the rounded value of `duration`.
+Rounds a percentile value to nearest integer.
+
+```qql
+stats avg(round(latency_ms))
+```
+Calculates average latency with each value rounded first.

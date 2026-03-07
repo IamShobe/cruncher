@@ -20,33 +20,62 @@ A typical config file looks like this:
 
 ```yaml
 # Cruncher configuration file
+
+# Profiles group adapter instances by purpose or environment
 profiles:
-    default:
-        connectors: [main]
-    docker:
-        connectors: [docker_logs]
-    all:
-        connectors: [main, docker_logs]
+  default:
+    connectors: [grafana, docker]
+  production:
+    connectors: [grafana]
+  testing:
+    connectors: [mocked]
+
+# Connectors define individual adapter instances
 connectors:
   - type: grafana_browser
-    name: main
+    name: grafana
     params:
-      grafanaUrl: <your_grafana_url>
-      uid: <your_loki_uid>
+      grafanaUrl: "https://grafana.example.com"
+      uid: "loki-data-source-uid"
       filter:
-        - key: label1
-          value: "label1_value"
+        - key: "job"
+          value: "my-app"
           operator: "="
       querySuffix: []
+
+  - type: loki
+    name: loki_direct
+    enabled: true
+    params:
+      url: "http://loki.example.com:3100"
+      listenPort: 3100
+      filter: []
+      querySuffix: []
+
   - type: docker
-    name: docker_logs
-    # ...params for docker adapter...
+    name: docker
+    params:
+      # Docker-specific params
+
+  - type: mocked_data
+    name: mocked
+    params:
+      # Mocked data has no required params
+
+# UI settings (optional)
+ui:
+  theme: nord
 ```
 
-- `connectors`: A list of adapters to use. Each entry defines an adapter type, a name, and any required parameters.
-- `type`: The adapter type (e.g., `grafana_browser`, `docker`, `mocked_data`).
-- `name`: A unique name for this adapter instance.
-- `params`: Adapter-specific parameters (see adapter docs for details).
+**Field Definitions:**
+
+- `profiles`: (object) Named groups of adapter instances. The `default` profile is used on startup.
+  - Each profile contains `connectors`: (array) List of adapter instance names to include.
+- `connectors`: (array) List of adapter instances.
+  - `type`: (string, **required**) Adapter type (`grafana_browser`, `loki`, `k8s`, `docker`, `coralogix`, `mocked_data`).
+  - `name`: (string, **required**) Unique identifier for this instance.
+  - `enabled`: (boolean, optional) Whether this adapter is active. Default: `true`.
+  - `params`: (object, **required**) Adapter-specific parameters. See each adapter's documentation for details.
 
 ## Profiles
 

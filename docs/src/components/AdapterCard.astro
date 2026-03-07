@@ -1,0 +1,99 @@
+---
+interface Props {
+  name: string;
+  type: string;
+  description: string;
+  link: string;
+  icon?: string;
+}
+
+const { name, type, description, link, icon = "🔌" } = Astro.props;
+---
+
+<a href={link} class="adapter-card">
+  <div class="adapter-card-header">
+    <span class="adapter-icon">{icon}</span>
+    <div>
+      <h3>{name}</h3>
+      <code class="adapter-type">{type}</code>
+    </div>
+  </div>
+  <p class="adapter-description">{description}</p>
+  <div class="adapter-footer">
+    <span class="learn-more">Learn more →</span>
+  </div>
+</a>
+
+<style>
+  .adapter-card {
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem;
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 8px;
+    background: var(--sl-color-bg-panel);
+    transition: all 0.3s ease;
+    text-decoration: none;
+    color: inherit;
+    height: 100%;
+    margin: 0 !important;
+  }
+
+  .adapter-card:hover {
+    border-color: var(--sl-color-accent);
+    background: var(--sl-color-accent, rgb(255, 107, 107));
+    background-blend-mode: multiply;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .adapter-card-header {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    align-items: flex-start;
+  }
+
+  .adapter-icon {
+    font-size: 1.75rem;
+    flex-shrink: 0;
+  }
+
+  .adapter-card-header h3 {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+  }
+
+  .adapter-type {
+    display: inline-block;
+    background: var(--sl-color-gray-6);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+  }
+
+  .adapter-description {
+    flex-grow: 1;
+    margin: 0 0 1rem 0;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: var(--sl-color-gray-2);
+  }
+
+  .adapter-footer {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .learn-more {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--sl-color-accent);
+  }
+
+  .adapter-card:hover .learn-more {
+    color: white;
+  }
+</style>

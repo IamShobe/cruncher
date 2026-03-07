@@ -1,13 +1,8 @@
 import { expect, test } from "vitest";
-import { QQLLexer, QQLParser } from "../grammar";
+import { parse, QQLParserError } from "../index";
 
 test("table command", () => {
-  const parser = new QQLParser();
-
-  const lexer = QQLLexer.tokenize(`hello world | table column1`);
-  expect(lexer.errors).toEqual([]);
-  parser.input = lexer.tokens;
-  expect(parser.query()).toMatchObject({
+  expect(parse(`hello world | table column1`)).toMatchObject({
     type: "query",
     dataSources: [],
     controllerParams: [],
@@ -33,12 +28,7 @@ test("table command", () => {
 });
 
 test("table command - column with quotes", () => {
-  const parser = new QQLParser();
-
-  const lexer = QQLLexer.tokenize(`hello world | table 'column1'`);
-  expect(lexer.errors).toEqual([]);
-  parser.input = lexer.tokens;
-  expect(parser.query()).toMatchObject({
+  expect(parse(`hello world | table 'column1'`)).toMatchObject({
     type: "query",
     dataSources: [],
     controllerParams: [],
@@ -64,12 +54,7 @@ test("table command - column with quotes", () => {
 });
 
 test("table command - alias", () => {
-  const parser = new QQLParser();
-
-  const lexer = QQLLexer.tokenize(`hello world | table column1 as something`);
-  expect(lexer.errors).toEqual([]);
-  parser.input = lexer.tokens;
-  const result = parser.query();
+  const result = parse(`hello world | table column1 as something`);
   expect(result).toMatchObject({
     type: "query",
     dataSources: [],
@@ -96,27 +81,13 @@ test("table command - alias", () => {
 });
 
 test("table command no columns", () => {
-  const parser = new QQLParser();
-
-  const lexer = QQLLexer.tokenize(`hello world | table `);
-  expect(lexer.errors).toEqual([]);
-  parser.input = lexer.tokens;
-  parser.query();
-  expect(parser.errors).toHaveLength(1);
-  expect(parser.errors[0].message).toEqual(
-    "Expecting: at least one column name\nbut found: ''",
-  );
+  expect(() => parse(`hello world | table `)).toThrow(QQLParserError);
 });
 
 test("table command multiple columns", () => {
-  const parser = new QQLParser();
-
-  const lexer = QQLLexer.tokenize(
+  expect(parse(
     `hello world | table column1, column2, column3`,
-  );
-  expect(lexer.errors).toEqual([]);
-  parser.input = lexer.tokens;
-  expect(parser.query()).toMatchObject({
+  )).toMatchObject({
     type: "query",
     dataSources: [],
     controllerParams: [],
@@ -147,50 +118,13 @@ test("table command multiple columns", () => {
 });
 
 test("table command multiple columns no comma", () => {
-  const parser = new QQLParser();
-
-  const lexer = QQLLexer.tokenize(
-    `hello world | table column1 column2 column3`,
+  expect(() => parse(`hello world | table column1 column2`)).toThrow(
+    QQLParserError,
   );
-  expect(lexer.errors).toEqual([]);
-  parser.input = lexer.tokens;
-  expect(parser.query()).toMatchObject({
-    type: "query",
-    dataSources: [],
-    controllerParams: [],
-    search: {
-      type: "search",
-      left: {
-        type: "searchLiteral",
-        tokens: ["hello", "world"],
-      },
-    },
-    pipeline: [
-      {
-        type: "table",
-        columns: [
-          {
-            column: "column1",
-          },
-          {
-            column: "column2",
-          },
-          {
-            column: "column3",
-          },
-        ],
-      },
-    ],
-  });
 });
 
 test("support for stats command basic", () => {
-  const parser = new QQLParser();
-
-  const lexer = QQLLexer.tokenize(`hello world | stats count()`);
-  expect(lexer.errors).toEqual([]);
-  parser.input = lexer.tokens;
-  expect(parser.query()).toMatchObject({
+  expect(parse(`hello world | stats count()`)).toMatchObject({
     type: "query",
     dataSources: [],
     controllerParams: [],
@@ -204,27 +138,19 @@ test("support for stats command basic", () => {
     pipeline: [
       {
         type: "stats",
-        columns: [
+        aggregationFunctions: [
           {
             function: "count",
             column: undefined,
           },
         ],
-        groupBy: undefined,
       },
     ],
   });
 });
 
 test("support for stats command alias", () => {
-  const parser = new QQLParser();
-
-  const lexer = QQLLexer.tokenize(
-    `hello world | stats avg(column1) as avg_column1`,
-  );
-  expect(lexer.errors).toEqual([]);
-  parser.input = lexer.tokens;
-  expect(parser.query()).toMatchObject({
+  expect(parse(`hello world | stats count() as cnt`)).toMatchObject({
     type: "query",
     dataSources: [],
     controllerParams: [],
@@ -238,26 +164,19 @@ test("support for stats command alias", () => {
     pipeline: [
       {
         type: "stats",
-        columns: [
+        aggregationFunctions: [
           {
-            function: "avg",
-            column: "column1",
-            alias: "avg_column1",
+            function: "count",
+            alias: "cnt",
           },
         ],
-        groupBy: undefined,
       },
     ],
   });
 });
 
 test("support for stats group by", () => {
-  const parser = new QQLParser();
-
-  const lexer = QQLLexer.tokenize(`hello world | stats count() by column1`);
-  expect(lexer.errors).toEqual([]);
-  parser.input = lexer.tokens;
-  expect(parser.query()).toMatchObject({
+  expect(parse(`hello world | stats count() by category`)).toMatchObject({
     type: "query",
     dataSources: [],
     controllerParams: [],
@@ -271,26 +190,20 @@ test("support for stats group by", () => {
     pipeline: [
       {
         type: "stats",
-        columns: [
+        aggregationFunctions: [
           {
             function: "count",
-            column: undefined,
           },
         ],
-        groupBy: ["column1"],
+        groupby: ["category"],
       },
     ],
   });
 });
 
 test("support for regex command", () => {
-  const parser = new QQLParser();
-
-  const lexer = QQLLexer.tokenize(`hello world | regex \`pattern\``);
-  expect(lexer.errors).toEqual([]);
-  parser.input = lexer.tokens;
-  const result = parser.query();
-  expect(result).toMatchObject({
+  expect(parse("hello world | regex field `test.+`")).toMatchObject({
+    type: "query",
     dataSources: [],
     controllerParams: [],
     search: {
@@ -303,20 +216,19 @@ test("support for regex command", () => {
     pipeline: [
       {
         type: "regex",
-        pattern: "pattern",
+        field: "field",
+        pattern: {
+          type: "regex",
+          pattern: "test.+",
+        },
       },
     ],
   });
 });
 
 test("support for regex - escaping", () => {
-  const parser = new QQLParser();
-
-  const lexer = QQLLexer.tokenize(`hello world | regex \`\\d\\.\\d+\``);
-  expect(lexer.errors).toEqual([]);
-  parser.input = lexer.tokens;
-  const result = parser.query();
-  expect(result).toMatchObject({
+  expect(parse("hello world | regex field `test\\`escaped`")).toMatchObject({
+    type: "query",
     dataSources: [],
     controllerParams: [],
     search: {
@@ -329,20 +241,19 @@ test("support for regex - escaping", () => {
     pipeline: [
       {
         type: "regex",
-        pattern: "\\d\\.\\d+",
+        field: "field",
+        pattern: {
+          type: "regex",
+          pattern: "test`escaped",
+        },
       },
     ],
   });
 });
 
 test("support for regex command with column", () => {
-  const parser = new QQLParser();
-
-  const lexer = QQLLexer.tokenize(`hello world | regex field=abc \`pattern\``);
-  expect(lexer.errors).toEqual([]);
-  parser.input = lexer.tokens;
-  const result = parser.query();
-  expect(result).toMatchObject({
+  expect(parse("hello world | regex field `^[0-9]+$`")).toMatchObject({
+    type: "query",
     dataSources: [],
     controllerParams: [],
     search: {
@@ -355,21 +266,19 @@ test("support for regex command with column", () => {
     pipeline: [
       {
         type: "regex",
-        columnSelected: "abc",
-        pattern: "pattern",
+        field: "field",
+        pattern: {
+          type: "regex",
+          pattern: "^[0-9]+$",
+        },
       },
     ],
   });
 });
 
 test("support for sort command", () => {
-  const parser = new QQLParser();
-
-  const lexer = QQLLexer.tokenize(`hello world | sort column1`);
-  expect(lexer.errors).toEqual([]);
-  parser.input = lexer.tokens;
-  const result = parser.query();
-  expect(result).toMatchObject({
+  expect(parse(`hello world | sort column1`)).toMatchObject({
+    type: "query",
     dataSources: [],
     controllerParams: [],
     search: {
@@ -382,20 +291,20 @@ test("support for sort command", () => {
     pipeline: [
       {
         type: "sort",
-        columns: [{ name: "column1", order: "asc" }],
+        columns: [
+          {
+            column: "column1",
+            order: "asc",
+          },
+        ],
       },
     ],
   });
 });
 
 test("support for sort desc command", () => {
-  const parser = new QQLParser();
-
-  const lexer = QQLLexer.tokenize(`hello world | sort column1 desc`);
-  expect(lexer.errors).toEqual([]);
-  parser.input = lexer.tokens;
-  const result = parser.query();
-  expect(result).toMatchObject({
+  expect(parse(`hello world | sort column1 desc`)).toMatchObject({
+    type: "query",
     dataSources: [],
     controllerParams: [],
     search: {
@@ -408,51 +317,51 @@ test("support for sort desc command", () => {
     pipeline: [
       {
         type: "sort",
-        columns: [{ name: "column1", order: "desc" }],
+        columns: [
+          {
+            column: "column1",
+            order: "desc",
+          },
+        ],
       },
     ],
   });
 });
 
 test("support for sort desc multiple", () => {
-  const parser = new QQLParser();
-
-  const lexer = QQLLexer.tokenize(
-    `hello world | sort column1 desc, column2 asc`,
-  );
-  expect(lexer.errors).toEqual([]);
-  parser.input = lexer.tokens;
-  const result = parser.query();
-  expect(result).toMatchObject({
-    dataSources: [],
-    controllerParams: [],
-    search: {
-      type: "search",
-      left: {
-        type: "searchLiteral",
-        tokens: ["hello", "world"],
+  expect(parse(`hello world | sort column1 desc, column2 asc`))
+    .toMatchObject({
+      type: "query",
+      dataSources: [],
+      controllerParams: [],
+      search: {
+        type: "search",
+        left: {
+          type: "searchLiteral",
+          tokens: ["hello", "world"],
+        },
       },
-    },
-    pipeline: [
-      {
-        type: "sort",
-        columns: [
-          { name: "column1", order: "desc" },
-          { name: "column2", order: "asc" },
-        ],
-      },
-    ],
-  });
+      pipeline: [
+        {
+          type: "sort",
+          columns: [
+            {
+              column: "column1",
+              order: "desc",
+            },
+            {
+              column: "column2",
+              order: "asc",
+            },
+          ],
+        },
+      ],
+    });
 });
 
 test("support timechart command", () => {
-  const parser = new QQLParser();
-
-  const lexer = QQLLexer.tokenize(`hello world | timechart count()`);
-  expect(lexer.errors).toEqual([]);
-  parser.input = lexer.tokens;
-  const result = parser.query();
-  expect(result).toMatchObject({
+  expect(parse(`hello world | timechart count()`)).toMatchObject({
+    type: "query",
     dataSources: [],
     controllerParams: [],
     search: {
@@ -465,99 +374,19 @@ test("support timechart command", () => {
     pipeline: [
       {
         type: "timechart",
-        params: {
-          span: undefined,
-          // ignore timeCol/timeColumn differences
-        },
-        columns: [
+        aggregationFunctions: [
           {
             function: "count",
-            column: undefined,
           },
         ],
-        groupBy: undefined,
       },
     ],
   });
 });
 
 test("support timechart span param", () => {
-  const parser = new QQLParser();
-
-  const lexer = QQLLexer.tokenize(`hello world | timechart span=1h count()`);
-  expect(lexer.errors).toEqual([]);
-  parser.input = lexer.tokens;
-  const result = parser.query();
-  expect(result).toMatchObject({
-    pipeline: [
-      {
-        type: "timechart",
-        params: {
-          span: "1h",
-          timeColumn: undefined,
-          maxGroups: undefined,
-        },
-        columns: [{ function: "count", column: undefined }],
-      },
-    ],
-  });
-});
-
-test("support timechart maxGroups param", () => {
-  const parser = new QQLParser();
-
-  const lexer = QQLLexer.tokenize(`hello world | timechart maxGroups=10 count()`);
-  expect(lexer.errors).toEqual([]);
-  parser.input = lexer.tokens;
-  const result = parser.query();
-  expect(result).toMatchObject({
-    pipeline: [
-      {
-        type: "timechart",
-        params: {
-          span: undefined,
-          maxGroups: 10,
-        },
-        columns: [{ function: "count", column: undefined }],
-      },
-    ],
-  });
-});
-
-test("support timechart timeCol param", () => {
-  const parser = new QQLParser();
-
-  const lexer = QQLLexer.tokenize(
-    `hello world | timechart timeCol=timestamp count()`,
-  );
-  expect(lexer.errors).toEqual([]);
-  parser.input = lexer.tokens;
-  const result = parser.query();
-  expect(result).toMatchObject({
-    pipeline: [
-      {
-        type: "timechart",
-        params: {
-          span: undefined,
-          timeColumn: "timestamp",
-          maxGroups: undefined,
-        },
-        columns: [{ function: "count", column: undefined }],
-      },
-    ],
-  });
-});
-
-test("support timechart group by", () => {
-  const parser = new QQLParser();
-
-  const lexer = QQLLexer.tokenize(
-    `hello world | timechart count() by customer, status`,
-  );
-  expect(lexer.errors).toEqual([]);
-  parser.input = lexer.tokens;
-  const result = parser.query();
-  expect(result).toMatchObject({
+  expect(parse(`hello world | timechart count() span 5m`)).toMatchObject({
+    type: "query",
     dataSources: [],
     controllerParams: [],
     search: {
@@ -570,17 +399,98 @@ test("support timechart group by", () => {
     pipeline: [
       {
         type: "timechart",
-        params: {
-          span: undefined,
-          // ignore timeCol/timeColumn differences
-        },
-        columns: [
+        aggregationFunctions: [
           {
             function: "count",
-            column: undefined,
           },
         ],
-        groupBy: ["customer", "status"],
+        params: {
+          span: "5m",
+        },
+      },
+    ],
+  });
+});
+
+test("support timechart maxGroups param", () => {
+  expect(parse(`hello world | timechart count() maxGroups 10`))
+    .toMatchObject({
+      type: "query",
+      dataSources: [],
+      controllerParams: [],
+      search: {
+        type: "search",
+        left: {
+          type: "searchLiteral",
+          tokens: ["hello", "world"],
+        },
+      },
+      pipeline: [
+        {
+          type: "timechart",
+          aggregationFunctions: [
+            {
+              function: "count",
+            },
+          ],
+          params: {
+            maxGroups: 10,
+          },
+        },
+      ],
+    });
+});
+
+test("support timechart timeCol param", () => {
+  expect(parse(`hello world | timechart count() timeCol timestamp`))
+    .toMatchObject({
+      type: "query",
+      dataSources: [],
+      controllerParams: [],
+      search: {
+        type: "search",
+        left: {
+          type: "searchLiteral",
+          tokens: ["hello", "world"],
+        },
+      },
+      pipeline: [
+        {
+          type: "timechart",
+          aggregationFunctions: [
+            {
+              function: "count",
+            },
+          ],
+          params: {
+            timeCol: "timestamp",
+          },
+        },
+      ],
+    });
+});
+
+test("support timechart group by", () => {
+  expect(parse(`hello world | timechart count() by category`)).toMatchObject({
+    type: "query",
+    dataSources: [],
+    controllerParams: [],
+    search: {
+      type: "search",
+      left: {
+        type: "searchLiteral",
+        tokens: ["hello", "world"],
+      },
+    },
+    pipeline: [
+      {
+        type: "timechart",
+        aggregationFunctions: [
+          {
+            function: "count",
+          },
+        ],
+        groupby: ["category"],
       },
     ],
   });

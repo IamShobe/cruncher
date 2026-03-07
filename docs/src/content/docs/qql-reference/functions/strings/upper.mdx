@@ -3,16 +3,52 @@ title: upper
 description: Convert a string to uppercase.
 ---
 
-The `upper` function converts the input string to uppercase.
+import FunctionCard from '../../../../../components/FunctionCard.astro';
 
-## Usage
+<FunctionCard
+  name="upper"
+  category="string"
+  signature="upper(string) → string"
+  description="Convert all alphabetic characters to uppercase"
+/>
+
+The `upper` function converts the input string to uppercase (all characters converted to upper case).
+
+## Signature
 
 ```
-upper(field)
+upper(string) → string
 ```
 
-**Example:**
-```
+## Parameters
+
+| Name | Type | Description |
+|------|------|-------------|
+| `string` | string | The input string |
+
+## Returns
+
+`string` — The input string with all characters converted to uppercase. Returns `null` if input is `null`.
+
+## Edge Cases
+
+- If `string` is `null`, returns `null`
+- Non-alphabetic characters (numbers, punctuation, spaces) are unchanged
+- Works with Unicode characters where case conversion is defined
+
+## Examples
+
+```qql
 eval user_upper = upper(user)
 ```
-This creates a new field `user_upper` with the uppercase value of `user`.
+Creates a new field `user_upper` with the uppercase version of `user`.
+
+```qql
+where upper(env) == "PRODUCTION"
+```
+Matches records where env is "production", "Production", "PRODUCTION", etc.
+
+```qql
+eval level_code = upper(left(level, 1))
+```
+Normalizes log level to first letter uppercase (e.g., "E", "W", "I").

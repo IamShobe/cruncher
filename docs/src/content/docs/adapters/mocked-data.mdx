@@ -1,0 +1,148 @@
+---
+title: Mocked Data
+description: Local test data adapter for demos and learning.
+---
+
+import { Badge, Aside } from '@astrojs/starlight/components';
+import AdapterCard from '../../../components/AdapterCard.astro';
+
+<Badge text="mocked_data" />
+
+The **Mocked Data** adapter generates sample log data locally without requiring any external data source. Use this adapter for testing, learning QQL, or creating demos.
+
+## When to Use
+
+- **Learning**: Explore QQL syntax without setting up a backend
+- **Demos**: Show Cruncher capabilities without production data
+- **Testing**: Verify queries and configurations before connecting to real data
+- **Offline work**: No external dependencies or network access needed
+
+## Generated Data
+
+The mocked data adapter generates synthetic log records with the following fields:
+
+| Field | Type | Example |
+|-------|------|---------|
+| `timestamp` | number | Unix timestamp in milliseconds |
+| `name` | string | `"Alice"`, `"Bob"`, `"Charlie"`, etc. |
+| `age` | number | Random age between 20-80 |
+| `address` | string | Random street address |
+| `tags` | string | Comma-separated values like `"tag1,tag2"` |
+| `key` | string | Random UUID-like identifier |
+| `field0` - `field9` | number | Random numeric fields (0-9) for testing aggregations |
+
+### Example Generated Record
+
+```json
+{
+  "timestamp": 1704067200000,
+  "name": "Alice",
+  "age": 42,
+  "address": "123 Main St, Springfield",
+  "tags": "important,urgent",
+  "key": "abc-123-def",
+  "field0": 5,
+  "field1": 8,
+  "field2": 3,
+  ...
+}
+```
+
+## Configuration
+
+The mocked data adapter requires no parameters:
+
+```yaml
+connectors:
+  - type: mocked_data
+    name: test_data
+```
+
+That's it! Cruncher will automatically generate data when you query this adapter.
+
+## Query Examples
+
+### Basic Filtering
+
+```qql
+where age > 40 | table name, age, address
+```
+
+Display names, ages, and addresses for people over 40.
+
+### Aggregation
+
+```qql
+| stats count, avg(age) by name
+```
+
+Group records by name and show count and average age.
+
+### Time Series
+
+```qql
+| timechart count by field0
+```
+
+Count records over time, grouped by the `field0` numeric value.
+
+### String Operations
+
+```qql
+where contains(address, "Street") | eval address_upper = upper(address) | table address, address_upper
+```
+
+Find addresses containing "Street" and create an uppercase version.
+
+### Complex Pipeline
+
+```qql
+where age > 30 |
+  eval age_group = if(age > 60, "senior", "adult") |
+  stats count, avg(field1) by age_group |
+  sort -count
+```
+
+Categorize by age group, aggregate, and sort by count.
+
+## Tips
+
+<Aside>
+The mocked data adapter generates different records each time Cruncher starts. If you need reproducible test data, you may want to export results and import them later.
+</Aside>
+
+- **Test QQL**: Use mocked data to test complex queries before running them against production
+- **Learn functions**: Practice with all QQL functions without affecting real data
+- **Profile switching**: Include the mocked data adapter in a "testing" profile for quick switching
+
+---
+
+## Ready to Try Real Data?
+
+Once you've learned QQL with mocked data, connect to real log sources:
+
+<div class="not-content" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin: 1.5rem 0;">
+  <AdapterCard
+    name="Docker"
+    type="docker"
+    description="Stream logs from local Docker containers"
+    link="/adapters/docker"
+    icon="🐳"
+  />
+  <AdapterCard
+    name="Kubernetes"
+    type="k8s"
+    description="Query pod logs from your cluster"
+    link="/adapters/kubernetes"
+    icon="☸️"
+  />
+  <AdapterCard
+    name="Grafana Loki"
+    type="grafana_browser"
+    description="Query logs from Grafana Loki"
+    link="/adapters/grafana-loki"
+    icon="🔷"
+  />
+</div>
+
+For QQL reference, see [QQL Documentation](/qql-reference/01-qql).

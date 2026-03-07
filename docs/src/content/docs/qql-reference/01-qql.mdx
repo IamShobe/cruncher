@@ -1,10 +1,139 @@
 ---
 title: QQL (Quick Query Language)
-description: The main query language inside `Cruncher` - it's main goal is to have a quick - easy to learn language - that's powerful enought to allow power users access to enhanced capabilities over that data.
+description: The main query language inside Cruncher for searching, filtering, and transforming log data.
 ---
 
+import QueryPipeline from '../../../components/QueryPipeline.astro';
 
-QQL is the main query language inside `Cruncher` - it's main goal is to have a quick - easy to learn language - that's powerful enought to allow power users access to enhanced capabilities over that data.
+# QQL (Quick Query Language)
 
-The query language was heavily inspired from Splunk (SPL2) and Kusto (KQL).  
+**QQL is the unified query language in Cruncher for searching, filtering, and transforming logs from any data source.**
+
+Inspired by observability languages like Splunk SPL2 and Kusto KQL, QQL is designed to be easy to learn while providing powerful capabilities for log analysis and investigation.
+
+## Why QQL?
+
+Different log sources (Grafana, Loki, Kubernetes, Docker) have different native query languages. QQL abstracts away these differences, letting you write once and query any source. You get:
+
+- **Consistent syntax** across all adapters
+- **Powerful pipeline model** for data transformation
+- **Simple learning curve** with familiar operators
+- **Local execution** for fast feedback
+
+## The Pipeline Model
+
+QQL uses a **pipeline model**: data flows through a series of commands, with each command filtering, transforming, or visualizing the data.
+
+<QueryPipeline
+  title="How Data Flows Through QQL"
+  stages={[
+    {
+      label: "Data Source",
+      description: "Logs retrieved from your configured adapter",
+      icon: "📥"
+    },
+    {
+      label: "Filter & Select",
+      description: "Use 'where' to filter records by condition",
+      icon: "🔽"
+    },
+    {
+      label: "Transform",
+      description: "Use 'eval' and 'regex' to create/modify fields",
+      icon: "🔄"
+    },
+    {
+      label: "Aggregate",
+      description: "Use 'stats' and 'timechart' to summarize data",
+      icon: "📊"
+    },
+    {
+      label: "Output",
+      description: "View results as Logs, Table, or Chart",
+      icon: "📈"
+    }
+  ]}
+/>
+
+## Query Structure
+
+A QQL query has two parts:
+
+1. **Controller parameters** (optional): Passed to the adapter for server-side filtering
+2. **Pipeline commands**: Executed locally on results
+
+```
+[controller_params] | command1 | command2 | command3
+```
+
+**Example:**
+
+```qql
+level=error | where contains(message, "timeout") | stats count by service
+```
+
+- No controller params in this example
+- `where contains(...)` — filters records where message contains "timeout"
+- `stats count by service` — counts records grouped by service field
+
+## Commands Quick Reference
+
+| Command | Purpose | Example |
+|---------|---------|---------|
+| `where` | Filter records by condition | `where status == "error"` |
+| `eval` | Create or modify fields | `eval duration_ms = duration / 1000` |
+| `regex` | Extract fields using regex | `regex "(?P<code>\d+)" message` |
+| `table` | Display as table, select columns | `table timestamp, message, level` |
+| `stats` | Aggregate: count, sum, avg, etc. | `stats count by level` |
+| `timechart` | Time-series aggregation | `timechart count by level` |
+| `sort` | Sort by field | `sort -timestamp` (descending) |
+| `unpack` | Flatten JSON/nested fields | `unpack json` |
+
+See [Commands](/qql-reference/commands) for full details.
+
+## Functions
+
+QQL provides functions for boolean logic, string manipulation, math, and more:
+
+- **Boolean**: `contains()`, `startsWith()`, `endsWith()`, `match()`, `isNull()`, `isNotNull()`
+- **String**: `lower()`, `upper()`, `length()`, `trim()`
+- **Math**: `abs()`, `round()`, `ceil()`, `floor()`
+- **Conditional**: `if()`, `case()`
+
+See [Functions](/qql-reference/functions) for full details.
+
+## Data Types
+
+QQL supports: `string`, `number`, `boolean`, and `null`. The adapter assigns types when extracting fields, and type coercion happens implicitly in expressions.
+
+See [Data Types](/qql-reference/03-data-types) for details.
+
+## Complete Example
+
+Suppose you want to investigate slow API requests in your logs:
+
+```qql
+service=api method=POST |
+  eval duration_ms = duration / 1000 |
+  where duration_ms > 100 |
+  stats avg(duration_ms), max(duration_ms), count by endpoint |
+  sort -count
+```
+
+**What happens:**
+
+1. Adapter filters for `service=api` and `method=POST` before sending data
+2. Pipeline creates `duration_ms` field in milliseconds
+3. Filters to requests slower than 100ms
+4. Aggregates by endpoint: avg/max duration, count
+5. Sorts by count descending
+
+**Result:** A table showing which endpoints have the most slow requests.
+
+---
+
+**Next steps:**
+- [Query Structure](/qql-reference/02-query) — Controller params and syntax details
+- [Commands](/qql-reference/commands) — Full command reference
+- [Functions](/qql-reference/functions) — All available functions
 

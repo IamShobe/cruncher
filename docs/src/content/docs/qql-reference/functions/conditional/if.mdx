@@ -1,0 +1,86 @@
+---
+title: if
+description: Conditional expression to return different values based on a condition.
+---
+
+import FunctionCard from '../../../../../components/FunctionCard.astro';
+
+<FunctionCard
+  name="if"
+  category="conditional"
+  signature="if(condition, then_value, else_value) → any"
+  description="Return one of two values based on whether a condition is true or false"
+/>
+
+The `if` function returns one value if a condition is true, and another value if it is false.
+
+## Signature
+
+```
+if(condition, then_value, else_value) → any
+```
+
+## Parameters
+
+| Name | Type | Description |
+|------|------|-------------|
+| `condition` | boolean | The condition to evaluate |
+| `then_value` | any | Value returned if condition is `true` |
+| `else_value` | any | Value returned if condition is `false` |
+
+## Returns
+
+`any` — Returns `then_value` if `condition` is `true`, otherwise returns `else_value`. Return type matches the types of the values provided.
+
+## Edge Cases
+
+- If `condition` is `null`, returns `null` (not `then_value` or `else_value`)
+- `then_value` and `else_value` can have different types (e.g., number and string)
+- `if` functions can be nested for complex logic
+- The condition part is always evaluated; short-circuit evaluation does not apply
+
+## Examples
+
+### Simple Boolean Field
+
+```qql
+eval is_error = if(status == "error", true, false)
+```
+
+Creates a boolean field `is_error` that is `true` if `status` equals "error".
+
+### Categorization
+
+```qql
+eval severity = if(status_code >= 500, "critical", "normal")
+```
+
+Categorizes records as "critical" if status code is 500 or higher, otherwise "normal".
+
+### Nested Conditions
+
+```qql
+eval tier = if(score > 90, "gold", if(score > 70, "silver", "bronze"))
+```
+
+Multi-level categorization: gold (>90), silver (>70), bronze (≤70).
+
+### Filtering and Calculation
+
+```qql
+eval discount = if(total_spent > 1000, total_spent * 0.1, 0)
+```
+
+Applies a 10% discount to customers who spent more than 1000, otherwise no discount.
+
+### Type Coercion
+
+```qql
+eval result_display = if(success, "OK", "FAILED")
+```
+
+Returns a string based on a boolean field.
+
+---
+
+See [Case](/qql-reference/functions/conditional/case) for a more complex conditional function with multiple branches.

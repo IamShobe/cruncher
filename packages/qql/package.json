@@ -29,6 +29,7 @@
     "dist"
   ],
   "scripts": {
+    "generate": "antlr4ng -Dlanguage=TypeScript -visitor -no-listener -o src/generated src/QQL.g4",
     "build": "tsc --project tsconfig.json",
     "test": "vitest run",
     "format": "oxfmt src/",
@@ -45,9 +46,10 @@
   },
   "license": "GPL-3.0-only",
   "dependencies": {
-    "chevrotain": "^11.2.0"
+    "antlr4ng": "^3.0.16"
   },
   "devDependencies": {
+    "antlr4ng-cli": "^2.0.0",
     "typescript": "^5.9.3",
     "vitest": "^4.0.18"
   }

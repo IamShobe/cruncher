@@ -3,16 +3,52 @@ title: lower
 description: Convert a string to lowercase.
 ---
 
-The `lower` function converts the input string to lowercase.
+import FunctionCard from '../../../../../components/FunctionCard.astro';
 
-## Usage
+<FunctionCard
+  name="lower"
+  category="string"
+  signature="lower(string) → string"
+  description="Convert all alphabetic characters to lowercase"
+/>
+
+The `lower` function converts the input string to lowercase (all characters converted to lower case).
+
+## Signature
 
 ```
-lower(field)
+lower(string) → string
 ```
 
-**Example:**
-```
+## Parameters
+
+| Name | Type | Description |
+|------|------|-------------|
+| `string` | string | The input string |
+
+## Returns
+
+`string` — The input string with all characters converted to lowercase. Returns `null` if input is `null`.
+
+## Edge Cases
+
+- If `string` is `null`, returns `null`
+- Non-alphabetic characters (numbers, punctuation, spaces) are unchanged
+- Works with Unicode characters where case conversion is defined
+
+## Examples
+
+```qql
 eval user_lower = lower(user)
 ```
-This creates a new field `user_lower` with the lowercase value of `user`.
+Creates a new field `user_lower` with the lowercase version of `user`, useful for case-insensitive comparisons.
+
+```qql
+where lower(status) == "error"
+```
+Matches records where status is "error", "ERROR", "Error", etc.
+
+```qql
+eval normalized_service = lower(service_name)
+```
+Normalizes service names to lowercase for grouping.

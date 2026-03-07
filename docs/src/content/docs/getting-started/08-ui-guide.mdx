@@ -1,0 +1,137 @@
+---
+title: UI Guide
+description: Tour of Cruncher's user interface, components, and features.
+---
+
+This guide walks through Cruncher's interface and explains the main UI components.
+
+## Main Layout
+
+The Cruncher window is divided into several key areas:
+
+1. **Search Header** — Query editor, time range, and controls (top)
+2. **Histogram** — Visual distribution of logs over time (middle)
+3. **Results View** — Tabs for different result types (bottom)
+4. **Row Details Panel** — Inspector for individual records (right side, when open)
+
+## Search Header
+
+The search header contains:
+
+- **Query Editor**: Multi-line input for your QQL query. Press `Alt+Q` to focus or use keyboard shortcut `Shift+Enter` to re-evaluate the pipeline.
+- **Time Range Selector**: Click to open a date/time picker, or press `Alt+T` to quickly access it.
+- **Execute Button**: Run your full search.
+- **Share Button**: Copy a shareable link to this search.
+- **Settings**: Access theme preferences and initialized datasets.
+
+### Keyboard Shortcuts
+
+- `Alt+Q` — Focus the query editor
+- `Alt+T` — Open time range selector
+- `Shift+Enter` — Re-evaluate the pipeline (fast)
+- `Cmd+Shift+Enter` (Mac) / `Ctrl+Shift+Enter` (Windows) — Full search
+- `Cmd+Shift+C` (Mac) / `Ctrl+Shift+C` (Windows) — Copy share link
+- `Cmd+N` (Mac) / `Ctrl+N` (Windows) — Toggle "until now" mode
+
+## Histogram
+
+The histogram visualizes the distribution of your log results over the selected time range. Each bar represents the count of matching logs in that time bucket.
+
+### Histogram Interactions
+
+- **Click a bucket**: Focus on that time period
+- **Drag across buckets**: Select a time range and zoom in
+- **Scroll**: Adjust bucket size (zoom in/out)
+- **Hover**: See exact timestamp and count for a bucket
+
+The histogram automatically updates when you modify your query or time range.
+
+## Results Views
+
+Results are displayed in tabs below the histogram. The available tabs depend on your query:
+
+### Logs Tab (Always Available)
+
+Shows individual log records in chronological order. Each row displays:
+
+- **Timestamp**: When the log was created
+- **Message/Fields**: The main content of the log
+- **Level/Severity**: Log level (error, warn, info, etc.), if available
+
+**Click a row** to open the Row Details panel on the right.
+
+### Table Tab (After `| table` or `| stats` command)
+
+When your query ends with a `table` or `stats` command, a Table tab appears showing aggregated results in a tabular format.
+
+- **Column headers**: Automatically generated from selected fields or aggregation results
+- **Sortable columns**: Click column headers to sort
+- **Row counts**: Shows how many rows are displayed
+
+**Example query that produces Table results:**
+```qql
+| stats count, avg(latency_ms) by service
+```
+
+### View Tab (After `| timechart` command)
+
+When your query produces time-series data (via `timechart` command), a View tab displays a chart visualization.
+
+- **Time-series chart**: Shows metrics over time
+- **Grouped by**: Color-coded series for different values
+
+**Example query that produces View results:**
+```qql
+| timechart count by level
+```
+
+## Row Details Panel
+
+When you click on a log record, the Row Details panel opens on the right side, showing all fields in that record.
+
+### Field Information
+
+Each field shows:
+
+- **Field name**: Left side
+- **Field value**: Right side
+- **Type indicator**: A small icon showing the field type (string, number, boolean, etc.)
+- **Copy button**: Hover over a value to see a copy icon
+- **Append button**: Arrow button to quickly add this field to your query
+
+### Interactions
+
+- **Copy value**: Click the copy icon next to any field value
+- **Append to query**: Click the arrow button to add a filter like `field="value"` to your query
+- **Close panel**: Click the X or click elsewhere in the results
+
+## Settings
+
+Click the **Settings** icon (gear) in the search header to access:
+
+### General Tab
+
+- **Theme**: Choose your preferred color scheme (Midnight, Nord, Dracula, Catppuccin)
+- **Profile**: Switch between different connector profiles
+
+### Initialized Datasets
+
+View and manage datasets that are loaded from your configured adapters.
+
+## Tabs
+
+Create multiple search tabs to organize different investigations:
+
+- **Create tab**: Press `Cmd+T` (Mac) or `Ctrl+T` (Windows)
+- **Close tab**: Press `Cmd+W` (Mac) or `Ctrl+W` (Windows)
+- **Switch tabs**: Click on any tab, or use keyboard navigation
+
+Each tab maintains its own:
+- Query
+- Time range
+- Results
+- Settings
+
+---
+
+For keyboard shortcuts reference, see [Keyboard Shortcuts](/getting-started/07-keyboard-shortcuts).

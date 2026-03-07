@@ -1,0 +1,137 @@
+---
+interface Shortcut {
+  action: string;
+  mac: string;
+  windows: string;
+  description?: string;
+}
+
+interface Props {
+  shortcuts: Shortcut[];
+  title?: string;
+}
+
+const { shortcuts, title } = Astro.props;
+---
+
+<div class="shortcuts-container">
+  {title && <h3 class="shortcuts-title">{title}</h3>}
+
+  <div class="shortcuts-grid">
+    {shortcuts.map((shortcut) => (
+      <div class="shortcut-item">
+        <div class="shortcut-action">{shortcut.action}</div>
+        {shortcut.description && (
+          <p class="shortcut-description">{shortcut.description}</p>
+        )}
+        <div class="shortcut-keys">
+          <div class="key-group">
+            <span class="platform-label">Mac</span>
+            <code class="keyboard-key">{shortcut.mac}</code>
+          </div>
+          <div class="key-group">
+            <span class="platform-label">Windows</span>
+            <code class="keyboard-key">{shortcut.windows}</code>
+          </div>
+        </div>
+      </div>
+    ))}
+  </div>
+</div>
+
+<style>
+  .shortcuts-container {
+    margin: 2rem 0 !important;
+  }
+
+  .shortcuts-title {
+    margin: 0 0 1.5rem 0 !important;
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+
+  .shortcuts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+  }
+
+  .shortcut-item {
+    padding: 1rem;
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 6px;
+    background: var(--sl-color-bg-panel);
+    transition: all 0.3s ease;
+  }
+
+  .shortcut-item:hover {
+    border-color: var(--sl-color-accent);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
+  }
+
+  .shortcut-action {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--sl-color-text);
+  }
+
+  .shortcut-description {
+    font-size: 0.8rem;
+    color: var(--sl-color-gray-2);
+    margin: 0 0 0.75rem 0;
+    line-height: 1.4;
+  }
+
+  .shortcut-keys {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .key-group {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .platform-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--sl-color-gray-3);
+    min-width: 50px;
+  }
+
+  .keyboard-key {
+    background: var(--sl-color-gray-7);
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 4px;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    font-family: 'Monaco', 'Menlo', monospace;
+    display: inline-block;
+    flex: 1;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+
+  @media (max-width: 640px) {
+    .shortcuts-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .shortcut-item {
+      padding: 0.75rem;
+    }
+
+    .keyboard-key {
+      padding: 0.375rem 0.5rem;
+      font-size: 0.75rem;
+    }
+  }
+</style>

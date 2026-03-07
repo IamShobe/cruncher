@@ -3,16 +3,55 @@ title: isNull
 description: Check if a value is null or undefined.
 ---
 
-The `isNull` function returns true if the given value is null or undefined.
+import FunctionCard from '../../../../../components/FunctionCard.astro';
 
-## Usage
+<FunctionCard
+  name="isNull"
+  category="boolean"
+  signature="isNull(value) → boolean"
+  returnType="boolean"
+  returnDescription="true if value is null or field is missing, false otherwise"
+  description="Check if a value is null or a field is missing"
+/>
+
+The `isNull` function returns `true` if the input value is `null` or undefined (field not present), otherwise `false`.
+
+## Signature
 
 ```
-isNull(field)
+isNull(value) → boolean
 ```
 
-**Example:**
-```
+## Parameters
+
+| Name | Type | Description |
+|------|------|-------------|
+| `value` | any | The value to check |
+
+## Returns
+
+`boolean` — `true` if `value` is `null` or the field does not exist, `false` otherwise.
+
+## Edge Cases
+
+- Distinguishes between `null` (explicit null value) and missing/undefined fields (both return `true`)
+- Empty strings `""` are **not** null (returns `false`)
+- Zero `0` and `false` are **not** null (returns `false`)
+- `null` in a comparison like `field == null` is equivalent to `isNull(field)`
+
+## Examples
+
+```qql
 where isNull(optional_field)
 ```
-This matches records where `optional_field` is null or not present.
+Matches records where `optional_field` is missing or null.
+
+```qql
+eval has_user = not(isNull(user_id))
+```
+Creates a boolean field `has_user` that is `true` if `user_id` is present.
+
+```qql
+where isNull(error_code)
+```
+Filters to successful records (no error code).

@@ -1,10 +1,29 @@
-import type { ILexingError, IRecognitionException } from "chevrotain";
-import { QQLLexer, QQLParser } from "./grammar";
+import * as antlr from "antlr4ng";
+import { QQLLexer } from "./generated/QQLLexer";
+import { QQLParser } from "./generated/QQLParser";
+import { ASTBuilder } from "./ASTBuilder";
+import { HighlightCollector } from "./HighlightCollector";
+import { SuggestionCollector } from "./SuggestionCollector";
+
+/**
+ * Custom error types
+ */
+export interface QQLLexError {
+  line: number;
+  column: number;
+  message: string;
+}
+
+export interface QQLParserErrorDetail {
+  line: number;
+  column: number;
+  message: string;
+}
 
 export class QQLLexingError extends Error {
   constructor(
     message: string,
-    public errors: ILexingError[],
+    public errors: QQLLexError[],
   ) {
     super(message);
   }
@@ -13,45 +32,83 @@ export class QQLLexingError extends Error {
 export class QQLParserError extends Error {
   constructor(
     message: string,
-    public errors: IRecognitionException[],
+    public errors: QQLParserErrorDetail[],
   ) {
     super(message);
   }
 }
 
 export const allData = (input: string) => {
-  const lexer = QQLLexer.tokenize(input);
+  const inputStream = new antlr.CharStreamImpl(input);
+  const lexer = new QQLLexer(inputStream);
+  const tokenStream = new antlr.CommonTokenStream(lexer);
+  const parser = new QQLParser(tokenStream);
 
-  const parser = new QQLParser();
-  parser.input = lexer.tokens;
-  const response = parser.query();
+  // Collect lexer errors
+  const lexerErrors: QQLLexError[] = (lexer as any).errors?.map((err: any) => ({
+    line: err.line ?? 0,
+    column: (err as any).charPositionInLine ?? 0,
+    message: err.message ?? String(err),
+  })) || [];
 
-  lexer.groups["singleLineComments"].forEach((comment) => {
-    parser.highlightComment(comment);
-  });
+  // Parse
+  const parseTree = parser.query();
+
+  // Build AST
+  const astBuilder = new ASTBuilder();
+  const ast = astBuilder.visit(parseTree);
+
+  // Collect highlights
+  const highlightCollector = new HighlightCollector();
+  highlightCollector.visit(parseTree);
+  const highlight = highlightCollector.getHighlightData();
+
+  // Collect suggestions
+  const suggestionCollector = new SuggestionCollector();
+  suggestionCollector.visit(parseTree);
+  const suggestions = suggestionCollector.getSuggestionData();
 
   return {
-    ast: response,
-    highlight: parser.getHighlightData(),
-    suggestions: parser.getSuggestionData(),
-    parserError: parser.errors,
+    ast,
+    highlight,
+    suggestions,
+    parserError: lexerErrors.length > 0 ? lexerErrors : undefined,
   };
 };
 
 export const parse = (input: string) => {
-  const lexer = QQLLexer.tokenize(input);
-  if (lexer.errors.length > 0) {
-    throw new QQLLexingError("Failed to tokenize input", lexer.errors);
+  const inputStream = new antlr.CharStreamImpl(input);
+  const lexer = new QQLLexer(inputStream);
+
+  // Check for lexing errors
+  const lexErrors = (lexer as any).errors as any[] || [];
+  if (lexErrors.length > 0) {
+    const errors = lexErrors.map((err: any) => ({
+      line: err.line ?? 0,
+      column: (err as any).charPositionInLine ?? 0,
+      message: err.message ?? String(err),
+    }));
+    throw new QQLLexingError("Failed to tokenize input", errors);
   }
 
-  const parser = new QQLParser();
-  parser.input = lexer.tokens;
-  const response = parser.query();
-  if (parser.errors.length > 0) {
-    throw new QQLParserError("Failed to parse input", parser.errors);
+  const tokenStream = new antlr.CommonTokenStream(lexer);
+  const parser = new QQLParser(tokenStream);
+  const parseTree = parser.query();
+
+  // Check for parser errors
+  const parseErrors = (parser as any).errors as any[] || [];
+  if (parseErrors.length > 0) {
+    const errors = parseErrors.map((err: any) => ({
+      line: err.line ?? 0,
+      column: (err as any).charPositionInLine ?? 0,
+      message: err.message ?? String(err),
+    }));
+    throw new QQLParserError("Failed to parse input", errors);
   }
 
-  return response;
+  // Build and return AST
+  const astBuilder = new ASTBuilder();
+  return astBuilder.visit(parseTree);
 };
 
 export type ParsedQuery = ReturnType<typeof parse>;

@@ -3,16 +3,48 @@ title: endsWith
 description: Check if a string ends with a suffix.
 ---
 
-The `endsWith` function returns true if the first argument ends with the second argument.
+import FunctionCard from '../../../../../components/FunctionCard.astro';
 
-## Usage
+<FunctionCard
+  name="endsWith"
+  category="boolean"
+  signature="endsWith(string, suffix) → boolean"
+  returnType="boolean"
+  returnDescription="true if string ends with suffix, false otherwise; null if either input is null"
+  description="Check if a string ends with the given suffix as a case-sensitive match"
+/>
 
-```
-endsWith(field, "suffix")
-```
+## Parameters
 
-**Example:**
+| Name | Type | Description |
+|------|------|-------------|
+| `string` | string | The string to check |
+| `suffix` | string | The suffix to match |
+
+## Returns
+
+`boolean` — `true` if `string` ends with `suffix` (case-sensitive), `false` otherwise.
+
+## Edge Cases
+
+- If `string` is `null`, returns `null`
+- If `suffix` is `null`, returns `null`
+- Empty suffix `""` matches any string (returns `true`)
+- Search is **case-sensitive**: `endsWith("Production", "tion")` returns `false`
+
+## Examples
+
+```qql
+where endsWith(filename, ".log")
 ```
-where endsWith(message, ".log")
+Matches records where `filename` ends with ".log".
+
+```qql
+eval is_json_file = endsWith(filename, ".json")
 ```
-This matches records where the `message` field ends with ".log".
+Creates a boolean field `is_json_file` that is `true` if the filename ends with ".json".
+
+```qql
+where endsWith(message, "success")
+```
+Filters to messages that indicate success.

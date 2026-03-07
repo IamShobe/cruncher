@@ -1,15 +1,10 @@
 import { expect, test } from "vitest";
-import { QQLLexer, QQLParser } from "../grammar";
+import { parse } from "../index";
 
 test("support controller params", () => {
-  const parser = new QQLParser();
-
-  const lexer = QQLLexer.tokenize(
+  const result = parse(
     `param1=\`abc\` param2=\`def\` third!=\`something\` hello world`,
   );
-  expect(lexer.errors).toEqual([]);
-  parser.input = lexer.tokens;
-  const result = parser.query();
   expect(result).toMatchObject({
     dataSources: [],
     controllerParams: [
@@ -44,12 +39,7 @@ test("support controller params", () => {
 });
 
 test("support datasource", () => {
-  const parser = new QQLParser();
-
-  const lexer = QQLLexer.tokenize(`@dev hello world`);
-  expect(lexer.errors).toEqual([]);
-  parser.input = lexer.tokens;
-  const result = parser.query();
+  const result = parse(`@dev hello world`);
   expect(result).toMatchObject({
     dataSources: [
       {
@@ -70,12 +60,7 @@ test("support datasource", () => {
 });
 
 test("support multiple datasources", () => {
-  const parser = new QQLParser();
-
-  const lexer = QQLLexer.tokenize(`@dev @prod hello world`);
-  expect(lexer.errors).toEqual([]);
-  parser.input = lexer.tokens;
-  const result = parser.query();
+  const result = parse(`@dev @prod hello world`);
   expect(result).toMatchObject({
     dataSources: [
       {

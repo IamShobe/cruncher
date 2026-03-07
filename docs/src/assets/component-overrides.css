@@ -1,0 +1,28 @@
+/* Override Starlight markdown margins for custom components */
+
+.sl-markdown-content > div[style*="display: grid"] {
+  margin-top: 1.5rem !important;
+  margin-bottom: 1.5rem !important;
+}
+
+.sl-markdown-content .not-content {
+  /* Prevent markdown margins from applying to children */
+  all: revert;
+}
+
+.sl-markdown-content .not-content > * {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+/* Ensure component containers don't get extra margins */
+.sl-markdown-content > :is(
+  .adapter-card,
+  .function-card,
+  .shortcuts-container,
+  .pipeline-container,
+  .feature-grid-container
+) {
+  margin-top: 1.5rem !important;
+  margin-bottom: 1.5rem !important;
+}

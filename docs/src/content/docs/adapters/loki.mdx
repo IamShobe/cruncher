@@ -1,0 +1,116 @@
+---
+title: Loki Direct
+description: Query Grafana Loki directly without a Grafana wrapper.
+---
+
+import ParamItem from '../../../components/ParamItem.astro';
+import AdapterCard from '../../../components/AdapterCard.astro';
+
+import { Badge } from '@astrojs/starlight/components';
+
+<Badge text="loki" />
+
+The **Loki Direct** adapter allows you to query Loki installations directly, without routing through Grafana. Use this adapter if you have a standalone Loki deployment or want to bypass Grafana.
+
+## Differences from Grafana Loki Browser
+
+| Feature | Loki Direct | Grafana Browser |
+|---------|------------|-----------------|
+| **Connection** | Direct HTTP to Loki | Through Grafana UI |
+| **Authentication** | URL-based (API key in URL or basic auth) | Browser-based (Grafana login) |
+| **Best for** | Standalone Loki or scripted access | Grafana-hosted Loki |
+| **Setup complexity** | Simple | May require proxy/auth |
+
+## Params
+
+<ParamItem label="url" type="string" optional={false}>
+    The base URL of your Loki instance (e.g., http://loki.example.com:3100 or http://localhost:3100).
+</ParamItem>
+
+<ParamItem label="listenPort" type="number" optional>
+    The port to use for connections. Default matches the port in the `url` parameter.
+</ParamItem>
+
+<ParamItem label="filter" type="array" optional>
+    A list of filter objects to apply to your queries. Each filter object should have:
+    <br/>
+    - <b>key</b> (string): The label or field to filter on.<br/>
+    - <b>value</b> (string): The value to match.<br/>
+    - <b>operator</b> (enum): One of `=`, `=~`, `!=`, `!~` (exact match, regex match, not equal, not regex match).
+</ParamItem>
+
+<ParamItem label="querySuffix" type="array" optional>
+    Additional query suffixes to append to your Loki queries.
+</ParamItem>
+
+## Examples
+
+### Minimal Configuration
+
+```yaml
+connectors:
+  - type: loki
+    name: loki_direct
+    params:
+      url: "http://loki.example.com:3100"
+```
+
+### With Port Specification
+
+```yaml
+connectors:
+  - type: loki
+    name: loki_prod
+    params:
+      url: "http://loki.example.com"
+      listenPort: 3100
+```
+
+### With Filters and Query Suffix
+
+```yaml
+connectors:
+  - type: loki
+    name: loki_filtered
+    params:
+      url: "http://loki.example.com:3100"
+      filter:
+        - key: "environment"
+          value: "production"
+          operator: "="
+        - key: "service"
+          value: "api"
+          operator: "="
+      querySuffix: ["| json"]
+```
+
+## Usage Notes
+
+- The `url` parameter is **required**. It should point to your Loki instance's root URL.
+- You may need to include authentication details in the URL itself (e.g., `http://user:password@loki.example.com:3100`) or configure authentication separately depending on your Loki setup.
+- The `filter` parameter works the same as in the Grafana Loki Browser adapter — it restricts logs at the adapter level before processing.
+- Use `querySuffix` to append operations like `| json` to automatically parse JSON logs.
+
+## Troubleshooting
+
+**Connection refused**: Verify the `url` is correct and the Loki instance is running and accessible.
+
+**401 Unauthorized**: If your Loki instance requires authentication, ensure credentials are included in the URL or are configured at the network level.
+
+**No results**: Check that your filters match existing labels in your Loki instance.
+
+---
+
+## Related Adapters
+
+<div class="not-content" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin: 1.5rem 0;">
+  <AdapterCard
+    name="Grafana Loki Browser"
+    type="grafana_browser"
+    description="Query Loki through Grafana UI — better if your Loki is hosted in Grafana"
+    link="/adapters/grafana-loki"
+    icon="🔷"
+  />
+</div>
+
+For more information on Loki query syntax and labels, see the [Grafana Loki documentation](https://grafana.com/docs/loki/).

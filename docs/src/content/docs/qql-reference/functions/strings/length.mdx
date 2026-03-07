@@ -1,18 +1,55 @@
 ---
 title: length
-description: Get the length of a string or array.
+description: Get the length of a string.
 ---
 
-The `length` function returns the number of characters in a string (or elements in an array, if supported).
+import FunctionCard from '../../../../../components/FunctionCard.astro';
 
-## Usage
+<FunctionCard
+  name="length"
+  category="string"
+  signature="length(string) → number"
+  description="Return the number of characters in a string"
+/>
+
+The `length` function returns the number of characters in the input string.
+
+## Signature
 
 ```
-length(field)
+length(string) → number
 ```
 
-**Example:**
-```
+## Parameters
+
+| Name | Type | Description |
+|------|------|-------------|
+| `string` | string | The input string |
+
+## Returns
+
+`number` — The length (number of characters) in the string. Returns `null` if input is `null`.
+
+## Edge Cases
+
+- If `string` is `null`, returns `null`
+- Empty string `""` has length `0`
+- Spaces are counted: `length("hello world")` returns `11`
+- Counts Unicode characters correctly
+
+## Examples
+
+```qql
 where length(message) > 100
 ```
-This matches records where the `message` field is longer than 100 characters.
+Matches records where `message` is longer than 100 characters.
+
+```qql
+eval log_size_category = if(length(raw_log) > 10000, "large", "small")
+```
+Categorizes logs by size.
+
+```qql
+stats avg(length(message)) by level
+```
+Calculates average message length by log level.

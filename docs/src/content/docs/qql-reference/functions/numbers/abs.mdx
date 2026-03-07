@@ -3,16 +3,55 @@ title: abs
 description: Get the absolute value of a number.
 ---
 
-The `abs` function returns the absolute value of the input number.
+import FunctionCard from '../../../../../components/FunctionCard.astro';
 
-## Usage
+<FunctionCard
+  name="abs"
+  category="number"
+  signature="abs(number) → number"
+  returnType="number"
+  returnDescription="The absolute value of the input number; null if input is null"
+  description="Return the absolute value (magnitude without sign) of a number"
+/>
+
+The `abs` function returns the absolute value (magnitude without sign) of the input number.
+
+## Signature
 
 ```
-abs(field)
+abs(number) → number
 ```
 
-**Example:**
+## Parameters
+
+| Name | Type | Description |
+|------|------|-------------|
+| `number` | number | The input number |
+
+## Returns
+
+`number` — The absolute value of `number`. Returns `null` if input is `null`.
+
+## Edge Cases
+
+- If `number` is `null`, returns `null`
+- `abs(-0)` returns `0`
+- `abs(0)` returns `0`
+- Preserves decimal precision: `abs(-3.14)` returns `3.14`
+
+## Examples
+
+```qql
+eval abs_delta = abs(difference)
 ```
-eval abs_duration = abs(duration)
+Creates a new field `abs_delta` with the absolute value of `difference`, useful for comparing magnitude regardless of direction.
+
+```qql
+eval error_magnitude = abs(deviation_percent)
 ```
-This creates a new field `abs_duration` with the absolute value of `duration`.
+Calculates the absolute error in a percentage calculation.
+
+```qql
+stats avg(abs(latency_offset))
+```
+Calculates the average absolute latency offset.

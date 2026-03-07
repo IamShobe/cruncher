@@ -3,16 +3,54 @@ title: isNotNull
 description: Check if a value is not null.
 ---
 
-The `isNotNull` function returns true if the value is not null or undefined.
+import FunctionCard from '../../../../../components/FunctionCard.astro';
 
-## Usage
+<FunctionCard
+  name="isNotNull"
+  category="boolean"
+  signature="isNotNull(value) → boolean"
+  returnType="boolean"
+  returnDescription="true if value is defined and not null, false otherwise"
+  description="Check if a value is defined and not null"
+/>
+
+The `isNotNull` function returns `true` if the input value is not `null` and the field is present, otherwise `false`.
+
+## Signature
 
 ```
-isNotNull(field)
+isNotNull(value) → boolean
 ```
 
-**Example:**
-```
+## Parameters
+
+| Name | Type | Description |
+|------|------|-------------|
+| `value` | any | The value to check |
+
+## Returns
+
+`boolean` — `true` if `value` is defined and not `null`, `false` otherwise.
+
+## Edge Cases
+
+- Returns `true` for empty strings `""`, zero `0`, and `false` (all valid, non-null values)
+- Returns `false` only if the field is missing or explicitly `null`
+- `isNotNull(x)` is equivalent to `not(isNull(x))`
+
+## Examples
+
+```qql
 where isNotNull(user)
 ```
-This matches records where the `user` field is present and not null.
+Matches records where the `user` field is present and not null.
+
+```qql
+eval has_metadata = isNotNull(metadata_json)
+```
+Creates a boolean field `has_metadata` that is `true` if `metadata_json` exists.
+
+```qql
+where isNotNull(user_id) AND isNotNull(request_id)
+```
+Filters to records with both user and request identifiers.
