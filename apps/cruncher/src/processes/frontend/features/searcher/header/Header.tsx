@@ -70,6 +70,7 @@ import {
   searchQueryAtom,
 } from "../../../core/store/queryState";
 import { Timer } from "./Timer";
+import { Portal } from "~components/ui/portal";
 import { MiniIconButton } from "~components/presets/IconButton";
 
 const StyledHeader = styled.form`
@@ -537,49 +538,53 @@ export const ExportButton: React.FC<{
     downloadFile(filename, jsonValue.payload, jsonValue.contentType);
   };
   return (
-    <Menu.Root lazyMount unmountOnExit>
+    <Menu.Root lazyMount unmountOnExit positioning={{ strategy: "fixed" }}>
       <Tooltip
         content={<span>Export</span>}
         showArrow
         positioning={{ placement: "bottom" }}
         disabled={isDisabled}
       >
-        <Menu.Trigger asChild>
-          <IconButton
-            aria-label="Export"
-            size="2xs"
-            variant="surface"
-            disabled={isDisabled}
-          >
-            <CiExport />
-          </IconButton>
-        </Menu.Trigger>
+        <span style={{ display: "inline-flex" }}>
+          <Menu.Trigger asChild>
+            <IconButton
+              aria-label="Export"
+              size="2xs"
+              variant="surface"
+              disabled={isDisabled}
+            >
+              <CiExport />
+            </IconButton>
+          </Menu.Trigger>
+        </span>
       </Tooltip>
-      <Menu.Positioner>
-        <Menu.Content>
-          <Menu.Item value="json-copy" cursor="pointer" onClick={copyJson}>
-            <LuClipboardCopy /> Copy JSON
-          </Menu.Item>
-          <Menu.Item value="csv-copy" cursor="pointer" onClick={copyCsv}>
-            <LuClipboardCopy /> Copy CSV
-          </Menu.Item>
-          <MenuSeparator />
-          <Menu.Item
-            value="json-download"
-            cursor="pointer"
-            onClick={downloadJson}
-          >
-            <LuDownload /> Download JSON
-          </Menu.Item>
-          <Menu.Item
-            value="csv-download"
-            cursor="pointer"
-            onClick={downloadCsv}
-          >
-            <LuDownload /> Download CSV
-          </Menu.Item>
-        </Menu.Content>
-      </Menu.Positioner>
+      <Portal>
+        <Menu.Positioner>
+          <Menu.Content>
+            <Menu.Item value="json-copy" cursor="pointer" onClick={copyJson}>
+              <LuClipboardCopy /> Copy JSON
+            </Menu.Item>
+            <Menu.Item value="csv-copy" cursor="pointer" onClick={copyCsv}>
+              <LuClipboardCopy /> Copy CSV
+            </Menu.Item>
+            <MenuSeparator />
+            <Menu.Item
+              value="json-download"
+              cursor="pointer"
+              onClick={downloadJson}
+            >
+              <LuDownload /> Download JSON
+            </Menu.Item>
+            <Menu.Item
+              value="csv-download"
+              cursor="pointer"
+              onClick={downloadCsv}
+            >
+              <LuDownload /> Download CSV
+            </Menu.Item>
+          </Menu.Content>
+        </Menu.Positioner>
+      </Portal>
     </Menu.Root>
   );
 };

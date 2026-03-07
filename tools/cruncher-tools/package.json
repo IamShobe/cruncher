@@ -9,8 +9,8 @@
     "build": "tsc --project tsconfig.lib.json && copyfiles -u 1 'src/**/!(*.ts)' ../../dist/tools/cruncher-tools && copyfiles generators.json '*.md' ../../dist/tools/cruncher-tools"
   },
   "dependencies": {
-    "@nx/devkit": "21.2.1",
-    "tslib": "^2.3.0"
+    "@nx/devkit": "22.5.4",
+    "tslib": "^2.8.1"
   },
   "generators": "./generators.json"
 }

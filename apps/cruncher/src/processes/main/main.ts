@@ -22,6 +22,16 @@ import { requestFromServer } from "./utils/requestFromServer";
 log.initialize();
 Object.assign(console, log.functions);
 
+process.on('uncaughtException', (error: NodeJS.ErrnoException) => {
+  if (error.code === 'EIO') return; // ignore broken pipe/disconnected stdout
+  throw error;
+});
+
+const _isDev = !app.getAppPath().includes("app.asar");
+if (!_isDev) {
+  log.transports.console.level = false;
+}
+
 const updateServer = "https://cruncher-upstream.vercel.app";
 const repoHome = "https://github.com/IamShobe/cruncher";
 const feedChannel = `${process.platform}_${process.arch}`;

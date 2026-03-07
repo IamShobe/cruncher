@@ -13,9 +13,9 @@ export default defineConfig({
         dark: "/src/assets/cruncher_full_logo.png",
         replacesTitle: true,
       },
-      social: {
-        github: "https://github.com/IamShobe/cruncher",
-      },
+      social: [
+        { icon: "github", label: "GitHub", href: "https://github.com/IamShobe/cruncher" },
+      ],
       favicon: "./src/assets/favicon.ico",
       customCss: ["./src/assets/landing.css"],
       sidebar: [

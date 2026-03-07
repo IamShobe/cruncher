@@ -33,8 +33,7 @@
     "name": "Elran Shefer"
   },
   "license": "GPL-3.0-only",
-  "dependencies": {},
   "devDependencies": {
-    "typescript": "^5.8.3"
+    "typescript": "^5.9.3"
   }
 }

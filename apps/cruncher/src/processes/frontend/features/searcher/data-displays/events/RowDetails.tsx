@@ -25,6 +25,7 @@ import {
   VscSymbolString,
 } from "react-icons/vsc";
 import { highlightItemQueryAtom } from "~core/search";
+import { Portal } from "~components/ui/portal";
 import { highlightText } from "~core/utils/highlight";
 
 type DataRowProps = {
@@ -161,26 +162,28 @@ export const RowDetail: React.FC<DataRowProps> = ({ rowKey, rowValue }) => {
                         </PopoverBody>
                       </PopoverContent>
                     </PopoverRoot>*/}
-      <Menu.Root lazyMount unmountOnExit>
+      <Menu.Root lazyMount unmountOnExit positioning={{ strategy: "fixed" }}>
         <Menu.Trigger asChild>
           <IconButton size={"2xs"} variant="ghost">
             <LuEllipsisVertical />
           </IconButton>
         </Menu.Trigger>
-        <Menu.Positioner>
-          <Menu.Content>
-            <Menu.Item
-              value="copy-value"
-              onClick={() => {
-                navigator.clipboard.writeText(asDisplayString(rowValue));
-              }}
-              cursor={"pointer"}
-            >
-              <LuClipboardCopy />
-              <Box flex="1">Copy Value</Box>
-            </Menu.Item>
-          </Menu.Content>
-        </Menu.Positioner>
+        <Portal>
+          <Menu.Positioner>
+            <Menu.Content>
+              <Menu.Item
+                value="copy-value"
+                onClick={() => {
+                  navigator.clipboard.writeText(asDisplayString(rowValue));
+                }}
+                cursor={"pointer"}
+              >
+                <LuClipboardCopy />
+                <Box flex="1">Copy Value</Box>
+              </Menu.Item>
+            </Menu.Content>
+          </Menu.Positioner>
+        </Portal>
       </Menu.Root>
     </div>
   );

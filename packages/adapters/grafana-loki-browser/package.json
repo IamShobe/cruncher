@@ -35,16 +35,16 @@
   },
   "license": "GPL-3.0-only",
   "dependencies": {
-    "zod": "^3.25.67",
-    "@cruncher/qql": "workspace:*",
-    "regex-escape": "^3.4.11",
-    "async-mutex": "^0.5.0",
+    "@cruncher/adapter-loki": "workspace:*",
     "@cruncher/adapter-utils": "workspace:*",
-    "@cruncher/adapter-loki": "workspace:*"
+    "@cruncher/qql": "workspace:*",
+    "async-mutex": "^0.5.0",
+    "regex-escape": "^3.4.11",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
-    "typescript": "^5.8.3",
+    "@types/node": "^25.3.5",
     "@types/regex-escape": "^3.4.1",
-    "@types/node": "^24.0.3"
+    "typescript": "^5.9.3"
   }
 }
