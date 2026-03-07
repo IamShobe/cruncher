@@ -60,8 +60,9 @@ jobs:
 
   publish-electron:
     name: Publish Electron app (${{ matrix.os }})
+    needs: release-npm
     runs-on: ${{ matrix.os }}
-    if: github.event_name == 'workflow_dispatch'
+    if: always() && (needs.release-npm.outputs.published == 'true' || github.event_name == 'workflow_dispatch')
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]

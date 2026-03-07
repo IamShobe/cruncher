@@ -7,5 +7,5 @@
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": ["cruncher-tools", "docs-cruncher", "cruncher"]
+  "ignore": ["cruncher-tools", "docs-cruncher"]
 }
