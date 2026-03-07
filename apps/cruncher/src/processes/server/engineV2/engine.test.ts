@@ -92,7 +92,7 @@ test("engine query", async () => {
     // empty search term to match all data
     fromTime: sub(new Date(), { days: 1 }).getTime(),
     toTime: new Date().getTime(),
-    limit: 100000,
+    limit: 1000,
     isForced: false,
   });
 
@@ -127,7 +127,7 @@ const makeEngine = () => {
 const defaultQueryOptions = {
   fromTime: sub(new Date(), { days: 1 }).getTime(),
   toTime: new Date().getTime(),
-  limit: 100000,
+  limit: 1000,
   isForced: false,
 };
 
