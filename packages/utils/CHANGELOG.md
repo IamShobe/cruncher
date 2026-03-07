@@ -1,3 +1,9 @@
+## 0.3.0
+
+### Minor Changes
+
+- [#17](https://github.com/IamShobe/cruncher/pull/17) [`c2b248c`](https://github.com/IamShobe/cruncher/commit/c2b248c10816d9f184654d78db9087771521789f) Thanks [@IamShobe](https://github.com/IamShobe)! - Migrate to Turborepo, new CI pipeline, new linter, and various enhancements
+
 ## 0.2.4 (2025-06-21)
 
 ### 🩹 Fixes
