@@ -2,9 +2,10 @@ import { Box, ProgressCircle } from "@chakra-ui/react";
 import { css } from "@emotion/react";
 import styled from "@emotion/styled";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { TanStackDevtools } from "@tanstack/react-devtools";
+import { ReactQueryDevtoolsPanel } from "@tanstack/react-query-devtools";
 import { createRootRoute, Outlet } from "@tanstack/react-router";
-import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
+import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { Provider as JotaiProvider } from "jotai";
 import { Provider } from "~components/ui/provider";
 import { Toaster } from "~components/ui/toaster";
@@ -25,7 +26,7 @@ const Wrapper = styled.div`
   flex: 1;
   display: flex;
   min-width: 0;
-  height: 100%;
+  min-height: 0;
   position: relative;
   background-color: rgb(17, 18, 23);
 `;
@@ -39,6 +40,31 @@ export const Route = createRootRoute({
         flex-direction: column;
       `}
     >
+      <div
+        css={css`
+          height: 34px;
+          flex-shrink: 0;
+          background-color: rgb(22, 23, 29);
+          -webkit-app-region: drag;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        `}
+      >
+        <span
+          css={css`
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            color: rgba(255, 255, 255, 0.35);
+            text-transform: uppercase;
+            -webkit-app-region: drag;
+            user-select: none;
+          `}
+        >
+          Cruncher
+        </span>
+      </div>
       <QueryClientProvider client={queryClient}>
         <Provider>
           <Toaster />
@@ -48,9 +74,19 @@ export const Route = createRootRoute({
             </JotaiProvider>
           </ApplicationProvider>
         </Provider>
-        <ReactQueryDevtools initialIsOpen={false} />
       </QueryClientProvider>
-      <TanStackRouterDevtools position="bottom-right" />
+      <TanStackDevtools
+        plugins={[
+          {
+            name: "TanStack Query",
+            render: <ReactQueryDevtoolsPanel />,
+          },
+          {
+            name: "TanStack Router",
+            render: <TanStackRouterDevtoolsPanel />,
+          },
+        ]}
+      />
     </div>
   ),
 });

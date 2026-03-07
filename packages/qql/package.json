@@ -26,9 +26,9 @@
   ],
   "scripts": {
     "build": "tsc --project tsconfig.json",
-    "test": "nx vite:test",
-    "format": "prettier --write src/",
-    "format:check": "prettier --check src/",
+    "test": "vitest run",
+    "format": "oxfmt src/",
+    "format:check": "oxfmt --check src/",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
@@ -41,10 +41,10 @@
   },
   "license": "GPL-3.0-only",
   "dependencies": {
-    "chevrotain": "^11.0.3"
+    "chevrotain": "^11.2.0"
   },
   "devDependencies": {
-    "typescript": "^5.8.3",
-    "vitest": "^3.2.4"
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
   }
 }

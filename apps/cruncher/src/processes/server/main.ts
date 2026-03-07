@@ -24,6 +24,13 @@ export type { AppRouter } from "./plugins_engine/router_messages";
 log.initialize();
 Object.assign(console, log.functions);
 
+process.on("uncaughtException", (error: NodeJS.ErrnoException) => {
+  if (error.code === "EIO") return; // ignore broken pipe/disconnected stdout
+  throw error;
+});
+
+log.transports.console.level = false; // utility process has no reliable stdio
+
 process.title = "cruncher-server";
 
 const eventEmitter = new EventEmitter();

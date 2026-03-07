@@ -1,9 +1,9 @@
-name: Publish Electron App
+name: Release
 on:
-  workflow_dispatch:
   push:
-    tags:
-      - "@cruncher/app@*"
+    branches:
+      - main
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -11,19 +11,71 @@ concurrency:
 
 permissions:
   contents: write
+  pull-requests: write
+  id-token: write
 
 jobs:
-  build-and-publish:
+  release-npm:
+    name: Release npm packages
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    outputs:
+      published: ${{ steps.changesets.outputs.published }}
+      publishedPackages: ${{ steps.changesets.outputs.publishedPackages }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Update npm for OIDC trusted publishing support
+        run: npm install -g npm@latest
+
+      - name: Create Release Pull Request or Publish to npm
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          version: pnpm run changeset-version
+          publish: pnpm run changeset-publish
+          commit: "chore(release): version packages"
+          title: "chore(release): version packages"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Empty string (not omitted) lets npm fall back to OIDC trusted publishing.
+          # See: https://github.com/changesets/action/issues/542
+          NODE_AUTH_TOKEN: ""
+
+  publish-electron:
+    name: Publish Electron app (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
+    if: github.event_name == 'workflow_dispatch'
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest] # Linux and macOS
-
+        os: [ubuntu-latest, macos-latest]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -32,4 +84,3 @@ jobs:
         run: pnpm run publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Add other environment variables as needed for your publisher (e.g., S3, DigitalOcean, etc.)

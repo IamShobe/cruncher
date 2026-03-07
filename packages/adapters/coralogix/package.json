@@ -19,8 +19,8 @@
   ],
   "scripts": {
     "build": "tsc --project tsconfig.json",
-    "format": "prettier --write src/",
-    "format:check": "prettier --check src/",
+    "format": "oxfmt src/",
+    "format:check": "oxfmt --check src/",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
@@ -35,13 +35,13 @@
   },
   "license": "GPL-3.0-only",
   "dependencies": {
-    "zod": "^3.25.67",
-    "async-mutex": "^0.5.0",
+    "@cruncher/adapter-utils": "workspace:*",
     "@cruncher/qql": "workspace:*",
-    "@cruncher/adapter-utils": "workspace:*"
+    "async-mutex": "^0.5.0",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
-    "typescript": "^5.8.3",
-    "@types/node": "^24.0.3"
+    "@types/node": "^25.3.5",
+    "typescript": "^5.9.3"
   }
 }

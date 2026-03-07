@@ -1,8 +1,0 @@
-{
-  "name": "@cruncher/adapter-grafana-loki-browser",
-  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
-  "projectType": "library",
-  "sourceRoot": "packages/adapters/grafana-loki-browser/src",
-  "tags": [],
-  "targets": {}
-}

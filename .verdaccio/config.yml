@@ -8,6 +8,12 @@ uplinks:
     maxage: 60m
 
 packages:
+  "@cruncher/*":
+    access: $all
+    publish: $all
+    unpublish: $all
+    # No proxy — don't fall through to real npm, so local versions don't conflict
+
   "**":
     access: public
     publish: $authenticated
@@ -15,11 +21,6 @@ packages:
 
     # if package is not available locally, proxy requests to npm registry
     proxy: npmjs
-
-  "@cruncher/app":
-    access: public
-    publish: false
-    unpublish: false
 
 # log settings
 log:

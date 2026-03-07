@@ -23,9 +23,9 @@
   ],
   "scripts": {
     "build": "tsc --project tsconfig.json",
-    "test": "vitest",
-    "format": "prettier --write src/",
-    "format:check": "prettier --check src/",
+    "test": "vitest run",
+    "format": "oxfmt src/",
+    "format:check": "oxfmt --check src/",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
@@ -40,10 +40,10 @@
     "@cruncher/qql": "workspace:*",
     "@types/regex-escape": "^3.4.1",
     "regex-escape": "^3.4.11",
-    "zod": "^3.25.67"
+    "zod": "^4.3.6"
   },
   "devDependencies": {
-    "typescript": "^5.8.3",
-    "vitest": "^3.2.4"
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
   }
 }

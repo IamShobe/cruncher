@@ -18,8 +18,8 @@
   ],
   "scripts": {
     "build": "tsc --project tsconfig.json",
-    "format": "prettier --write src/",
-    "format:check": "prettier --check src/",
+    "format": "oxfmt src/",
+    "format:check": "oxfmt --check src/",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
@@ -33,8 +33,7 @@
     "name": "Elran Shefer"
   },
   "license": "GPL-3.0-only",
-  "dependencies": {},
   "devDependencies": {
-    "typescript": "^5.8.3"
+    "typescript": "^5.9.3"
   }
 }

@@ -2,7 +2,6 @@ import styled from "@emotion/styled";
 import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 
-import { usePopper } from "react-popper";
 import { AutoCompleter, Suggestion } from "./AutoCompleter";
 import { HighlightData, TextHighlighter } from "./Highlighter";
 import { Coordinates, getCaretCoordinates } from "./getCoordinates";
@@ -115,16 +114,16 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
       height: 0,
     });
 
-    const [popperElement, setPopperElement] = useState<HTMLDivElement | null>(
-      null,
-    );
-
-    const { styles, attributes } = usePopper(referenceElement, popperElement, {
-      placement: "bottom-start",
-      modifiers: [
-        { name: "offset", options: { offset: [pos.left, -100 + pos.top] } },
-      ],
-    });
+    const popperStyle = useMemo((): React.CSSProperties => {
+      if (!referenceElement) return { display: "none" };
+      const rect = referenceElement.getBoundingClientRect();
+      return {
+        position: "fixed",
+        left: rect.left + pos.left,
+        top: rect.top + pos.top + 20,
+        zIndex: 1000,
+      };
+    }, [referenceElement, pos]);
 
     const [cursorPosition, setCursorPosition] = useState(value.length);
     const [isCompleterOpen, setIsCompleterOpen] = useState(false);
@@ -301,11 +300,7 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
         {isCompleterOpen &&
           popperRoot &&
           createPortal(
-            <div
-              ref={setPopperElement}
-              style={styles.popper}
-              {...attributes.popper}
-            >
+            <div style={popperStyle}>
               <AutoCompleter
                 suggestions={filteredSuggestions}
                 hoveredItem={hoveredCompletionItem}
