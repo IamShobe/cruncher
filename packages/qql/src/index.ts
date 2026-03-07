@@ -64,4 +64,52 @@ export type NarrowedPipelineItem<T extends PipelineItemType> = Extract<
   { type: T }
 >;
 
+export function isTableCommand(
+  item: PipelineItem,
+): item is NarrowedPipelineItem<"table"> {
+  return item.type === "table";
+}
+
+export function isStatsCommand(
+  item: PipelineItem,
+): item is NarrowedPipelineItem<"stats"> {
+  return item.type === "stats";
+}
+
+export function isWhereCommand(
+  item: PipelineItem,
+): item is NarrowedPipelineItem<"where"> {
+  return item.type === "where";
+}
+
+export function isSortCommand(
+  item: PipelineItem,
+): item is NarrowedPipelineItem<"sort"> {
+  return item.type === "sort";
+}
+
+export function isRegexCommand(
+  item: PipelineItem,
+): item is NarrowedPipelineItem<"regex"> {
+  return item.type === "regex";
+}
+
+export function isUnpackCommand(
+  item: PipelineItem,
+): item is NarrowedPipelineItem<"unpack"> {
+  return item.type === "unpack";
+}
+
+export function isEvalCommand(
+  item: PipelineItem,
+): item is NarrowedPipelineItem<"eval"> {
+  return item.type === "eval";
+}
+
+export function isTimeChartCommand(
+  item: PipelineItem,
+): item is NarrowedPipelineItem<"timechart"> {
+  return item.type === "timechart";
+}
+
 export * from "./searchTree";

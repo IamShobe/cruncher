@@ -1,0 +1,719 @@
+import { expect, test } from "vitest";
+import { QQLLexer, QQLParser } from "../grammar";
+
+test("support eval assignment", () => {
+  const parser = new QQLParser();
+
+  const lexer = QQLLexer.tokenize(`hello world | eval column1 = column2`);
+  expect(lexer.errors).toEqual([]);
+  parser.input = lexer.tokens;
+  const result = parser.query();
+
+  expect(result).toMatchObject({
+    dataSources: [],
+    controllerParams: [],
+    search: {
+      type: "search",
+      left: {
+        type: "searchLiteral",
+        tokens: ["hello", "world"],
+      },
+    },
+    pipeline: [
+      {
+        type: "eval",
+        variableName: "column1",
+        expression: {
+          type: "calcExpression",
+          left: {
+            type: "calcTerm",
+            left: {
+              type: "calculateUnit",
+              value: {
+                type: "columnRef",
+                columnName: "column2",
+              },
+            },
+          },
+        },
+      },
+    ],
+  });
+});
+
+test("support eval calculation", () => {
+  const parser = new QQLParser();
+
+  const lexer = QQLLexer.tokenize(`hello world | eval column1 = column2 + 1`);
+  expect(lexer.errors).toEqual([]);
+  parser.input = lexer.tokens;
+  const result = parser.query();
+
+  expect(result).toMatchObject({
+    dataSources: [],
+    controllerParams: [],
+    search: {
+      type: "search",
+      left: {
+        type: "searchLiteral",
+        tokens: ["hello", "world"],
+      },
+    },
+    pipeline: [
+      {
+        type: "eval",
+        variableName: "column1",
+        expression: {
+          type: "calcExpression",
+          left: {
+            type: "calcTerm",
+            left: {
+              type: "calculateUnit",
+              value: {
+                type: "columnRef",
+                columnName: "column2",
+              },
+            },
+          },
+          tail: [
+            {
+              type: "calcAction",
+              operator: "+",
+              right: {
+                type: "calcTerm",
+                left: {
+                  type: "calculateUnit",
+                  value: {
+                    type: "number",
+                    value: 1,
+                  },
+                },
+              },
+            },
+          ],
+        },
+      },
+    ],
+  });
+});
+
+test("support eval calculation with multiple operators", () => {
+  const parser = new QQLParser();
+
+  const lexer = QQLLexer.tokenize(
+    `hello world | eval column1 = column2 + 1 - 2 * 3 / 4`,
+  );
+  expect(lexer.errors).toEqual([]);
+  parser.input = lexer.tokens;
+  const result = parser.query();
+
+  expect(result).toMatchObject({
+    dataSources: [],
+    controllerParams: [],
+    search: {
+      type: "search",
+      left: {
+        type: "searchLiteral",
+        tokens: ["hello", "world"],
+      },
+    },
+    pipeline: [
+      {
+        type: "eval",
+        variableName: "column1",
+        expression: {
+          type: "calcExpression",
+          left: {
+            type: "calcTerm",
+            left: {
+              type: "calculateUnit",
+              value: {
+                type: "columnRef",
+                columnName: "column2",
+              },
+            },
+          },
+          tail: [
+            {
+              type: "calcAction",
+              operator: "+",
+              right: {
+                type: "calcTerm",
+                left: {
+                  type: "calculateUnit",
+                  value: {
+                    type: "number",
+                    value: 1,
+                  },
+                },
+              },
+            },
+            {
+              type: "calcAction",
+              operator: "-",
+              right: {
+                type: "calcTerm",
+                left: {
+                  type: "calculateUnit",
+                  value: {
+                    type: "number",
+                    value: 2,
+                  },
+                },
+                tail: [
+                  {
+                    type: "calcTermAction",
+                    operator: "*",
+                    right: {
+                      type: "calculateUnit",
+                      value: {
+                        type: "number",
+                        value: 3,
+                      },
+                    },
+                  },
+                  {
+                    type: "calcTermAction",
+                    operator: "/",
+                    right: {
+                      type: "calculateUnit",
+                      value: {
+                        type: "number",
+                        value: 4,
+                      },
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      },
+    ],
+  });
+});
+
+test("support eval command", () => {
+  const parser = new QQLParser();
+
+  const lexer = QQLLexer.tokenize(
+    `hello world | eval column1 = if(column2 == 1, 1, 0)`,
+  );
+  expect(lexer.errors).toEqual([]);
+  parser.input = lexer.tokens;
+  const result = parser.query();
+
+  expect(result).toMatchObject({
+    dataSources: [],
+    controllerParams: [],
+    search: {
+      type: "search",
+      left: {
+        type: "searchLiteral",
+        tokens: ["hello", "world"],
+      },
+    },
+    pipeline: [
+      {
+        type: "eval",
+        variableName: "column1",
+        expression: {
+          type: "functionExpression",
+          functionName: "if",
+          condition: {
+            type: "logicalExpression",
+            left: {
+              type: "unitExpression",
+              value: {
+                left: {
+                  type: "columnRef",
+                  columnName: "column2",
+                },
+                operator: "==",
+                right: {
+                  type: "number",
+                  value: 1,
+                },
+                type: "comparisonExpression",
+              },
+            },
+            right: undefined,
+          },
+          then: {
+            type: "calcExpression",
+            left: {
+              type: "calcTerm",
+              left: {
+                type: "calculateUnit",
+                value: {
+                  type: "number",
+                  value: 1,
+                },
+              },
+            },
+          },
+          else: {
+            type: "calcExpression",
+            left: {
+              type: "calcTerm",
+              left: {
+                type: "calculateUnit",
+                value: {
+                  type: "number",
+                  value: 0,
+                },
+              },
+            },
+          },
+        },
+      },
+    ],
+  });
+});
+
+test("support for where command function", () => {
+  const parser = new QQLParser();
+
+  const lexer = QQLLexer.tokenize(`hello world | where isNotNull(column1)`);
+  expect(lexer.errors).toEqual([]);
+  parser.input = lexer.tokens;
+  const result = parser.query();
+  expect(result).toMatchObject({
+    dataSources: [],
+    controllerParams: [],
+    search: {
+      type: "search",
+      left: {
+        type: "searchLiteral",
+        tokens: ["hello", "world"],
+      },
+    },
+    pipeline: [
+      {
+        type: "where",
+        expression: {
+          type: "logicalExpression",
+          left: {
+            type: "unitExpression",
+            value: {
+              args: [
+                {
+                  type: "columnRef",
+                  columnName: "column1",
+                },
+              ],
+              functionName: "isNotNull",
+              type: "functionExpression",
+            },
+          },
+          right: undefined,
+        },
+      },
+    ],
+  });
+});
+
+test.each([
+  ["&&", "andExpression"],
+  ["||", "orExpression"],
+])("support for where command logical operators %s", (operator, type) => {
+  const parser = new QQLParser();
+
+  const lexer = QQLLexer.tokenize(
+    `hello world | where column1 == 1 ${operator} column2 == 2`,
+  );
+  expect(lexer.errors).toEqual([]);
+  parser.input = lexer.tokens;
+  const result = parser.query();
+  expect(result).toMatchObject({
+    dataSources: [],
+    controllerParams: [],
+    search: {
+      type: "search",
+      left: {
+        type: "searchLiteral",
+        tokens: ["hello", "world"],
+      },
+    },
+    pipeline: [
+      {
+        type: "where",
+        expression: {
+          type: "logicalExpression",
+          left: {
+            type: "unitExpression",
+            value: {
+              left: {
+                type: "columnRef",
+                columnName: "column1",
+              },
+              operator: "==",
+              right: {
+                type: "number",
+                value: 1,
+              },
+              type: "comparisonExpression",
+            },
+          },
+          right: {
+            type: type,
+            right: {
+              type: "logicalExpression",
+              left: {
+                type: "unitExpression",
+                value: {
+                  left: {
+                    type: "columnRef",
+                    columnName: "column2",
+                  },
+                  operator: "==",
+                  right: {
+                    type: "number",
+                    value: 2,
+                  },
+                  type: "comparisonExpression",
+                },
+              },
+              right: undefined,
+            },
+          },
+        },
+      },
+    ],
+  });
+});
+
+test("support for where command complex and", () => {
+  const parser = new QQLParser();
+
+  const lexer = QQLLexer.tokenize(
+    `hello world | where column1 == 1 && column2 == 2`,
+  );
+  expect(lexer.errors).toEqual([]);
+  parser.input = lexer.tokens;
+  const result = parser.query();
+  expect(result).toMatchObject({
+    dataSources: [],
+    controllerParams: [],
+    search: {
+      type: "search",
+      left: {
+        type: "searchLiteral",
+        tokens: ["hello", "world"],
+      },
+    },
+    pipeline: [
+      {
+        type: "where",
+        expression: {
+          type: "logicalExpression",
+          left: {
+            type: "unitExpression",
+            value: {
+              left: {
+                type: "columnRef",
+                columnName: "column1",
+              },
+              operator: "==",
+              right: {
+                type: "number",
+                value: 1,
+              },
+              type: "comparisonExpression",
+            },
+          },
+          right: {
+            type: "andExpression",
+            right: {
+              type: "logicalExpression",
+              left: {
+                type: "unitExpression",
+                value: {
+                  left: {
+                    type: "columnRef",
+                    columnName: "column2",
+                  },
+                  operator: "==",
+                  right: {
+                    type: "number",
+                    value: 2,
+                  },
+                  type: "comparisonExpression",
+                },
+              },
+              right: undefined,
+            },
+          },
+        },
+      },
+    ],
+  });
+});
+
+test("support for where notExpression", () => {
+  const parser = new QQLParser();
+
+  const lexer = QQLLexer.tokenize(`hello world | where !isNull(column1)`);
+  expect(lexer.errors).toEqual([]);
+  parser.input = lexer.tokens;
+  const result = parser.query();
+  expect(result).toMatchObject({
+    pipeline: [
+      {
+        type: "where",
+        expression: {
+          type: "logicalExpression",
+          left: {
+            type: "unitExpression",
+            value: {
+              type: "notExpression",
+              expression: {
+                type: "unitExpression",
+                value: {
+                  type: "functionExpression",
+                  functionName: "isNull",
+                  args: [{ type: "columnRef", columnName: "column1" }],
+                },
+              },
+            },
+          },
+          right: undefined,
+        },
+      },
+    ],
+  });
+});
+
+test("support for where inArrayStatement", () => {
+  const parser = new QQLParser();
+
+  const lexer = QQLLexer.tokenize(`hello world | where status in ["a", "b"]`);
+  expect(lexer.errors).toEqual([]);
+  parser.input = lexer.tokens;
+  const result = parser.query();
+  expect(result).toMatchObject({
+    pipeline: [
+      {
+        type: "where",
+        expression: {
+          type: "logicalExpression",
+          left: {
+            type: "unitExpression",
+            value: {
+              type: "inArrayExpression",
+              left: { type: "columnRef", columnName: "status" },
+              right: [
+                { type: "string", value: "a" },
+                { type: "string", value: "b" },
+              ],
+            },
+          },
+          right: undefined,
+        },
+      },
+    ],
+  });
+});
+
+test("support for eval case function", () => {
+  const parser = new QQLParser();
+
+  const lexer = QQLLexer.tokenize(
+    `hello world | eval s = case(x > 1, "big", "small")`,
+  );
+  expect(lexer.errors).toEqual([]);
+  parser.input = lexer.tokens;
+  const result = parser.query();
+  expect(result).toMatchObject({
+    pipeline: [
+      {
+        type: "eval",
+        variableName: "s",
+        expression: {
+          type: "functionExpression",
+          functionName: "case",
+          cases: [
+            {
+              type: "functionExpression",
+              functionName: "caseThen",
+              expression: {
+                type: "logicalExpression",
+                left: {
+                  type: "unitExpression",
+                  value: {
+                    type: "comparisonExpression",
+                    left: { type: "columnRef", columnName: "x" },
+                    operator: ">",
+                    right: { type: "number", value: 1 },
+                  },
+                },
+              },
+              truethy: { type: "calcExpression" },
+            },
+          ],
+          elseCase: { type: "calcExpression" },
+        },
+      },
+    ],
+  });
+});
+
+test("support for where parenthesisExpression", () => {
+  const parser = new QQLParser();
+
+  const lexer = QQLLexer.tokenize(
+    `hello world | where (col1 == 1 && col2 == 2)`,
+  );
+  expect(lexer.errors).toEqual([]);
+  parser.input = lexer.tokens;
+  const result = parser.query();
+  expect(result).toMatchObject({
+    pipeline: [
+      {
+        type: "where",
+        expression: {
+          type: "logicalExpression",
+          left: {
+            type: "unitExpression",
+            value: {
+              type: "logicalExpression",
+              left: {
+                type: "unitExpression",
+                value: {
+                  type: "comparisonExpression",
+                  left: { type: "columnRef", columnName: "col1" },
+                  operator: "==",
+                  right: { type: "number", value: 1 },
+                },
+              },
+              right: {
+                type: "andExpression",
+                right: {
+                  type: "logicalExpression",
+                  left: {
+                    type: "unitExpression",
+                    value: {
+                      type: "comparisonExpression",
+                      left: { type: "columnRef", columnName: "col2" },
+                      operator: "==",
+                      right: { type: "number", value: 2 },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          right: undefined,
+        },
+      },
+    ],
+  });
+});
+
+test("support for parenthesisCalcExpression in eval", () => {
+  const parser = new QQLParser();
+
+  const lexer = QQLLexer.tokenize(`hello world | eval x = (2 + 3) * 4`);
+  expect(lexer.errors).toEqual([]);
+  parser.input = lexer.tokens;
+  const result = parser.query();
+  expect(result).toMatchObject({
+    pipeline: [
+      {
+        type: "eval",
+        variableName: "x",
+        expression: {
+          type: "calcExpression",
+          left: {
+            type: "calcTerm",
+            left: {
+              type: "calculateUnit",
+              value: {
+                type: "calcExpression",
+                left: {
+                  type: "calcTerm",
+                  left: {
+                    type: "calculateUnit",
+                    value: { type: "number", value: 2 },
+                  },
+                },
+                tail: [
+                  {
+                    type: "calcAction",
+                    operator: "+",
+                    right: {
+                      type: "calcTerm",
+                      left: {
+                        type: "calculateUnit",
+                        value: { type: "number", value: 3 },
+                      },
+                    },
+                  },
+                ],
+              },
+            },
+            tail: [
+              {
+                type: "calcTermAction",
+                operator: "*",
+                right: {
+                  type: "calculateUnit",
+                  value: { type: "number", value: 4 },
+                },
+              },
+            ],
+          },
+        },
+      },
+    ],
+  });
+});
+
+test.each([["=="], ["!="], [">"], ["<"], [">="], ["<="]])(
+  "test where command operators %s",
+  (operator) => {
+    const parser = new QQLParser();
+
+    const lexer = QQLLexer.tokenize(
+      `hello world | where column1 ${operator} 1`,
+    );
+    expect(lexer.errors).toEqual([]);
+    parser.input = lexer.tokens;
+    const result = parser.query();
+    expect(result).toMatchObject({
+      dataSources: [],
+      controllerParams: [],
+      search: {
+        type: "search",
+        left: {
+          type: "searchLiteral",
+          tokens: ["hello", "world"],
+        },
+      },
+      pipeline: [
+        {
+          type: "where",
+          expression: {
+            type: "logicalExpression",
+            left: {
+              type: "unitExpression",
+              value: {
+                left: {
+                  type: "columnRef",
+                  columnName: "column1",
+                },
+                operator: operator,
+                right: {
+                  type: "number",
+                  value: 1,
+                },
+                type: "comparisonExpression",
+              },
+            },
+            right: undefined,
+          },
+        },
+      ],
+    });
+  },
+);
