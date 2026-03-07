@@ -13,6 +13,15 @@ ANTLR="$PACKAGE_DIR/node_modules/.bin/antlr4ng"
 
 ANTLR_FLAGS="-Dlanguage=TypeScript -visitor -no-listener -Xexact-output-dir"
 
+# Skip generation if neither grammar file is newer than the generated output
+SENTINEL="$SYNTAX_DIR/QQL.ts"
+if [ -f "$SENTINEL" ] \
+   && [ ! "$SYNTAX_DIR/QQLLexer.g4" -nt "$SENTINEL" ] \
+   && [ ! "$SYNTAX_DIR/QQL.g4" -nt "$SENTINEL" ]; then
+  echo "Grammar unchanged, skipping generation."
+  exit 0
+fi
+
 # Grammar files and generated output all live flat in src/syntax/.
 # ANTLR writes QQLLexer.tokens next to QQLLexer.g4 so tokenVocab lookup
 # for QQL.g4 works without any copying.
