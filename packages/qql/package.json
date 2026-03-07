@@ -26,7 +26,7 @@
   ],
   "scripts": {
     "build": "tsc --project tsconfig.json",
-    "test": "nx vite:test",
+    "test": "vitest run",
     "format": "prettier --write src/",
     "format:check": "prettier --check src/",
     "prepublishOnly": "npm run build"

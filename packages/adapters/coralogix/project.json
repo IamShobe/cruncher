@@ -1,8 +1,0 @@
-{
-  "name": "@cruncher/adapter-coralogix",
-  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
-  "projectType": "library",
-  "sourceRoot": "packages/adapters/coralogix/src",
-  "tags": [],
-  "targets": {}
-}

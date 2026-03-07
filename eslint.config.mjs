@@ -1,17 +1,18 @@
-import nx from "@nx/eslint-plugin";
+import js from "@eslint/js";
+import tseslint from "typescript-eslint";
+import prettierConfig from "eslint-config-prettier";
 
 export default [
   {
     files: ["**/*.json"],
-    // Override or add rules here
     rules: {},
     languageOptions: {
       parser: await import("jsonc-eslint-parser"),
     },
   },
-  ...nx.configs["flat/base"],
-  ...nx.configs["flat/typescript"],
-  ...nx.configs["flat/javascript"],
+  js.configs.recommended,
+  ...tseslint.configs.recommended,
+  prettierConfig,
   {
     ignores: [
       "**/dist",
@@ -22,34 +23,11 @@ export default [
   {
     files: ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"],
     rules: {
-      "@nx/enforce-module-boundaries": [
-        "error",
-        {
-          enforceBuildableLibDependency: true,
-          allow: ["^.*/eslint(\\.base)?\\.config\\.[cm]?[jt]s$"],
-          depConstraints: [
-            {
-              sourceTag: "*",
-              onlyDependOnLibsWithTags: ["*"],
-            },
-          ],
-        },
-      ],
       "@typescript-eslint/no-inferrable-types": "off",
     },
   },
   {
-    files: [
-      "**/*.ts",
-      "**/*.tsx",
-      "**/*.cts",
-      "**/*.mts",
-      "**/*.js",
-      "**/*.jsx",
-      "**/*.cjs",
-      "**/*.mjs",
-    ],
-    // Override or add rules here
+    files: ["**/*.ts", "**/*.tsx", "**/*.cts", "**/*.mts", "**/*.js", "**/*.jsx", "**/*.cjs", "**/*.mjs"],
     rules: {},
   },
 ];
