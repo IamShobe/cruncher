@@ -4,6 +4,7 @@ description: Convert a string to lowercase.
 ---
 
 import FunctionCard from '../../../../../components/FunctionCard.astro';
+import QQLCode from '../../../../../components/QQLCode.astro';
 
 <FunctionCard
   name="lower"
@@ -14,7 +15,7 @@ import FunctionCard from '../../../../../components/FunctionCard.astro';
   description="Convert all alphabetic characters to lowercase"
 />
 
-The `lower` function converts the input string to lowercase (all characters converted to lower case).
+The `lower` function converts the input string to lowercase.
 
 ## Edge Cases
 
@@ -24,17 +25,14 @@ The `lower` function converts the input string to lowercase (all characters conv
 
 ## Examples
 
-```qql
-eval user_lower = lower(user)
-```
+<QQLCode code={`| eval user_lower = lower(user)`} />
+
 Creates a new field `user_lower` with the lowercase version of `user`, useful for case-insensitive comparisons.
 
-```qql
-where lower(status) == "error"
-```
+<QQLCode code={`| where lower(status) == "error"`} />
+
 Matches records where status is "error", "ERROR", "Error", etc.
 
-```qql
-eval normalized_service = lower(service_name)
-```
+<QQLCode code={`| eval normalized_service = lower(service_name)`} />
+
 Normalizes service names to lowercase for grouping.

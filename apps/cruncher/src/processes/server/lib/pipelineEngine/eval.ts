@@ -15,6 +15,8 @@ import {
   EvalFunction,
   EvalFunctionArg,
   EvalIfFunction,
+  FunctionArg,
+  FunctionExpression,
 } from "@cruncher/qql/grammar";
 import {
   Context,
@@ -67,7 +69,12 @@ const processEvalFunctionArg = (
 
     case "functionExpression":
       if (!isEvalFunction(expression)) {
-        return processFunctionExpression(expression, context);
+        // Pre-resolve any CalcExpression args before delegating to the standard
+        // function processor, which only knows how to handle FunctionArg types.
+        return processFunctionExpression(
+          resolveCalcArgs(expression, context),
+          context,
+        );
       }
 
       return processEvalFunctionExpression(expression, context);
@@ -84,6 +91,39 @@ const processEvalFunctionArg = (
       // @ts-expect-error - this should never happen
       throw new Error(`Unsupported expression type: ${expression.type}`);
   }
+};
+
+/**
+ * Converts any CalcExpression arguments in a function expression to their
+ * evaluated scalar equivalents so the standard processFunctionExpression
+ * (which only accepts FunctionArg types) can handle them.
+ *
+ * This enables expressions like `ceil(duration_ms / 1000)` inside `eval`.
+ */
+const resolveCalcArgs = (
+  expression: FunctionExpression,
+  context: Context,
+): FunctionExpression => {
+  const resolvedArgs = expression.args.map((arg): FunctionArg => {
+    if (arg.type !== "calcExpression") {
+      return arg as FunctionArg;
+    }
+    const resolved = processCalcExpression(arg, context);
+    if (!resolved) {
+      return { type: "number", value: 0 };
+    }
+    switch (resolved.type) {
+      case "number":
+        return { type: "number", value: resolved.value };
+      case "string":
+        return { type: "string", value: resolved.value };
+      case "boolean":
+        return { type: "boolean", value: resolved.value };
+      default:
+        return { type: "number", value: 0 };
+    }
+  });
+  return { ...expression, args: resolvedArgs };
 };
 
 const isEvalFunction = (expression: unknown): expression is EvalFunction => {

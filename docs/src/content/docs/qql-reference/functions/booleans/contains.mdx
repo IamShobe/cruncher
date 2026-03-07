@@ -4,6 +4,7 @@ description: Check if a string contains a substring.
 ---
 
 import FunctionCard from '../../../../../components/FunctionCard.astro';
+import QQLCode from '../../../../../components/QQLCode.astro';
 
 <FunctionCard
   name="contains"
@@ -23,17 +24,14 @@ import FunctionCard from '../../../../../components/FunctionCard.astro';
 
 ## Examples
 
-```qql
-where contains(message, "error")
-```
+<QQLCode code={`| where contains(message, "error")`} />
+
 Matches records where the `message` field contains "error".
 
-```qql
-eval has_timeout = contains(error_message, "timeout")
-```
+<QQLCode code={`| eval has_timeout = contains(error_message, "timeout")`} />
+
 Creates a boolean field `has_timeout` that is `true` if `error_message` contains "timeout".
 
-```qql
-eval is_json = contains(raw_log, "{")
-```
+<QQLCode code={`| eval is_json = contains(raw_log, "{")`} />
+
 Detects if `raw_log` contains JSON (looks for opening brace).

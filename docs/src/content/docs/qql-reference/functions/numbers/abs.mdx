@@ -4,6 +4,7 @@ description: Get the absolute value of a number.
 ---
 
 import FunctionCard from '../../../../../components/FunctionCard.astro';
+import QQLCode from '../../../../../components/QQLCode.astro';
 
 <FunctionCard
   name="abs"
@@ -25,17 +26,14 @@ The `abs` function returns the absolute value (magnitude without sign) of the in
 
 ## Examples
 
-```qql
-eval abs_delta = abs(difference)
-```
-Creates a new field `abs_delta` with the absolute value of `difference`, useful for comparing magnitude regardless of direction.
+<QQLCode code={`| eval abs_delta = abs(difference)`} />
 
-```qql
-eval error_magnitude = abs(deviation_percent)
-```
+Creates a new field `abs_delta` with the absolute value of `difference`.
+
+<QQLCode code={`| eval error_magnitude = abs(deviation_percent)`} />
+
 Calculates the absolute error in a percentage calculation.
 
-```qql
-stats avg(abs(latency_offset))
-```
+<QQLCode code={`| stats avg(abs(latency_offset))`} />
+
 Calculates the average absolute latency offset.

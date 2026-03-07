@@ -1,6 +1,29 @@
 import styled from "@emotion/styled";
 import React, { useMemo } from "react";
 import { token } from "../system";
+import {
+  LuTable2,
+  LuChartBar,
+  LuFilter,
+  LuArrowUpDown,
+  LuSquareFunction,
+  LuRegex,
+  LuChartLine,
+  LuPackageOpen,
+  LuHash,
+  LuType,
+  LuToggleLeft,
+  LuCode,
+  LuGitBranchPlus,
+  LuDatabase,
+  LuTriangleAlert,
+  LuSettings2,
+  LuTag,
+  LuSplit,
+  LuExternalLink,
+} from "react-icons/lu";
+
+export { LuExternalLink };
 
 const StyledPre = styled.pre`
   pointer-events: none;
@@ -127,43 +150,128 @@ const typeToStyle = (type: string) => {
   return { color: token("colors.syntax.default") };
 };
 
-type TooltipContent = { label: string; description: string };
+export type TooltipContent = {
+  icon: React.ElementType;
+  label: string;
+  badge?: string;
+  syntax?: string;
+  description: string;
+  docsUrl?: string;
+};
+
+const DOCS_BASE = "https://cruncher.iamshobe.com";
+
+const COMMAND_DOCS: Record<string, Omit<TooltipContent, "icon">> = {
+  "cmd:table": {
+    label: "table",
+    badge: "Command",
+    syntax: "table <col> [as <alias>], ...",
+    description: "Selects and reorders columns in the result set. Use `as` to rename a column.",
+    docsUrl: `${DOCS_BASE}/qql-reference/commands/table/`,
+  },
+  "cmd:stats": {
+    label: "stats",
+    badge: "Command",
+    syntax: "stats <fn>(<col>) [as <alias>] [by <col>, ...]",
+    description: "Aggregates results using functions like count, sum, avg, min, max. Group with `by`.",
+    docsUrl: `${DOCS_BASE}/qql-reference/commands/stats/`,
+  },
+  "cmd:where": {
+    label: "where",
+    badge: "Command",
+    syntax: "where <expression>",
+    description: "Filters events by a boolean expression. Supports ==, !=, <, >, and, or, not, in(...).",
+    docsUrl: `${DOCS_BASE}/qql-reference/commands/where/`,
+  },
+  "cmd:sort": {
+    label: "sort",
+    badge: "Command",
+    syntax: "sort <col> [asc|desc], ...",
+    description: "Orders results by one or more columns. Default order is ascending.",
+    docsUrl: `${DOCS_BASE}/qql-reference/commands/sort/`,
+  },
+  "cmd:eval": {
+    label: "eval",
+    badge: "Command",
+    syntax: "eval <name> = <expression>",
+    description: "Creates or overwrites a field using an expression, arithmetic, or if/case logic.",
+    docsUrl: `${DOCS_BASE}/qql-reference/commands/eval/`,
+  },
+  "cmd:regex": {
+    label: "regex",
+    badge: "Command",
+    syntax: "regex [<field> =] `<pattern>`",
+    description: "Filters events where a field matches a regular expression. Omit the field to match against the raw event.",
+    docsUrl: `${DOCS_BASE}/qql-reference/commands/regex/`,
+  },
+  "cmd:timechart": {
+    label: "timechart",
+    badge: "Command",
+    syntax: "timechart [span=<interval>] <fn>(<col>) [by <col>]",
+    description: "Aggregates events over time buckets for charting. Use `span` to control the bucket size.",
+    docsUrl: `${DOCS_BASE}/qql-reference/commands/timechart/`,
+  },
+  "cmd:unpack": {
+    label: "unpack",
+    badge: "Command",
+    syntax: "unpack <field>",
+    description: "Expands a JSON object stored in a field, promoting its keys as top-level fields.",
+    docsUrl: `${DOCS_BASE}/qql-reference/commands/unpack/`,
+  },
+};
 
 export const getTooltipContent = (type: string, metadata?: string): TooltipContent | null => {
+  // Command keywords with rich per-command docs
+  if (type === "keyword" && metadata && metadata.startsWith("cmd:")) {
+    const doc = COMMAND_DOCS[metadata];
+    if (doc) return { icon: COMMAND_ICONS[metadata] ?? LuCode, ...doc };
+  }
+
   switch (type) {
     case "keyword":
-      return { label: "Keyword", description: "QQL language keyword" };
+      return { icon: LuCode, label: "Keyword", description: "A QQL language keyword that controls query structure." };
     case "column":
-      return { label: "Column", description: "Reference to a field or column" };
+      return { icon: LuTag, label: "Column", description: "Reference to a field or column in the event data." };
     case "string":
-      return { label: "String", description: "String literal value" };
+      return { icon: LuType, label: "String", description: "A quoted string literal value." };
     case "function":
-      return { label: "Function", description: "Aggregation or transformation function" };
+      return { icon: LuSquareFunction, label: "Function", description: "An aggregation or transformation function (e.g. count, sum, avg)." };
     case "booleanFunction":
-      return { label: "Boolean Function", description: "Function returning a boolean" };
+      return { icon: LuToggleLeft, label: "Boolean Function", description: "A function that returns true or false." };
     case "number":
-      return { label: "Number", description: "Numeric literal value" };
+      return { icon: LuHash, label: "Number", description: "A numeric literal value (integer or float)." };
     case "operator":
-      return { label: "Operator", description: "Comparison or logical operator" };
+      return { icon: LuGitBranchPlus, label: "Operator", description: "A comparison (==, !=, <, >) or logical (and, or, not) operator." };
     case "regex":
-      return { label: "Regex", description: "Regular expression pattern" };
+      return { icon: LuRegex, label: "Regex", description: "A regular expression pattern enclosed in backticks." };
     case "error":
-      return { label: "Syntax Error", description: metadata ?? "Unexpected token" };
+      return { icon: LuTriangleAlert, label: "Syntax Error", description: metadata ?? "Unexpected token — check your query syntax." };
     case "param":
-      return { label: "Parameter", description: "Query parameter name" };
+      return { icon: LuSettings2, label: "Parameter", description: "A controller parameter that filters the data source (e.g. index=main)." };
     case "index":
-      return { label: "Index Value", description: "Parameter or index value" };
+      return { icon: LuSettings2, label: "Index Value", description: "The value of a controller parameter." };
     case "pipe":
-      return { label: "Pipeline", description: "Separates pipeline commands" };
+      return { icon: LuSplit, label: "Pipeline", description: "Separates pipeline commands. Each command transforms the results of the previous." };
     case "datasource":
-      return { label: "Datasource", description: "Data source selector" };
+      return { icon: LuDatabase, label: "Datasource", description: "Selects the data source to query (prefixed with @)." };
     case "identifier":
-      return { label: "Identifier", description: "Field or token identifier" };
+      return { icon: LuTag, label: "Identifier", description: "A bare word used as a field name or search token." };
     case "comment":
-      return { label: "Comment", description: "Ignored by the parser" };
+      return { icon: LuCode2, label: "Comment", description: "Ignored by the parser. Use // to start a comment." };
     default:
       return null;
   }
+};
+
+const COMMAND_ICONS: Record<string, React.ElementType> = {
+  "cmd:table": LuTable2,
+  "cmd:stats": LuChartBar,
+  "cmd:where": LuFilter,
+  "cmd:sort": LuArrowUpDown,
+  "cmd:eval": LuSquareFunction,
+  "cmd:regex": LuRegex,
+  "cmd:timechart": LuChartLine,
+  "cmd:unpack": LuPackageOpen,
 };
 
 const TokenSpan = styled.span`

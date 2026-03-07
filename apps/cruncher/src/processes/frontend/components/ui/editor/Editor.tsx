@@ -2,16 +2,19 @@ import styled from "@emotion/styled";
 import { token } from "../system";
 import React, { useCallback, useEffect, useMemo, useRef, useState, CSSProperties } from "react";
 import { createPortal } from "react-dom";
-import { Popover, Portal, Text } from "@chakra-ui/react";
+import { Badge, Box, Code, HStack, Icon, IconButton, Popover, Portal, Text } from "@chakra-ui/react";
+import { Tooltip } from "~components/presets/Tooltip";
 
 import { AutoCompleter, compareSuggestions, Suggestion } from "./AutoCompleter";
-import { HighlightData, TextHighlighter, getTooltipContent } from "./Highlighter";
+import { HighlightData, LuExternalLink, TextHighlighter, TooltipContent, getTooltipContent } from "./Highlighter";
+import { LuBug } from "react-icons/lu";
 import { Coordinates, getCaretCoordinates } from "./getCoordinates";
 
 const EditorWrapper = styled.div`
   display: grid;
   grid-template-columns: 1fr;
   grid-template-rows: 1fr;
+  position: relative;
   gap: 0;
   height: 130px;
 
@@ -97,10 +100,11 @@ export type EditorProps = {
   suggestions: Suggestion[];
   highlightData: HighlightData[];
   popperRoot: Element | undefined | null;
+  onCopyAst?: () => void;
 };
 
 export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
-  ({ value, onChange, suggestions, popperRoot, highlightData }, ref) => {
+  ({ value, onChange, suggestions, popperRoot, highlightData, onCopyAst }, ref) => {
     const [referenceElement, setReferenceElement] =
       React.useState<HTMLTextAreaElement | null>(null);
 
@@ -244,10 +248,7 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
     }, [isCompleterOpen, filteredSuggestions, hoveredCompletionItem, writtenWord, cursorPosition]);
 
     const [popoverOpen, setPopoverOpen] = useState(false);
-    const [tokenContent, setTokenContent] = useState<{
-      label: string;
-      description: string;
-    } | null>(null);
+    const [tokenContent, setTokenContent] = useState<TooltipContent | null>(null);
     const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
     const closeTimerRef = useRef<ReturnType<typeof setTimeout>>();
     const openTimerRef = useRef<ReturnType<typeof setTimeout>>();
@@ -323,6 +324,8 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
       [cancelClose, cancelOpen, popoverOpen, anchorRect],
     );
 
+    const [isEditorHovered, setIsEditorHovered] = useState(false);
+
     const syncScroll = () => {
       if (!referenceElement || !preElement.current) return;
 
@@ -331,7 +334,10 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
     };
 
     return (
-      <EditorWrapper>
+      <EditorWrapper
+        onMouseEnter={() => setIsEditorHovered(true)}
+        onMouseLeave={() => setIsEditorHovered(false)}
+      >
         <TextareaCustom
           placeholder={ghostTextInfo ? "" : "Type your query here..."}
           value={value}
@@ -468,16 +474,50 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
                 <Popover.Body>
                   {tokenContent && (
                     <>
-                      <Text
-                        fontSize="xs"
-                        fontWeight="semibold"
-                        textTransform="uppercase"
-                        letterSpacing="wider"
-                        color="fg.muted"
-                      >
-                        {tokenContent.label}
-                      </Text>
-                      <Text fontSize="sm" color="fg" mt="1">
+                      <HStack gap="2" mb="2" align="center">
+                        <Icon as={tokenContent.icon} boxSize="4" color="fg.muted" />
+                        <Text fontWeight="semibold" fontSize="sm" color="fg">
+                          {tokenContent.label}
+                        </Text>
+                        {tokenContent.badge && (
+                          <Badge size="sm" variant="subtle" colorPalette="blue">
+                            {tokenContent.badge}
+                          </Badge>
+                        )}
+                        {tokenContent.docsUrl && (
+                          <Tooltip text="Open documentation" openDelay={400}>
+                            <IconButton
+                              as="a"
+                              href={tokenContent.docsUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              aria-label="Open documentation"
+                              size="2xs"
+                              variant="ghost"
+                              colorPalette="blue"
+                              ms="auto"
+                            >
+                              <Icon as={LuExternalLink} />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+                      </HStack>
+                      {tokenContent.syntax && (
+                        <Box mb="2">
+                          <Code
+                            fontSize="xs"
+                            px="2"
+                            py="1"
+                            borderRadius="md"
+                            display="block"
+                            whiteSpace="pre-wrap"
+                            colorPalette="gray"
+                          >
+                            {tokenContent.syntax}
+                          </Code>
+                        </Box>
+                      )}
+                      <Text fontSize="sm" color="fg.muted" lineHeight="1.5">
                         {tokenContent.description}
                       </Text>
                     </>
@@ -487,6 +527,20 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
             </Popover.Positioner>
           </Portal>
         </Popover.Root>
+        {onCopyAst && isEditorHovered && (
+          <div style={{ position: "absolute", top: 6, right: 6, zIndex: 3 }}>
+            <Tooltip text="Copy AST (debug)" position="left">
+              <IconButton
+                aria-label="Copy AST (debug)"
+                size="2xs"
+                variant="ghost"
+                onClick={onCopyAst}
+              >
+                <LuBug />
+              </IconButton>
+            </Tooltip>
+          </div>
+        )}
       </EditorWrapper>
     );
   },

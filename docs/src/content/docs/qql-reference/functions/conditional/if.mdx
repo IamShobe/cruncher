@@ -4,6 +4,7 @@ description: Conditional expression to return different values based on a condit
 ---
 
 import FunctionCard from '../../../../../components/FunctionCard.astro';
+import QQLCode from '../../../../../components/QQLCode.astro';
 
 <FunctionCard
   name="if"
@@ -21,47 +22,36 @@ The `if` function returns one value if a condition is true, and another value if
 - If `condition` is `null`, returns `null` (not `then_value` or `else_value`)
 - `then_value` and `else_value` can have different types (e.g., number and string)
 - `if` functions can be nested for complex logic
-- The condition part is always evaluated; short-circuit evaluation does not apply
 
 ## Examples
 
 ### Simple Boolean Field
 
-```qql
-eval is_error = if(status == "error", true, false)
-```
+<QQLCode code={`| eval is_error = if(status == "error", true, false)`} />
 
 Creates a boolean field `is_error` that is `true` if `status` equals "error".
 
 ### Categorization
 
-```qql
-eval severity = if(status_code >= 500, "critical", "normal")
-```
+<QQLCode code={`| eval severity = if(status_code >= 500, "critical", "normal")`} />
 
 Categorizes records as "critical" if status code is 500 or higher, otherwise "normal".
 
 ### Nested Conditions
 
-```qql
-eval tier = if(score > 90, "gold", if(score > 70, "silver", "bronze"))
-```
+<QQLCode code={`| eval tier = if(score > 90, "gold", if(score > 70, "silver", "bronze"))`} />
 
 Multi-level categorization: gold (>90), silver (>70), bronze (≤70).
 
-### Filtering and Calculation
+### Calculation with Condition
 
-```qql
-eval discount = if(total_spent > 1000, total_spent * 0.1, 0)
-```
+<QQLCode code={`| eval discount = if(total_spent > 1000, total_spent * 0.1, 0)`} />
 
 Applies a 10% discount to customers who spent more than 1000, otherwise no discount.
 
-### Type Coercion
+### String from Boolean Field
 
-```qql
-eval result_display = if(success, "OK", "FAILED")
-```
+<QQLCode code={`| eval result_display = if(success, "OK", "FAILED")`} />
 
 Returns a string based on a boolean field.
 

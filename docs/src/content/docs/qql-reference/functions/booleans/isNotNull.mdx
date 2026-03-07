@@ -4,6 +4,7 @@ description: Check if a value is not null.
 ---
 
 import FunctionCard from '../../../../../components/FunctionCard.astro';
+import QQLCode from '../../../../../components/QQLCode.astro';
 
 <FunctionCard
   name="isNotNull"
@@ -20,21 +21,18 @@ The `isNotNull` function returns `true` if the input value is not `null` and the
 
 - Returns `true` for empty strings `""`, zero `0`, and `false` (all valid, non-null values)
 - Returns `false` only if the field is missing or explicitly `null`
-- `isNotNull(x)` is equivalent to `not(isNull(x))`
+- `isNotNull(x)` is equivalent to `!(isNull(x))`
 
 ## Examples
 
-```qql
-where isNotNull(user)
-```
+<QQLCode code={`| where isNotNull(user)`} />
+
 Matches records where the `user` field is present and not null.
 
-```qql
-eval has_metadata = isNotNull(metadata_json)
-```
+<QQLCode code={`| eval has_metadata = isNotNull(metadata_json)`} />
+
 Creates a boolean field `has_metadata` that is `true` if `metadata_json` exists.
 
-```qql
-where isNotNull(user_id) AND isNotNull(request_id)
-```
+<QQLCode code={`| where isNotNull(user_id) && isNotNull(request_id)`} />
+
 Filters to records with both user and request identifiers.

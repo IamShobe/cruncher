@@ -4,6 +4,7 @@ description: Round a number down to the nearest integer.
 ---
 
 import FunctionCard from '../../../../../components/FunctionCard.astro';
+import QQLCode from '../../../../../components/QQLCode.astro';
 
 <FunctionCard
   name="floor"
@@ -26,17 +27,14 @@ The `floor` function rounds the input number **down** to the nearest integer (fl
 
 ## Examples
 
-```qql
-eval hours = floor(duration_seconds / 3600)
-```
-Calculates how many complete hours in a duration.
+<QQLCode code={`| eval hours = floor(duration_seconds / 3600)`} />
 
-```qql
-eval request_batch = floor(request_id / 100)
-```
+Calculates how many complete hours are in a duration.
+
+<QQLCode code={`| eval request_batch = floor(request_id / 100)`} />
+
 Groups requests into batches of 100.
 
-```qql
-stats sum(floor(cost))
-```
+<QQLCode code={`| stats sum(floor(cost))`} />
+
 Calculates total cost with each item rounded down.

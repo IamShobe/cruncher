@@ -4,6 +4,7 @@ description: Multi-branch conditional expression for selecting values based on m
 ---
 
 import FunctionCard from '../../../../../components/FunctionCard.astro';
+import QQLCode from '../../../../../components/QQLCode.astro';
 
 <FunctionCard
   name="case"
@@ -28,61 +29,31 @@ The `case` function evaluates a series of conditions and returns the value assoc
 
 ### Simple Status Mapping
 
-```qql
-eval status_label = case(status == "error", "Error", status == "warn", "Warning", "OK")
-```
+<QQLCode code={`| eval status_label = case(status == "error", "Error", status == "warn", "Warning", "OK")`} />
 
 Maps status codes to readable labels: "Error", "Warning", or "OK".
 
 ### Log Level Categorization
 
-```qql
-eval severity_tier = case(
-  level == "FATAL", 1,
-  level == "ERROR", 2,
-  level == "WARN", 3,
-  level == "INFO", 4,
-  5
-)
-```
+<QQLCode code={`| eval severity_tier = case(level == "FATAL", 1, level == "ERROR", 2, level == "WARN", 3, level == "INFO", 4, 5)`} />
 
 Assigns severity tier numbers: FATAL=1, ERROR=2, WARN=3, INFO=4, other=5.
 
 ### Response Time Classification
 
-```qql
-eval performance = case(
-  response_time_ms < 100, "fast",
-  response_time_ms < 500, "normal",
-  response_time_ms < 1000, "slow",
-  "very slow"
-)
-```
+<QQLCode code={`| eval performance = case(response_time_ms < 100, "fast", response_time_ms < 500, "normal", response_time_ms < 1000, "slow", "very slow")`} />
 
 Categorizes requests by response time.
 
-### Complex Business Logic
+### Multi-criteria Segmentation
 
-```qql
-eval customer_segment = case(
-  total_spent > 10000, "premium",
-  total_spent > 1000, "standard",
-  login_count == 0, "inactive",
-  "active"
-)
-```
+<QQLCode code={`| eval customer_segment = case(total_spent > 10000, "premium", total_spent > 1000, "standard", login_count == 0, "inactive", "active")`} />
 
-Multi-criteria customer segmentation.
+Customer segmentation based on spend and activity.
 
-### Environment-Based Configuration
+### Environment-Based Alerting
 
-```qql
-eval should_alert = case(
-  environment == "production" AND error_count > 10, true,
-  environment == "staging" AND error_count > 50, true,
-  false
-)
-```
+<QQLCode code={`| eval should_alert = case(environment == "production" && error_count > 10, true, environment == "staging" && error_count > 50, true, false)`} />
 
 Alert conditions vary by environment.
 

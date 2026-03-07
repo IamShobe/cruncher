@@ -4,6 +4,7 @@ description: Remove whitespace from both ends of a string.
 ---
 
 import FunctionCard from '../../../../../components/FunctionCard.astro';
+import QQLCode from '../../../../../components/QQLCode.astro';
 
 <FunctionCard
   name="trim"
@@ -26,17 +27,14 @@ The `trim` function removes whitespace (spaces, tabs, newlines, etc.) from the b
 
 ## Examples
 
-```qql
-eval clean_message = trim(message)
-```
+<QQLCode code={`| eval clean_message = trim(message)`} />
+
 Removes leading/trailing whitespace from `message`, useful for data cleanup.
 
-```qql
-where trim(user_input) != ""
-```
+<QQLCode code={`| where trim(user_input) != ""`} />
+
 Filters to non-empty user input (after removing whitespace).
 
-```qql
-eval normalized_tag = lower(trim(tag))
-```
+<QQLCode code={`| eval normalized_tag = lower(trim(tag))`} />
+
 Normalizes tags by trimming whitespace and converting to lowercase.

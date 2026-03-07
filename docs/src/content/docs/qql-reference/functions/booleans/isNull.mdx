@@ -4,6 +4,7 @@ description: Check if a value is null or undefined.
 ---
 
 import FunctionCard from '../../../../../components/FunctionCard.astro';
+import QQLCode from '../../../../../components/QQLCode.astro';
 
 <FunctionCard
   name="isNull"
@@ -25,17 +26,14 @@ The `isNull` function returns `true` if the input value is `null` or undefined (
 
 ## Examples
 
-```qql
-where isNull(optional_field)
-```
+<QQLCode code={`| where isNull(optional_field)`} />
+
 Matches records where `optional_field` is missing or null.
 
-```qql
-eval has_user = not(isNull(user_id))
-```
+<QQLCode code={`| eval has_user = !(isNull(user_id))`} />
+
 Creates a boolean field `has_user` that is `true` if `user_id` is present.
 
-```qql
-where isNull(error_code)
-```
+<QQLCode code={`| where isNull(error_code)`} />
+
 Filters to successful records (no error code).

@@ -174,7 +174,7 @@ export class HighlightCollector extends AbstractParseTreeVisitor<void> {
     if (kw) {
       const sym = kw.getSymbol()!;
       if (sym) {
-        this.addHighlight("keyword", sym.start ?? 0, sym.stop);
+        this.addHighlight("keyword", sym.start ?? 0, sym.stop, "cmd:table");
       }
     }
 
@@ -201,7 +201,7 @@ export class HighlightCollector extends AbstractParseTreeVisitor<void> {
     if (kw) {
       const sym = kw.getSymbol()!;
       if (sym) {
-        this.addHighlight("keyword", sym.start ?? 0, sym.stop);
+        this.addHighlight("keyword", sym.start ?? 0, sym.stop, "cmd:stats");
       }
     }
 
@@ -242,7 +242,7 @@ export class HighlightCollector extends AbstractParseTreeVisitor<void> {
     if (kw) {
       const sym = kw.getSymbol()!;
       if (sym) {
-        this.addHighlight("keyword", sym.start ?? 0, sym.stop);
+        this.addHighlight("keyword", sym.start ?? 0, sym.stop, "cmd:where");
       }
     }
 
@@ -254,7 +254,7 @@ export class HighlightCollector extends AbstractParseTreeVisitor<void> {
     if (kw) {
       const sym = kw.getSymbol()!;
       if (sym) {
-        this.addHighlight("keyword", sym.start ?? 0, sym.stop);
+        this.addHighlight("keyword", sym.start ?? 0, sym.stop, "cmd:sort");
       }
     }
 
@@ -286,7 +286,7 @@ export class HighlightCollector extends AbstractParseTreeVisitor<void> {
     if (kw) {
       const sym = kw.getSymbol()!;
       if (sym) {
-        this.addHighlight("keyword", sym.start ?? 0, sym.stop);
+        this.addHighlight("keyword", sym.start ?? 0, sym.stop, "cmd:eval");
       }
     }
 
@@ -306,7 +306,7 @@ export class HighlightCollector extends AbstractParseTreeVisitor<void> {
   };
 
   visitRegexCmd = (ctx: Parser.RegexCmdContext) => {
-    this.highlightTerminal(ctx.REGEX(), "keyword");
+    this.highlightTerminal(ctx.REGEX(), "keyword", "cmd:regex");
     this.highlightTerminal(ctx.FIELD(), "keyword");
     this.highlightTerminal(ctx.EQUAL(), "operator");
     const identCtx = ctx.identifierOrString();
@@ -320,7 +320,7 @@ export class HighlightCollector extends AbstractParseTreeVisitor<void> {
     if (kw) {
       const sym = kw.getSymbol()!;
       if (sym) {
-        this.addHighlight("keyword", sym.start ?? 0, sym.stop);
+        this.addHighlight("keyword", sym.start ?? 0, sym.stop, "cmd:timechart");
       }
     }
 
@@ -369,7 +369,7 @@ export class HighlightCollector extends AbstractParseTreeVisitor<void> {
   };
 
   visitUnpackCmd = (ctx: Parser.UnpackCmdContext) => {
-    this.highlightTerminal(ctx.UNPACK(), "keyword");
+    this.highlightTerminal(ctx.UNPACK(), "keyword", "cmd:unpack");
     this.highlightIdOrStr(ctx.identifierOrString());
   };
 

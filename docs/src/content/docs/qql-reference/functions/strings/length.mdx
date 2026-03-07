@@ -4,6 +4,7 @@ description: Get the length of a string.
 ---
 
 import FunctionCard from '../../../../../components/FunctionCard.astro';
+import QQLCode from '../../../../../components/QQLCode.astro';
 
 <FunctionCard
   name="length"
@@ -29,17 +30,14 @@ The `length` function returns the number of characters in the input string.
 
 ## Examples
 
-```qql
-where length(message) > 100
-```
+<QQLCode code={`| where length(message) > 100`} />
+
 Matches records where `message` is longer than 100 characters.
 
-```qql
-eval log_size_category = if(length(raw_log) > 10000, "large", "small")
-```
+<QQLCode code={`| eval log_size_category = if(length(raw_log) > 10000, "large", "small")`} />
+
 Categorizes logs by size.
 
-```qql
-stats avg(length(message)) by level
-```
+<QQLCode code={`| stats avg(length(message)) by level`} />
+
 Calculates average message length by log level.

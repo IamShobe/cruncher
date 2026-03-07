@@ -13,6 +13,7 @@ import { HighlightData as ParserHighlightData } from "@cruncher/qql/grammar";
 import { getPopperRoot } from "~core/utils/shadowUtils";
 import { availableColumnsAtom, queryDataAtom } from "~core/store/queryState";
 import { useControllerParams } from "~core/search";
+import { notifySuccess } from "../../../core/notifyError";
 import styled from "@emotion/styled";
 import { token } from "~components/ui/system";
 
@@ -111,6 +112,12 @@ const translateHighlightData = (
 export const Editor = ({ value, onChange }: EditorProps) => {
   const availableColumns = useAtomValue(availableColumnsAtom);
   const data = useAtomValue(queryDataAtom);
+
+  const handleCopyAst = async () => {
+    const json = JSON.stringify(data.ast, null, 2);
+    await navigator.clipboard.writeText(json);
+    notifySuccess("AST copied to clipboard");
+  };
   const setQueryEditor = useSetAtom(queryEditorAtom);
   const controllerParamsResp = useControllerParams();
   const controllerParams = useMemo(() => {
@@ -249,6 +256,7 @@ export const Editor = ({ value, onChange }: EditorProps) => {
         onChange={onChange}
         highlightData={highlightData}
         suggestions={suggestions}
+        onCopyAst={handleCopyAst}
       />
     </EditorErrorBoundary>
   );

@@ -2,8 +2,10 @@
 title: match
 description: Check if a string matches a regular expression.
 ---
+
 import { Aside } from '@astrojs/starlight/components';
 import FunctionCard from '../../../../../components/FunctionCard.astro';
+import QQLCode from '../../../../../components/QQLCode.astro';
 
 <FunctionCard
   name="match"
@@ -29,22 +31,18 @@ Use `match()` to test regex patterns. Use the `regex` command to extract named g
 
 ## Examples
 
-```qql
-where match(message, `^Error:.*`)
-```
+<QQLCode code={'| where match(message, `^Error:.*`)'} />
+
 Matches records where `message` starts with "Error:".
 
-```qql
-eval is_http_status = match(status_code, `^[45][0-9]{2}$`)
-```
-Creates a boolean field `is_http_status` that is `true` if `status_code` is a 4xx or 5xx HTTP status.
+<QQLCode code={'| eval is_4xx_5xx = match(status_code, `^[45][0-9]{2}$`)'} />
 
-```qql
-where match(hostname, `^(prod|staging)-.*`)
-```
+Creates a boolean field that is `true` if `status_code` is a 4xx or 5xx HTTP status.
+
+<QQLCode code={'| where match(hostname, `^(prod|staging)-.*`)'} />
+
 Matches hostnames that start with either "prod-" or "staging-".
 
-```qql
-eval is_uuid = match(id, `^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)
-```
-Checks if a field looks like a UUID.
+<QQLCode code={'| eval is_uuid = match(id, `^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)'} />
+
+Checks if `id` looks like a UUID.

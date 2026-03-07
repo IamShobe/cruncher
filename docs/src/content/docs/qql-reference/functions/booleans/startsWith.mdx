@@ -4,6 +4,7 @@ description: Check if a string starts with a prefix.
 ---
 
 import FunctionCard from '../../../../../components/FunctionCard.astro';
+import QQLCode from '../../../../../components/QQLCode.astro';
 
 <FunctionCard
   name="startsWith"
@@ -23,17 +24,14 @@ import FunctionCard from '../../../../../components/FunctionCard.astro';
 
 ## Examples
 
-```qql
-where startsWith(message, "Error:")
-```
+<QQLCode code={`| where startsWith(message, "Error:")`} />
+
 Matches records where `message` starts with "Error:".
 
-```qql
-eval is_api_call = startsWith(request_path, "/api/")
-```
+<QQLCode code={`| eval is_api_call = startsWith(request_path, "/api/")`} />
+
 Creates a boolean field `is_api_call` that is `true` if `request_path` starts with "/api/".
 
-```qql
-where startsWith(hostname, "prod-")
-```
+<QQLCode code={`| where startsWith(hostname, "prod-")`} />
+
 Filters to production hostnames only.

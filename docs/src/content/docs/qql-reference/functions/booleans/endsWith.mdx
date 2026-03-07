@@ -4,6 +4,7 @@ description: Check if a string ends with a suffix.
 ---
 
 import FunctionCard from '../../../../../components/FunctionCard.astro';
+import QQLCode from '../../../../../components/QQLCode.astro';
 
 <FunctionCard
   name="endsWith"
@@ -23,17 +24,14 @@ import FunctionCard from '../../../../../components/FunctionCard.astro';
 
 ## Examples
 
-```qql
-where endsWith(filename, ".log")
-```
+<QQLCode code={`| where endsWith(filename, ".log")`} />
+
 Matches records where `filename` ends with ".log".
 
-```qql
-eval is_json_file = endsWith(filename, ".json")
-```
+<QQLCode code={`| eval is_json_file = endsWith(filename, ".json")`} />
+
 Creates a boolean field `is_json_file` that is `true` if the filename ends with ".json".
 
-```qql
-where endsWith(message, "success")
-```
+<QQLCode code={`| where endsWith(message, "success")`} />
+
 Filters to messages that indicate success.

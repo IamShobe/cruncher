@@ -4,6 +4,7 @@ description: Round a number to the nearest integer.
 ---
 
 import FunctionCard from '../../../../../components/FunctionCard.astro';
+import QQLCode from '../../../../../components/QQLCode.astro';
 
 <FunctionCard
   name="round"
@@ -27,17 +28,14 @@ The `round` function rounds the input number to the **nearest integer**.
 
 ## Examples
 
-```qql
-eval rounded_duration = round(duration_ms / 1000)
-```
+<QQLCode code={`| eval rounded_duration = round(duration_ms / 1000)`} />
+
 Rounds duration in milliseconds to the nearest second.
 
-```qql
-eval percentile_rounded = round(percentile)
-```
-Rounds a percentile value to nearest integer.
+<QQLCode code={`| eval percentile_rounded = round(percentile)`} />
 
-```qql
-stats avg(round(latency_ms))
-```
+Rounds a percentile value to the nearest integer.
+
+<QQLCode code={`| stats avg(round(latency_ms))`} />
+
 Calculates average latency with each value rounded first.
