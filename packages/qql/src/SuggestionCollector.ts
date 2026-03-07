@@ -214,11 +214,15 @@ export class SuggestionCollector extends AbstractParseTreeVisitor<void> {
 
       // After the column name, suggest "as" if no alias has been typed yet.
       // Stop at the next comma so "as" doesn't bleed into the next column entry.
-      // Guard against error-recovered phantom tokens (their position won't be
-      // past the TABLE keyword) so "as" is never suggested on a bare `| table`.
+      // Guard against error-recovered phantom tokens: ANTLR places their stop at
+      // the preceding boundary token (TABLE stop or comma stop), so their
+      // afterColumnPos lands at exactly prevBoundary+1. Real tokens always exceed that.
       if (idOrStrings.length > 0 && !hasAs) {
         const afterColumnPos = this.getNextTokenPosition(idOrStrings[0]);
-        if (afterColumnPos <= tableKwPos) continue;
+        const prevCommaStop: number | undefined = commas[i - 1]?.getSymbol?.()?.stop;
+        const prevBoundary = prevCommaStop != null ? prevCommaStop : tableKwPos - 1;
+        if (afterColumnPos <= prevBoundary + 1) continue;
+
         const nextCommaStart: number | undefined = commas[i]?.getSymbol?.()?.start;
         this.addSuggestion({
           type: "keywords",

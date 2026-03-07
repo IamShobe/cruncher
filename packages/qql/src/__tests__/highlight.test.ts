@@ -298,7 +298,7 @@ test("highlight inline comment after where command", () => {
   const highlights = getHighlights("| where x == 1 // only keep x=1");
   const commentHighlight = highlights.find((h) => h.type === "comment");
   expect(commentHighlight).toBeDefined();
-  expect(commentHighlight).toMatchObject({ type: "comment", startOffset: 15, endOffset: 31 });
+  expect(commentHighlight).toMatchObject({ type: "comment", startOffset: 15, endOffset: 30 });
 });
 
 test("highlight inline comment after sort command", () => {

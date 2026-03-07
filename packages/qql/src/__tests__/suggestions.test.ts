@@ -108,19 +108,36 @@ test("| table col as alias: does not suggest 'as' when alias already present", (
   expect(kw.length).toBe(0);
 });
 
-test("| table col, col2: 'as' not suggested after comma (only columns)", () => {
-  // Cursor is past the comma — "as" suggestion for col1 should be bounded by the comma
-  const sug = getSuggestions("| table col, col2 ");
+test("| table col, : 'as' not suggested after bare comma (no second column yet)", () => {
+  // When cursor is right after the comma and no second column exists,
+  // ANTLR error-recovery must not inject a phantom 'as' suggestion.
+  const sug = getSuggestions("| table col, ");
   const kw = sug.filter(
     (s) => s.type === "keywords" && (s as any).keywords?.includes("as"),
   ) as Extract<SuggestionData, { type: "keywords" }>[];
-  // Any "as" suggestions should have a toPosition <= the comma's position
-  // so they don't appear when cursor is past the comma
-  const commaPos = "| table col".length; // position of ','
+  // The only permitted 'as' entry is the one for col1, which must be bounded
+  // by toPosition <= comma's position (pos 11) so it never fires past the comma.
+  const commaPos = "| table col".length; // 11
   for (const k of kw) {
     expect(k.toPosition).toBeDefined();
     expect(k.toPosition!).toBeLessThanOrEqual(commaPos);
   }
+});
+
+test("| table col, col2: 'as' suggested for col2, not before comma", () => {
+  const sug = getSuggestions("| table col, col2 ");
+  const kw = sug.filter(
+    (s) => s.type === "keywords" && (s as any).keywords?.includes("as"),
+  ) as Extract<SuggestionData, { type: "keywords" }>[];
+  // col1's 'as' is bounded by the comma; col2's 'as' is open-ended (no next comma)
+  const commaPos = "| table col".length; // 11
+  const col1As = kw.find((k) => k.toPosition != null);
+  expect(col1As).toBeDefined();
+  expect(col1As!.toPosition!).toBeLessThanOrEqual(commaPos);
+  // col2's open-ended 'as' starts after col2
+  const col2As = kw.find((k) => k.toPosition == null);
+  expect(col2As).toBeDefined();
+  expect(col2As!.fromPosition).toBeGreaterThan(commaPos);
 });
 
 // ─── stats ────────────────────────────────────────────────────────────────────

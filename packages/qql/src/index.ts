@@ -105,7 +105,7 @@ export const allData = (input: string): AllDataResult => {
 
     // Comments are on the HIDDEN channel — not visited by the tree visitor.
     // Scan all buffered tokens and emit a "comment" highlight for each one.
-    const commentHighlights: HighlightData[] = tokenStream.tokens
+    const commentHighlights: HighlightData[] = tokenStream.getTokens()
       .filter((t) => t.channel !== 0 && t.type !== antlr.Token.EOF)
       .map((t) => ({
         type: "comment" as const,
