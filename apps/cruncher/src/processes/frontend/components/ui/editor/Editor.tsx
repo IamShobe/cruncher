@@ -300,9 +300,7 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
         {isCompleterOpen &&
           popperRoot &&
           createPortal(
-            <div
-              style={popperStyle}
-            >
+            <div style={popperStyle}>
               <AutoCompleter
                 suggestions={filteredSuggestions}
                 hoveredItem={hoveredCompletionItem}

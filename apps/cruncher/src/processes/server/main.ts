@@ -24,8 +24,8 @@ export type { AppRouter } from "./plugins_engine/router_messages";
 log.initialize();
 Object.assign(console, log.functions);
 
-process.on('uncaughtException', (error: NodeJS.ErrnoException) => {
-  if (error.code === 'EIO') return; // ignore broken pipe/disconnected stdout
+process.on("uncaughtException", (error: NodeJS.ErrnoException) => {
+  if (error.code === "EIO") return; // ignore broken pipe/disconnected stdout
   throw error;
 });
 

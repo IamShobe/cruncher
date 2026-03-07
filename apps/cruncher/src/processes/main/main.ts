@@ -22,8 +22,8 @@ import { requestFromServer } from "./utils/requestFromServer";
 log.initialize();
 Object.assign(console, log.functions);
 
-process.on('uncaughtException', (error: NodeJS.ErrnoException) => {
-  if (error.code === 'EIO') return; // ignore broken pipe/disconnected stdout
+process.on("uncaughtException", (error: NodeJS.ErrnoException) => {
+  if (error.code === "EIO") return; // ignore broken pipe/disconnected stdout
   throw error;
 });
 
