@@ -538,30 +538,48 @@ export const ExportButton: React.FC<{
   };
   return (
     <Menu.Root lazyMount unmountOnExit>
-      <Menu.Trigger asChild disabled={isDisabled}>
-        <MiniIconButton tooltip="Export" disabled={isDisabled}>
-          <CiExport />
-        </MiniIconButton>
-      </Menu.Trigger>
-      <Menu.Content>
-        <Menu.Item value="json-copy" cursor="pointer" onClick={copyJson}>
-          <LuClipboardCopy /> Copy JSON
-        </Menu.Item>
-        <Menu.Item value="csv-copy" cursor="pointer" onClick={copyCsv}>
-          <LuClipboardCopy /> Copy CSV
-        </Menu.Item>
-        <MenuSeparator />
-        <Menu.Item
-          value="json-download"
-          cursor="pointer"
-          onClick={downloadJson}
-        >
-          <LuDownload /> Download JSON
-        </Menu.Item>
-        <Menu.Item value="csv-download" cursor="pointer" onClick={downloadCsv}>
-          <LuDownload /> Download CSV
-        </Menu.Item>
-      </Menu.Content>
+      <Tooltip
+        content={<span>Export</span>}
+        showArrow
+        positioning={{ placement: "bottom" }}
+        disabled={isDisabled}
+      >
+        <Menu.Trigger asChild>
+          <IconButton
+            aria-label="Export"
+            size="2xs"
+            variant="surface"
+            disabled={isDisabled}
+          >
+            <CiExport />
+          </IconButton>
+        </Menu.Trigger>
+      </Tooltip>
+      <Menu.Positioner>
+        <Menu.Content>
+          <Menu.Item value="json-copy" cursor="pointer" onClick={copyJson}>
+            <LuClipboardCopy /> Copy JSON
+          </Menu.Item>
+          <Menu.Item value="csv-copy" cursor="pointer" onClick={copyCsv}>
+            <LuClipboardCopy /> Copy CSV
+          </Menu.Item>
+          <MenuSeparator />
+          <Menu.Item
+            value="json-download"
+            cursor="pointer"
+            onClick={downloadJson}
+          >
+            <LuDownload /> Download JSON
+          </Menu.Item>
+          <Menu.Item
+            value="csv-download"
+            cursor="pointer"
+            onClick={downloadCsv}
+          >
+            <LuDownload /> Download CSV
+          </Menu.Item>
+        </Menu.Content>
+      </Menu.Positioner>
     </Menu.Root>
   );
 };

@@ -7,11 +7,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout full repo with history and tags
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
+      - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
       - name: Install dependencies
         run: pnpm install --frozen-lockfile

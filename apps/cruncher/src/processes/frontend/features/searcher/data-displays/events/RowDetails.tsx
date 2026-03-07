@@ -167,18 +167,20 @@ export const RowDetail: React.FC<DataRowProps> = ({ rowKey, rowValue }) => {
             <LuEllipsisVertical />
           </IconButton>
         </Menu.Trigger>
-        <Menu.Content>
-          <Menu.Item
-            value="copy-value"
-            onClick={() => {
-              navigator.clipboard.writeText(asDisplayString(rowValue));
-            }}
-            cursor={"pointer"}
-          >
-            <LuClipboardCopy />
-            <Box flex="1">Copy Value</Box>
-          </Menu.Item>
-        </Menu.Content>
+        <Menu.Positioner>
+          <Menu.Content>
+            <Menu.Item
+              value="copy-value"
+              onClick={() => {
+                navigator.clipboard.writeText(asDisplayString(rowValue));
+              }}
+              cursor={"pointer"}
+            >
+              <LuClipboardCopy />
+              <Box flex="1">Copy Value</Box>
+            </Menu.Item>
+          </Menu.Content>
+        </Menu.Positioner>
       </Menu.Root>
     </div>
   );

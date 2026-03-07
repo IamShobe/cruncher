@@ -63,7 +63,7 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.27.6",
-    "@chakra-ui/react": "^3.21.0",
+    "@chakra-ui/react": "^3.34.0",
     "@cruncher/adapter-coralogix": "workspace:*",
     "@cruncher/adapter-docker": "workspace:*",
     "@cruncher/adapter-grafana-loki-browser": "workspace:*",

@@ -1,7 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tsconfigPaths from "vite-tsconfig-paths";
-import process from "process";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 
 // is production
