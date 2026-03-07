@@ -1,3 +1,12 @@
+## 0.3.1
+
+### Patch Changes
+
+- [`3cd20aa`](https://github.com/IamShobe/cruncher/commit/3cd20aadc4ac3e9a70f15ed542a78e7a36c58059) Thanks [@IamShobe](https://github.com/IamShobe)! - Fix three bugs in QQL parser:
+  - `isNumeric`: unescaped dot in regex caused strings like `123a456` to be misclassified as numeric
+  - `getNextPos`: could return `undefined` at EOF, corrupting autocomplete suggestion ranges with `NaN`
+  - `remove()`: `splice(indexOf(...), 1)` with a -1 result silently removed an unrelated suggestion from the list
+
 ## 0.3.0
 
 ### Minor Changes
