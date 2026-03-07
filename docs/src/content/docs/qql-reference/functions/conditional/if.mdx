@@ -9,28 +9,12 @@ import FunctionCard from '../../../../../components/FunctionCard.astro';
   name="if"
   category="conditional"
   signature="if(condition, then_value, else_value) → any"
+  returnType="any"
+  returnDescription="Returns then_value if condition is true, else_value if false; null if condition is null"
   description="Return one of two values based on whether a condition is true or false"
 />
 
 The `if` function returns one value if a condition is true, and another value if it is false.
-
-## Signature
-
-```
-if(condition, then_value, else_value) → any
-```
-
-## Parameters
-
-| Name | Type | Description |
-|------|------|-------------|
-| `condition` | boolean | The condition to evaluate |
-| `then_value` | any | Value returned if condition is `true` |
-| `else_value` | any | Value returned if condition is `false` |
-
-## Returns
-
-`any` — Returns `then_value` if `condition` is `true`, otherwise returns `else_value`. Return type matches the types of the values provided.
 
 ## Edge Cases
 

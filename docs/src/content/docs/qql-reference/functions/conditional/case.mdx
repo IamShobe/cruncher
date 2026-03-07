@@ -9,28 +9,12 @@ import FunctionCard from '../../../../../components/FunctionCard.astro';
   name="case"
   category="conditional"
   signature="case(cond1, val1, cond2, val2, ..., default) → any"
+  returnType="any"
+  returnDescription="Returns the value paired with the first true condition, or default if none match; null if matching condition is null"
   description="Return a value based on the first matching condition, or a default if none match"
 />
 
 The `case` function evaluates a series of conditions and returns the value associated with the first condition that is true. If none match, it returns the default value.
-
-## Signature
-
-```
-case(condition1, value1, condition2, value2, ..., default_value) → any
-```
-
-## Parameters
-
-| Name | Type | Description |
-|------|------|-------------|
-| `condition1`, `condition2`, ... | boolean | Conditions evaluated in order |
-| `value1`, `value2`, ... | any | Values returned if the corresponding condition is `true` |
-| `default_value` | any | Value returned if none of the conditions are `true` (last argument) |
-
-## Returns
-
-`any` — Returns the value paired with the first `true` condition. If no conditions are true, returns `default_value`.
 
 ## Edge Cases
 

@@ -3,15 +3,18 @@ title: sort
 description: Sorts records by one or more fields in ascending or descending order.
 ---
 
-import { Badge } from '@astrojs/starlight/components';
+import CommandCard from '/src/components/CommandCard.astro';
+
+<CommandCard
+  name="sort"
+  description="Order records by one or more fields in ascending or descending order."
+  syntax="sort FIELD_NAME [asc|desc], ..."
+  output="logs"
+/>
 
 The `sort` command orders records by one or more fields, in ascending or descending order.
 
-## Syntax
-
-```
-sort FIELD_NAME [asc|desc], ...
-```
+## Parameters
 
 - `FIELD_NAME`: The fields to sort by.
 - `asc`: Sort in ascending order (default).

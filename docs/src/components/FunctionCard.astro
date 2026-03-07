@@ -50,6 +50,12 @@ const { bg, text, icon } = categoryColors[category] || categoryColors.string;
 </div>
 
 <style>
+  .function-card,
+  .function-card * {
+    margin: 0;
+    padding: 0;
+  }
+
   .function-card {
     border: 1px solid var(--sl-color-gray-5);
     border-radius: 8px;
@@ -68,11 +74,17 @@ const { bg, text, icon } = categoryColors[category] || categoryColors.string;
     justify-content: space-between;
     align-items: flex-start;
     margin-bottom: 1rem;
+    gap: 1rem;
+  }
+
+  .function-header > div {
+    flex: 1;
   }
 
   .function-header h3 {
     margin: 0 0 0.5rem 0;
     font-size: 1.25rem;
+    word-break: break-word;
   }
 
   .category-badge {
@@ -93,9 +105,9 @@ const { bg, text, icon } = categoryColors[category] || categoryColors.string;
   }
 
   .function-details {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
     margin-bottom: 1rem;
     padding: 1rem;
     background: var(--sl-color-gray-7);
@@ -123,19 +135,20 @@ const { bg, text, icon } = categoryColors[category] || categoryColors.string;
     border-radius: 4px;
     font-size: 0.85rem;
     overflow-x: auto;
+    word-break: break-word;
   }
 
   .return-info {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.75rem;
   }
 
   .return-desc {
     margin: 0;
     font-size: 0.8rem;
     color: var(--sl-color-gray-2);
-    line-height: 1.4;
+    line-height: 1.5;
     font-style: italic;
   }
 

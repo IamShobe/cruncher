@@ -13,16 +13,16 @@
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
-      "default": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
     },
     "./grammar": {
-      "default": "./dist/grammar.js",
-      "types": "./dist/grammar.d.ts"
+      "types": "./dist/grammar.d.ts",
+      "default": "./dist/grammar.js"
     },
     "./searchTree": {
-      "default": "./dist/searchTree.js",
-      "types": "./dist/searchTree.d.ts"
+      "types": "./dist/searchTree.d.ts",
+      "default": "./dist/searchTree.js"
     }
   },
   "files": [
@@ -30,7 +30,7 @@
   ],
   "scripts": {
     "generate": "antlr4ng -Dlanguage=TypeScript -visitor -no-listener -o src/generated src/QQL.g4",
-    "build": "tsc --project tsconfig.json",
+    "build": "antlr4ng -Dlanguage=TypeScript -visitor -no-listener -o src/generated src/QQL.g4 && tsc --project tsconfig.json",
     "test": "vitest run",
     "format": "oxfmt src/",
     "format:check": "oxfmt --check src/",

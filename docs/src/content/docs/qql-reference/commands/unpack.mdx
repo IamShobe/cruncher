@@ -3,13 +3,18 @@ title: unpack
 description: Extracts and flattens fields from nested objects or JSON strings in a column, creating new columns for each key.
 ---
 
+import CommandCard from '/src/components/CommandCard.astro';
+
+<CommandCard
+  name="unpack"
+  description="Extract and flatten fields from nested objects or JSON strings in columns."
+  syntax="unpack <column1>[, <column2>, ...]"
+  output="logs"
+/>
+
 The `unpack` command extracts and flattens fields from nested objects or JSON strings in the specified columns. For each key in the object or parsed JSON, a new column is created with the name `<column>.<key>`. This is useful for working with logs or data where fields are embedded as JSON or objects inside a single column.
 
-## Syntax
-
-```
-unpack <column1>[, <column2>, ...]
-```
+## Parameters
 
 - `<column>`: The name of the column to unpack. You can specify multiple columns, separated by commas.
 

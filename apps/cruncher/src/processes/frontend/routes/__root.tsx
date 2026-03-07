@@ -21,6 +21,7 @@ import {
   useIsShortcutsShown,
   useSetShortcutsShown,
 } from "~core/store/appStore";
+import { ErrorBoundary } from "~components/ErrorBoundary";
 
 import "../index.css";
 
@@ -31,6 +32,14 @@ const Wrapper = styled.div`
   min-height: 0;
   position: relative;
   background-color: ${token("colors.bg")};
+`;
+
+const ScrollableBody = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: auto;
 `;
 export const Route = createRootRoute({
   component: () => (
@@ -102,10 +111,14 @@ const MainContent = () => {
   }
 
   return (
-    <Wrapper>
-      <Shortcuts open={isShown} onOpenChange={setIsShown} />
-      <SideMenu />
-      <Outlet />
-    </Wrapper>
+    <ScrollableBody>
+      <ErrorBoundary>
+        <Wrapper>
+          <Shortcuts open={isShown} onOpenChange={setIsShown} />
+          <SideMenu />
+          <Outlet />
+        </Wrapper>
+      </ErrorBoundary>
+    </ScrollableBody>
   );
 };

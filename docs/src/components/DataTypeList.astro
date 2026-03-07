@@ -1,0 +1,98 @@
+---
+interface DataType {
+  name: string;
+  example: string;
+}
+
+const types: DataType[] = [
+  { name: 'NumberField', example: '42, 3.14, -7' },
+  { name: 'StringField', example: '"hello", "user@example.com"' },
+  { name: 'DateField', example: '1677628800000' },
+  { name: 'BooleanField', example: 'true, false' },
+  { name: 'ArrayField', example: '["a", "b", "c"]' },
+  { name: 'ObjectField', example: '{"key": "value"}' },
+  { name: 'NullField', example: 'null' },
+];
+---
+
+<div class="datatype-list">
+  <div class="datatype-row datatype-header">
+    <div class="datatype-name">Type</div>
+    <div class="datatype-example">Example</div>
+  </div>
+  {types.map((type) => (
+    <div class="datatype-row">
+      <div class="datatype-name">{type.name}</div>
+      <div class="datatype-example">
+        <code>{type.example}</code>
+      </div>
+    </div>
+  ))}
+</div>
+
+<style>
+  .datatype-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin: 1.5rem 0;
+  }
+
+  .datatype-row {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 1.5rem;
+    padding: 0.75rem 1rem;
+    align-items: center;
+    border-bottom: 1px solid var(--sl-color-gray-6);
+  }
+
+  .datatype-header {
+    background: var(--sl-color-gray-7);
+    border-bottom: 2px solid var(--sl-color-accent);
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+  }
+
+  .datatype-header .datatype-name,
+  .datatype-header .datatype-example {
+    color: var(--sl-color-gray-1);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .datatype-name {
+    font-weight: 600;
+    color: var(--sl-color-accent);
+    font-size: 0.95rem;
+  }
+
+  .datatype-example {
+    font-size: 0.9rem;
+  }
+
+  .datatype-example code {
+    background: var(--sl-color-gray-7);
+    padding: 0.35rem 0.6rem;
+    border-radius: 3px;
+    font-size: 0.85rem;
+    word-break: break-word;
+  }
+
+  @media (max-width: 640px) {
+    .datatype-row {
+      grid-template-columns: 1fr;
+      gap: 0.5rem;
+      padding: 0.6rem 0.8rem;
+    }
+
+    .datatype-name {
+      font-size: 0.9rem;
+    }
+
+    .datatype-example code {
+      font-size: 0.8rem;
+    }
+  }
+</style>

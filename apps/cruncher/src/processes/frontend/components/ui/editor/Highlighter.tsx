@@ -46,6 +46,11 @@ export const splitTextToChunks = (
       return;
     }
 
+    // Skip spans that fall within already-processed range
+    if (currentIndex > startOffset) {
+      return;
+    }
+
     // Add the text before the token (if any)
     if (currentIndex < startOffset) {
       result.push(text.slice(currentIndex, startOffset));
@@ -86,6 +91,15 @@ const typeToStyle = (type: string) => {
     case "booleanFunction":
       return { color: token("colors.syntax.boolean") };
 
+    case "number":
+      return { color: token("colors.syntax.number") };
+
+    case "operator":
+      return { color: token("colors.syntax.operator") };
+
+    case "regex":
+      return { color: token("colors.syntax.regex") };
+
     case "error":
       return {
         color: token("colors.log.error"),
@@ -94,6 +108,12 @@ const typeToStyle = (type: string) => {
 
     case "param":
       return { color: token("colors.syntax.param") };
+
+    case "index":
+      return { color: token("colors.syntax.index") };
+
+    case "pipe":
+      return { color: token("colors.syntax.pipe") };
 
     case "comment":
       return { color: token("colors.syntax.comment") };

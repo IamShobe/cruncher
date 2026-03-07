@@ -3,6 +3,7 @@ title: Cruncher Config File
 description: How to create and configure the Cruncher config file.
 ---
 import { Aside } from '@astrojs/starlight/components';
+import ConfigField from '/src/components/ConfigField.astro';
 
 Cruncher uses a YAML configuration file to define which adapters and data sources are available. This file tells Cruncher how to connect to your data and what options to use for each adapter.
 
@@ -67,15 +68,65 @@ ui:
   theme: nord
 ```
 
-**Field Definitions:**
+## Field Definitions
 
-- `profiles`: (object) Named groups of adapter instances. The `default` profile is used on startup.
-  - Each profile contains `connectors`: (array) List of adapter instance names to include.
-- `connectors`: (array) List of adapter instances.
-  - `type`: (string, **required**) Adapter type (`grafana_browser`, `loki`, `k8s`, `docker`, `coralogix`, `mocked_data`).
-  - `name`: (string, **required**) Unique identifier for this instance.
-  - `enabled`: (boolean, optional) Whether this adapter is active. Default: `true`.
-  - `params`: (object, **required**) Adapter-specific parameters. See each adapter's documentation for details.
+<ConfigField
+  name="profiles"
+  type="object"
+  required={false}
+>
+  Named groups of adapter instances. The `default` profile is used on startup. Each profile contains a `connectors` array listing adapter instance names to include.
+</ConfigField>
+
+<ConfigField
+  name="connectors"
+  type="array"
+  required={true}
+>
+  List of adapter instances. Each item must contain `type`, `name`, and `params`.
+</ConfigField>
+
+<ConfigField
+  name="type"
+  type="string"
+  required={true}
+>
+  Adapter type. Supported values: `grafana_browser`, `loki`, `k8s`, `docker`, `coralogix`, `mocked_data`.
+</ConfigField>
+
+<ConfigField
+  name="name"
+  type="string"
+  required={true}
+>
+  Unique identifier for this connector instance. Used to reference this connector in profiles.
+</ConfigField>
+
+<ConfigField
+  name="enabled"
+  type="boolean"
+  required={false}
+  defaultValue="true"
+>
+  Whether this connector is active and available for use.
+</ConfigField>
+
+<ConfigField
+  name="params"
+  type="object"
+  required={true}
+>
+  Adapter-specific parameters. See each adapter's documentation for required and optional fields.
+</ConfigField>
+
+<ConfigField
+  name="ui.theme"
+  type="string"
+  required={false}
+  defaultValue="midnight"
+>
+  The colour theme used across the entire UI. Supported values: `midnight`, `nord`, `dracula`, `catppuccin`.
+</ConfigField>
 
 ## Profiles
 
@@ -92,10 +143,6 @@ The optional `ui` section controls appearance preferences:
 ui:
   theme: nord   # midnight | nord | dracula | catppuccin
 ```
-
-| Key | Type | Default | Description |
-|-----|------|---------|-------------|
-| `theme` | string | `midnight` | The colour theme used across the entire UI. |
 
 See the [Themes documentation](/getting-started/06-themes) for a full description of each theme.
 

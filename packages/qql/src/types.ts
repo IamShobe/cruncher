@@ -1,5 +1,22 @@
+export type HighlightType =
+  | "keyword"
+  | "operator"
+  | "string"
+  | "column"
+  | "function"
+  | "identifier"
+  | "number"
+  | "datasource"
+  | "regex"
+  | "comment"
+  | "time"
+  | "param"
+  | "boolean"
+  | "index"
+  | "pipe";
+
 export type HighlightData = {
-  type: string;
+  type: HighlightType;
   token: {
     startOffset: number;
     endOffset: number | undefined;
@@ -21,6 +38,15 @@ export type SuggestionData = {
   toPosition?: number;
   disabled?: boolean;
 } & SuggetionType;
+
+// --------------------- Parser Error Contract ---------------------
+
+export type QQLParserErrorDetail = {
+  line: number;
+  column: number;
+  message: string;
+  token: { startOffset: number; endOffset: number | undefined };
+};
 
 // --------------------- Custom Grammar Types ---------------------
 

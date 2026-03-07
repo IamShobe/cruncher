@@ -1,9 +1,10 @@
 import * as antlr from "antlr4ng";
-import { QQLLexer } from "./generated/QQLLexer";
-import { QQLParser } from "./generated/QQLParser";
+import { QQLLexer } from "./generated/src/QQLLexer";
+import { QQLParser } from "./generated/src/QQLParser";
 import { ASTBuilder } from "./ASTBuilder";
 import { HighlightCollector } from "./HighlightCollector";
 import { SuggestionCollector } from "./SuggestionCollector";
+import type { HighlightData, QQLParserErrorDetail, SuggestionData } from "./types";
 
 /**
  * Custom error types
@@ -12,13 +13,10 @@ export interface QQLLexError {
   line: number;
   column: number;
   message: string;
+  token: { startOffset: number; endOffset: number | undefined };
 }
 
-export interface QQLParserErrorDetail {
-  line: number;
-  column: number;
-  message: string;
-}
+export type { QQLParserErrorDetail } from "./types";
 
 export class QQLLexingError extends Error {
   constructor(
@@ -38,75 +36,136 @@ export class QQLParserError extends Error {
   }
 }
 
-export const allData = (input: string) => {
+export type AllDataResult = {
+  ast: ReturnType<ASTBuilder["visit"]> | null;
+  highlight: HighlightData[];
+  suggestions: SuggestionData[];
+  parserError: QQLParserErrorDetail[];
+};
+
+export const allData = (input: string): AllDataResult => {
   const inputStream = new antlr.CharStreamImpl(input);
   const lexer = new QQLLexer(inputStream);
   const tokenStream = new antlr.CommonTokenStream(lexer);
   const parser = new QQLParser(tokenStream);
 
-  // Collect lexer errors
-  const lexerErrors: QQLLexError[] = (lexer as any).errors?.map((err: any) => ({
-    line: err.line ?? 0,
-    column: (err as any).charPositionInLine ?? 0,
-    message: err.message ?? String(err),
-  })) || [];
+  // Collect errors silently (suppress default stderr output)
+  const lexerErrors: QQLLexError[] = [];
+  lexer.removeErrorListeners();
+  lexer.addErrorListener(makeErrorListener(lexerErrors));
+  const parserErrors: QQLParserErrorDetail[] = [];
+  parser.removeErrorListeners();
+  parser.addErrorListener(makeErrorListener(parserErrors));
+
+  const emptyResult = (e: unknown): AllDataResult => {
+    const message = e instanceof Error ? e.message : String(e);
+    return {
+      ast: null,
+      highlight: [],
+      suggestions: [],
+      parserError: [
+        ...lexerErrors,
+        ...parserErrors,
+        {
+          line: 0,
+          column: 0,
+          message,
+          token: { startOffset: 0, endOffset: undefined },
+        } satisfies QQLParserErrorDetail,
+      ],
+    };
+  };
 
   // Parse
-  const parseTree = parser.query();
+  let parseTree;
+  try {
+    parseTree = parser.query();
+  } catch (e) {
+    return emptyResult(e);
+  }
 
-  // Build AST
-  const astBuilder = new ASTBuilder();
-  const ast = astBuilder.visit(parseTree);
+  // Ensure all tokens are buffered so SuggestionCollector's fallback scan sees them
+  tokenStream.fill();
 
-  // Collect highlights
-  const highlightCollector = new HighlightCollector();
-  highlightCollector.visit(parseTree);
-  const highlight = highlightCollector.getHighlightData();
+  // Build AST + collect highlights/suggestions — any visitor can throw on malformed trees
+  try {
+    const astBuilder = new ASTBuilder();
+    const ast = astBuilder.visit(parseTree);
 
-  // Collect suggestions
-  const suggestionCollector = new SuggestionCollector();
-  suggestionCollector.visit(parseTree);
-  const suggestions = suggestionCollector.getSuggestionData();
+    const highlightCollector = new HighlightCollector();
+    highlightCollector.visit(parseTree);
+    const highlight = highlightCollector.getHighlightData();
 
-  return {
-    ast,
-    highlight,
-    suggestions,
-    parserError: lexerErrors.length > 0 ? lexerErrors : undefined,
-  };
+    const suggestionCollector = new SuggestionCollector(tokenStream);
+    suggestionCollector.visit(parseTree);
+    const suggestions = suggestionCollector.getSuggestionData();
+
+    if (astBuilder.errors.length > 0) {
+      console.warn("[QQL] AST builder errors:", astBuilder.errors);
+    }
+
+    return {
+      ast,
+      highlight,
+      suggestions,
+      parserError: [...lexerErrors, ...parserErrors, ...astBuilder.errors],
+    };
+  } catch (e) {
+    console.error("[QQL] Unexpected error during parsing:", e);
+    return emptyResult(e);
+  }
 };
+
+function makeErrorListener(errors: QQLParserErrorDetail[]) {
+  return {
+    syntaxError(
+      _recognizer: unknown,
+      offendingSymbol: unknown,
+      line: number,
+      charPositionInLine: number,
+      msg: string,
+    ) {
+      const sym = offendingSymbol as antlr.Token | null;
+      errors.push({
+        line,
+        column: charPositionInLine,
+        message: msg,
+        token: {
+          startOffset: sym?.start ?? 0,
+          endOffset: sym?.stop ?? undefined,
+        },
+      });
+    },
+    reportAmbiguity() {},
+    reportAttemptingFullContext() {},
+    reportContextSensitivity() {},
+  } as antlr.ANTLRErrorListener;
+}
 
 export const parse = (input: string) => {
   const inputStream = new antlr.CharStreamImpl(input);
   const lexer = new QQLLexer(inputStream);
 
-  // Check for lexing errors
-  const lexErrors = (lexer as any).errors as any[] || [];
-  if (lexErrors.length > 0) {
-    const errors = lexErrors.map((err: any) => ({
-      line: err.line ?? 0,
-      column: (err as any).charPositionInLine ?? 0,
-      message: err.message ?? String(err),
-    }));
-    throw new QQLLexingError("Failed to tokenize input", errors);
-  }
+  const lexErrors: QQLLexError[] = [];
+  lexer.removeErrorListeners();
+  lexer.addErrorListener(makeErrorListener(lexErrors));
 
   const tokenStream = new antlr.CommonTokenStream(lexer);
   const parser = new QQLParser(tokenStream);
+
+  const parseErrors: QQLParserErrorDetail[] = [];
+  parser.removeErrorListeners();
+  parser.addErrorListener(makeErrorListener(parseErrors));
+
   const parseTree = parser.query();
 
-  // Check for parser errors
-  const parseErrors = (parser as any).errors as any[] || [];
+  if (lexErrors.length > 0) {
+    throw new QQLLexingError("Failed to tokenize input", lexErrors);
+  }
   if (parseErrors.length > 0) {
-    const errors = parseErrors.map((err: any) => ({
-      line: err.line ?? 0,
-      column: (err as any).charPositionInLine ?? 0,
-      message: err.message ?? String(err),
-    }));
-    throw new QQLParserError("Failed to parse input", errors);
+    throw new QQLParserError("Failed to parse input", parseErrors);
   }
 
-  // Build and return AST
   const astBuilder = new ASTBuilder();
   return astBuilder.visit(parseTree);
 };

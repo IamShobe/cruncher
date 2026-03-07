@@ -2,9 +2,9 @@
  * ANTLR4 Visitor that collects highlight data for syntax highlighting.
  */
 
-import { AbstractParseTreeVisitor, TerminalNode } from "antlr4ng";
-import type { HighlightData } from "./types";
-import * as Parser from "./generated/QQLParser";
+import { AbstractParseTreeVisitor, ParserRuleContext, TerminalNode } from "antlr4ng";
+import type { HighlightData, HighlightType } from "./types";
+import * as Parser from "./generated/src/QQLParser";
 
 const KEYWORDS = new Set([
   "table",
@@ -40,7 +40,7 @@ export class HighlightCollector extends AbstractParseTreeVisitor<void> {
     return this.highlightData;
   }
 
-  private addHighlight(type: string, startOffset: number, endOffset: number | undefined) {
+  private addHighlight(type: HighlightType, startOffset: number, endOffset: number | undefined) {
     this.highlightData.push({
       type,
       token: {
@@ -50,13 +50,30 @@ export class HighlightCollector extends AbstractParseTreeVisitor<void> {
     });
   }
 
-  private highlightTerminal(terminal: any, type: string) {
-    if (terminal) {
-      const symbol = typeof terminal.getSymbol === "function" ? terminal.getSymbol()! : null;
-      if (symbol) {
-        this.addHighlight(type, symbol.start ?? 0, symbol.stop ?? 0);
-      }
-    }
+  private highlightTerminal(terminal: TerminalNode | null | undefined, type: HighlightType) {
+    if (!terminal) return;
+    const symbol = terminal.getSymbol();
+    this.addHighlight(type, symbol.start ?? 0, symbol.stop ?? 0);
+  }
+
+  // For parser rule contexts, .start/.stop are Token objects.
+  // Use .start.start and .stop.stop for character positions.
+  private ctxStart(ctx: ParserRuleContext): number {
+    return ctx.start?.start ?? 0;
+  }
+
+  private ctxStop(ctx: ParserRuleContext): number | undefined {
+    return ctx.stop?.stop ?? undefined;
+  }
+
+  private highlightIdOrStr(ctx: Parser.IdentifierOrStringContext) {
+    const start = this.ctxStart(ctx);
+    const stop = this.ctxStop(ctx);
+    // Skip error-recovery synthetic tokens (ANTLR4 produces stop < start for missing tokens)
+    if (stop !== undefined && stop < start) return;
+    const text = ctx.getText();
+    const type: HighlightType = text.startsWith('"') || text.startsWith("'") ? "string" : "column";
+    this.addHighlight(type, start, stop);
   }
 
   visitQuery = (ctx: Parser.QueryContext) => {
@@ -74,14 +91,29 @@ export class HighlightCollector extends AbstractParseTreeVisitor<void> {
   };
 
   visitControllerParam = (ctx: Parser.ControllerParamContext) => {
-    const ids = (ctx as any).IDENTIFIER?.();
-    if (Array.isArray(ids) && ids.length > 0) {
-      this.highlightTerminal(ids[0], "identifier");
+    this.highlightTerminal(ctx.IDENTIFIER(), "identifier");
+    this.highlightTerminal(ctx.EQUAL(), "operator");
+    this.highlightTerminal(ctx.NOT_EQUAL(), "operator");
+    // Highlight the value (quoted string or regex) as "index" so the editor
+    // can style index names distinctly from regular string literals.
+    const strCtx = ctx.literalString();
+    if (strCtx) {
+      const str = strCtx.DQUOT_STRING() || strCtx.SQUOT_STRING();
+      if (str) {
+        const sym = str.getSymbol();
+        if (sym) this.addHighlight("index", sym.start ?? 0, sym.stop);
+      }
+      return;
     }
-
-    this.highlightTerminal(ctx.EQUAL?.(), "operator");
-
-    this.visitChildren(ctx);
+    const regexCtx = ctx.regexLiteral();
+    if (regexCtx) {
+      const pattern = regexCtx.REGEX_PATTERN();
+      if (pattern) {
+        const sym = pattern.getSymbol();
+        if (sym) this.addHighlight("index", sym.start ?? 0, sym.stop);
+      }
+      return;
+    }
   };
 
   visitSearch = (ctx: Parser.SearchContext) => {
@@ -89,13 +121,13 @@ export class HighlightCollector extends AbstractParseTreeVisitor<void> {
   };
 
   visitSearchTail = (ctx: Parser.SearchTailContext) => {
-    this.highlightTerminal(ctx.SEARCH_AND?.(), "keyword");
-    this.highlightTerminal(ctx.SEARCH_OR?.(), "keyword");
+    this.highlightTerminal(ctx.SEARCH_AND(), "keyword");
+    this.highlightTerminal(ctx.SEARCH_OR(), "keyword");
     this.visitChildren(ctx);
   };
 
   visitSearchFactor = (ctx: Parser.SearchFactorContext) => {
-    this.highlightTerminal(ctx.SEARCH_PARAM_NEQ?.(), "operator");
+    this.highlightTerminal(ctx.NOT_EQUAL(), "operator");
     this.visitChildren(ctx);
   };
 
@@ -124,7 +156,7 @@ export class HighlightCollector extends AbstractParseTreeVisitor<void> {
     if (pipe) {
       const sym = pipe.getSymbol()!;
       if (sym) {
-        this.addHighlight("operator", sym.start ?? 0, sym.stop);
+        this.addHighlight("pipe", sym.start ?? 0, sym.stop);
       }
     }
 
@@ -144,28 +176,18 @@ export class HighlightCollector extends AbstractParseTreeVisitor<void> {
   };
 
   visitTableColumn = (ctx: Parser.TableColumnContext) => {
-    const ids = ctx.IDENTIFIER();
-    if (ids && ids.length > 0) {
-      const sym = ids[0].getSymbol();
-      if (sym) {
-        this.addHighlight("identifier", sym.start ?? 0, sym.stop);
-      }
-    }
-
+    const idOrStrs = ctx.identifierOrString();
     const asKeyword = ctx.AS();
+
+    // Emit highlights in source order: column, AS keyword, alias
+    if (idOrStrs[0]) this.highlightIdOrStr(idOrStrs[0]);
     if (asKeyword) {
       const sym = asKeyword.getSymbol();
       if (sym) {
         this.addHighlight("keyword", sym.start ?? 0, sym.stop);
       }
     }
-
-    if (ids && ids.length > 1) {
-      const sym = ids[1].getSymbol();
-      if (sym) {
-        this.addHighlight("identifier", sym.start ?? 0, sym.stop);
-      }
-    }
+    if (idOrStrs[1]) this.highlightIdOrStr(idOrStrs[1]);
   };
 
   visitStatsCmd = (ctx: Parser.StatsCmdContext) => {
@@ -177,15 +199,20 @@ export class HighlightCollector extends AbstractParseTreeVisitor<void> {
       }
     }
 
+    this.highlightTerminal(ctx.BY(), "keyword");
+
     this.visitChildren(ctx);
   };
 
   visitAggregationFunction = (ctx: Parser.AggregationFunctionContext) => {
-    const ids = ctx.IDENTIFIER();
-    if (ids && ids.length > 0) {
-      const sym = ids[0].getSymbol();
-      if (sym) {
-        this.addHighlight("function", sym.start ?? 0, sym.stop);
+    const idOrStrs = ctx.identifierOrString();
+    if (idOrStrs.length > 0) {
+      // First identifierOrString is the function name
+      this.addHighlight("function", this.ctxStart(idOrStrs[0]), this.ctxStop(idOrStrs[0]));
+
+      // Second (if exists) is the column argument
+      if (idOrStrs.length > 1) {
+        this.highlightIdOrStr(idOrStrs[1]);
       }
     }
 
@@ -196,21 +223,11 @@ export class HighlightCollector extends AbstractParseTreeVisitor<void> {
         this.addHighlight("keyword", sym.start ?? 0, sym.stop);
       }
     }
-
-    if (ids && ids.length > 1) {
-      const sym = ids[1].getSymbol();
-      if (sym) {
-        this.addHighlight("identifier", sym.start ?? 0, sym.stop);
-      }
-    }
   };
 
   visitGroupby = (ctx: Parser.GroupbyContext) => {
-    for (const id of ctx.IDENTIFIER()) {
-      const sym = id.getSymbol()!;
-      if (sym) {
-        this.addHighlight("identifier", sym.start ?? 0, sym.stop);
-      }
+    for (const idOrStr of ctx.identifierOrString()) {
+      this.highlightIdOrStr(idOrStr);
     }
   };
 
@@ -239,13 +256,7 @@ export class HighlightCollector extends AbstractParseTreeVisitor<void> {
   };
 
   visitSortColumn = (ctx: Parser.SortColumnContext) => {
-    const id = ctx.IDENTIFIER();
-    if (id) {
-      const sym = id.getSymbol();
-      if (sym) {
-        this.addHighlight("identifier", sym.start ?? 0, sym.stop);
-      }
-    }
+    this.highlightIdOrStr(ctx.identifierOrString());
 
     const ascKeyword = ctx.ASC();
     if (ascKeyword) {
@@ -277,20 +288,12 @@ export class HighlightCollector extends AbstractParseTreeVisitor<void> {
   };
 
   visitEvalExpression = (ctx: Parser.EvalExpressionContext) => {
-    const id = ctx.IDENTIFIER();
-    if (id) {
-      const sym = id.getSymbol()!;
-      if (sym) {
-        this.addHighlight("identifier", sym.start ?? 0, sym.stop);
-      }
-    }
+    this.highlightIdOrStr(ctx.identifierOrString());
 
     const eq = ctx.EQUAL();
-    if (eq) {
-      const sym = eq.getSymbol()!;
-      if (sym) {
-        this.addHighlight("operator", sym.start ?? 0, sym.stop);
-      }
+    const sym = eq.getSymbol();
+    if (sym) {
+      this.addHighlight("operator", sym.start ?? 0, sym.stop);
     }
 
     this.visitChildren(ctx);
@@ -299,15 +302,6 @@ export class HighlightCollector extends AbstractParseTreeVisitor<void> {
   visitRegexCmd = (ctx: Parser.RegexCmdContext) => {
     this.highlightTerminal(ctx.REGEX(), "keyword");
     this.highlightTerminal(ctx.FIELD(), "keyword");
-
-    // Highlight identifiers
-    const ids = (ctx as any).IDENTIFIER?.();
-    if (Array.isArray(ids)) {
-      for (const id of ids) {
-        this.highlightTerminal(id, "identifier");
-      }
-    }
-
     this.visitChildren(ctx);
   };
 
@@ -319,6 +313,8 @@ export class HighlightCollector extends AbstractParseTreeVisitor<void> {
         this.addHighlight("keyword", sym.start ?? 0, sym.stop);
       }
     }
+
+    this.highlightTerminal(ctx.BY(), "keyword");
 
     this.visitChildren(ctx);
   };
@@ -348,12 +344,9 @@ export class HighlightCollector extends AbstractParseTreeVisitor<void> {
       }
     }
 
-    const id = ctx.IDENTIFIER();
-    if (id) {
-      const sym = id.getSymbol();
-      if (sym) {
-        this.addHighlight("identifier", sym.start ?? 0, sym.stop);
-      }
+    const idOrStr = ctx.identifierOrString();
+    if (idOrStr) {
+      this.highlightIdOrStr(idOrStr);
     }
 
     const intToken = ctx.INTEGER();
@@ -366,21 +359,8 @@ export class HighlightCollector extends AbstractParseTreeVisitor<void> {
   };
 
   visitUnpackCmd = (ctx: Parser.UnpackCmdContext) => {
-    const kw = ctx.UNPACK();
-    if (kw) {
-      const sym = kw.getSymbol()!;
-      if (sym) {
-        this.addHighlight("keyword", sym.start ?? 0, sym.stop);
-      }
-    }
-
-    const id = ctx.IDENTIFIER();
-    if (id) {
-      const sym = id.getSymbol()!;
-      if (sym) {
-        this.addHighlight("identifier", sym.start ?? 0, sym.stop);
-      }
-    }
+    this.highlightTerminal(ctx.UNPACK(), "keyword");
+    this.highlightIdOrStr(ctx.identifierOrString());
   };
 
   visitLogicalExpression = (ctx: Parser.LogicalExpressionContext) => {
@@ -488,26 +468,10 @@ export class HighlightCollector extends AbstractParseTreeVisitor<void> {
       }
     }
 
-    const elseKeyword = ctx.ELSE();
-    if (elseKeyword) {
-      const sym = elseKeyword.getSymbol();
-      if (sym) {
-        this.addHighlight("keyword", sym.start ?? 0, sym.stop);
-      }
-    }
-
     this.visitChildren(ctx);
   };
 
   visitCaseThen = (ctx: Parser.CaseThenContext) => {
-    const ifKeyword = ctx.IF();
-    if (ifKeyword) {
-      const sym = ifKeyword.getSymbol();
-      if (sym) {
-        this.addHighlight("keyword", sym.start ?? 0, sym.stop);
-      }
-    }
-
     this.visitChildren(ctx);
   };
 
@@ -564,6 +528,18 @@ export class HighlightCollector extends AbstractParseTreeVisitor<void> {
   };
 
   visitFactor = (ctx: Parser.FactorContext) => {
+    const intToken = ctx.INTEGER();
+    if (intToken) {
+      const sym = intToken.getSymbol();
+      if (sym) this.addHighlight("number", sym.start ?? 0, sym.stop);
+      return;
+    }
+    const idToken = ctx.IDENTIFIER();
+    if (idToken) {
+      const sym = idToken.getSymbol();
+      if (sym) this.addHighlight("column", sym.start ?? 0, sym.stop);
+      return;
+    }
     this.visitChildren(ctx);
   };
 
@@ -587,7 +563,9 @@ export class HighlightCollector extends AbstractParseTreeVisitor<void> {
   };
 
   visitRegexLiteral = (ctx: Parser.RegexLiteralContext) => {
-    const sym = ctx.REGEX_PATTERN().getSymbol()!;
+    const token = ctx.REGEX_PATTERN();
+    if (!token) return;
+    const sym = token.getSymbol()!;
     if (sym) {
       this.addHighlight("regex", sym.start ?? 0, sym.stop);
     }

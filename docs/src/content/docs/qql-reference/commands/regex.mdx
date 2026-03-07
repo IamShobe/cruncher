@@ -3,15 +3,18 @@ title: regex
 description: Extract values from a field using a regular expression and create new fields from the captured groups.
 ---
 
-import { Badge } from '@astrojs/starlight/components';
+import CommandCard from '/src/components/CommandCard.astro';
+
+<CommandCard
+  name="regex"
+  description="Extract values from a field using a regular expression and create new fields from captured groups."
+  syntax='regex [field="<FIELD_NAME>"] `<PATTERN>`'
+  output="logs"
+/>
 
 The `regex` command extracts values from a field using a regular expression and creates new fields from the captured groups.
 
-## Syntax
-
-```
-regex [field="<FIELD_NAME>"] `<PATTERN>`
-```
+## Parameters
 
 - `FIELD_NAME`: The field to apply the regex to. If not specified, defaults to `_raw`.
 - `PATTERN`: The regular expression pattern, using named capture groups.

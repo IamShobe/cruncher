@@ -1,6 +1,20 @@
 import { expect, test } from "vitest";
 import { parse } from "../index";
 
+test("empty input", () => {
+  expect(parse("")).toMatchObject({
+    type: "query",
+    dataSources: [],
+    controllerParams: [],
+    search: {
+      type: "search",
+      left: { type: "searchLiteral", tokens: [] },
+      right: undefined,
+    },
+    pipeline: [],
+  });
+});
+
 test("parser hello world", () => {
   expect(parse("hello world this is awesome").search).toEqual({
     type: "search",

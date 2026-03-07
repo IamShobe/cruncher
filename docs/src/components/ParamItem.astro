@@ -1,30 +1,103 @@
 ---
-const { label, type, description } = Astro.props;
+interface Props {
+  label: string;
+  type: string;
+  optional?: boolean;
+  defaultValue?: string;
+}
+
+const { label, type, optional = false, defaultValue } = Astro.props;
 ---
 
+<div class="param-item">
+  <div class="param-header">
+    <code class="param-label">{label}</code>
+    <span class="param-type">{type}</span>
+    {optional && <span class="badge optional">Optional</span>}
+  </div>
+  {defaultValue && (
+    <div class="param-default">
+      <strong>Default:</strong> <code>{defaultValue}</code>
+    </div>
+  )}
+  <div class="param-description">
+    <slot />
+  </div>
+</div>
+
 <style>
+  .param-item,
+  .param-item * {
+    margin: 0;
+    padding: 0;
+  }
+
   .param-item {
+    border-left: 3px solid var(--sl-color-accent);
+    background: var(--sl-color-gray-7);
+    padding: 0.75rem;
+    border-radius: 4px;
+    margin: 0.75rem 0;
+  }
+
+  .param-header {
     display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.5rem;
   }
+
   .param-label {
-    font-weight: bold;
-    margin-right: 8px;
+    background: var(--sl-color-bg);
+    padding: 0.25rem 0.5rem;
+    border-radius: 3px;
+    font-size: 0.85rem;
+    font-weight: 600;
   }
+
   .param-type {
-    color: #555;
-    margin-right: 8px;
+    font-size: 0.8rem;
+    color: var(--sl-color-gray-3);
+    font-style: italic;
   }
+
+  .badge {
+    display: inline-block;
+    padding: 0.2rem 0.5rem;
+    border-radius: 10px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.2px;
+  }
+
+  .badge.optional {
+    background: rgba(59, 130, 246, 0.15);
+    color: rgb(37, 99, 235);
+  }
+
+  .param-default {
+    font-size: 0.8rem;
+    margin-bottom: 0.5rem;
+    padding: 0.35rem 0.5rem;
+    background: var(--sl-color-bg);
+    border-radius: 3px;
+  }
+
+  .param-default code {
+    background: transparent;
+    padding: 0;
+    font-size: 0.8rem;
+  }
+
   .param-description {
-    margin-left: 8px;
-    color: #333;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: var(--sl-color-gray-2);
+  }
+
+  .param-description :global(p) {
+    margin: 0;
   }
 </style>
-
-<div class="param-item">
-  <span class="param-label">{label}</span>
-  <span class="param-type">{type}</span>
-  -
-  <span class="param-description">
-    <slot />
-  </span>
-</div>

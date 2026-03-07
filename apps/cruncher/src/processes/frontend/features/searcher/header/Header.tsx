@@ -36,7 +36,7 @@ import { Tooltip } from "~components/ui/tooltip";
 import { DateType } from "~lib/dateUtils";
 import { DateSelector, isDateSelectorOpenAtom } from "./calendar/DateSelector";
 import { SettingsDrawer } from "~features/searcher/header/settings-drawer/Drawer";
-import { Editor } from "./Editor";
+import { Editor, EditorErrorBoundary } from "./Editor";
 import {
   createShortcutsHandler,
   headerShortcuts,
@@ -195,7 +195,9 @@ const Header: React.FC<HeaderProps> = () => {
                     flex: 1;
                   `}
                 >
-                  <Editor value={searchValue} onChange={setSearchValue} />
+                  <EditorErrorBoundary>
+                    <Editor value={searchValue} onChange={setSearchValue} />
+                  </EditorErrorBoundary>
                 </div>
                 <Timer
                   startTime={queryStartTime}

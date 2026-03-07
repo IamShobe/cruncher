@@ -118,9 +118,18 @@ test("table command multiple columns", () => {
 });
 
 test("table command multiple columns no comma", () => {
-  expect(() => parse(`hello world | table column1 column2`)).toThrow(
-    QQLParserError,
-  );
+  expect(parse(`hello world | table column1 column2`)).toMatchObject({
+    type: "query",
+    pipeline: [
+      {
+        type: "table",
+        columns: [
+          { column: "column1", alias: undefined },
+          { column: "column2", alias: undefined },
+        ],
+      },
+    ],
+  });
 });
 
 test("support for stats command basic", () => {

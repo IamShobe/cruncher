@@ -9,7 +9,7 @@ grammar QQL;
 // ==================== PARSER RULES ====================
 
 query
-  : datasource* controllerParam* search pipelineCommand*
+  : datasource* controllerParam* search? pipelineCommand* EOF
   ;
 
 datasource
@@ -17,11 +17,11 @@ datasource
   ;
 
 controllerParam
-  : IDENTIFIER EQUAL (literalString | regexLiteral)
+  : IDENTIFIER (EQUAL | NOT_EQUAL) (literalString | regexLiteral)
   ;
 
 search
-  : searchFactor searchTail?
+  : searchTerm searchTail?
   ;
 
 searchTail
@@ -29,8 +29,13 @@ searchTail
   | SEARCH_OR search
   ;
 
+searchTerm
+  : LPAREN search RPAREN
+  | searchFactor
+  ;
+
 searchFactor
-  : searchLiteral (SEARCH_PARAM_NEQ searchLiteral)?
+  : searchLiteral (NOT_EQUAL searchLiteral)?
   ;
 
 searchLiteral
@@ -42,23 +47,23 @@ pipelineCommand
   ;
 
 tableCmd
-  : TABLE tableColumn (COMMA tableColumn)*
+  : TABLE tableColumn (COMMA? tableColumn)*
   ;
 
 tableColumn
-  : IDENTIFIER (AS IDENTIFIER)?
+  : identifierOrString (AS identifierOrString)?
   ;
 
 statsCmd
-  : STATS aggregationFunction (COMMA aggregationFunction)* (BY groupby)?
+  : STATS aggregationFunction (COMMA? aggregationFunction)* (BY groupby)?
   ;
 
 aggregationFunction
-  : IDENTIFIER (LPAREN IDENTIFIER? RPAREN)? (AS IDENTIFIER)?
+  : identifierOrString (LPAREN identifierOrString? RPAREN)? (AS identifierOrString)?
   ;
 
 groupby
-  : IDENTIFIER (COMMA IDENTIFIER)*
+  : identifierOrString (COMMA? identifierOrString)*
   ;
 
 whereCmd
@@ -66,19 +71,19 @@ whereCmd
   ;
 
 sortCmd
-  : SORT sortColumn (COMMA sortColumn)*
+  : SORT sortColumn (COMMA? sortColumn)*
   ;
 
 sortColumn
-  : IDENTIFIER (ASC | DESC)?
+  : identifierOrString (ASC | DESC)?
   ;
 
 evalCmd
-  : EVAL evalExpression (COMMA evalExpression)*
+  : EVAL evalExpression
   ;
 
 evalExpression
-  : IDENTIFIER EQUAL evalFunctionArg
+  : identifierOrString EQUAL evalFunctionArg
   ;
 
 regexCmd
@@ -86,17 +91,17 @@ regexCmd
   ;
 
 timechartCmd
-  : TIMECHART aggregationFunction (COMMA aggregationFunction)* timechartParams* (BY groupby)?
+  : TIMECHART aggregationFunction (COMMA? aggregationFunction)* timechartParams* (BY groupby)?
   ;
 
 timechartParams
-  : SPAN IDENTIFIER
-  | TIMECOL IDENTIFIER
+  : SPAN identifierOrString
+  | TIMECOL identifierOrString
   | MAXGROUPS INTEGER
   ;
 
 unpackCmd
-  : UNPACK IDENTIFIER
+  : UNPACK identifierOrString
   ;
 
 // ==================== EXPRESSION RULES ====================
@@ -143,20 +148,19 @@ functionArg
   ;
 
 evalFunctionArg
-  : factor
-  | logicalExpression
-  | evalFunction
-  | calcExpression
+  : evalFunction
   | functionExpression
+  | logicalExpression
+  | calcExpression
   ;
 
 evalFunction
-  : IF LPAREN logicalExpression RPAREN evalFunctionArg (ELSE evalFunctionArg)?
-  | CASE caseThen+ (ELSE evalFunctionArg)?
+  : IF LPAREN logicalExpression COMMA evalFunctionArg (COMMA evalFunctionArg)? RPAREN
+  | CASE LPAREN caseThen (COMMA evalFunctionArg)? RPAREN
   ;
 
 caseThen
-  : IF LPAREN logicalExpression RPAREN evalFunctionArg
+  : logicalExpression COMMA evalFunctionArg
   ;
 
 calcExpression
@@ -201,6 +205,12 @@ literalString
 
 regexLiteral
   : REGEX_PATTERN
+  ;
+
+identifierOrString
+  : IDENTIFIER
+  | DQUOT_STRING
+  | SQUOT_STRING
   ;
 
 // ==================== LEXER RULES ====================
@@ -391,13 +401,13 @@ AT_DATASOURCE
   : '@' [a-zA-Z_] [0-9a-zA-Z_-]*
   ;
 
-// String literals
+// String literals (newlines allowed)
 DQUOT_STRING
-  : '"' (~["\\\r\n] | '\\' [btnrtv"\\/ ])* '"'
+  : '"' (~[\\"] | '\\' .)* '"'
   ;
 
 SQUOT_STRING
-  : '\'' (~['\\\r\n] | '\\' [btnrtv'\\/ ])* '\''
+  : '\'' (~[\\'] | '\\' .)* '\''
   ;
 
 REGEX_PATTERN

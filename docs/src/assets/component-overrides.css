@@ -21,8 +21,54 @@
   .function-card,
   .shortcuts-container,
   .pipeline-container,
-  .feature-grid-container
+  .feature-grid-container,
+  .datatype-list,
+  .command-card,
+  .config-field,
+  .param-item
 ) {
   margin-top: 1.5rem !important;
   margin-bottom: 1.5rem !important;
+}
+
+/* Remove adjacent margin spacing caused by Starlight's :not() selector */
+.sl-markdown-content :is(
+  .datatype-list,
+  .command-card,
+  .config-field,
+  .param-item,
+  .adapter-card,
+  .function-card
+) + * {
+  margin-top: 0 !important;
+}
+
+.sl-markdown-content * + :is(
+  .datatype-list,
+  .command-card,
+  .config-field,
+  .param-item,
+  .adapter-card,
+  .function-card
+) {
+  margin-top: 0 !important;
+}
+
+/* Prevent margins inside component containers */
+.sl-markdown-content .datatype-list *,
+.sl-markdown-content .command-card *,
+.sl-markdown-content .config-field *,
+.sl-markdown-content .param-item * {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+/* Add border/padding to prevent margin collapse with components */
+.sl-markdown-content .datatype-list,
+.sl-markdown-content .command-card,
+.sl-markdown-content .config-field,
+.sl-markdown-content .param-item {
+  margin-top: 1.5rem !important;
+  margin-bottom: 1.5rem !important;
+  overflow: hidden;
 }

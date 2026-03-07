@@ -21,7 +21,12 @@ export type ThemeDefinition = {
   syntaxString: string;
   syntaxFunction: string;
   syntaxBoolean: string;
+  syntaxNumber: string;
+  syntaxOperator: string;
+  syntaxRegex: string;
   syntaxParam: string;
+  syntaxIndex: string;
+  syntaxPipe: string;
   syntaxComment: string;
   syntaxDefault: string;
   logDefault: string;
@@ -57,7 +62,12 @@ export const THEMES: Record<ThemeId, ThemeDefinition> = {
     syntaxString: "#f87171",
     syntaxFunction: "#c084fc",
     syntaxBoolean: "#fbbf24",
+    syntaxNumber: "#fb923c",
+    syntaxOperator: "#f472b6",
+    syntaxRegex: "#22d3ee",
     syntaxParam: "#38bdf8",
+    syntaxIndex: "#2dd4bf",
+    syntaxPipe: "#fde68a",
     syntaxComment: "#6b7280",
     syntaxDefault: "#8892a4",
     logDefault: "#2caf00",
@@ -91,7 +101,12 @@ export const THEMES: Record<ThemeId, ThemeDefinition> = {
     syntaxString: "#a3be8c",
     syntaxFunction: "#88c0d0",
     syntaxBoolean: "#ebcb8b",
+    syntaxNumber: "#d08770",
+    syntaxOperator: "#5e81ac",
+    syntaxRegex: "#bf616a",
     syntaxParam: "#b48ead",
+    syntaxIndex: "#5e81ac",
+    syntaxPipe: "#ebcb8b",
     syntaxComment: "#616e88",
     syntaxDefault: "#d8dee9",
     logDefault: "#a3be8c",
@@ -125,7 +140,12 @@ export const THEMES: Record<ThemeId, ThemeDefinition> = {
     syntaxString: "#f1fa8c",
     syntaxFunction: "#8be9fd",
     syntaxBoolean: "#ffb86c",
+    syntaxNumber: "#bd93f9",
+    syntaxOperator: "#ff5555",
+    syntaxRegex: "#ff6e6e",
     syntaxParam: "#50fa7b",
+    syntaxIndex: "#80ffea",
+    syntaxPipe: "#d6b4fc",
     syntaxComment: "#6272a4",
     syntaxDefault: "#f8f8f2",
     logDefault: "#50fa7b",
@@ -159,7 +179,12 @@ export const THEMES: Record<ThemeId, ThemeDefinition> = {
     syntaxString: "#a6e3a1",
     syntaxFunction: "#89b4fa",
     syntaxBoolean: "#fab387",
+    syntaxNumber: "#f9e2af",
+    syntaxOperator: "#74c7ec",
+    syntaxRegex: "#eba0ac",
     syntaxParam: "#f38ba8",
+    syntaxIndex: "#94e2d5",
+    syntaxPipe: "#f5c2e7",
     syntaxComment: "#6c7086",
     syntaxDefault: "#cdd6f4",
     logDefault: "#a6e3a1",

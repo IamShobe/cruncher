@@ -65,7 +65,12 @@ export function Provider(props: ThemeProviderProps) {
       --chakra-colors-syntax-string: ${theme.syntaxString};
       --chakra-colors-syntax-function: ${theme.syntaxFunction};
       --chakra-colors-syntax-boolean: ${theme.syntaxBoolean};
+      --chakra-colors-syntax-number: ${theme.syntaxNumber};
+      --chakra-colors-syntax-operator: ${theme.syntaxOperator};
+      --chakra-colors-syntax-regex: ${theme.syntaxRegex};
       --chakra-colors-syntax-param: ${theme.syntaxParam};
+      --chakra-colors-syntax-index: ${theme.syntaxIndex};
+      --chakra-colors-syntax-pipe: ${theme.syntaxPipe};
       --chakra-colors-syntax-comment: ${theme.syntaxComment};
       --chakra-colors-syntax-default: ${theme.syntaxDefault};
       --chakra-colors-log-default: ${theme.logDefault};

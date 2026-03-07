@@ -16,22 +16,6 @@ import FunctionCard from '../../../../../components/FunctionCard.astro';
 
 The `isNull` function returns `true` if the input value is `null` or undefined (field not present), otherwise `false`.
 
-## Signature
-
-```
-isNull(value) → boolean
-```
-
-## Parameters
-
-| Name | Type | Description |
-|------|------|-------------|
-| `value` | any | The value to check |
-
-## Returns
-
-`boolean` — `true` if `value` is `null` or the field does not exist, `false` otherwise.
-
 ## Edge Cases
 
 - Distinguishes between `null` (explicit null value) and missing/undefined fields (both return `true`)

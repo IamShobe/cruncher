@@ -3,13 +3,16 @@ title: eval
 description: The eval command in QQL allows you to create or modify fields by evaluating expressions for each record.
 ---
 
-The `eval` command creates or modifies fields by evaluating expressions for each record.
+import CommandCard from '/src/components/CommandCard.astro';
 
-## Syntax
+<CommandCard
+  name="eval"
+  description="Create or modify fields by evaluating expressions for each record."
+  syntax="eval newField = expression"
+  output="none"
+/>
 
-```
-eval newField = expression
-```
+## Parameters
 
 - `newField = expression`: Assigns the result of the expression to a new or existing field.
 

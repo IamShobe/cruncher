@@ -2,13 +2,18 @@
 title: where
 ---
 
+import CommandCard from '/src/components/CommandCard.astro';
+
+<CommandCard
+  name="where"
+  description="Filter records based on a boolean expression."
+  syntax="where expression"
+  output="logs"
+/>
+
 The `where` command filters records based on a boolean expression. Only records where the expression evaluates to true are kept. It is commonly used to narrow down results before further processing or visualization.
 
-## Syntax
-
-```
-where expression
-```
+## Parameters
 
 - `expression`: A boolean condition using fields, operators, values, and functions. Expressions can be simple comparisons or complex logical statements.
 

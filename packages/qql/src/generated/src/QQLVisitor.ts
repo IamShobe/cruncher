@@ -8,6 +8,7 @@ import { DatasourceContext } from "./QQLParser.js";
 import { ControllerParamContext } from "./QQLParser.js";
 import { SearchContext } from "./QQLParser.js";
 import { SearchTailContext } from "./QQLParser.js";
+import { SearchTermContext } from "./QQLParser.js";
 import { SearchFactorContext } from "./QQLParser.js";
 import { SearchLiteralContext } from "./QQLParser.js";
 import { PipelineCommandContext } from "./QQLParser.js";
@@ -46,6 +47,7 @@ import { FactorContext } from "./QQLParser.js";
 import { LiteralBooleanContext } from "./QQLParser.js";
 import { LiteralStringContext } from "./QQLParser.js";
 import { RegexLiteralContext } from "./QQLParser.js";
+import { IdentifierOrStringContext } from "./QQLParser.js";
 
 
 /**
@@ -86,6 +88,12 @@ export class QQLVisitor<Result> extends AbstractParseTreeVisitor<Result> {
      * @return the visitor result
      */
     visitSearchTail?: (ctx: SearchTailContext) => Result;
+    /**
+     * Visit a parse tree produced by `QQLParser.searchTerm`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitSearchTerm?: (ctx: SearchTermContext) => Result;
     /**
      * Visit a parse tree produced by `QQLParser.searchFactor`.
      * @param ctx the parse tree
@@ -314,5 +322,11 @@ export class QQLVisitor<Result> extends AbstractParseTreeVisitor<Result> {
      * @return the visitor result
      */
     visitRegexLiteral?: (ctx: RegexLiteralContext) => Result;
+    /**
+     * Visit a parse tree produced by `QQLParser.identifierOrString`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitIdentifierOrString?: (ctx: IdentifierOrStringContext) => Result;
 }
 

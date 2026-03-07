@@ -1,0 +1,114 @@
+---
+interface Props {
+  name: string;
+  type: string;
+  required?: boolean;
+  defaultValue?: string;
+}
+
+const { name, type, required = false, defaultValue } = Astro.props;
+---
+
+<div class="config-field">
+  <div class="field-header">
+    <code class="field-name">{name}</code>
+    <span class="field-type">{type}</span>
+    {required ? (
+      <span class="badge required">Required</span>
+    ) : (
+      <span class="badge optional">Optional</span>
+    )}
+  </div>
+
+  {defaultValue && (
+    <div class="field-default">
+      <strong>Default:</strong> <code>{defaultValue}</code>
+    </div>
+  )}
+
+  <div class="field-description">
+    <slot />
+  </div>
+</div>
+
+<style>
+  .config-field,
+  .config-field * {
+    margin: 0;
+    padding: 0;
+  }
+
+  .config-field {
+    border-left: 3px solid var(--sl-color-accent);
+    background: var(--sl-color-gray-7);
+    padding: 1rem;
+    border-radius: 6px;
+    margin: 1rem 0;
+  }
+
+  .field-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.75rem;
+  }
+
+  .field-name {
+    background: var(--sl-color-bg);
+    padding: 0.375rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  .field-type {
+    font-size: 0.8rem;
+    color: var(--sl-color-gray-3);
+    font-style: italic;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 0.25rem 0.625rem;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+
+  .badge.required {
+    background: rgba(239, 68, 68, 0.15);
+    color: rgb(220, 38, 38);
+  }
+
+  .badge.optional {
+    background: rgba(59, 130, 246, 0.15);
+    color: rgb(37, 99, 235);
+  }
+
+  .field-default {
+    font-size: 0.85rem;
+    margin-bottom: 0.75rem;
+    padding: 0.5rem;
+    background: var(--sl-color-bg);
+    border-radius: 4px;
+  }
+
+  .field-default code {
+    background: transparent;
+    padding: 0;
+    font-size: 0.85rem;
+  }
+
+  .field-description {
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: var(--sl-color-gray-2);
+  }
+
+  .field-description :global(p) {
+    margin: 0;
+  }
+</style>

@@ -3,17 +3,18 @@ title: timechart
 description: Create time series visualizations with the `timechart` command in QQL.
 ---
 
-import { Badge } from '@astrojs/starlight/components';
+import CommandCard from '/src/components/CommandCard.astro';
 
-<Badge text="view" />
+<CommandCard
+  name="timechart"
+  description="Create a time series visualization by aggregating data into time buckets with flexible grouping."
+  syntax="timechart [span=interval] [timeCol=field] [maxGroups=N] [agg(field) [as alias], ...] [by groupField1, ...]"
+  output="timechart"
+/>
 
 The `timechart` command creates a time series visualization by aggregating data into time buckets. It supports multiple aggregation functions, grouping, and several parameters for customizing the time axis and grouping behavior.
 
-## Syntax
-
-```
-timechart [span=interval] [timeCol=field] [maxGroups=N] [agg(field) [as alias], ...] [by groupField1, ...]
-```
+## Parameters
 
 - `span=interval`: (Optional) Bucket size for the time axis (e.g., `1m`, `5m`, `1h`).
 - `timeCol=field`: (Optional) The field to use as the time axis (default is usually `timestamp`).
