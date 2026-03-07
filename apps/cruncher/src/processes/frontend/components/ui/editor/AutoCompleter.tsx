@@ -5,12 +5,13 @@ import { useEffect, useRef } from "react";
 import { AiOutlineFunction } from "react-icons/ai";
 import {
   VscSymbolKeyword,
+  VscSymbolNamespace,
   VscSymbolParameter,
   VscSymbolVariable,
 } from "react-icons/vsc";
 
 export type Suggestion = {
-  type: "keyword" | "function" | "variable" | "param";
+  type: "keyword" | "function" | "variable" | "param" | "controllerParam";
   value: string;
   fromPosition: number;
   toPosition?: number;
@@ -31,6 +32,8 @@ const getSuggestionIcon = (suggestion: Suggestion) => {
       return <VscSymbolVariable />;
     case "param":
       return <VscSymbolParameter />;
+    case "controllerParam":
+      return <VscSymbolNamespace />;
   }
 };
 

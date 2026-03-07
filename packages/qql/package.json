@@ -30,11 +30,12 @@
   ],
   "scripts": {
     "generate": "bash scripts/generate.sh",
-    "build": "bash scripts/generate.sh && tsc --project tsconfig.json",
+    "generate:watch": "chokidar 'src/syntax/*.g4' --initial -c 'bash scripts/generate.sh'",
+    "build": "tsc --project tsconfig.json",
     "test": "vitest run",
     "format": "oxfmt src/",
     "format:check": "oxfmt --check src/",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run generate && npm run build"
   },
   "keywords": [
     "cruncher",
@@ -50,6 +51,7 @@
   },
   "devDependencies": {
     "antlr4ng-cli": "^2.0.0",
+    "chokidar-cli": "^3.0.0",
     "typescript": "^5.9.3",
     "vitest": "^4.0.18"
   }

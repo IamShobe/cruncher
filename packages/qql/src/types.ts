@@ -27,7 +27,7 @@ export type SuggetionType =
   | { type: "column" }
   | { type: "function" }
   | { type: "booleanFunction" }
-  | { type: "controllerParam" }
+  | { type: "controllerParam"; excludeKeys?: string[] }
   | { type: "paramValue"; key: string }
   | { type: "keywords"; keywords: string[] }
   | { type: "params"; keywords: string[] }
@@ -248,3 +248,109 @@ export type Datasource = {
   type: "datasource";
   name: string;
 };
+
+// --------------------- Pipeline Command Types ---------------------
+
+export type SortColumnRef = { column: string; order: Order };
+
+export type TableCmd = {
+  type: "table";
+  columns: TableColumn[];
+};
+
+export type StatsCmd = {
+  type: "stats";
+  aggregationFunctions: AggregationFunction[];
+  groupby: string[] | undefined;
+};
+
+export type WhereCmd = {
+  type: "where";
+  expression: LogicalExpression;
+};
+
+export type SortCmd = {
+  type: "sort";
+  columns: SortColumnRef[];
+};
+
+export type EvalCmd = {
+  type: "eval";
+  variableName: string;
+  expression: EvalFunctionArg | null;
+};
+
+export type RegexCmd = {
+  type: "regex";
+  columnSelected: string | undefined;
+  pattern: RegexLiteral | null;
+};
+
+export type TimechartParams = {
+  span?: string;
+  timeCol?: string;
+  maxGroups?: number;
+};
+
+export type TimechartCmd = {
+  type: "timechart";
+  aggregationFunctions: AggregationFunction[];
+  params: TimechartParams;
+  groupby: string[] | undefined;
+};
+
+export type UnpackCmd = {
+  type: "unpack";
+  field: string;
+};
+
+export type PipelineCommand =
+  | TableCmd
+  | StatsCmd
+  | WhereCmd
+  | SortCmd
+  | EvalCmd
+  | RegexCmd
+  | TimechartCmd
+  | UnpackCmd;
+
+export type QueryNode = {
+  type: "query";
+  dataSources: Datasource[];
+  controllerParams: ControllerIndexParam[];
+  search: Search;
+  pipeline: PipelineCommand[];
+};
+
+// --------------------- Visitor Result Union ---------------------
+
+export type ASTNode =
+  | QueryNode
+  | Datasource
+  | ControllerIndexParam
+  | Search
+  | SearchLiteral
+  | SearchAND
+  | SearchOR
+  | PipelineCommand
+  | TableColumn
+  | AggregationFunction
+  | SortColumnRef
+  | LogicalExpression
+  | AndExpression
+  | OrExpression
+  | UnitExpression
+  | NotExpression
+  | InArrayExpression
+  | ComparisonExpression
+  | FunctionExpression
+  | EvalCaseThen
+  | CalcExpression
+  | CalcAction
+  | CalcTerm
+  | CalcTermAction
+  | CalculateUnit
+  | FactorType
+  | RegexLiteral
+  | TimechartParams
+  | string[];

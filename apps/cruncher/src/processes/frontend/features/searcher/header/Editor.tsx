@@ -123,24 +123,6 @@ export const Editor = ({ value, onChange }: EditorProps) => {
 
   // Get the controller params from the context
   const highlightData = useMemo<HighlightData[]>(() => {
-    (window as any).printQQL = () => {
-      const seen = new WeakSet();
-      const safeReplacer = (_key: string, val: unknown) => {
-        if (typeof val === "object" && val !== null) {
-          if (seen.has(val)) return "[Circular]";
-          seen.add(val);
-        }
-        return val;
-      };
-      console.log(JSON.stringify({
-        value,
-        highlight: data.highlight,
-        suggestions: data.suggestions,
-        parserError: data.parserError,
-      }, safeReplacer, 2));
-    };
-
-    void console.log(data)
     const errorHighlightData = (data.parserError ?? []).map(
       (error: QQLParserErrorDetail) => {
         return {
@@ -221,16 +203,20 @@ export const Editor = ({ value, onChange }: EditorProps) => {
             }),
           );
           break;
-        case "controllerParam":
-          Object.keys(controllerParams).forEach((param) =>
-            results.push({
-              type: "param",
-              value: param,
-              fromPosition: suggestion.fromPosition,
-              toPosition: suggestion.toPosition,
-            }),
-          );
+        case "controllerParam": {
+          const excluded = new Set(suggestion.excludeKeys ?? []);
+          Object.keys(controllerParams)
+            .filter((param) => !excluded.has(param))
+            .forEach((param) =>
+              results.push({
+                type: "controllerParam",
+                value: param,
+                fromPosition: suggestion.fromPosition,
+                toPosition: suggestion.toPosition,
+              }),
+            );
           break;
+        }
         case "paramValue": {
           const paramValues = controllerParams[suggestion.key];
           if (!paramValues) {
@@ -240,7 +226,7 @@ export const Editor = ({ value, onChange }: EditorProps) => {
           paramValues.forEach((value) =>
             results.push({
               type: "variable",
-              value: value,
+              value: `"${value}"`,
               fromPosition: suggestion.fromPosition,
               toPosition: suggestion.toPosition,
             }),

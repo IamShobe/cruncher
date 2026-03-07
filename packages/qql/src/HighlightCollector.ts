@@ -89,7 +89,7 @@ export class HighlightCollector extends AbstractParseTreeVisitor<void> {
   };
 
   visitControllerParam = (ctx: Parser.ControllerParamContext) => {
-    this.highlightTerminal(ctx.IDENTIFIER(), "identifier");
+    this.highlightTerminal(ctx.IDENTIFIER(), "param");
     this.highlightTerminal(ctx.EQUAL(), "operator");
     this.highlightTerminal(ctx.NOT_EQUAL(), "operator");
     // Highlight the value (quoted string or regex) as "index" so the editor

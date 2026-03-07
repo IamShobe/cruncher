@@ -12,9 +12,13 @@ function types(suggestions: SuggestionData[]) {
 
 // ─── Empty / preamble ─────────────────────────────────────────────────────────
 
-test("empty input: suggests datasource at position 0", () => {
+test("empty input: suggests datasource and controllerParam at position 0", () => {
   const sug = getSuggestions("");
-  expect(sug).toEqual([{ type: "datasource", fromPosition: 0, disabled: false }]);
+  const t = types(sug);
+  expect(t).toContain("datasource");
+  expect(t).toContain("controllerParam");
+  expect(sug.find((s) => s.type === "datasource")!.fromPosition).toBe(0);
+  expect(sug.find((s) => s.type === "controllerParam")!.fromPosition).toBe(0);
 });
 
 test("@mydata: suggests controllerParam after datasource", () => {
@@ -30,6 +34,25 @@ test("controller param without datasource: still suggests controllerParam", () =
   const sug = getSuggestions('index="main"');
   expect(types(sug)).toContain("controllerParam");
 });
+
+test("index=: suggests paramValue with key='index' after '='", () => {
+  // "index=" → EQUAL at 5 (stop=5), fromPosition=6
+  const sug = getSuggestions("index=");
+  const pv = sug.find((s) => s.type === "paramValue") as Extract<SuggestionData, { type: "paramValue" }> | undefined;
+  expect(pv).toBeDefined();
+  expect(pv!.key).toBe("index");
+  expect(pv!.fromPosition).toBe(6);
+  // Must NOT suggest another controllerParam while a value is still being entered
+  expect(sug.find((s) => s.type === "controllerParam")).toBeUndefined();
+});
+
+test('index="main": suggests more controllerParams after a complete param', () => {
+  const sug = getSuggestions('index="main" ');
+  expect(sug.find((s) => s.type === "controllerParam")).toBeDefined();
+  // But no paramValue — the value was already entered
+  expect(sug.find((s) => s.type === "paramValue")).toBeUndefined();
+});
+
 
 // ─── Pipeline keyword suggestions ────────────────────────────────────────────
 

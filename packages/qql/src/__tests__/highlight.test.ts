@@ -98,7 +98,7 @@ test("highlight datasource token", () => {
 
 test("highlight controller param (key=value)", () => {
   expect(getHighlights("key=value")).toEqual([
-    { type: "identifier", startOffset: 0, endOffset: 2 },
+    { type: "param", startOffset: 0, endOffset: 2 },
     { type: "operator", startOffset: 3, endOffset: 3 },
     { type: "identifier", startOffset: 4, endOffset: 8 },
   ]);

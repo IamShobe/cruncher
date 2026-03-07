@@ -3,12 +3,11 @@
  * All node shapes match those in types.ts exactly.
  */
 
-import { AbstractParseTreeVisitor, ParseTreeVisitor } from "antlr4ng";
+import { AbstractParseTreeVisitor } from "antlr4ng";
 import {
   parseDoubleQuotedString,
   parseSingleQuotedString,
   unquoteBacktick,
-  isNumeric,
 } from "./helpers";
 import type { QQLParserErrorDetail } from "./types";
 import type {
@@ -19,12 +18,12 @@ import type {
   CalcTerm,
   CalcTermAction,
   CalculateUnit,
-  ColumnRef,
   ComparisonExpression,
   ControllerIndexParam,
   Datasource,
   EvalCaseFunction,
   EvalCaseThen,
+  EvalCmd,
   EvalFunction,
   EvalFunctionArg,
   EvalIfFunction,
@@ -33,62 +32,65 @@ import type {
   FunctionExpression,
   InArrayExpression,
   LiteralBoolean,
-  LiteralFloat,
-  LiteralNumber,
   LiteralString,
   LogicalExpression,
   NotExpression,
   Order,
   OrExpression,
+  PipelineCommand,
+  QueryNode,
+  RegexCmd,
   RegexLiteral,
   Search,
   SearchAND,
   SearchLiteral,
   SearchOR,
-  SuggestionData,
+  SortCmd,
+  SortColumnRef,
+  StatsCmd,
+  TableCmd,
   TableColumn,
+  TimechartCmd,
+  TimechartParams,
   UnitExpression,
+  UnpackCmd,
+  WhereCmd,
 } from "./types";
 import * as Parser from "./syntax/QQL";
 
 /**
- * Helper function to convert child context to string value
- */
-function getTokenText(token: any): string {
-  if (!token) return "";
-  if (token.getText) return token.getText();
-  if (typeof token === "string") return token;
-  return String(token);
-}
-
-/**
  * Extract string value from identifierOrString context
  */
-function extractIdentifierValue(ctx: any): string {
+function extractIdentifierValue(ctx: Parser.IdentifierOrStringContext | null | undefined): string {
   if (!ctx) return "";
 
-  if (ctx.IDENTIFIER?.()) {
-    return ctx.IDENTIFIER().getText();
-  }
+  const identifier = ctx.IDENTIFIER();
+  if (identifier) return identifier.getText();
 
-  const dquotString = ctx.DQUOT_STRING?.();
-  if (dquotString) {
-    return parseDoubleQuotedString(dquotString.getText());
-  }
+  const dquotString = ctx.DQUOT_STRING();
+  if (dquotString) return parseDoubleQuotedString(dquotString.getText());
 
-  const squotString = ctx.SQUOT_STRING?.();
-  if (squotString) {
-    return parseSingleQuotedString(squotString.getText());
-  }
+  const squotString = ctx.SQUOT_STRING();
+  if (squotString) return parseSingleQuotedString(squotString.getText());
 
-  return ctx.getText?.() || "";
+  // keyword used as an identifier (e.g. column named "table" or "by")
+  const kw = ctx.keyword();
+  if (kw) return kw.getText();
+
+  return ctx.getText();
 }
 
-export class ASTBuilder extends AbstractParseTreeVisitor<any> {
+export class ASTBuilder extends AbstractParseTreeVisitor<QueryNode> {
   public errors: QQLParserErrorDetail[] = [];
 
-  defaultResult() {
-    return null;
+  defaultResult(): QueryNode {
+    return {
+      type: "query",
+      dataSources: [],
+      controllerParams: [],
+      search: { type: "search", left: { type: "searchLiteral", tokens: [] }, right: undefined },
+      pipeline: [],
+    };
   }
 
   private addError(message: string, ctx?: any): void {
@@ -104,7 +106,7 @@ export class ASTBuilder extends AbstractParseTreeVisitor<any> {
     });
   }
 
-  visitQuery = (ctx: Parser.QueryContext) => {
+  visitQuery = (ctx: Parser.QueryContext): QueryNode => {
     const dataSources: Datasource[] = [];
     const controllerParams: ControllerIndexParam[] = [];
 
@@ -125,7 +127,7 @@ export class ASTBuilder extends AbstractParseTreeVisitor<any> {
       : { type: "search" as const, left: { type: "searchLiteral" as const, tokens: [] }, right: undefined };
 
     // Visit pipeline commands
-    const pipeline: any[] = [];
+    const pipeline: PipelineCommand[] = [];
     for (const pcCtx of ctx.pipelineCommand()) {
       const cmd = this.visitPipelineCommand(pcCtx);
       if (cmd) {
@@ -239,24 +241,26 @@ export class ASTBuilder extends AbstractParseTreeVisitor<any> {
     const floats = ctx.FLOAT();
     const ints = ctx.INTEGER();
     const litStrs = ctx.literalString();
+    const keywords = ctx.keyword();
 
     let idIdx = 0;
     let floatIdx = 0;
     let intIdx = 0;
     let strIdx = 0;
+    let kwIdx = 0;
 
     // Parse in order of appearance in the grammar
     for (let i = 0; i < ctx.getChildCount(); i++) {
-      const child = ctx.getChild(i)!;
+      const child = ctx.getChild(i);
       if (!child) continue;
 
-      const childText = typeof child === "object" && child !== null && "getText" in child ? (child as any).getText() : String(child);
+      const childText = child.getText();
 
       if (childText === "," || childText === " ") {
         continue;
       }
 
-      // Try to match to token types
+      // Try to match to token types in order
       if (ids && idIdx < ids.length && ids[idIdx].getText() === childText) {
         tokens.push(ids[idIdx].getText());
         idIdx++;
@@ -269,6 +273,10 @@ export class ASTBuilder extends AbstractParseTreeVisitor<any> {
       } else if (litStrs && strIdx < litStrs.length && litStrs[strIdx].getText() === childText) {
         tokens.push(this.visitLiteralString(litStrs[strIdx]).value);
         strIdx++;
+      } else if (keywords && kwIdx < keywords.length && keywords[kwIdx].getText() === childText) {
+        // keyword used as a plain search word (e.g. searching for "as" or "table")
+        tokens.push(keywords[kwIdx].getText());
+        kwIdx++;
       }
     }
 
@@ -278,7 +286,7 @@ export class ASTBuilder extends AbstractParseTreeVisitor<any> {
     };
   };
 
-  visitPipelineCommand = (ctx: Parser.PipelineCommandContext) => {
+  visitPipelineCommand = (ctx: Parser.PipelineCommandContext): PipelineCommand | null => {
     if (ctx.tableCmd()) {
       return this.visitTableCmd(ctx.tableCmd()!);
     } else if (ctx.statsCmd()) {
@@ -299,7 +307,7 @@ export class ASTBuilder extends AbstractParseTreeVisitor<any> {
     return null;
   };
 
-  visitTableCmd = (ctx: Parser.TableCmdContext) => {
+  visitTableCmd = (ctx: Parser.TableCmdContext): TableCmd => {
     const columns: TableColumn[] = [];
     for (const colCtx of ctx.tableColumn()) {
       columns.push(this.visitTableColumn(colCtx));
@@ -322,7 +330,7 @@ export class ASTBuilder extends AbstractParseTreeVisitor<any> {
     };
   };
 
-  visitStatsCmd = (ctx: Parser.StatsCmdContext) => {
+  visitStatsCmd = (ctx: Parser.StatsCmdContext): StatsCmd => {
     const aggregationFunctions: AggregationFunction[] = [];
     for (const aggCtx of ctx.aggregationFunction()) {
       aggregationFunctions.push(this.visitAggregationFunction(aggCtx));
@@ -377,10 +385,10 @@ export class ASTBuilder extends AbstractParseTreeVisitor<any> {
   visitGroupby = (ctx: Parser.GroupbyContext): string[] => {
     const idOrStrings = ctx.identifierOrString?.();
     if (!idOrStrings) return [];
-    return idOrStrings.map((idOrStr: any) => extractIdentifierValue(idOrStr));
+    return idOrStrings.map((idOrStr: Parser.IdentifierOrStringContext) => extractIdentifierValue(idOrStr));
   };
 
-  visitWhereCmd = (ctx: Parser.WhereCmdContext) => {
+  visitWhereCmd = (ctx: Parser.WhereCmdContext): WhereCmd => {
     const expression = this.visitLogicalExpression(ctx.logicalExpression());
 
     return {
@@ -389,8 +397,8 @@ export class ASTBuilder extends AbstractParseTreeVisitor<any> {
     };
   };
 
-  visitSortCmd = (ctx: Parser.SortCmdContext) => {
-    const columns: { column: string; order: Order }[] = [];
+  visitSortCmd = (ctx: Parser.SortCmdContext): SortCmd => {
+    const columns: SortColumnRef[] = [];
     for (const colCtx of ctx.sortColumn()) {
       columns.push(this.visitSortColumn(colCtx));
     }
@@ -401,7 +409,7 @@ export class ASTBuilder extends AbstractParseTreeVisitor<any> {
     };
   };
 
-  visitSortColumn = (ctx: Parser.SortColumnContext): { column: string; order: Order } => {
+  visitSortColumn = (ctx: Parser.SortColumnContext): SortColumnRef => {
     const column = extractIdentifierValue(ctx.identifierOrString());
     let order: Order = "asc";
 
@@ -414,15 +422,15 @@ export class ASTBuilder extends AbstractParseTreeVisitor<any> {
     return { column, order };
   };
 
-  visitEvalCmd = (ctx: Parser.EvalCmdContext) => {
+  visitEvalCmd = (ctx: Parser.EvalCmdContext): EvalCmd => {
     const exprCtx = ctx.evalExpression();
     if (!exprCtx) {
-      return { type: "eval" as const, variableName: "", expression: null as any };
+      return { type: "eval" as const, variableName: "", expression: null };
     }
     const variableName = extractIdentifierValue(exprCtx.identifierOrString());
     const evalFuncArgCtx = exprCtx.evalFunctionArg();
     if (!evalFuncArgCtx) {
-      return { type: "eval" as const, variableName, expression: null as any };
+      return { type: "eval" as const, variableName, expression: null };
     }
     const expression = this.visitEvalFunctionArg(evalFuncArgCtx);
 
@@ -433,19 +441,19 @@ export class ASTBuilder extends AbstractParseTreeVisitor<any> {
     };
   };
 
-  visitRegexCmd = (ctx: Parser.RegexCmdContext) => {
+  visitRegexCmd = (ctx: Parser.RegexCmdContext): RegexCmd => {
     // Syntax: REGEX (FIELD EQUAL identifierOrString)? regexLiteral
     const identCtx = ctx.identifierOrString();
     const columnSelected = identCtx ? extractIdentifierValue(identCtx) : undefined;
     const regexLiteralCtx = ctx.regexLiteral();
     if (!regexLiteralCtx) {
-      return { type: "regex" as const, columnSelected, pattern: null as any };
+      return { type: "regex" as const, columnSelected, pattern: null };
     }
     const pattern = this.visitRegexLiteral(regexLiteralCtx);
     return { type: "regex" as const, columnSelected, pattern };
   };
 
-  visitTimechartCmd = (ctx: Parser.TimechartCmdContext) => {
+  visitTimechartCmd = (ctx: Parser.TimechartCmdContext): TimechartCmd => {
     const aggregationFunctions: AggregationFunction[] = [];
     const aggFuncs = ctx.aggregationFunction();
     if (aggFuncs) {
@@ -454,7 +462,7 @@ export class ASTBuilder extends AbstractParseTreeVisitor<any> {
       }
     }
 
-    const params: any = {};
+    const params: TimechartParams = {};
     const paramContexts = ctx.timechartParams();
     if (paramContexts) {
       for (const pCtx of paramContexts) {
@@ -477,7 +485,7 @@ export class ASTBuilder extends AbstractParseTreeVisitor<any> {
     };
   };
 
-  visitTimechartParams = (ctx: Parser.TimechartParamsContext) => {
+  visitTimechartParams = (ctx: Parser.TimechartParamsContext): TimechartParams => {
     if (ctx.SPAN()) {
       return {
         span: extractIdentifierValue(ctx.identifierOrString()),
@@ -494,7 +502,7 @@ export class ASTBuilder extends AbstractParseTreeVisitor<any> {
     return {};
   };
 
-  visitUnpackCmd = (ctx: Parser.UnpackCmdContext) => {
+  visitUnpackCmd = (ctx: Parser.UnpackCmdContext): UnpackCmd => {
     const field = extractIdentifierValue(ctx.identifierOrString());
 
     return {
@@ -513,7 +521,7 @@ export class ASTBuilder extends AbstractParseTreeVisitor<any> {
     if (tails && tails.length > 0) {
       // Process tails in order - last one takes precedence
       for (let i = 0; i < tails.length; i++) {
-        right = this.visitLogicalTail(tails[i]) as any;
+        right = this.visitLogicalTail(tails[i]);
       }
     }
 
@@ -789,6 +797,12 @@ export class ASTBuilder extends AbstractParseTreeVisitor<any> {
         type: "columnRef" as const,
         columnName: ctx.IDENTIFIER()!.getText(),
       };
+    } else if (ctx.keyword()) {
+      // keyword used as a column reference (e.g. `where table == "foo"`)
+      return {
+        type: "columnRef" as const,
+        columnName: ctx.keyword()!.getText(),
+      };
     } else if (ctx.literalBoolean()) {
       return this.visitLiteralBoolean(ctx.literalBoolean()!);
     }
@@ -799,7 +813,7 @@ export class ASTBuilder extends AbstractParseTreeVisitor<any> {
   visitLiteralBoolean = (ctx: Parser.LiteralBooleanContext): LiteralBoolean => {
     return {
       type: "boolean" as const,
-      value: ctx.TRUE() ? true : false,
+      value: !!ctx.TRUE(),
     };
   };
 

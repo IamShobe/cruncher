@@ -69,21 +69,52 @@ export class SuggestionCollector extends AbstractParseTreeVisitor<void> {
     const datasources: any[] = ctx.datasource?.() || [];
     const controllerParams: any[] = ctx.controllerParam?.() || [];
 
+    const lastCp = controllerParams.length > 0 ? controllerParams[controllerParams.length - 1] : null;
+    // A controllerParam is "complete" only when it has a value (literal string or regex).
+    // If the user typed `key=` but no value yet, we suppress further controllerParam
+    // suggestions and let visitControllerParam emit the paramValue suggestions instead.
+    const lastCpComplete = !lastCp || !!(lastCp.literalString?.() || lastCp.regexLiteral?.());
+
+    // Collect all keys already present so the frontend can hide duplicates.
+    const usedKeys: string[] = controllerParams
+      .map((cp: any) => {
+        const text = cp.IDENTIFIER?.()?.getText?.();
+        return typeof text === "string" ? text : undefined;
+      })
+      .filter((k): k is string => k !== undefined);
+
+    // Controller params are only valid before the search term or first pipe.
+    // Compute an upper bound so suggestions don't bleed into pipeline commands.
+    const searchCtx = ctx.search?.();
+    const pipelineCmds: any[] = ctx.pipelineCommand?.() || [];
+    let cpZoneEnd: number | undefined;
+    if (searchCtx?.start?.start != null) {
+      cpZoneEnd = (searchCtx.start.start as number) - 1;
+    } else if (pipelineCmds.length > 0) {
+      const firstPipeStart: number | undefined = pipelineCmds[0].PIPE?.()?.getSymbol?.()?.start;
+      if (firstPipeStart != null) cpZoneEnd = firstPipeStart - 1;
+    }
+
     if (datasources.length > 0) {
-      // Suggest controller params immediately after the last datasource
-      const pos = this.getNextTokenPosition(datasources[datasources.length - 1]);
-      this.addSuggestion({ type: "controllerParam", fromPosition: pos, disabled: false });
+      if (lastCpComplete) {
+        const pos = lastCp
+          ? this.getNextTokenPosition(lastCp)
+          : this.getNextTokenPosition(datasources[datasources.length - 1]);
+        this.addSuggestion({ type: "controllerParam", excludeKeys: usedKeys, fromPosition: pos, toPosition: cpZoneEnd, disabled: false });
+      }
     } else if (controllerParams.length > 0) {
-      // Already have controller params but no datasource — suggest more
-      const pos = this.getNextTokenPosition(controllerParams[controllerParams.length - 1]);
-      this.addSuggestion({ type: "controllerParam", fromPosition: pos, disabled: false });
+      if (lastCpComplete) {
+        const pos = this.getNextTokenPosition(lastCp!);
+        this.addSuggestion({ type: "controllerParam", excludeKeys: usedKeys, fromPosition: pos, toPosition: cpZoneEnd, disabled: false });
+      }
     } else {
-      // Nothing typed yet — invite the user to pick a data source
-      this.addSuggestion({ type: "datasource", fromPosition: 0, disabled: false });
+      // Nothing typed yet — suggest both datasource (@foo) and index params (index="...")
+      this.addSuggestion({ type: "datasource", fromPosition: 0, toPosition: cpZoneEnd, disabled: false });
+      this.addSuggestion({ type: "controllerParam", excludeKeys: [], fromPosition: 0, toPosition: cpZoneEnd, disabled: false });
     }
 
     for (const ds of datasources) this.visitDatasource(ds);
-    for (const cp of controllerParams) this.visitControllerParam(cp);
+    for (const cp of controllerParams) this.visitControllerParam(cp, cpZoneEnd);
 
     const search = ctx.search?.();
     if (search) this.visitSearch(search);
@@ -95,7 +126,19 @@ export class SuggestionCollector extends AbstractParseTreeVisitor<void> {
 
   visitDatasource = (_ctx: any) => {};
 
-  visitControllerParam = (_ctx: any) => {};
+  visitControllerParam = (ctx: any, toPosition?: number) => {
+    // After the = operator, suggest available values — but only when the param
+    // has no value yet. Once a literalString/regexLiteral is present the param
+    // is complete and no further value suggestions are needed.
+    const op = ctx.EQUAL?.() ?? ctx.NOT_EQUAL?.();
+    const identifier = ctx.IDENTIFIER?.();
+    const hasValue = !!(ctx.literalString?.() || ctx.regexLiteral?.());
+    if (op && identifier && !hasValue) {
+      const key = typeof identifier.getText?.() === "string" ? identifier.getText() : "";
+      const pos = this.getNextTokenPosition(op);
+      this.addSuggestion({ type: "paramValue", key, fromPosition: pos, toPosition, disabled: false });
+    }
+  };
 
   visitSearch = (ctx: any) => {
     const searchTerm = ctx.searchTerm?.();

@@ -1,6 +1,6 @@
 import styled from "@emotion/styled";
 import { token } from "../system";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { AutoCompleter, Suggestion } from "./AutoCompleter";
@@ -59,79 +59,15 @@ const EditorWrapper = styled.div`
     border-color: ${token("colors.border")};
     --focus-ring-color: var(--chakra-colors-color-palette-focus-ring);
   }
-`;
 
-const TokenTooltipPopup = styled.div`
-  position: fixed;
-  background-color: ${token("colors.bg")};
-  border: 1px solid ${token("colors.border")};
-  border-radius: ${token("radii.md")};
-  padding: ${token("spacing.2")} ${token("spacing.3")};
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  pointer-events: none;
-  z-index: 1001;
-  max-width: 240px;
-`;
-
-const TokenTooltipType = styled.div`
-  font-size: 0.7rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: ${token("colors.fg.muted")};
-`;
-
-const TokenTooltipDescription = styled.div`
-  font-size: 0.8rem;
-  color: ${token("colors.fg")};
-  margin-top: ${token("spacing.1")};
-`;
-
-type TooltipContent = { label: string; description: string };
-
-const getTooltipContent = (type: string, metadata?: string): TooltipContent | null => {
-  switch (type) {
-    case "keyword":
-      return { label: "Keyword", description: "QQL language keyword" };
-    case "column":
-      return { label: "Column", description: "Reference to a field or column" };
-    case "string":
-      return { label: "String", description: "String literal value" };
-    case "function":
-      return { label: "Function", description: "Aggregation or transformation function" };
-    case "booleanFunction":
-      return { label: "Boolean Function", description: "Function returning a boolean" };
-    case "number":
-      return { label: "Number", description: "Numeric literal value" };
-    case "operator":
-      return { label: "Operator", description: "Comparison or logical operator" };
-    case "regex":
-      return { label: "Regex", description: "Regular expression pattern" };
-    case "error":
-      return { label: "Syntax Error", description: metadata ?? "Unexpected token" };
-    case "param":
-      return { label: "Parameter", description: "Query parameter name" };
-    case "index":
-      return { label: "Index Value", description: "Parameter or index value" };
-    case "pipe":
-      return { label: "Pipeline", description: "Separates pipeline commands" };
-    case "datasource":
-      return { label: "Datasource", description: "Data source selector" };
-    case "identifier":
-      return { label: "Identifier", description: "Field or token identifier" };
-    case "comment":
-      return { label: "Comment", description: "Ignored by the parser" };
-    default:
-      return null;
+  & pre {
+    z-index: 2;
   }
-};
 
-type HoveredToken = {
-  type: string;
-  metadata?: string;
-  tokenCenterX: number;
-  tokenBottom: number;
-};
+  & textarea {
+    z-index: 1;
+  }
+`;
 
 const TextareaCustom = styled.textarea`
   color: transparent;
@@ -200,55 +136,9 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
 
     const [cursorPosition, setCursorPosition] = useState(value.length);
     const [isCompleterOpen, setIsCompleterOpen] = useState(false);
-    const [hoveredToken, setHoveredToken] = useState<HoveredToken | null>(null);
-    const tooltipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-    const handleMouseMove = useCallback(
-      (e: React.MouseEvent<HTMLTextAreaElement>) => {
-        if (!preElement.current) {
-          setHoveredToken(null);
-          return;
-        }
-        const { clientX, clientY } = e;
-        const spans =
-          preElement.current.querySelectorAll<HTMLElement>(
-            "span[data-token-type]",
-          );
-        for (const span of spans) {
-          const rect = span.getBoundingClientRect();
-          if (
-            clientX >= rect.left &&
-            clientX <= rect.right &&
-            clientY >= rect.top &&
-            clientY <= rect.bottom
-          ) {
-            const type = span.dataset.tokenType!;
-            const metadata = span.dataset.tokenMeta;
-            if (tooltipTimerRef.current) clearTimeout(tooltipTimerRef.current);
-            tooltipTimerRef.current = setTimeout(() => {
-              setHoveredToken({
-                type,
-                metadata,
-                tokenCenterX: rect.left + rect.width / 2,
-                tokenBottom: rect.bottom,
-              });
-            }, 400);
-            return;
-          }
-        }
-        if (tooltipTimerRef.current) clearTimeout(tooltipTimerRef.current);
-        setHoveredToken(null);
-      },
-      [],
-    );
-
-    const handleMouseLeave = useCallback(() => {
-      if (tooltipTimerRef.current) clearTimeout(tooltipTimerRef.current);
-      setHoveredToken(null);
-    }, []);
 
     const [hoveredCompletionItem, setHoveredCompletionItem] =
-      useState<number>(0);
+      useState<number | undefined>(undefined);
     const [hasInteractedWithMenu, setHasInteractedWithMenu] = useState(false);
 
     const writtenWord = useMemo(() => {
@@ -275,18 +165,30 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
         results.add(suggestion);
       }
 
-      return Array.from(results).filter((suggestion) =>
-        writtenWord ? suggestion.value.startsWith(writtenWord) : true,
-      );
+      return Array.from(results).filter((suggestion) => {
+        if (!writtenWord) return true;
+        // For quoted values like `"main"`, match the inner text when the user
+        // hasn't typed the opening quote yet, or the full value when they have.
+        const valueToMatch =
+          suggestion.value.startsWith('"') && !writtenWord.startsWith('"')
+            ? suggestion.value.slice(1, -1)
+            : suggestion.value;
+        return valueToMatch.startsWith(writtenWord);
+      });
     }, [suggestions, cursorPosition, writtenWord]);
 
     const acceptCompletion = () => {
-      const startPos = cursorPosition - writtenWord.length;
-      const endPos =
-        startPos + filteredSuggestions[hoveredCompletionItem].value.length;
+      let startPos = cursorPosition - writtenWord.length;
+      const insertText = filteredSuggestions[hoveredCompletionItem ?? 0].value;
+      // Avoid double-quoting: if the user already typed the opening `"` and
+      // the completion also starts with `"`, roll back one extra character.
+      if (startPos > 0 && value[startPos - 1] === '"' && insertText.startsWith('"')) {
+        startPos -= 1;
+      }
+      const endPos = startPos + insertText.length;
       onChange(
         value.slice(0, startPos) +
-          filteredSuggestions[hoveredCompletionItem].value +
+          insertText +
           value.slice(cursorPosition),
       );
       // set cursor position to end of the word
@@ -302,23 +204,41 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
 
     const advanceHoveredItem = () => {
       setHoveredCompletionItem((prev) => {
-        if (prev === filteredSuggestions.length - 1) {
-          return 0;
-        }
-
-        return prev + 1;
+        const current = prev ?? -1;
+        return current === filteredSuggestions.length - 1 ? 0 : current + 1;
       });
     };
 
     const retreatHoveredItem = () => {
       setHoveredCompletionItem((prev) => {
-        if (prev === 0) {
-          return filteredSuggestions.length - 1;
-        }
-
-        return prev - 1;
+        const current = prev ?? filteredSuggestions.length;
+        return current === 0 ? filteredSuggestions.length - 1 : current - 1;
       });
     };
+
+    const ghostTextInfo = useMemo(() => {
+      if (!isCompleterOpen || filteredSuggestions.length === 0) return undefined;
+      const suggestion = filteredSuggestions[hoveredCompletionItem ?? 0];
+      if (!suggestion) return undefined;
+
+      const sv = suggestion.value;
+      let ghost: string;
+      if (sv.startsWith('"') && !writtenWord.startsWith('"')) {
+        // Suggestion is quoted but user hasn't typed the opening quote yet.
+        // Nothing typed: show the full quoted value (the `"` will be inserted too).
+        // Some chars typed: show the inner suffix + closing quote.
+        if (writtenWord.length === 0) {
+          ghost = sv;
+        } else {
+          ghost = sv.slice(1, -1).slice(writtenWord.length) + '"';
+        }
+      } else {
+        ghost = sv.slice(writtenWord.length);
+      }
+
+      if (!ghost) return undefined;
+      return { text: ghost, offset: cursorPosition };
+    }, [isCompleterOpen, filteredSuggestions, hoveredCompletionItem, writtenWord, cursorPosition]);
 
     const syncScroll = () => {
       if (!referenceElement || !preElement.current) return;
@@ -329,11 +249,6 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
 
     return (
       <EditorWrapper>
-        <TextHighlighter
-          value={value}
-          highlightData={highlightData}
-          ref={preElement}
-        />
         <TextareaCustom
           placeholder="Type your query here..."
           value={value}
@@ -391,8 +306,6 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
 
             setCursorPosition(e.currentTarget.selectionStart);
           }}
-          onMouseMove={handleMouseMove}
-          onMouseLeave={handleMouseLeave}
           onInput={() => {
             syncScroll();
           }}
@@ -410,10 +323,17 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
               e.target.value.length > value.length &&
               !["\n", " "].includes(char);
 
+            // Also open on space if there are suggestions that start exactly at
+            // the new cursor position (e.g. after a complete controller param).
+            const isSpaceAdded = e.target.value.length > value.length && char === " ";
+            const hasFreshSuggestions =
+              isSpaceAdded &&
+              suggestions.some((s) => s.fromPosition === selectionStart);
+
             onChange(e.target.value);
             setCursorPosition(e.currentTarget.selectionStart);
-            setIsCompleterOpen(isCharAdded);
-            setHoveredCompletionItem(0);
+            setIsCompleterOpen(isCharAdded || hasFreshSuggestions);
+            setHoveredCompletionItem(undefined);
             setHasInteractedWithMenu(false);
 
             setPos(
@@ -423,6 +343,13 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
               ),
             );
           }}
+        />
+        <TextHighlighter
+          value={value}
+          highlightData={highlightData}
+          ref={preElement}
+          ghostText={ghostTextInfo?.text}
+          ghostTextOffset={ghostTextInfo?.offset}
         />
         {isCompleterOpen &&
           popperRoot &&
@@ -435,28 +362,6 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
             </div>,
             popperRoot,
           )}
-        {hoveredToken &&
-          popperRoot &&
-          (() => {
-            const content = getTooltipContent(
-              hoveredToken.type,
-              hoveredToken.metadata,
-            );
-            if (!content) return null;
-            return createPortal(
-              <TokenTooltipPopup
-                style={{
-                  left: hoveredToken.tokenCenterX,
-                  top: hoveredToken.tokenBottom + 4,
-                  transform: "translateX(-50%)",
-                }}
-              >
-                <TokenTooltipType>{content.label}</TokenTooltipType>
-                <TokenTooltipDescription>{content.description}</TokenTooltipDescription>
-              </TokenTooltipPopup>,
-              popperRoot,
-            );
-          })()}
       </EditorWrapper>
     );
   },

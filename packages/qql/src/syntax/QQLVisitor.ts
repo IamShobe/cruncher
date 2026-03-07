@@ -48,6 +48,7 @@ import { LiteralBooleanContext } from "./QQL.js";
 import { LiteralStringContext } from "./QQL.js";
 import { RegexLiteralContext } from "./QQL.js";
 import { IdentifierOrStringContext } from "./QQL.js";
+import { KeywordContext } from "./QQL.js";
 
 
 /**
@@ -328,5 +329,11 @@ export class QQLVisitor<Result> extends AbstractParseTreeVisitor<Result> {
      * @return the visitor result
      */
     visitIdentifierOrString?: (ctx: IdentifierOrStringContext) => Result;
+    /**
+     * Visit a parse tree produced by `QQL.keyword`.
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    visitKeyword?: (ctx: KeywordContext) => Result;
 }
 

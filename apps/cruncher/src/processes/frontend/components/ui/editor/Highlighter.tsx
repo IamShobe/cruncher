@@ -1,9 +1,11 @@
 import styled from "@emotion/styled";
 import React, { useMemo } from "react";
 import { token } from "../system";
+import { HoverCard, Text } from "@chakra-ui/react";
+import { Portal } from "~components/ui/portal";
 
 const StyledPre = styled.pre`
-  /* background-color: #f8f8f8; */
+  pointer-events: none;
 `;
 
 export type HighlightData = {
@@ -18,6 +20,8 @@ export type HighlightData = {
 export type HighlighterProps = {
   value: string;
   highlightData: HighlightData[];
+  ghostText?: string;
+  ghostTextOffset?: number;
 };
 
 type HighlightedText = {
@@ -125,52 +129,170 @@ const typeToStyle = (type: string) => {
   return { color: token("colors.syntax.default") };
 };
 
+type TooltipContent = { label: string; description: string };
+
+const getTooltipContent = (type: string, metadata?: string): TooltipContent | null => {
+  switch (type) {
+    case "keyword":
+      return { label: "Keyword", description: "QQL language keyword" };
+    case "column":
+      return { label: "Column", description: "Reference to a field or column" };
+    case "string":
+      return { label: "String", description: "String literal value" };
+    case "function":
+      return { label: "Function", description: "Aggregation or transformation function" };
+    case "booleanFunction":
+      return { label: "Boolean Function", description: "Function returning a boolean" };
+    case "number":
+      return { label: "Number", description: "Numeric literal value" };
+    case "operator":
+      return { label: "Operator", description: "Comparison or logical operator" };
+    case "regex":
+      return { label: "Regex", description: "Regular expression pattern" };
+    case "error":
+      return { label: "Syntax Error", description: metadata ?? "Unexpected token" };
+    case "param":
+      return { label: "Parameter", description: "Query parameter name" };
+    case "index":
+      return { label: "Index Value", description: "Parameter or index value" };
+    case "pipe":
+      return { label: "Pipeline", description: "Separates pipeline commands" };
+    case "datasource":
+      return { label: "Datasource", description: "Data source selector" };
+    case "identifier":
+      return { label: "Identifier", description: "Field or token identifier" };
+    case "comment":
+      return { label: "Comment", description: "Ignored by the parser" };
+    default:
+      return null;
+  }
+};
+
+const TokenSpan = styled.span`
+  pointer-events: auto;
+  &:not([data-token-type="error"]):hover {
+    text-decoration: underline;
+  }
+`;
+
+const GhostSpan = styled.span`
+  opacity: 0.35;
+  pointer-events: none;
+`;
+
 const renderChunks = (text: string, highlightData: HighlightData[]) => {
-  const render = splitTextToChunks(text, highlightData).map<React.ReactNode>(
+  const nodes = splitTextToChunks(text, highlightData).map<React.ReactNode>(
     (chunk, index) => {
       if (typeof chunk === "string") {
         return chunk;
       }
 
+      if (chunk.type === "ghost") {
+        return <GhostSpan key={index}>{chunk.value}</GhostSpan>;
+      }
+
       const style = typeToStyle(chunk.type);
+      const content = getTooltipContent(chunk.type, chunk.metadata);
+
+      if (!content) {
+        return (
+          <TokenSpan key={index} style={style} data-token-type={chunk.type}>
+            {chunk.value}
+          </TokenSpan>
+        );
+      }
 
       return (
-        <span
+        <HoverCard.Root
           key={index}
-          style={style}
-          data-token-type={chunk.type}
-          data-token-meta={chunk.metadata}
+          openDelay={150}
+          closeDelay={200}
+          lazyMount
+          unmountOnExit
         >
-          {chunk.value}
-        </span>
+          <HoverCard.Trigger asChild>
+            <TokenSpan style={style} data-token-type={chunk.type}>
+              {chunk.value}
+            </TokenSpan>
+          </HoverCard.Trigger>
+          <Portal>
+            <HoverCard.Positioner>
+              <HoverCard.Content maxWidth="260px">
+                <HoverCard.Arrow />
+                <Text
+                  fontSize="xs"
+                  fontWeight="semibold"
+                  textTransform="uppercase"
+                  letterSpacing="wider"
+                  color="fg.muted"
+                >
+                  {content.label}
+                </Text>
+                <Text fontSize="sm" color="fg" mt="1">
+                  {content.description}
+                </Text>
+              </HoverCard.Content>
+            </HoverCard.Positioner>
+          </Portal>
+        </HoverCard.Root>
       );
     },
   );
 
-  if (render.length === 0) {
-    return text;
-  }
-
-  return render.reduce((prev, curr) => [prev, curr]);
+  if (nodes.length === 0) return text;
+  return nodes.reduce((prev, curr) => [prev, curr]);
 };
 
 export const TextHighlighter = React.forwardRef<
   HTMLPreElement,
   HighlighterProps
->(({ value, highlightData }, ref) => {
-  const textToRender = useMemo(() => {
+>(({ value, highlightData, ghostText, ghostTextOffset }, ref) => {
+  const { displayText, displayHighlightData } = useMemo(() => {
     let text = value;
     if (text[text.length - 1] == "\n") {
-      // If the last character is a newline character
-      text += " "; // Add a placeholder space character to the final line
+      text += " ";
     }
-    // Update code
-    return text
-      .replace(new RegExp("&", "g"), "&")
-      .replace(new RegExp("<", "g"), "<"); /* Global RegExp */
-  }, [value]);
+
+    // Insert ghost text at the cursor offset and shift token offsets accordingly
+    let data = highlightData;
+    if (ghostText && ghostTextOffset !== undefined && ghostText.length > 0) {
+      text =
+        text.slice(0, ghostTextOffset) + ghostText + text.slice(ghostTextOffset);
+
+      const ghostLen = ghostText.length;
+      data = [
+        ...highlightData.map((h) => {
+          if (h.token.startOffset < ghostTextOffset) return h;
+          return {
+            ...h,
+            token: {
+              startOffset: h.token.startOffset + ghostLen,
+              endOffset:
+                h.token.endOffset !== undefined
+                  ? h.token.endOffset + ghostLen
+                  : undefined,
+            },
+          };
+        }),
+        {
+          type: "ghost",
+          token: {
+            startOffset: ghostTextOffset,
+            endOffset: ghostTextOffset + ghostLen - 1,
+          },
+        },
+      ];
+    }
+
+    // Entity-encode after all text manipulation
+    text = text
+      .replace(new RegExp("&", "g"), "&amp;")
+      .replace(new RegExp("<", "g"), "&lt;");
+
+    return { displayText: text, displayHighlightData: data };
+  }, [value, highlightData, ghostText, ghostTextOffset]);
 
   return (
-    <StyledPre ref={ref}>{renderChunks(textToRender, highlightData)}</StyledPre>
+    <StyledPre ref={ref}>{renderChunks(displayText, displayHighlightData)}</StyledPre>
   );
 });

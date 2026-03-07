@@ -36,6 +36,10 @@
     "watch-routes": {
       "cache": false,
       "persistent": true
+    },
+    "generate:watch": {
+      "cache": false,
+      "persistent": true
     }
   }
 }
