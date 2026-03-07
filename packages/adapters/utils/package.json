@@ -1,6 +1,10 @@
 {
   "name": "@cruncher/adapter-utils",
   "version": "0.3.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/IamShobe/cruncher"
+  },
   "description": "Utility functions for Cruncher adapters.",
   "publishConfig": {
     "access": "public"

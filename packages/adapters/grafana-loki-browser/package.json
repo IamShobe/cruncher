@@ -1,6 +1,10 @@
 {
   "name": "@cruncher/adapter-grafana-loki-browser",
   "version": "0.3.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/IamShobe/cruncher"
+  },
   "description": "Grafana Loki browser adapter for Cruncher.",
   "publishConfig": {
     "access": "public"

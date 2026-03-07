@@ -2,6 +2,10 @@
   "name": "@cruncher/adapter-coralogix",
   "type": "module",
   "version": "0.3.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/IamShobe/cruncher"
+  },
   "description": "Coralogix adapter for Cruncher.",
   "publishConfig": {
     "access": "public"
