@@ -1,4 +1,5 @@
 import { css } from "@emotion/react";
+import { token } from "./system";
 
 type ShortcutProps = {
   keys: string[];
@@ -9,7 +10,7 @@ export const Shortcut = ({ keys }: ShortcutProps) => {
     <span
       css={css`
         font-size: 0.8rem;
-        color: #666;
+        color: ${token("colors.fg.subtle")};
       `}
     >
       {keys.join("")}

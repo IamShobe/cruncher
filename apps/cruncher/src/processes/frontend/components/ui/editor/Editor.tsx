@@ -1,4 +1,5 @@
 import styled from "@emotion/styled";
+import { token } from "../system";
 import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 
@@ -35,7 +36,7 @@ const EditorWrapper = styled.div`
       "Segoe UI Emoji",
       "Segoe UI Symbol",
       "Noto Color Emoji";
-    border: 1px solid #d2d6dc;
+    border: 1px solid ${token("colors.border")};
     word-spacing: 0;
     letter-spacing: normal;
     /* font-size: 14px; */
@@ -55,7 +56,7 @@ const EditorWrapper = styled.div`
     background: var(--chakra-colors-transparent);
     --bg-currentcolor: var(--chakra-colors-transparent);
     border-width: 1px;
-    border-color: var(--chakra-colors-border);
+    border-color: ${token("colors.border")};
     --focus-ring-color: var(--chakra-colors-color-palette-focus-ring);
   }
 `;
@@ -70,7 +71,7 @@ const TextareaCustom = styled.textarea`
 
   background-color: transparent;
   border: none;
-  caret-color: #fff;
+  caret-color: ${token("colors.fg")};
 
   &:focus-visible {
     outline-offset: 0px;

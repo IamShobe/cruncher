@@ -1,4 +1,5 @@
 import { css } from "@emotion/react";
+import { token } from "~components/ui/system";
 import type { Range } from "@tanstack/react-virtual";
 import { defaultRangeExtractor, useVirtualizer } from "@tanstack/react-virtual";
 import { atom, useSetAtom } from "jotai";
@@ -192,7 +193,7 @@ const DataLog: React.FC<DataRowProps> = () => {
                 top: 0,
                 left: 0,
                 width: "100%",
-                backgroundColor: "rgb(17, 18, 23)",
+                backgroundColor: token("colors.bg"),
               }}
             >
               <DataRow row={logs[index]} index={index} />

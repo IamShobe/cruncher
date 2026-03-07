@@ -1,5 +1,6 @@
 import { Card } from "@chakra-ui/react";
 import { css } from "@emotion/react";
+import { token } from "../system";
 import { useEffect, useRef } from "react";
 import { AiOutlineFunction } from "react-icons/ai";
 import {
@@ -67,7 +68,15 @@ export const AutoCompleter = ({
   }
 
   return (
-    <Card.Root width="200px" overflow="hidden" zIndex={1}>
+    <Card.Root
+      width="200px"
+      overflow="hidden"
+      zIndex={1}
+      bg="bg.muted"
+      borderWidth="1px"
+      borderColor="border"
+      color="fg"
+    >
       <Card.Body
         ref={scrollerRef}
         padding="0"
@@ -95,7 +104,8 @@ export const AutoCompleter = ({
                 ${
                   hoveredItem === index &&
                   css`
-                    background-color: #686;
+                    background-color: ${token("colors.accent.subtle")};
+                    color: ${token("colors.accent.muted")};
                   `
                 }
               `}

@@ -1,5 +1,6 @@
 import { css } from "@emotion/react";
 import styled from "@emotion/styled";
+import { token } from "~components/ui/system";
 import { parse } from "ansicolor";
 import { useAtomValue, useSetAtom } from "jotai";
 import React, { useMemo } from "react";
@@ -20,40 +21,41 @@ const getColorFromObject = (
 ) => {
   const level = object[columnName]?.value;
   if (typeof level !== "string") {
-    return "rgb(44, 175, 0)";
+    return token("colors.log.default");
   }
 
   switch (level) {
     case "error":
-      return "rgb(185, 31, 31)";
+      return token("colors.log.error");
     case "warn":
-      return "rgb(174, 158, 33)";
+      return token("colors.log.warn");
     default:
-      return "rgb(44, 175, 0)";
+      return token("colors.log.default");
   }
 };
 
 const StyledRow = styled.div`
   display: flex;
   flex-direction: row;
+  border-bottom: 1px solid ${token("colors.border.muted")};
   &:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: ${token("colors.bg.subtle")};
   }
   & ::selection {
-    background-color: rgba(255, 255, 255, 0.5);
+    background-color: ${token("colors.accent.subtle")};
   }
 `;
 
 const StyledGutter = styled.div<{ row: ProcessedData }>`
-  width: 6px;
-  border-right: 1px solid rgb(49, 54, 63);
+  width: 4px;
   background-color: ${({ row }) =>
     getColorFromObject(
       row.object,
       "level",
     )}; // TODO: this needs to be configurable by user
   flex-shrink: 0;
-  margin-right: 0.3rem;
+  margin-right: 0.4rem;
+  opacity: 0.85;
 `;
 
 const DataRow: React.FC<DataRowProps> = ({ row, index }) => {
@@ -92,6 +94,11 @@ const DataRow: React.FC<DataRowProps> = ({ row, index }) => {
           <div
             style={{
               width: 170,
+              color: token("colors.fg.muted"),
+              fontFamily: "monospace",
+              fontSize: "0.75rem",
+              flexShrink: 0,
+              paddingTop: "1px",
             }}
           >
             {formatDataTime(asDateField(row.object._time).value)}
@@ -99,6 +106,7 @@ const DataRow: React.FC<DataRowProps> = ({ row, index }) => {
           <div
             style={{
               flex: 1,
+              color: token("colors.fg"),
             }}
           >
             {parse(row.message).spans.map((span, spanIndex) => {

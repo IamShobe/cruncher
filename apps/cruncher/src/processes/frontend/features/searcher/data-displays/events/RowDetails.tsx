@@ -1,5 +1,6 @@
 import { Box, IconButton, Menu } from "@chakra-ui/react";
 import { css } from "@emotion/react";
+import { token } from "~components/ui/system";
 import { useAtomValue, useSetAtom } from "jotai";
 import React, { useMemo } from "react";
 import {
@@ -49,8 +50,10 @@ export const RowDetails = ({
   return (
     <div
       css={css`
-        margin: 0.3rem 0.6rem;
-        background-color: rgb(24, 24, 24);
+        margin: 0 0 0 4px;
+        background-color: ${token("colors.bg.subtle")};
+        border-left: 2px solid ${token("colors.border")};
+        border-bottom: 1px solid ${token("colors.border")};
       `}
     >
       {Object.entries(row.object)
@@ -96,16 +99,17 @@ export const RowDetail: React.FC<DataRowProps> = ({ rowKey, rowValue }) => {
       css={css`
         display: flex;
         flex-direction: row;
-        padding: 0.1rem 0.6rem;
-        line-height: 1;
+        padding: 0.2rem 0.8rem;
+        line-height: 1.5;
+        border-bottom: 1px solid ${token("colors.border.muted")};
         &:hover {
-          background-color: rgba(0, 0, 0, 0.3);
+          background-color: ${token("colors.bg.emphasized")};
         }
       `}
     >
       <div
         css={css`
-          color: rgb(139, 142, 149);
+          color: ${token("colors.fg.muted")};
           margin-right: 0.3rem;
           width: 15rem;
           flex-shrink: 0;

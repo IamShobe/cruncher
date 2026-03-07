@@ -1,8 +1,7 @@
-import { Badge, Icon, IconButton, Separator, Stack } from "@chakra-ui/react";
+import { Badge, Box, IconButton, Separator, Stack } from "@chakra-ui/react";
 import { Link } from "@tanstack/react-router";
 import { ReactNode } from "react";
 import { LuBolt, LuFileSearch, LuKeyboard } from "react-icons/lu";
-import logo from "src/icons/png/256x256.png";
 import {
   ApplicationStore,
   useApplicationStore,
@@ -27,18 +26,14 @@ export const SideMenu = () => {
   const setShortcutsShown = useSetShortcutsShown();
 
   return (
-    <Stack direction="row" backgroundColor="rgb(22, 23, 29)" gap={0}>
-      <Stack p={2} justify="space-between">
+    <Stack
+      direction="row"
+      gap={0}
+      bg="bg.subtle"
+    >
+      <Stack p={2} justify="space-between" align="center">
         <Stack>
-          <Icon>
-            <img
-              src={logo}
-              alt="Cruncher Logo"
-              style={{ width: "40px", height: "40px" }}
-            />
-          </Icon>
-          <Separator />
-          <Stack gap={2}>
+          <Stack gap={2} align="center">
             <Link to="/">
               {({ isActive }) => (
                 <MenuButton
@@ -52,16 +47,18 @@ export const SideMenu = () => {
         </Stack>
 
         <Stack>
-          <Separator />
+          <Separator borderColor="border" />
           <Tooltip
             text="Keyboard Shortcuts"
             position="right"
             shortcut={globalShortcuts.getAlias("toggle-help")}
           >
             <IconButton
-              variant={"outline"}
-              size="2xs"
+              variant={"ghost"}
+              size="sm"
               onClick={() => setShortcutsShown((prev) => !prev)}
+              color="fg.subtle"
+              _hover={{ bg: "bg.muted", color: "fg.muted" }}
             >
               <LuKeyboard />
             </IconButton>
@@ -77,12 +74,19 @@ export const SideMenu = () => {
               )}
             </Link>
           </Stack>
-          <Badge size="xs" variant="surface" justifyContent="center">
+          <Badge
+            size="xs"
+            variant="surface"
+            justifyContent="center"
+            bg="border"
+            color="fg.muted"
+            fontSize="0.6rem"
+          >
             {version}
           </Badge>
         </Stack>
       </Stack>
-      <Separator orientation="vertical" m={0} p={0} />
+      <Separator orientation="vertical" m={0} p={0} borderColor="border" />
     </Stack>
   );
 };
@@ -94,7 +98,18 @@ const MenuButton: React.FC<{
 }> = ({ isActive: isSelected, tooltip, icon }) => {
   return (
     <Tooltip text={tooltip} position="right">
-      <IconButton variant={isSelected ? "solid" : "outline"}>{icon}</IconButton>
+      <IconButton
+        variant="ghost"
+        size="sm"
+        bg={isSelected ? "border" : "transparent"}
+        color={isSelected ? "accent.muted" : "fg.subtle"}
+        _hover={{ bg: "bg.muted", color: "fg.muted" }}
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+      >
+        {icon}
+      </IconButton>
     </Tooltip>
   );
 };

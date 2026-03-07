@@ -1,5 +1,6 @@
 import styled from "@emotion/styled";
 import React, { useMemo } from "react";
+import { token } from "../system";
 
 const StyledPre = styled.pre`
   /* background-color: #f8f8f8; */
@@ -71,31 +72,34 @@ export const splitTextToChunks = (
 const typeToStyle = (type: string) => {
   switch (type) {
     case "keyword":
-      return { color: "rgb(105, 105, 177)" };
+      return { color: token("colors.syntax.keyword") };
 
     case "column":
-      return { color: "rgb(105, 177, 105)" };
+      return { color: token("colors.syntax.column") };
 
     case "string":
-      return { color: "rgb(177, 105, 105)" };
+      return { color: token("colors.syntax.string") };
 
     case "function":
-      return { color: "rgb(177, 105, 177)" };
+      return { color: token("colors.syntax.function") };
 
     case "booleanFunction":
-      return { color: "rgb(177, 177, 105)" };
+      return { color: token("colors.syntax.boolean") };
 
     case "error":
-      return { color: "red", textDecoration: "wavy underline red" };
+      return {
+        color: token("colors.log.error"),
+        textDecoration: `wavy underline ${token("colors.log.error")}`,
+      };
 
     case "param":
-      return { color: "rgb(105, 177, 177)" };
+      return { color: token("colors.syntax.param") };
 
     case "comment":
-      return { color: "rgb(173, 196, 176)" };
+      return { color: token("colors.syntax.comment") };
   }
 
-  return { color: "gray" };
+  return { color: token("colors.syntax.default") };
 };
 
 const renderChunks = (text: string, highlightData: HighlightData[]) => {

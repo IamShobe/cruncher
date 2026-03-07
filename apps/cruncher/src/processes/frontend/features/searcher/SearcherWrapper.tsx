@@ -1,5 +1,6 @@
 import { Box, Stack } from "@chakra-ui/react";
 import { css } from "@emotion/react";
+import { token } from "~components/ui/system";
 import { atom, createStore, Provider, useAtom, useAtomValue } from "jotai";
 import { v4 as uuidv4 } from "uuid";
 import React, { useCallback, useState } from "react";
@@ -260,15 +261,16 @@ export const SearcherWrapper = () => {
           overflow-y: hidden;
           box-sizing: border-box;
           width: 100%;
-          height: 36px;
+          height: 38px;
           flex-shrink: 0;
-          background-color: rgb(22, 23, 29);
+          background-color: ${token("colors.bg")};
+          border-bottom: 1px solid ${token("colors.border")};
           -webkit-app-region: drag;
           &::-webkit-scrollbar {
             height: 2px;
           }
           &::-webkit-scrollbar-thumb {
-            background-color: rgba(255, 255, 255, 0.3);
+            background-color: ${token("colors.accent")};
           }
         `}
       >
@@ -332,13 +334,15 @@ export const DisplayTab: React.FC<{
       alignItems="center"
       key={tab.key}
       css={css`
-        padding: 0 0.35rem;
-        color: ${selectedTab === index ? "white" : "rgba(255,255,255,0.45)"};
+        padding: 0 0.35rem 0 calc(0.35rem + 16px);
+        color: ${selectedTab === index ? token("colors.fg") : token("colors.fg.muted")};
         background-color: ${
-          selectedTab === index ? "rgba(255, 255, 255, 0.07)" : "transparent"
+          selectedTab === index ? token("colors.bg.muted") : "transparent"
         };
         border-bottom: ${
-          selectedTab === index ? "2px solid #3182ce" : "2px solid transparent"
+          selectedTab === index
+            ? `2px solid ${token("colors.accent")}`
+            : "2px solid transparent"
         };
         cursor: pointer;
         display: flex;
@@ -347,24 +351,33 @@ export const DisplayTab: React.FC<{
         flex-shrink: 0;
         min-width: 0;
         gap: 0.4rem;
-        border-radius: ${index === 0 ? "0 6px 0 0" : "6px 6px 0 0"};
+        border-radius: 0;
         font-size: 0.8rem;
         -webkit-app-region: no-drag;
         transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out;
+        & .close-btn {
+          opacity: 0;
+          visibility: hidden;
+          transition: opacity 0.15s ease-in-out, visibility 0.15s;
+        }
+        &:hover .close-btn {
+          opacity: 1;
+          visibility: visible;
+        }
         &:focus,
         &:focus-visible {
           outline: none;
-          background-color: rgba(255, 255, 255, 0.07);
+          background-color: ${token("colors.bg.muted")};
         }
         &:focus-visible {
-          box-shadow: 0 0 0 2px rgba(49, 130, 206, 0.6);
+          box-shadow: 0 0 0 2px ${token("colors.accent.subtle")};
         }
         &:hover,
         &:active,
         &:focus,
         &:focus-visible {
-          background-color: rgba(255, 255, 255, 0.1);
-          color: rgba(255, 255, 255, 0.8);
+          background-color: ${token("colors.bg.subtle")};
+          color: ${token("colors.fg")};
         }
       `}
       onClick={() => setSelectedTab(index)}
@@ -382,7 +395,7 @@ export const DisplayTab: React.FC<{
             width: Math.max(80, editingValue.length * 8),
             background: "rgba(0,0,0,0.3)",
             color: "white",
-            border: "1px solid #3182ce",
+            border: `1px solid ${token("colors.border.emphasized")}`,
             borderRadius: 4,
             padding: "2px 6px",
           }}
@@ -404,6 +417,7 @@ export const DisplayTab: React.FC<{
         tooltipShortcut={searcherGlobalShortcuts.getAlias("close-tab")}
         aria-label="Close tab"
         variant="ghost"
+        className="close-btn"
         css={css`
           width: 16px;
           height: 16px;

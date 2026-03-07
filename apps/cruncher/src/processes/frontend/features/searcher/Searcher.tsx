@@ -1,6 +1,7 @@
 import { Badge, Tabs } from "@chakra-ui/react";
 import { css } from "@emotion/react";
 import styled from "@emotion/styled";
+import { token } from "~components/ui/system";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useEffect, useState } from "react";
 import { LuChartArea, LuLogs, LuTable } from "react-icons/lu";
@@ -107,13 +108,31 @@ export const Searcher: React.FC<SearcherProps> = () => {
         `}
         onValueChange={(e) => selectTab(e.value)}
       >
-        <Tabs.List zIndex={10} alignItems="center">
+        <Tabs.List
+          zIndex={10}
+          alignItems="center"
+          px={4}
+          gap={1}
+          css={css`
+            background-color: ${token("colors.bg.subtle")};
+            border-bottom: 1px solid ${token("colors.border")};
+          `}
+        >
           <Tabs.Trigger value="logs">
-            <LuLogs /> Logs {eventsTotal > 0 && <Badge>{eventsTotal}</Badge>}
+            <LuLogs /> Logs{" "}
+            {eventsTotal > 0 && (
+              <Badge colorPalette="indigo" variant="subtle">
+                {eventsTotal}
+              </Badge>
+            )}
           </Tabs.Trigger>
           <Tabs.Trigger value="table" disabled={!hasTableView}>
             <LuTable /> Table{" "}
-            {tableTotalRows > 0 && <Badge>{tableTotalRows}</Badge>}
+            {tableTotalRows > 0 && (
+              <Badge colorPalette="indigo" variant="subtle">
+                {tableTotalRows}
+              </Badge>
+            )}
           </Tabs.Trigger>
           <Tabs.Trigger value="view" disabled={!hasViewChart}>
             <LuChartArea /> View

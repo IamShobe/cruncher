@@ -1,4 +1,5 @@
 import { Card } from "@chakra-ui/react";
+import { token } from "~components/ui/system";
 import { scaleLinear } from "d3-scale";
 import { useAtomValue } from "jotai";
 import { useMemo, useState } from "react";
@@ -75,7 +76,7 @@ export const ViewChart = ({}: ViewChartProps) => {
 
   if (isTooBig) {
     return (
-      <Card.Root>
+      <Card.Root bg="bg.muted" borderWidth="1px" borderColor="border" color="fg" fontSize="0.75rem">
         <Card.Body padding={2}>
           <p className="intro">
             Too many data points to display ({"> "}
@@ -94,11 +95,11 @@ export const ViewChart = ({}: ViewChartProps) => {
   return (
     <div
       className="highlight-bar-charts"
-      style={{ userSelect: "none", width: "100%" }}
+      style={{ userSelect: "none", width: "100%", background: token("colors.bg") }}
     >
       <ResponsiveContainer width="100%" minHeight={300}>
         <LineChart width={100} height={300} data={dataPoints}>
-          <CartesianGrid strokeDasharray="10 10" />
+          <CartesianGrid strokeDasharray="4 4" stroke={token("colors.border")} vertical={false} />
           <XAxis
             scale={scale}
             dataKey={view.XAxis}
@@ -106,8 +107,17 @@ export const ViewChart = ({}: ViewChartProps) => {
             domain={scale.domain()}
             tickFormatter={(value) => formatDataTimeShort(value)}
             type="number"
+            tick={{ fill: token("colors.fg.muted"), fontSize: 11 }}
+            axisLine={{ stroke: token("colors.border") }}
+            tickLine={{ stroke: token("colors.border") }}
           />
-          <YAxis yAxisId="1" />
+          <YAxis
+            yAxisId="1"
+            tick={{ fill: token("colors.fg.muted"), fontSize: 11 }}
+            axisLine={{ stroke: token("colors.border") }}
+            tickLine={{ stroke: token("colors.border") }}
+            width={40}
+          />
           <Tooltip
             content={<CustomTooltip selectedAxises={selectedSerieses} />}
           />
@@ -163,7 +173,7 @@ const CustomTooltip = ({
 
   if (active && payload && payload.length) {
     return (
-      <Card.Root>
+      <Card.Root bg="bg.muted" borderWidth="1px" borderColor="border" color="fg" fontSize="0.75rem">
         <Card.Body padding={2}>
           <p className="label">{formatDataTimeShort(label)}</p>
           {sortedPayload.slice(0, 10).map((item) => {

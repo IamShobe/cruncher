@@ -1,5 +1,6 @@
 import { Box, Heading, Stack } from "@chakra-ui/react";
 import { css } from "@emotion/react";
+import { token } from "~components/ui/system";
 import { createFileRoute, Outlet, Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/settings")({
@@ -48,7 +49,7 @@ const SettingsTab: React.FC<{
         display: flex;
         flex-direction: column;
         flex: 1;
-        ${isActive ? "border-bottom: 2px solid #3182ce;" : ""}
+        ${isActive ? `border-bottom: 2px solid ${token("colors.accent")};` : ""}
       `}
     >
       <Heading

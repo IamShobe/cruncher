@@ -1,6 +1,8 @@
 import { useRef, useState } from "react";
 
+import { Global, css } from "@emotion/react";
 import { Card } from "@chakra-ui/react";
+import { token } from "~components/ui/system";
 import { useAtomValue } from "jotai";
 import { isNil } from "lodash-es";
 import {
@@ -44,9 +46,21 @@ export const EventsHistogram = () => {
   }
 
   return (
+    <>
+    <Global styles={css`
+      .highlight-bar-charts *:focus {
+        outline: none !important;
+      }
+    `} />
     <div
       className="highlight-bar-charts"
-      style={{ userSelect: "none", width: "100%" }}
+      style={{
+        userSelect: "none",
+        width: "100%",
+        background: token("colors.bg"),
+        borderBottom: `1px solid ${token("colors.border")}`,
+        outline: "none",
+      }}
     >
       <ResponsiveContainer width="100%" height={100}>
         <BarChart
@@ -54,11 +68,13 @@ export const EventsHistogram = () => {
           ref={ref}
           height={400}
           data={dataBuckets}
+          style={{ background: token("colors.bg") }}
+          tabIndex={-1}
           onMouseDown={async (e) => {
-            if (e.chartX === undefined) return;
+            if (e.activeLabel === undefined) return;
             if (!displayedJob) return;
 
-            const timestampClicked = scale.invert(e.chartX);
+            const timestampClicked = Number(e.activeLabel);
             setRefAreaLeft(timestampClicked);
 
             const clicked = await controller.getClosestDateEvent(
@@ -70,13 +86,13 @@ export const EventsHistogram = () => {
           }}
           onMouseMove={(e) => {
             if (!refAreaLeft) return;
-            if (e.chartX === undefined) return;
+            if (e.activeLabel === undefined) return;
 
-            setRefAreaRight(scale.invert(e.chartX));
+            setRefAreaRight(Number(e.activeLabel));
           }}
           onMouseUp={rangeSelected}
         >
-          <CartesianGrid strokeDasharray="10 10" />
+          <CartesianGrid strokeDasharray="4 4" stroke={token("colors.border")} vertical={false} />
           <XAxis
             scale={scale}
             dataKey="timestamp"
@@ -84,8 +100,19 @@ export const EventsHistogram = () => {
             domain={scale.domain()}
             tickFormatter={(value) => formatDataTimeShort(value)}
             type="number"
+            tick={{ fill: token("colors.fg.muted"), fontSize: 11 }}
+            axisLine={{ stroke: token("colors.border") }}
+            tickLine={{ stroke: token("colors.border") }}
           />
-          <YAxis domain={[0, "dataMax + 1"]} type="number" yAxisId="1" />
+          <YAxis
+            domain={[0, "dataMax + 1"]}
+            type="number"
+            yAxisId="1"
+            tick={{ fill: token("colors.fg.muted"), fontSize: 11 }}
+            axisLine={{ stroke: token("colors.border") }}
+            tickLine={{ stroke: token("colors.border") }}
+            width={32}
+          />
           <Tooltip
             content={
               <CustomTooltip leftArea={refAreaLeft} rightArea={refAreaRight} />
@@ -94,8 +121,8 @@ export const EventsHistogram = () => {
           <Bar
             yAxisId="1"
             dataKey="count"
-            stroke="#949494"
-            fill="#e0e0e0"
+            stroke={token("colors.border.emphasized")}
+            fill={token("colors.accent")}
             maxBarSize={10}
             animationDuration={300}
           />
@@ -103,11 +130,11 @@ export const EventsHistogram = () => {
             yAxisId="1"
             x1={rangeInView.start}
             x2={rangeInView.end}
-            fill="rgb(255, 255, 255)"
-            stroke="#3c55a7"
-            strokeWidth={2}
-            strokeOpacity={1}
-            fillOpacity={0.2}
+            fill={token("colors.accent")}
+            stroke={token("colors.accent.muted")}
+            strokeWidth={1}
+            strokeOpacity={0.8}
+            fillOpacity={0.08}
           />
 
           {refAreaLeft && refAreaRight ? (
@@ -121,6 +148,7 @@ export const EventsHistogram = () => {
         </BarChart>
       </ResponsiveContainer>
     </div>
+    </>
   );
 };
 
@@ -136,7 +164,13 @@ const CustomTooltip = ({
 }) => {
   if (active && payload && payload.length) {
     return (
-      <Card.Root>
+      <Card.Root
+        bg="bg.muted"
+        borderWidth="1px"
+        borderColor="border"
+        color="fg"
+        fontSize="0.75rem"
+      >
         <Card.Body padding={2}>
           {leftArea && rightArea ? (
             <p className="intro">

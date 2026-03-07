@@ -1,5 +1,6 @@
 import { Collapsible, Field, Menu } from "@chakra-ui/react";
 import styled from "@emotion/styled";
+import { token } from "~components/ui/system";
 import type React from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { ProgressBar, ProgressRoot } from "~components/ui/progress";
@@ -71,13 +72,12 @@ import {
 } from "../../../core/store/queryState";
 import { Timer } from "./Timer";
 import { Portal } from "~components/ui/portal";
-import { MiniIconButton } from "~components/presets/IconButton";
-
 const StyledHeader = styled.form`
   display: flex;
   gap: 0.4rem;
   flex-direction: row;
-  padding: 1rem 1rem 0.3rem 1rem;
+  padding: 0.75rem 1rem 0.5rem;
+  background-color: ${token("colors.bg")};
 
   // add media
   @media (max-width: 768px) {
@@ -153,7 +153,7 @@ const Header: React.FC<HeaderProps> = () => {
   const loaderValue = isLoading ? null : 100;
   const loaderColor = useMemo(() => {
     if (isLoading) {
-      return "gray" as const;
+      return "indigo" as const;
     }
 
     if (isQuerySuccess) {
@@ -257,7 +257,7 @@ const downloadFile = (filename: string, data: string, mimeType: string) => {
 
 const MiniButtons = () => {
   return (
-    <Stack gap={3} direction="row" alignItems="center" p={1.5}>
+    <Stack gap={0.5} direction="row" alignItems="center" p={0.5}>
       <ExportButton />
       <CopyShareLinkButton />
       <SettingsDrawer />
@@ -550,7 +550,7 @@ export const ExportButton: React.FC<{
             <IconButton
               aria-label="Export"
               size="2xs"
-              variant="surface"
+              variant="ghost"
               disabled={isDisabled}
             >
               <CiExport />
@@ -592,13 +592,20 @@ export const ExportButton: React.FC<{
 export const CopyShareLinkButton: React.FC = () => {
   const { copyCurrentShareLink } = useQueryActions();
   return (
-    <MiniIconButton
-      tooltip="Copy External Link"
-      tooltipShortcut={searcherShortcuts.getAlias("copy-link")}
-      onClick={copyCurrentShareLink}
+    <Tooltip
+      content={<span>Copy External Link</span>}
+      showArrow
+      positioning={{ placement: "bottom" }}
     >
-      <LuLink />
-    </MiniIconButton>
+      <IconButton
+        aria-label="Copy External Link"
+        size="2xs"
+        variant="ghost"
+        onClick={copyCurrentShareLink}
+      >
+        <LuLink />
+      </IconButton>
+    </Tooltip>
   );
 };
 

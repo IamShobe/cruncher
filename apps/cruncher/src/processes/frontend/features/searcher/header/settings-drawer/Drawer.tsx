@@ -13,7 +13,7 @@ export const SettingsDrawer = () => {
     <Drawer.Root size={"md"}>
       <Tooltip text="Search Settings">
         <Drawer.Trigger asChild>
-          <IconButton aria-label="Settings" size="2xs" variant="surface">
+          <IconButton aria-label="Settings" size="2xs" variant="ghost">
             <LuSettings />
           </IconButton>
         </Drawer.Trigger>
