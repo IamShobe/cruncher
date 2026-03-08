@@ -1,3 +1,11 @@
+## 0.2.3
+
+### Patch Changes
+
+- Updated dependencies [[`f8ee20b`](https://github.com/IamShobe/cruncher/commit/f8ee20bc9eb660b73dfca7ad3a3215abee73a122)]:
+  - @cruncher/adapter-utils@0.4.0
+  - @cruncher/qql@0.4.1
+
 ## 0.2.2
 
 ### Patch Changes
