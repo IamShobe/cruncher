@@ -209,7 +209,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
                       variant="ghost"
                       onClick={() =>
                         this.copyToClipboard(
-                          error.errors.map((e: any) => e.message).join("\n")
+                          error.errors.map((e: any) => e.message).join("\n"),
                         )
                       }
                     >
@@ -266,8 +266,11 @@ export class ErrorBoundary extends React.Component<Props, State> {
                       onClick={() =>
                         this.copyToClipboard(
                           error.errors
-                            .map((e: any) => `${e.line}:${e.column} - ${e.message}`)
-                            .join("\n")
+                            .map(
+                              (e: any) =>
+                                `${e.line}:${e.column} - ${e.message}`,
+                            )
+                            .join("\n"),
                         )
                       }
                     >
@@ -297,7 +300,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
                           variant="ghost"
                           onClick={() =>
                             this.copyToClipboard(
-                              `${e.line}:${e.column} - ${e.message}`
+                              `${e.line}:${e.column} - ${e.message}`,
                             )
                           }
                           flexShrink={0}
@@ -369,7 +372,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
                           onClick={(e) => {
                             e.stopPropagation();
                             this.copyToClipboard(
-                              this.state.errorInfo?.componentStack || ""
+                              this.state.errorInfo?.componentStack || "",
                             );
                           }}
                         >

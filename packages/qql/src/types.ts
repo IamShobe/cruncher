@@ -92,7 +92,7 @@ export type AggFunctionArg = {
 
 export type AggregationFunction = {
   function: string;
-  column: string | undefined;          // plain field name arg, e.g. `avg(latency)`
+  column: string | undefined; // plain field name arg, e.g. `avg(latency)`
   columnExpression: AggFunctionArg | undefined; // nested function arg, e.g. `avg(abs(latency))`
   alias: string | undefined;
 };

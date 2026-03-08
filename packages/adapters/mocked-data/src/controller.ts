@@ -72,8 +72,14 @@ export const MockController = {
       const fromTime = options.fromTime;
       const toTime = options.toTime;
 
+      const maxCount = Math.floor(Math.random() * 10) + 1; // 1–10 items per query
+
+      // Shuffle so each call returns a different random sample
+      const shuffled = [...filteredData].sort(() => Math.random() - 0.5);
+      const sampledData = shuffled.slice(0, maxCount);
+
       // convert the data to ProcessedData
-      const result = filteredData.map<ProcessedData>((item) => {
+      const result = sampledData.map<ProcessedData>((item) => {
         // get random time between fromTime and toTime
         const randomTime =
           Math.floor(Math.random() * (toTime.getTime() - fromTime.getTime())) +

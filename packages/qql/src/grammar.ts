@@ -78,7 +78,14 @@ export class QQLParser {
     parser.removeErrorListeners();
 
     const errorListener = {
-      syntaxError: (recognizer: any, offendingSymbol: any, line: number, column: number, msg: string, e: any) => {
+      syntaxError: (
+        recognizer: any,
+        offendingSymbol: any,
+        line: number,
+        column: number,
+        msg: string,
+        e: any,
+      ) => {
         this.errors.push({
           message: msg,
           line,

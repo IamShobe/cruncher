@@ -166,61 +166,72 @@ const COMMAND_DOCS: Record<string, Omit<TooltipContent, "icon">> = {
     label: "table",
     badge: "Command",
     syntax: "table <col> [as <alias>], ...",
-    description: "Selects and reorders columns in the result set. Use `as` to rename a column.",
+    description:
+      "Selects and reorders columns in the result set. Use `as` to rename a column.",
     docsUrl: `${DOCS_BASE}/qql-reference/commands/table/`,
   },
   "cmd:stats": {
     label: "stats",
     badge: "Command",
     syntax: "stats <fn>(<col>) [as <alias>] [by <col>, ...]",
-    description: "Aggregates results using functions like count, sum, avg, min, max. Group with `by`.",
+    description:
+      "Aggregates results using functions like count, sum, avg, min, max. Group with `by`.",
     docsUrl: `${DOCS_BASE}/qql-reference/commands/stats/`,
   },
   "cmd:where": {
     label: "where",
     badge: "Command",
     syntax: "where <expression>",
-    description: "Filters events by a boolean expression. Supports ==, !=, <, >, and, or, not, in(...).",
+    description:
+      "Filters events by a boolean expression. Supports ==, !=, <, >, and, or, not, in(...).",
     docsUrl: `${DOCS_BASE}/qql-reference/commands/where/`,
   },
   "cmd:sort": {
     label: "sort",
     badge: "Command",
     syntax: "sort <col> [asc|desc], ...",
-    description: "Orders results by one or more columns. Default order is ascending.",
+    description:
+      "Orders results by one or more columns. Default order is ascending.",
     docsUrl: `${DOCS_BASE}/qql-reference/commands/sort/`,
   },
   "cmd:eval": {
     label: "eval",
     badge: "Command",
     syntax: "eval <name> = <expression>",
-    description: "Creates or overwrites a field using an expression, arithmetic, or if/case logic.",
+    description:
+      "Creates or overwrites a field using an expression, arithmetic, or if/case logic.",
     docsUrl: `${DOCS_BASE}/qql-reference/commands/eval/`,
   },
   "cmd:regex": {
     label: "regex",
     badge: "Command",
     syntax: "regex [<field> =] `<pattern>`",
-    description: "Filters events where a field matches a regular expression. Omit the field to match against the raw event.",
+    description:
+      "Filters events where a field matches a regular expression. Omit the field to match against the raw event.",
     docsUrl: `${DOCS_BASE}/qql-reference/commands/regex/`,
   },
   "cmd:timechart": {
     label: "timechart",
     badge: "Command",
     syntax: "timechart [span=<interval>] <fn>(<col>) [by <col>]",
-    description: "Aggregates events over time buckets for charting. Use `span` to control the bucket size.",
+    description:
+      "Aggregates events over time buckets for charting. Use `span` to control the bucket size.",
     docsUrl: `${DOCS_BASE}/qql-reference/commands/timechart/`,
   },
   "cmd:unpack": {
     label: "unpack",
     badge: "Command",
     syntax: "unpack <field>",
-    description: "Expands a JSON object stored in a field, promoting its keys as top-level fields.",
+    description:
+      "Expands a JSON object stored in a field, promoting its keys as top-level fields.",
     docsUrl: `${DOCS_BASE}/qql-reference/commands/unpack/`,
   },
 };
 
-export const getTooltipContent = (type: string, metadata?: string): TooltipContent | null => {
+export const getTooltipContent = (
+  type: string,
+  metadata?: string,
+): TooltipContent | null => {
   // Command keywords with rich per-command docs
   if (type === "keyword" && metadata && metadata.startsWith("cmd:")) {
     const doc = COMMAND_DOCS[metadata];
@@ -229,35 +240,99 @@ export const getTooltipContent = (type: string, metadata?: string): TooltipConte
 
   switch (type) {
     case "keyword":
-      return { icon: LuCode, label: "Keyword", description: "A QQL language keyword that controls query structure." };
+      return {
+        icon: LuCode,
+        label: "Keyword",
+        description: "A QQL language keyword that controls query structure.",
+      };
     case "column":
-      return { icon: LuTag, label: "Column", description: "Reference to a field or column in the event data." };
+      return {
+        icon: LuTag,
+        label: "Column",
+        description: "Reference to a field or column in the event data.",
+      };
     case "string":
-      return { icon: LuType, label: "String", description: "A quoted string literal value." };
+      return {
+        icon: LuType,
+        label: "String",
+        description: "A quoted string literal value.",
+      };
     case "function":
-      return { icon: LuSquareFunction, label: "Function", description: "An aggregation or transformation function (e.g. count, sum, avg)." };
+      return {
+        icon: LuSquareFunction,
+        label: "Function",
+        description:
+          "An aggregation or transformation function (e.g. count, sum, avg).",
+      };
     case "booleanFunction":
-      return { icon: LuToggleLeft, label: "Boolean Function", description: "A function that returns true or false." };
+      return {
+        icon: LuToggleLeft,
+        label: "Boolean Function",
+        description: "A function that returns true or false.",
+      };
     case "number":
-      return { icon: LuHash, label: "Number", description: "A numeric literal value (integer or float)." };
+      return {
+        icon: LuHash,
+        label: "Number",
+        description: "A numeric literal value (integer or float).",
+      };
     case "operator":
-      return { icon: LuGitBranchPlus, label: "Operator", description: "A comparison (==, !=, <, >) or logical (and, or, not) operator." };
+      return {
+        icon: LuGitBranchPlus,
+        label: "Operator",
+        description:
+          "A comparison (==, !=, <, >) or logical (and, or, not) operator.",
+      };
     case "regex":
-      return { icon: LuRegex, label: "Regex", description: "A regular expression pattern enclosed in backticks." };
+      return {
+        icon: LuRegex,
+        label: "Regex",
+        description: "A regular expression pattern enclosed in backticks.",
+      };
     case "error":
-      return { icon: LuTriangleAlert, label: "Syntax Error", description: metadata ?? "Unexpected token — check your query syntax." };
+      return {
+        icon: LuTriangleAlert,
+        label: "Syntax Error",
+        description: metadata ?? "Unexpected token — check your query syntax.",
+      };
     case "param":
-      return { icon: LuSettings2, label: "Parameter", description: "A controller parameter that filters the data source (e.g. index=main)." };
+      return {
+        icon: LuSettings2,
+        label: "Parameter",
+        description:
+          "A controller parameter that filters the data source (e.g. index=main).",
+      };
     case "index":
-      return { icon: LuSettings2, label: "Index Value", description: "The value of a controller parameter." };
+      return {
+        icon: LuSettings2,
+        label: "Index Value",
+        description: "The value of a controller parameter.",
+      };
     case "pipe":
-      return { icon: LuSplit, label: "Pipeline", description: "Separates pipeline commands. Each command transforms the results of the previous." };
+      return {
+        icon: LuSplit,
+        label: "Pipeline",
+        description:
+          "Separates pipeline commands. Each command transforms the results of the previous.",
+      };
     case "datasource":
-      return { icon: LuDatabase, label: "Datasource", description: "Selects the data source to query (prefixed with @)." };
+      return {
+        icon: LuDatabase,
+        label: "Datasource",
+        description: "Selects the data source to query (prefixed with @).",
+      };
     case "identifier":
-      return { icon: LuTag, label: "Identifier", description: "A bare word used as a field name or search token." };
+      return {
+        icon: LuTag,
+        label: "Identifier",
+        description: "A bare word used as a field name or search token.",
+      };
     case "comment":
-      return { icon: LuCode, label: "Comment", description: "Ignored by the parser. Use // to start a comment." };
+      return {
+        icon: LuCode,
+        label: "Comment",
+        description: "Ignored by the parser. Use // to start a comment.",
+      };
     default:
       return null;
   }
@@ -283,10 +358,7 @@ const GhostSpan = styled.span`
   pointer-events: none;
 `;
 
-const renderChunks = (
-  text: string,
-  highlightData: HighlightData[],
-) => {
+const renderChunks = (text: string, highlightData: HighlightData[]) => {
   const nodes = splitTextToChunks(text, highlightData).map<React.ReactNode>(
     (chunk, index) => {
       if (typeof chunk === "string") {
@@ -330,7 +402,9 @@ export const TextHighlighter = React.forwardRef<
     let data = highlightData;
     if (ghostText && ghostTextOffset !== undefined && ghostText.length > 0) {
       text =
-        text.slice(0, ghostTextOffset) + ghostText + text.slice(ghostTextOffset);
+        text.slice(0, ghostTextOffset) +
+        ghostText +
+        text.slice(ghostTextOffset);
 
       const ghostLen = ghostText.length;
       data = [
@@ -366,6 +440,8 @@ export const TextHighlighter = React.forwardRef<
   }, [value, highlightData, ghostText, ghostTextOffset]);
 
   return (
-    <StyledPre ref={ref}>{renderChunks(displayText, displayHighlightData)}</StyledPre>
+    <StyledPre ref={ref}>
+      {renderChunks(displayText, displayHighlightData)}
+    </StyledPre>
   );
 });

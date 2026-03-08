@@ -50,6 +50,20 @@ export class ApiController {
     return await this.connection.getGeneralSettings.query();
   };
 
+  setLiveSettings = async (
+    liveInterval: string,
+    maxLogs: number,
+    liveAutoStopMinutes: number | null,
+    timezone: string,
+  ) => {
+    return await this.connection.setLiveSettings.mutate({
+      liveInterval: liveInterval as "1s" | "3s" | "5s" | "10s",
+      maxLogs,
+      liveAutoStopMinutes,
+      timezone: timezone as "local" | "utc",
+    });
+  };
+
   setTheme = async (theme: string) => {
     return await this.connection.setTheme.mutate({
       theme: theme as "midnight" | "nord" | "dracula" | "catppuccin",
@@ -128,6 +142,20 @@ export class ApiController {
     return await this.connection.exportTableResults.mutate({
       jobId: taskId,
       format: format,
+    });
+  }
+
+  async appendQueryResults(
+    jobId: TaskRef,
+    fromTime: Date,
+    toTime: Date,
+    maxLogs?: number,
+  ): Promise<{ newCount: number; batchStatus: JobBatchFinished }> {
+    return await this.connection.appendQueryResults.mutate({
+      jobId,
+      fromTime: fromTime.getTime(),
+      toTime: toTime.getTime(),
+      maxLogs,
     });
   }
 

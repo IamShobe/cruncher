@@ -2,7 +2,11 @@
  * ANTLR4 Visitor that collects highlight data for syntax highlighting.
  */
 
-import { AbstractParseTreeVisitor, ParserRuleContext, TerminalNode } from "antlr4ng";
+import {
+  AbstractParseTreeVisitor,
+  ParserRuleContext,
+  TerminalNode,
+} from "antlr4ng";
 import type { HighlightData, HighlightType } from "./types";
 import * as Parser from "./syntax/QQL";
 
@@ -38,7 +42,12 @@ export class HighlightCollector extends AbstractParseTreeVisitor<void> {
     return this.highlightData;
   }
 
-  private addHighlight(type: HighlightType, startOffset: number, endOffset: number | undefined, metadata?: string) {
+  private addHighlight(
+    type: HighlightType,
+    startOffset: number,
+    endOffset: number | undefined,
+    metadata?: string,
+  ) {
     this.highlightData.push({
       type,
       metadata,
@@ -49,7 +58,11 @@ export class HighlightCollector extends AbstractParseTreeVisitor<void> {
     });
   }
 
-  private highlightTerminal(terminal: TerminalNode | null | undefined, type: HighlightType, metadata?: string) {
+  private highlightTerminal(
+    terminal: TerminalNode | null | undefined,
+    type: HighlightType,
+    metadata?: string,
+  ) {
     if (!terminal) return;
     const symbol = terminal.getSymbol();
     this.addHighlight(type, symbol.start ?? 0, symbol.stop ?? 0, metadata);
@@ -214,7 +227,11 @@ export class HighlightCollector extends AbstractParseTreeVisitor<void> {
     const idOrStrs = ctx.identifierOrString();
     if (idOrStrs.length > 0) {
       // First identifierOrString is the function name
-      this.addHighlight("function", this.ctxStart(idOrStrs[0]), this.ctxStop(idOrStrs[0]));
+      this.addHighlight(
+        "function",
+        this.ctxStart(idOrStrs[0]),
+        this.ctxStop(idOrStrs[0]),
+      );
     }
 
     // Column argument is now inside the aggFunctionArg sub-rule
@@ -433,8 +450,13 @@ export class HighlightCollector extends AbstractParseTreeVisitor<void> {
   };
 
   visitComparisonExpression = (ctx: Parser.ComparisonExpressionContext) => {
-    const opToken = ctx.EQUAL_EQUAL() || ctx.NOT_EQUAL() || ctx.GREATER_EQUAL() ||
-      ctx.LESS_EQUAL() || ctx.GREATER_THAN() || ctx.LESS_THAN();
+    const opToken =
+      ctx.EQUAL_EQUAL() ||
+      ctx.NOT_EQUAL() ||
+      ctx.GREATER_EQUAL() ||
+      ctx.LESS_EQUAL() ||
+      ctx.GREATER_THAN() ||
+      ctx.LESS_THAN();
 
     if (opToken) {
       const sym = opToken.getSymbol()!;

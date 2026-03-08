@@ -4,7 +4,11 @@ import { QQL } from "./syntax/QQL";
 import { ASTBuilder } from "./ASTBuilder";
 import { HighlightCollector } from "./HighlightCollector";
 import { SuggestionCollector } from "./SuggestionCollector";
-import type { HighlightData, QQLParserErrorDetail, SuggestionData } from "./types";
+import type {
+  HighlightData,
+  QQLParserErrorDetail,
+  SuggestionData,
+} from "./types";
 
 /**
  * Custom error types
@@ -105,7 +109,8 @@ export const allData = (input: string): AllDataResult => {
 
     // Comments are on the HIDDEN channel — not visited by the tree visitor.
     // Scan all buffered tokens and emit a "comment" highlight for each one.
-    const commentHighlights: HighlightData[] = tokenStream.getTokens()
+    const commentHighlights: HighlightData[] = tokenStream
+      .getTokens()
       .filter((t) => t.channel !== 0 && t.type !== antlr.Token.EOF)
       .map((t) => ({
         type: "comment" as const,
@@ -204,6 +209,5 @@ export type NarrowedPipelineItem<T extends PipelineItemType> = Extract<
   PipelineItem,
   { type: T }
 >;
-
 
 export * from "./searchTree";

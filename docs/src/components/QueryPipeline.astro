@@ -5,31 +5,69 @@ interface Stage {
   icon?: string;
 }
 
-interface Props {
+interface StageGroup {
+  group: true;
+  label: string;
   stages: Stage[];
+}
+
+type Step = Stage | StageGroup;
+
+interface Props {
+  steps: Step[];
   title?: string;
 }
 
-const { stages, title } = Astro.props;
+const { steps, title } = Astro.props;
+
+function isGroup(step: Step): step is StageGroup {
+  return (step as StageGroup).group === true;
+}
+
+let ordinal = 0;
+const numbered = steps.map((step) => ({ step, num: ++ordinal }));
 ---
 
-<div class="pipeline-container">
-  {title && <h3 class="pipeline-title">{title}</h3>}
+<div class="pipeline-wrap">
+  {title && <p class="pipeline-title">{title}</p>}
 
   <div class="pipeline">
-    {stages.map((stage, index) => (
+    {numbered.map(({ step, num }, i) => (
       <>
-        <div class="pipeline-stage">
-          <div class="stage-icon">{stage.icon || '⚙️'}</div>
-          <div class="stage-content">
-            <h4>{stage.label}</h4>
-            <p>{stage.description}</p>
+        {isGroup(step) ? (
+          <div class="stage-group">
+            <div class="group-badge">
+              <span class="stage-num">{num}</span>
+              <span>{step.label}</span>
+              <span class="group-hint">any order · repeatable</span>
+            </div>
+            <div class="group-stages">
+              {step.stages.map((s) => (
+                <div class="group-stage">
+                  <span class="stage-icon">{s.icon || "⚙️"}</span>
+                  <div>
+                    <div class="stage-label">{s.label}</div>
+                    <div class="stage-desc">{s.description}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-        {index < stages.length - 1 && (
-          <div class="pipeline-arrow">
-            <svg viewBox="0 0 20 20" fill="currentColor">
-              <path d="M10.5 1.5v16M15 12l-4.5 4.5-4.5-4.5" />
+        ) : (
+          <div class="stage">
+            <span class="stage-num">{num}</span>
+            <span class="stage-icon">{(step as Stage).icon || "⚙️"}</span>
+            <div class="stage-body">
+              <div class="stage-label">{(step as Stage).label}</div>
+              <div class="stage-desc">{(step as Stage).description}</div>
+            </div>
+          </div>
+        )}
+        {i < steps.length - 1 && (
+          <div class="connector" aria-hidden="true">
+            <div class="connector-line" />
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 5v14M6 13l6 6 6-6"/>
             </svg>
           </div>
         )}
@@ -39,91 +77,166 @@ const { stages, title } = Astro.props;
 </div>
 
 <style>
-  .pipeline-container {
-    margin: 2rem 0 !important;
+  .pipeline-wrap {
+    margin: 1.5rem 0;
   }
 
   .pipeline-title {
-    margin: 0 0 1.5rem 0 !important;
-    font-size: 1.1rem;
-    font-weight: 600;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--sl-color-gray-3);
+    margin: 0 0 0.75rem 0;
   }
 
   .pipeline {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    align-items: stretch;
+    gap: 0;
   }
 
-  .pipeline-stage {
+  /* ── Regular stage ── */
+  .stage {
     display: flex;
-    gap: 1rem;
-    padding: 1rem;
-    background: linear-gradient(135deg, var(--sl-color-accent-low) 0%, transparent 100%);
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.85rem 1rem;
+    background: var(--sl-color-bg-panel);
     border: 1px solid var(--sl-color-gray-5);
-    border-radius: 6px;
-    align-items: flex-start;
+    border-radius: 8px;
+    transition: background 0.15s;
+  }
+
+  .stage:hover {
+    background: var(--sl-color-bg-sidebar);
+  }
+
+  .stage-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.35rem;
+    height: 1.35rem;
+    background: var(--sl-color-accent);
+    color: var(--sl-color-bg);
+    font-size: 0.65rem;
+    font-weight: 700;
+    border-radius: 50%;
+    flex-shrink: 0;
+    line-height: 1;
   }
 
   .stage-icon {
-    font-size: 1.5rem;
+    font-size: 1.1rem;
     flex-shrink: 0;
+    line-height: 1;
+  }
+
+  .stage-body {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 2.5rem;
-    height: 2.5rem;
-    background: var(--sl-color-gray-7);
-    border-radius: 6px;
+    align-items: baseline;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    min-width: 0;
   }
 
-  .stage-content {
-    flex: 1;
-  }
-
-  .stage-content h4 {
-    margin: 0 0 0.25rem 0;
-    font-size: 0.95rem;
+  .stage-label {
+    font-size: 0.875rem;
     font-weight: 600;
+    color: var(--sl-color-text);
+    white-space: nowrap;
   }
 
-  .stage-content p {
-    margin: 0;
-    font-size: 0.85rem;
+  .stage-desc {
+    font-size: 0.8rem;
     color: var(--sl-color-gray-2);
     line-height: 1.4;
   }
 
-  .pipeline-arrow {
+  /* ── Group ── */
+  .stage-group {
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .group-badge {
     display: flex;
-    justify-content: center;
-    padding: 0.25rem 0;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--sl-color-bg-nav);
+    border-bottom: 1px dashed var(--sl-color-gray-5);
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--sl-color-text-accent);
+  }
+
+  .group-hint {
+    margin-left: auto;
+    font-weight: 400;
+    font-style: italic;
+    text-transform: none;
+    letter-spacing: 0;
+    color: var(--sl-color-gray-3);
+    font-size: 0.7rem;
+  }
+
+  .group-stages {
+    display: flex;
+  }
+
+  .group-stage {
+    flex: 1;
+    padding: 0.85rem 1rem;
+    display: flex;
+    gap: 0.6rem;
+    align-items: flex-start;
+    background: var(--sl-color-bg-panel);
+    border-right: 1px dashed var(--sl-color-gray-5);
+    transition: background 0.15s;
+  }
+
+  .group-stage:last-child {
+    border-right: none;
+  }
+
+  .group-stage:hover {
+    background: var(--sl-color-bg-sidebar);
+  }
+
+  .group-stage .stage-icon {
+    font-size: 1rem;
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+  }
+
+  /* ── Connector ── */
+  .connector {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
     color: var(--sl-color-accent);
+    height: 2rem;
+    justify-content: center;
+    opacity: 0.7;
   }
 
-  .pipeline-arrow svg {
-    width: 1.5rem;
-    height: 1.5rem;
+  .connector svg {
+    width: 1rem;
+    height: 1rem;
+    margin-top: -2px;
   }
 
-  @media (max-width: 768px) {
-    .pipeline-stage {
-      gap: 0.75rem;
-      padding: 0.75rem;
-    }
-
-    .stage-icon {
-      width: 2rem;
-      height: 2rem;
-      font-size: 1.25rem;
-    }
-
-    .stage-content h4 {
-      font-size: 0.875rem;
-    }
-
-    .stage-content p {
-      font-size: 0.75rem;
-    }
+  .connector-line {
+    width: 1px;
+    flex: 1;
+    background: var(--sl-color-accent);
+    opacity: 0.4;
   }
 </style>

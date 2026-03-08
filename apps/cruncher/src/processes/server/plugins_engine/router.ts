@@ -6,7 +6,13 @@ import {
   TaskRef,
 } from "../engineV2/types";
 import z from "zod/v4";
-import { appGeneralSettings, setupPluginsFromConfig, writeConfig, readConfig } from "./config";
+import {
+  appGeneralSettings,
+  setupPluginsFromConfig,
+  writeConfig,
+  readConfig,
+} from "./config";
+import { LIVE_INTERVAL_OPTIONS, TIMEZONE_OPTIONS } from "../config/schema";
 import { QueryBatchDone, QueryJobUpdated, UrlNavigation } from "./protocolOut";
 import { publicProcedure, router } from "./trpc";
 
@@ -141,12 +147,39 @@ export const appRouter = router({
       console.log(`Hello, ${input.name}!`);
     }),
   getGeneralSettings: publicProcedure.query(async () => {
-    const config = readConfig(appGeneralSettings);
+    const { config, error } = readConfig(appGeneralSettings);
     return {
       ...appGeneralSettings,
       theme: config.ui?.theme ?? "midnight",
+      liveInterval: config.ui?.liveInterval ?? "5s",
+      maxLogs: config.ui?.maxLogs ?? 100000,
+      liveAutoStopMinutes: config.ui?.liveAutoStopMinutes ?? 30,
+      timezone: config.ui?.timezone ?? "local",
+      configError: error,
     };
   }),
+  setLiveSettings: publicProcedure
+    .input(
+      z.object({
+        liveInterval: z.enum(LIVE_INTERVAL_OPTIONS),
+        maxLogs: z.number(),
+        liveAutoStopMinutes: z.number().nullable(),
+        timezone: z.enum(TIMEZONE_OPTIONS),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      writeConfig(appGeneralSettings, (config) => ({
+        ...config,
+        ui: {
+          ...config.ui,
+          liveInterval: input.liveInterval,
+          maxLogs: input.maxLogs,
+          liveAutoStopMinutes: input.liveAutoStopMinutes,
+          timezone: input.timezone,
+        },
+      }));
+      return { success: true };
+    }),
   setTheme: publicProcedure
     .input(
       z.object({
@@ -181,6 +214,24 @@ export const appRouter = router({
     )
     .query(async ({ ctx, input }) => {
       return ctx.engine.getViewData(input.jobId as TaskRef);
+    }),
+
+  appendQueryResults: publicProcedure
+    .input(
+      z.object({
+        jobId: z.string(),
+        fromTime: z.number(),
+        toTime: z.number(),
+        maxLogs: z.number().optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      return ctx.engine.appendQuery(
+        input.jobId as TaskRef,
+        new Date(input.fromTime),
+        new Date(input.toTime),
+        input.maxLogs,
+      );
     }),
 
   // Subscriptions

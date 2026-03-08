@@ -1,6 +1,7 @@
 import { formatDataTime } from "./formatters";
 
 export type ProcessedData = {
+  id?: string;
   object: ObjectFields;
   message: string;
 };

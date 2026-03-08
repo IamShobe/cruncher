@@ -21,7 +21,12 @@ export const TopBar = () => {
       <img
         src={logo}
         alt="Cruncher Logo"
-        style={{ width: "20px", height: "20px", pointerEvents: "none", userSelect: "none" }}
+        style={{
+          width: "20px",
+          height: "20px",
+          pointerEvents: "none",
+          userSelect: "none",
+        }}
       />
       <span
         css={css`

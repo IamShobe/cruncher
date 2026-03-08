@@ -3,135 +3,168 @@ interface Shortcut {
   action: string;
   mac: string;
   windows: string;
-  description?: string;
+}
+
+interface Group {
+  label: string;
+  shortcuts: Shortcut[];
 }
 
 interface Props {
-  shortcuts: Shortcut[];
-  title?: string;
+  groups: Group[];
 }
 
-const { shortcuts, title } = Astro.props;
+const { groups } = Astro.props;
+
+function splitKeys(combo: string): string[] {
+  return combo.split(" + ");
+}
 ---
 
-<div class="shortcuts-container">
-  {title && <h3 class="shortcuts-title">{title}</h3>}
-
-  <div class="shortcuts-grid">
-    {shortcuts.map((shortcut) => (
-      <div class="shortcut-item">
-        <div class="shortcut-action">{shortcut.action}</div>
-        {shortcut.description && (
-          <p class="shortcut-description">{shortcut.description}</p>
-        )}
-        <div class="shortcut-keys">
-          <div class="key-group">
-            <span class="platform-label">Mac</span>
-            <code class="keyboard-key">{shortcut.mac}</code>
-          </div>
-          <div class="key-group">
-            <span class="platform-label">Windows</span>
-            <code class="keyboard-key">{shortcut.windows}</code>
-          </div>
-        </div>
-      </div>
-    ))}
-  </div>
+<div class="kb-wrap">
+  <table class="kb-table">
+    <thead>
+      <tr>
+        <th>Action</th>
+        <th>Mac</th>
+        <th>Windows</th>
+      </tr>
+    </thead>
+    <tbody>
+      {groups.map((group) => (
+        <>
+          <tr class="kb-group-row">
+            <td colspan="3">{group.label}</td>
+          </tr>
+          {group.shortcuts.map((s) => (
+            <tr class="kb-row">
+              <td class="kb-action">{s.action}</td>
+              <td>
+                <div class="kb-keys">
+                  {splitKeys(s.mac).map((k, i) => (
+                    <>
+                      {i > 0 && <span class="kb-plus">+</span>}
+                      <kbd>{k}</kbd>
+                    </>
+                  ))}
+                </div>
+              </td>
+              <td>
+                <div class="kb-keys">
+                  {splitKeys(s.windows).map((k, i) => (
+                    <>
+                      {i > 0 && <span class="kb-plus">+</span>}
+                      <kbd>{k}</kbd>
+                    </>
+                  ))}
+                </div>
+              </td>
+            </tr>
+          ))}
+        </>
+      ))}
+    </tbody>
+  </table>
 </div>
 
 <style>
-  .shortcuts-container {
-    margin: 2rem 0 !important;
-  }
-
-  .shortcuts-title {
-    margin: 0 0 1.5rem 0 !important;
-    font-size: 1.1rem;
-    font-weight: 600;
-  }
-
-  .shortcuts-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 1rem;
-  }
-
-  .shortcut-item {
-    padding: 1rem;
+  .kb-wrap {
+    margin: 1.5rem 0;
     border: 1px solid var(--sl-color-gray-5);
-    border-radius: 6px;
-    background: var(--sl-color-bg-panel);
-    transition: all 0.3s ease;
+    border-radius: 8px;
+    overflow: hidden;
   }
 
-  .shortcut-item:hover {
-    border-color: var(--sl-color-accent);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    transform: translateY(-1px);
+  .kb-table {
+    display: table !important;
+    width: 100% !important;
+    margin: 0 !important;
+    border-collapse: collapse !important;
+    border-spacing: 0 !important;
+    font-size: 0.875rem;
   }
 
-  .shortcut-action {
-    font-size: 0.95rem;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-    color: var(--sl-color-text);
-  }
-
-  .shortcut-description {
-    font-size: 0.8rem;
-    color: var(--sl-color-gray-2);
-    margin: 0 0 0.75rem 0;
-    line-height: 1.4;
-  }
-
-  .shortcut-keys {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  .key-group {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-  }
-
-  .platform-label {
+  thead th {
+    padding: 0.6rem 1rem;
+    text-align: left;
     font-size: 0.7rem;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.06em;
     color: var(--sl-color-gray-3);
-    min-width: 50px;
+    background: var(--sl-color-bg-nav);
+    border-bottom: 1px solid var(--sl-color-gray-5);
   }
 
-  .keyboard-key {
-    background: var(--sl-color-gray-7);
-    border: 1px solid var(--sl-color-gray-5);
-    border-radius: 4px;
-    padding: 0.5rem 0.75rem;
-    font-size: 0.8rem;
+  .kb-group-row td {
+    padding: 0.4rem 1rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--sl-color-accent);
+    background: var(--sl-color-bg-nav);
+    border-top: 1px solid var(--sl-color-gray-5);
+    border-bottom: 1px solid var(--sl-color-gray-6);
+  }
+
+  .kb-row td {
+    padding: 0.55rem 1rem;
+    border-bottom: 1px solid var(--sl-color-gray-6);
+    vertical-align: middle;
+  }
+
+  .kb-row:last-child td {
+    border-bottom: none;
+  }
+
+  .kb-row:hover td {
+    background: var(--sl-color-bg-sidebar);
+  }
+
+  .kb-action {
+    color: var(--sl-color-text);
     font-weight: 500;
-    font-family: 'Monaco', 'Menlo', monospace;
-    display: inline-block;
-    flex: 1;
-    text-align: center;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    white-space: nowrap;
   }
 
-  @media (max-width: 640px) {
-    .shortcuts-grid {
-      grid-template-columns: 1fr;
+  .kb-keys {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    white-space: nowrap;
+  }
+
+  kbd {
+    display: inline-block;
+    padding: 0.15em 0.45em;
+    font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+    font-size: 0.78rem;
+    font-style: normal;
+    line-height: 1.4;
+    color: var(--sl-color-text);
+    background: var(--sl-color-bg-panel);
+    border: 1px solid var(--sl-color-gray-4);
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    box-shadow: none;
+  }
+
+  .kb-plus {
+    color: var(--sl-color-gray-3);
+    font-size: 0.7rem;
+    user-select: none;
+  }
+
+  @media (max-width: 600px) {
+    thead th:last-child,
+    .kb-row td:last-child,
+    .kb-group-row td {
+      display: none;
     }
 
-    .shortcut-item {
-      padding: 0.75rem;
-    }
-
-    .keyboard-key {
-      padding: 0.375rem 0.5rem;
-      font-size: 0.75rem;
+    thead th:nth-child(2) {
+      content: 'Shortcut';
     }
   }
 </style>

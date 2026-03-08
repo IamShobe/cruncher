@@ -1,6 +1,10 @@
 import { subDays, subHours, subMinutes } from "date-fns";
-import { atom, useAtom, useSetAtom } from "jotai";
+import { atom, useAtom, useAtomValue, useSetAtom } from "jotai";
 import type React from "react";
+import styled from "@emotion/styled";
+import { css, keyframes } from "@emotion/react";
+import { token } from "~components/ui/system";
+import { isLiveModeAtom } from "~core/store/liveState";
 import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
 import { DateRange } from "react-day-picker";
 import {
@@ -27,6 +31,19 @@ import { Tooltip } from "~components/ui/tooltip";
 import { useOutsideDetector } from "~components/ui/useOutsideDetector";
 import { CalendarSelector } from "./CalendarSelector";
 import { searcherShortcuts } from "~core/keymaps";
+
+const ringGlow = keyframes`
+  0%, 100% { box-shadow: 0 0 0 1.5px ${token("colors.teal.600")}, 0 0 8px ${token("colors.teal.600")}55; }
+  50%       { box-shadow: 0 0 0 1.5px ${token("colors.teal.400")}, 0 0 16px ${token("colors.teal.400")}66; }
+`;
+
+const LiveDateButton = styled(Button)<{ $isLive: boolean }>`
+  ${({ $isLive }) =>
+    $isLive &&
+    css`
+      animation: ${ringGlow} 2.4s ease-in-out infinite;
+    `}
+`;
 import { useQueryActions } from "~core/search";
 import { useQuerySpecificStoreInternal } from "~core/store/queryState";
 import { compareFullDates } from "src/processes/server/lib/dateUtils";
@@ -60,6 +77,7 @@ export const DateSelector = () => {
   const [selectedRenderedStartDate] = useAtom(renderedStartDateAtom);
   const [selectedRenderedEndDate] = useAtom(renderedEndDateAtom);
   const [isOpen, setIsOpen] = useAtom(isDateSelectorOpenAtom);
+  const isLiveMode = useAtomValue(isLiveModeAtom);
 
   const firstFocusRef = useRef<HTMLInputElement>(null);
 
@@ -98,7 +116,8 @@ export const DateSelector = () => {
             placement: "bottom",
           }}
         >
-          <Button
+          <LiveDateButton
+            $isLive={isLiveMode}
             size="sm"
             variant="outline"
             style={{
@@ -114,7 +133,7 @@ export const DateSelector = () => {
               <span> - </span>
               <span style={{ flex: 1 }}>{selectedRenderedEndDate}</span>
             </Stack>
-          </Button>
+          </LiveDateButton>
         </Tooltip>
       </PopoverTrigger>
       <PopoverContent width={400} ref={wrapperRef}>

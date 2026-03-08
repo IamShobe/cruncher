@@ -20,11 +20,28 @@ export const CruncherLokiConfigSchema = z.object({
 
 export type CruncherLokiConfig = z.infer<typeof CruncherLokiConfigSchema>;
 
+export const LIVE_INTERVAL_OPTIONS = ["1s", "3s", "5s", "10s"] as const;
+export type LiveInterval = (typeof LIVE_INTERVAL_OPTIONS)[number];
+
+export const LIVE_INTERVAL_MS: Record<LiveInterval, number> = {
+  "1s": 1000,
+  "3s": 3000,
+  "5s": 5000,
+  "10s": 10000,
+};
+
+export const TIMEZONE_OPTIONS = ["local", "utc"] as const;
+export type TimezoneOption = (typeof TIMEZONE_OPTIONS)[number];
+
 export const UIConfigSchema = z.object({
   theme: z
     .enum(["midnight", "nord", "dracula", "catppuccin"])
     .optional()
     .default("midnight"),
+  liveInterval: z.enum(LIVE_INTERVAL_OPTIONS).optional().default("5s"),
+  maxLogs: z.number().optional().default(100000),
+  liveAutoStopMinutes: z.number().nullable().optional().default(30),
+  timezone: z.enum(TIMEZONE_OPTIONS).optional().default("local"),
 });
 
 export type UIConfig = z.infer<typeof UIConfigSchema>;

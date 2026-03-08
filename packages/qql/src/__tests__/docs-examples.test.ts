@@ -21,7 +21,9 @@ import { parse } from "../index";
 
 describe("docs: where command", () => {
   test("status and duration filter", () => {
-    expect(() => parse(`| where status == "error" && duration > 1000`)).not.toThrow();
+    expect(() =>
+      parse(`| where status == "error" && duration > 1000`),
+    ).not.toThrow();
   });
 
   test("in-array membership", () => {
@@ -34,7 +36,9 @@ describe("docs: where command", () => {
 
   test("parenthesised OR combined with AND", () => {
     expect(() =>
-      parse(`| where (status == "error" || status == "warn") && duration >= 500`),
+      parse(
+        `| where (status == "error" || status == "warn") && duration >= 500`,
+      ),
     ).not.toThrow();
   });
 
@@ -155,9 +159,7 @@ describe("docs: stats command", () => {
   });
 
   test("group by multiple fields", () => {
-    expect(() =>
-      parse(`| stats count() by service, status`),
-    ).not.toThrow();
+    expect(() => parse(`| stats count() by service, status`)).not.toThrow();
   });
 });
 
@@ -210,15 +212,11 @@ describe("docs: timechart command", () => {
   });
 
   test("count with timeCol", () => {
-    expect(() =>
-      parse(`| timechart count() timeCol event_time`),
-    ).not.toThrow();
+    expect(() => parse(`| timechart count() timeCol event_time`)).not.toThrow();
   });
 
   test("count with maxGroups", () => {
-    expect(() =>
-      parse(`| timechart count() maxGroups 10`),
-    ).not.toThrow();
+    expect(() => parse(`| timechart count() maxGroups 10`)).not.toThrow();
   });
 
   test("multiple aggregations with all params and group by", () => {
@@ -230,9 +228,7 @@ describe("docs: timechart command", () => {
   });
 
   test("group by single field", () => {
-    expect(() =>
-      parse(`| timechart count() by service`),
-    ).not.toThrow();
+    expect(() => parse(`| timechart count() by service`)).not.toThrow();
   });
 
   test("span with hours", () => {
@@ -325,9 +321,7 @@ describe("docs: contains() function", () => {
 
 describe("docs: startsWith() function", () => {
   test("in where clause", () => {
-    expect(() =>
-      parse(`| where startsWith(message, "Error:")`),
-    ).not.toThrow();
+    expect(() => parse(`| where startsWith(message, "Error:")`)).not.toThrow();
   });
 
   test("in eval assignment", () => {
@@ -337,9 +331,7 @@ describe("docs: startsWith() function", () => {
   });
 
   test("filter production hostnames", () => {
-    expect(() =>
-      parse(`| where startsWith(hostname, "prod-")`),
-    ).not.toThrow();
+    expect(() => parse(`| where startsWith(hostname, "prod-")`)).not.toThrow();
   });
 });
 
@@ -349,9 +341,7 @@ describe("docs: startsWith() function", () => {
 
 describe("docs: endsWith() function", () => {
   test("in where clause", () => {
-    expect(() =>
-      parse(`| where endsWith(filename, ".log")`),
-    ).not.toThrow();
+    expect(() => parse(`| where endsWith(filename, ".log")`)).not.toThrow();
   });
 
   test("in eval assignment", () => {
@@ -361,9 +351,7 @@ describe("docs: endsWith() function", () => {
   });
 
   test("filter by message suffix", () => {
-    expect(() =>
-      parse(`| where endsWith(message, "success")`),
-    ).not.toThrow();
+    expect(() => parse(`| where endsWith(message, "success")`)).not.toThrow();
   });
 });
 
@@ -373,9 +361,7 @@ describe("docs: endsWith() function", () => {
 
 describe("docs: match() function", () => {
   test("in where clause", () => {
-    expect(() =>
-      parse("| where match(message, `^Error:.*`)"),
-    ).not.toThrow();
+    expect(() => parse("| where match(message, `^Error:.*`)")).not.toThrow();
   });
 
   test("in eval assignment - status code pattern", () => {
@@ -409,9 +395,7 @@ describe("docs: isNull() function", () => {
   });
 
   test("negated in eval", () => {
-    expect(() =>
-      parse(`| eval has_user = !(isNull(user_id))`),
-    ).not.toThrow();
+    expect(() => parse(`| eval has_user = !(isNull(user_id))`)).not.toThrow();
   });
 
   test("filter successful records", () => {
@@ -500,9 +484,7 @@ describe("docs: length() function", () => {
 
 describe("docs: trim() function", () => {
   test("in eval assignment", () => {
-    expect(() =>
-      parse(`| eval clean_message = trim(message)`),
-    ).not.toThrow();
+    expect(() => parse(`| eval clean_message = trim(message)`)).not.toThrow();
   });
 
   test("nested lower(trim(...))", () => {
@@ -621,9 +603,7 @@ describe("docs: if() function", () => {
   });
 
   test("if without else branch", () => {
-    expect(() =>
-      parse(`| eval col = if(x == 1, "yes")`),
-    ).not.toThrow();
+    expect(() => parse(`| eval col = if(x == 1, "yes")`)).not.toThrow();
   });
 });
 
@@ -688,7 +668,9 @@ describe("docs: case() function", () => {
 describe("docs: query structure - controller params", () => {
   test("equality controller param", () => {
     expect(() =>
-      parse(`user="alice" environment="prod" | where duration > 1000 | table timestamp, message`),
+      parse(
+        `user="alice" environment="prod" | where duration > 1000 | table timestamp, message`,
+      ),
     ).not.toThrow();
   });
 
@@ -700,7 +682,7 @@ describe("docs: query structure - controller params", () => {
 
   test("regex controller param", () => {
     expect(() =>
-      parse("namespace=`^prod-.*` | where level == \"error\""),
+      parse('namespace=`^prod-.*` | where level == "error"'),
     ).not.toThrow();
   });
 
@@ -713,9 +695,7 @@ describe("docs: query structure - controller params", () => {
 
 describe("docs: query structure - datasource selection", () => {
   test("datasource with search and where", () => {
-    expect(() =>
-      parse(`@docker error | where level == "error"`),
-    ).not.toThrow();
+    expect(() => parse(`@docker error | where level == "error"`)).not.toThrow();
     expect(parse(`@docker error | where level == "error"`)).toMatchObject({
       dataSources: [{ type: "datasource", name: "docker" }],
     });
@@ -730,9 +710,7 @@ describe("docs: query structure - datasource selection", () => {
 
 describe("docs: query structure - search expressions", () => {
   test("controller param plus search word", () => {
-    expect(() =>
-      parse(`user="alice" error | table message`),
-    ).not.toThrow();
+    expect(() => parse(`user="alice" error | table message`)).not.toThrow();
   });
 
   test("implicit AND between search words", () => {
@@ -756,7 +734,9 @@ describe("docs: query structure - search expressions", () => {
 describe("docs: query structure - comments", () => {
   test("inline comment after command", () => {
     expect(() =>
-      parse(`@docker | where level == "error" // only errors\n| stats count() by service`),
+      parse(
+        `@docker | where level == "error" // only errors\n| stats count() by service`,
+      ),
     ).not.toThrow();
   });
 });
@@ -865,7 +845,9 @@ describe("structural: eval expressions from docs", () => {
   });
 
   test("eval ceil() with arithmetic arg", () => {
-    expect(parse(`| eval rounded_duration = ceil(duration_ms / 1000)`)).toMatchObject({
+    expect(
+      parse(`| eval rounded_duration = ceil(duration_ms / 1000)`),
+    ).toMatchObject({
       pipeline: [
         {
           type: "eval",

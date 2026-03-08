@@ -1,0 +1,129 @@
+---
+title: Live Mode
+description: Monitor logs in real time with automatic incremental refresh.
+sidebar:
+    badge:
+        text: New
+        variant: tip
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import ConfigField from '/src/components/ConfigField.astro';
+
+Live Mode turns Cruncher into a real-time log monitor. Instead of running a fresh query each time, it periodically fetches only the **new logs** since the last refresh and merges them into the existing results — keeping the display fast and your scroll position stable.
+
+## Enabling Live Mode
+
+Run a search first, then click the **Live** button (activity icon) in the search header toolbar. The button is disabled until at least one query has been executed.
+
+When active, the button turns teal and shows a pulsing dot. The progress bar at the top of the header also turns teal while live mode is idle, and pulses indigo during each fetch.
+
+Click the button again to disable Live Mode. Manually running a new search also disables it automatically.
+
+## How It Works
+
+Each live tick:
+
+1. Cruncher records the end time of the previous query (or tick) as `fromTime`.
+2. After the configured interval, it fetches logs in the window `[fromTime, now]` from all adapters.
+3. New logs are merged into the existing results (sorted by timestamp), and the pipeline is re-evaluated.
+4. The histogram and time range display update to reflect the extended window.
+5. Newly arrived rows are highlighted with a brief teal fade animation.
+6. The next tick is scheduled only **after** the current one completes — concurrent requests never overlap.
+
+<Aside type="note">
+Live Mode uses sequential `setTimeout` chaining, not `setInterval`. This means slow adapters never cause overlapping requests.
+</Aside>
+
+## Scroll Anchoring
+
+When new logs arrive at the top of the list, Cruncher automatically compensates to keep your current position stable:
+
+- If you are scrolled to the very top, new logs appear above and the view follows them (so you always see the latest).
+- If you are scrolled down, your position is preserved exactly — including if a log detail panel is open.
+
+## New Log Highlights
+
+Rows that arrived in the most recent live tick are highlighted with a brief teal fade animation. The highlight fades over ~2 seconds and does not repeat on subsequent ticks.
+
+## Auto-Stop
+
+Live Mode can automatically turn itself off after a configurable period of inactivity — useful if you forget to disable it and don't want it running overnight or over a long break.
+
+By default, Live Mode stops after **30 minutes**. Set the value to **0** to disable auto-stop entirely.
+
+The timer resets every time you manually toggle Live Mode on. It does not reset on each tick — it counts wall-clock time from when Live Mode was enabled.
+
+## Jitter
+
+Each live tick fires at a slightly randomised interval (±10% of the configured live interval). For example, with a 5 s interval the actual delay per tick is anywhere from **4.5 s to 5.5 s**.
+
+This spreads requests over time when multiple users or tabs are polling the same backend, reducing the risk of synchronised request bursts being flagged as bot traffic.
+
+## Settings
+
+Live Mode settings are accessed via the **Settings** drawer (gear icon in the search header) and are persisted to the [config file](/getting-started/05-config-file).
+
+### Live Interval
+
+How long Cruncher waits between ticks. Options: **1s**, **3s**, **5s** (default), **10s**.
+
+Stored in the config file as `ui.liveInterval`.
+
+### Max Logs in Memory
+
+The maximum number of log records kept in memory at once. When new logs arrive and the total would exceed this limit, the oldest records are discarded to stay within the cap.
+
+Default: **100,000**. Range: 1,000 – 1,000,000.
+
+Stored in the config file as `ui.maxLogs`.
+
+### Auto-Stop After
+
+How many minutes of live polling before Live Mode turns itself off automatically. Set to **0** to disable.
+
+Default: **30 minutes**. Range: 0 – 480 minutes (step: 5).
+
+Stored in the config file as `ui.liveAutoStopMinutes`.
+
+## Config File Reference
+
+All settings can also be set directly in `~/.config/cruncher/cruncher.config.yaml`:
+
+```yaml
+ui:
+  liveInterval: 5s         # 1s | 3s | 5s | 10s
+  maxLogs: 100000
+  liveAutoStopMinutes: 30  # 0 to disable auto-stop
+```
+
+<ConfigField
+  name="ui.liveInterval"
+  type="string"
+  required={false}
+  defaultValue="5s"
+>
+  Interval between live refresh ticks. Must be one of `1s`, `3s`, `5s`, or `10s`. Each tick includes ±10% random jitter. Changes take effect on the next tick after saving.
+</ConfigField>
+
+<ConfigField
+  name="ui.maxLogs"
+  type="number"
+  required={false}
+  defaultValue="100000"
+>
+  Maximum number of log records to keep in memory. When exceeded, the oldest records (furthest from the current time) are discarded. Minimum: 1000.
+</ConfigField>
+
+<ConfigField
+  name="ui.liveAutoStopMinutes"
+  type="number"
+  required={false}
+  defaultValue="30"
+>
+  Minutes after which Live Mode automatically turns off. Set to `0` to never auto-stop. The timer starts when Live Mode is enabled and fires exactly at the configured duration.
+</ConfigField>
+
+<Aside type="tip">
+For high-volume log sources, lower `maxLogs` (e.g. 10000) reduces memory usage. For low-frequency sources, a higher `liveInterval` (e.g. `10s`) reduces adapter load. If you routinely leave Cruncher open overnight, set `liveAutoStopMinutes` to a safe value so it doesn't poll indefinitely.
+</Aside>

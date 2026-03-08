@@ -67,10 +67,20 @@ export class EditorErrorBoundary extends React.Component<
       const stack = this.state.error.stack ?? this.state.error.message;
       return (
         <EditorErrorBox>
-          <span title={this.state.error.message} style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          <span
+            title={this.state.error.message}
+            style={{
+              flex: 1,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
             Editor error: {this.state.error.message}
           </span>
-          <EditorErrorReset onClick={() => navigator.clipboard.writeText(stack)}>
+          <EditorErrorReset
+            onClick={() => navigator.clipboard.writeText(stack)}
+          >
             Copy
           </EditorErrorReset>
           <EditorErrorReset onClick={() => this.setState({ error: null })}>

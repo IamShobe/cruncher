@@ -26,11 +26,7 @@ export const SideMenu = () => {
   const setShortcutsShown = useSetShortcutsShown();
 
   return (
-    <Stack
-      direction="row"
-      gap={0}
-      bg="bg.subtle"
-    >
+    <Stack direction="row" gap={0} bg="bg.subtle">
       <Stack p={2} justify="space-between" align="center">
         <Stack>
           <Stack gap={2} align="center">

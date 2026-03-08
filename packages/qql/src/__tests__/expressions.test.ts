@@ -88,7 +88,6 @@ test("support eval calculation", () => {
 });
 
 test("support eval calculation with multiple operators", () => {
-
   const result = parse(`hello world | eval column1 = column2 + 1 - 2 * 3 / 4`);
 
   expect(result).toMatchObject({
@@ -178,7 +177,6 @@ test("support eval calculation with multiple operators", () => {
 });
 
 test("support eval command", () => {
-
   const result = parse(`hello world | eval column1 = if(column2 == 1, 1, 0)`);
 
   expect(result).toMatchObject({
@@ -290,8 +288,9 @@ test.each([
   ["&&", "andExpression"],
   ["||", "orExpression"],
 ])("support for where command logical operators %s", (operator, type) => {
-
-  const result = parse(`hello world | where column1 == 1 ${operator} column2 == 2`);
+  const result = parse(
+    `hello world | where column1 == 1 ${operator} column2 == 2`,
+  );
   expect(result).toMatchObject({
     dataSources: [],
     controllerParams: [],
@@ -351,7 +350,6 @@ test.each([
 });
 
 test("support for where command complex and", () => {
-
   const result = parse(`hello world | where column1 == 1 && column2 == 2`);
   expect(result).toMatchObject({
     dataSources: [],
@@ -467,7 +465,6 @@ test("support for where inArrayStatement", () => {
 });
 
 test("support for eval case function", () => {
-
   const result = parse(`hello world | eval s = case(x > 1, "big", "small")`);
   expect(result).toMatchObject({
     pipeline: [
@@ -504,7 +501,6 @@ test("support for eval case function", () => {
 });
 
 test("support for where parenthesisExpression", () => {
-
   const result = parse(`hello world | where (col1 == 1 && col2 == 2)`);
   expect(result).toMatchObject({
     pipeline: [
@@ -803,7 +799,6 @@ test("eval - simple column ref arg still works after grammar change: ceil(x)", (
 test.each([["=="], ["!="], [">"], ["<"], [">="], ["<="]])(
   "test where command operators %s",
   (operator) => {
-
     const result = parse(`hello world | where column1 ${operator} 1`);
     expect(result).toMatchObject({
       dataSources: [],

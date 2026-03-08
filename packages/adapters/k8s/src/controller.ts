@@ -127,21 +127,23 @@ export class K8sController implements QueryProvider {
 
         try {
           const result = JSON.parse(output);
-          const pods: K8sPod[] = (result.items ?? []).map((item: Record<string, unknown>) => {
-            const metadata = item.metadata as Record<string, unknown>;
-            const spec = item.spec as Record<string, unknown>;
-            const status = item.status as Record<string, unknown>;
-            const containers = ((spec?.containers as Array<Record<string, unknown>>) ?? []).map(
-              (c) => c.name as string,
-            );
-            return {
-              name: metadata?.name as string,
-              namespace: metadata?.namespace as string,
-              labels: (metadata?.labels as Record<string, string>) ?? {},
-              containers,
-              phase: (status?.phase as string) ?? "Unknown",
-            };
-          });
+          const pods: K8sPod[] = (result.items ?? []).map(
+            (item: Record<string, unknown>) => {
+              const metadata = item.metadata as Record<string, unknown>;
+              const spec = item.spec as Record<string, unknown>;
+              const status = item.status as Record<string, unknown>;
+              const containers = (
+                (spec?.containers as Array<Record<string, unknown>>) ?? []
+              ).map((c) => c.name as string);
+              return {
+                name: metadata?.name as string,
+                namespace: metadata?.namespace as string,
+                labels: (metadata?.labels as Record<string, string>) ?? {},
+                containers,
+                phase: (status?.phase as string) ?? "Unknown",
+              };
+            },
+          );
           resolve(pods);
         } catch (error) {
           reject(new Error(`Failed to parse kubectl output: ${error}`));
@@ -149,7 +151,9 @@ export class K8sController implements QueryProvider {
       });
 
       kubectlProcess.on("error", (error) => {
-        reject(new Error(`Failed to execute kubectl command: ${error.message}`));
+        reject(
+          new Error(`Failed to execute kubectl command: ${error.message}`),
+        );
       });
     });
   }

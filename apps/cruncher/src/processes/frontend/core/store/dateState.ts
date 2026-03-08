@@ -1,7 +1,10 @@
 import { format, isValid, parse, subMinutes } from "date-fns";
-import { atom, PrimitiveAtom, useAtom } from "jotai";
+import { utc } from "@date-fns/utc";
+import { atom, PrimitiveAtom, useAtom, useAtomValue } from "jotai";
 import { DateRange } from "react-day-picker";
 import { DateType, FullDate, isTimeNow } from "~lib/dateUtils";
+import { timezoneAtom } from "./liveState";
+import type { TimezoneOption } from "src/processes/server/config/schema";
 
 export const dateFormat = "yyyy/MM/dd HH:mm:ss";
 const dateOnlyFormat = "yyyy/MM/dd";
@@ -99,7 +102,10 @@ export const dateRangeAtom = atom(
   },
 );
 
-const formatTime = (date: FullDate | undefined) => {
+const tzOptions = (timezone: TimezoneOption) =>
+  timezone === "utc" ? { in: utc } : undefined;
+
+const formatTime = (date: FullDate | undefined, timezone: TimezoneOption) => {
   if (!date) {
     return "";
   }
@@ -108,18 +114,21 @@ const formatTime = (date: FullDate | undefined) => {
     return "Now";
   }
 
-  return format(date, dateFormat);
+  return format(date, dateFormat, tzOptions(timezone));
 };
 
 const renderedDateAtom = (dateAtom: PrimitiveAtom<FullDate | undefined>) =>
   atom((get) => {
-    return formatTime(get(dateAtom));
+    return formatTime(get(dateAtom), get(timezoneAtom));
   });
 
 export const useTryToUpdateDate = (
   dateAtom: PrimitiveAtom<FullDate | undefined>,
 ) => {
   const [fullDate, setFullDate] = useAtom(dateAtom);
+  const timezone = useAtomValue(timezoneAtom);
+  const opts = tzOptions(timezone);
+  const ref = () => (fullDate instanceof Date ? fullDate : new Date());
 
   return (update: string) => {
     if (update.toLowerCase() === "now") {
@@ -127,7 +136,7 @@ export const useTryToUpdateDate = (
       return;
     }
 
-    const res = parse(update, dateFormat, fullDate ?? new Date());
+    const res = parse(update, dateFormat, ref(), opts);
     if (isValid(res)) {
       setFullDate(res);
       return;
@@ -136,14 +145,15 @@ export const useTryToUpdateDate = (
     const dateWithoutSeconds = parse(
       update,
       dateWithoutSecondsFormat,
-      fullDate ?? new Date(),
+      ref(),
+      opts,
     );
     if (isValid(dateWithoutSeconds)) {
       setFullDate(dateWithoutSeconds);
       return;
     }
 
-    const dateOnly = parse(update, dateOnlyFormat, fullDate ?? new Date());
+    const dateOnly = parse(update, dateOnlyFormat, ref(), opts);
     if (isValid(dateOnly)) {
       setFullDate(dateOnly);
       return;

@@ -57,7 +57,13 @@ import {
   useQueryActions,
   useRunQuery,
   useSelectedSearchProfile,
+  useLiveMode,
 } from "../../../core/search";
+import {
+  isLiveFetchingAtom,
+  isLiveModeAtom,
+} from "../../../core/store/liveState";
+import LiveModeButton from "./LiveModeButton";
 import {
   ApplicationStore,
   useApplicationStore,
@@ -106,6 +112,8 @@ type HeaderProps = {};
 
 const Header: React.FC<HeaderProps> = () => {
   const isLoading = useAtomValue(isLoadingAtom);
+  const isLiveMode = useAtomValue(isLiveModeAtom);
+  const isLiveFetching = useAtomValue(isLiveFetchingAtom);
 
   const [searchValue, setSearchValue] = useAtom(searchQueryAtom);
   const selectedStartTime = useAtomValue(startFullDateAtom);
@@ -119,6 +127,8 @@ const Header: React.FC<HeaderProps> = () => {
   const setDateSelectorOpen = useSetAtom(isDateSelectorOpenAtom);
   const runQuery = useRunQuery();
   const { abortRunningQuery } = useQueryActions();
+
+  useLiveMode();
 
   const { handleSubmit } = useForm<FormValues>({
     values: {
@@ -150,10 +160,14 @@ const Header: React.FC<HeaderProps> = () => {
     },
   );
 
-  const loaderValue = isLoading ? null : 100;
+  const loaderValue = isLoading || isLiveFetching ? null : 100;
   const loaderColor = useMemo(() => {
-    if (isLoading) {
+    if (isLoading || isLiveFetching) {
       return "indigo" as const;
+    }
+
+    if (isLiveMode) {
+      return "teal" as const; // steady teal = live but idle
     }
 
     if (isQuerySuccess) {
@@ -161,7 +175,7 @@ const Header: React.FC<HeaderProps> = () => {
     }
 
     return "red" as const;
-  }, [isLoading, isQuerySuccess]);
+  }, [isLoading, isLiveFetching, isLiveMode, isQuerySuccess]);
 
   return (
     <>
@@ -234,6 +248,7 @@ const SearchBarButtons: React.FC<SearchBarButtonsProps> = ({
             onForceSubmit={onForceSubmit}
           />
           <ReEvaluateButton isLoading={isLoading} />
+          <LiveModeButton />
         </Stack>
         <DateSelector />
         <MiniButtons />
@@ -266,7 +281,6 @@ const MiniButtons = () => {
     </Stack>
   );
 };
-
 
 const createSearchProfileIsLoadingSelector = (
   profileRef: SearchProfileRef,

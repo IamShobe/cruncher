@@ -41,11 +41,11 @@ type SuggestionMeta = {
 };
 
 const SUGGESTION_META: Record<Suggestion["type"], SuggestionMeta> = {
-  keyword:         { icon: LuCode,           colorPalette: "purple", label: "keyword" },
-  function:        { icon: LuSquareFunction,  colorPalette: "blue",   label: "fn" },
-  variable:        { icon: LuTag,             colorPalette: "green",  label: "field" },
-  param:           { icon: LuSettings2,       colorPalette: "orange", label: "param" },
-  controllerParam: { icon: LuWrench,          colorPalette: "orange", label: "param" },
+  keyword: { icon: LuCode, colorPalette: "purple", label: "keyword" },
+  function: { icon: LuSquareFunction, colorPalette: "blue", label: "fn" },
+  variable: { icon: LuTag, colorPalette: "green", label: "field" },
+  param: { icon: LuSettings2, colorPalette: "orange", label: "param" },
+  controllerParam: { icon: LuWrench, colorPalette: "orange", label: "param" },
 };
 
 export const AutoCompleter = ({
@@ -94,7 +94,13 @@ export const AutoCompleter = ({
                 color={`${meta.colorPalette}.fg`}
                 flexShrink={0}
               />
-              <Text fontSize="xs" fontFamily="mono" flex={1} truncate lineHeight="1">
+              <Text
+                fontSize="xs"
+                fontFamily="mono"
+                flex={1}
+                truncate
+                lineHeight="1"
+              >
                 {suggestion.value}
               </Text>
               <Badge

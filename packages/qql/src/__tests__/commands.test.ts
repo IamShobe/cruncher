@@ -85,9 +85,7 @@ test("table command no columns", () => {
 });
 
 test("table command multiple columns", () => {
-  expect(parse(
-    `hello world | table column1, column2, column3`,
-  )).toMatchObject({
+  expect(parse(`hello world | table column1, column2, column3`)).toMatchObject({
     type: "query",
     dataSources: [],
     controllerParams: [],
@@ -378,34 +376,33 @@ test("support for sort desc command", () => {
 });
 
 test("support for sort desc multiple", () => {
-  expect(parse(`hello world | sort column1 desc, column2 asc`))
-    .toMatchObject({
-      type: "query",
-      dataSources: [],
-      controllerParams: [],
-      search: {
-        type: "search",
-        left: {
-          type: "searchLiteral",
-          tokens: ["hello", "world"],
-        },
+  expect(parse(`hello world | sort column1 desc, column2 asc`)).toMatchObject({
+    type: "query",
+    dataSources: [],
+    controllerParams: [],
+    search: {
+      type: "search",
+      left: {
+        type: "searchLiteral",
+        tokens: ["hello", "world"],
       },
-      pipeline: [
-        {
-          type: "sort",
-          columns: [
-            {
-              column: "column1",
-              order: "desc",
-            },
-            {
-              column: "column2",
-              order: "asc",
-            },
-          ],
-        },
-      ],
-    });
+    },
+    pipeline: [
+      {
+        type: "sort",
+        columns: [
+          {
+            column: "column1",
+            order: "desc",
+          },
+          {
+            column: "column2",
+            order: "asc",
+          },
+        ],
+      },
+    ],
+  });
 });
 
 test("support timechart command", () => {
@@ -462,61 +459,61 @@ test("support timechart span param", () => {
 });
 
 test("support timechart maxGroups param", () => {
-  expect(parse(`hello world | timechart count() maxGroups 10`))
-    .toMatchObject({
-      type: "query",
-      dataSources: [],
-      controllerParams: [],
-      search: {
-        type: "search",
-        left: {
-          type: "searchLiteral",
-          tokens: ["hello", "world"],
+  expect(parse(`hello world | timechart count() maxGroups 10`)).toMatchObject({
+    type: "query",
+    dataSources: [],
+    controllerParams: [],
+    search: {
+      type: "search",
+      left: {
+        type: "searchLiteral",
+        tokens: ["hello", "world"],
+      },
+    },
+    pipeline: [
+      {
+        type: "timechart",
+        aggregationFunctions: [
+          {
+            function: "count",
+          },
+        ],
+        params: {
+          maxGroups: 10,
         },
       },
-      pipeline: [
-        {
-          type: "timechart",
-          aggregationFunctions: [
-            {
-              function: "count",
-            },
-          ],
-          params: {
-            maxGroups: 10,
-          },
-        },
-      ],
-    });
+    ],
+  });
 });
 
 test("support timechart timeCol param", () => {
-  expect(parse(`hello world | timechart count() timeCol timestamp`))
-    .toMatchObject({
-      type: "query",
-      dataSources: [],
-      controllerParams: [],
-      search: {
-        type: "search",
-        left: {
-          type: "searchLiteral",
-          tokens: ["hello", "world"],
+  expect(
+    parse(`hello world | timechart count() timeCol timestamp`),
+  ).toMatchObject({
+    type: "query",
+    dataSources: [],
+    controllerParams: [],
+    search: {
+      type: "search",
+      left: {
+        type: "searchLiteral",
+        tokens: ["hello", "world"],
+      },
+    },
+    pipeline: [
+      {
+        type: "timechart",
+        aggregationFunctions: [
+          {
+            function: "count",
+          },
+        ],
+        params: {
+          timeCol: "timestamp",
         },
       },
-      pipeline: [
-        {
-          type: "timechart",
-          aggregationFunctions: [
-            {
-              function: "count",
-            },
-          ],
-          params: {
-            timeCol: "timestamp",
-          },
-        },
-      ],
-    });
+    ],
+  });
 });
 
 test("regex command with field= and quoted column", () => {
@@ -532,7 +529,9 @@ test("regex command with field= and quoted column", () => {
 });
 
 test("regex command with field= and dot-notation column", () => {
-  expect(parse("hello world | regex field=kubernetes.pod_name `^web`")).toMatchObject({
+  expect(
+    parse("hello world | regex field=kubernetes.pod_name `^web`"),
+  ).toMatchObject({
     pipeline: [
       {
         type: "regex",

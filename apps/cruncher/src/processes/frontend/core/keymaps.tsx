@@ -112,6 +112,14 @@ export const searcherShortcuts = new ShortcutHolder({
     Mac: "Meta + F",
     Windows: "Control + F",
   },
+  "toggle-live-mode": {
+    Mac: "Meta + L",
+    Windows: "Control + L",
+  },
+  "toggle-idle-hints": {
+    Mac: "Meta + Shift + I",
+    Windows: "Control + Shift + I",
+  },
 });
 
 export const searcherGlobalShortcuts = new ShortcutHolder({

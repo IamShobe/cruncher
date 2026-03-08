@@ -16,6 +16,7 @@ import {
 import { useViewDataQuery } from "~core/api";
 import { actualEndTimeAtom, actualStartTimeAtom } from "~core/store/dateState";
 import { formatDataTimeShort } from "@cruncher/adapter-utils/formatters";
+import { timezoneAtom } from "~core/store/liveState";
 import { toJsonObject } from "@cruncher/adapter-utils/logTypes";
 import { Bucket } from "~lib/displayTypes";
 
@@ -26,6 +27,7 @@ export const ViewChart = ({}: ViewChartProps) => {
   // TODO: use fixed values instead of the actual atoms
   const selectedStartTime = useAtomValue(actualStartTimeAtom);
   const selectedEndTime = useAtomValue(actualEndTimeAtom);
+  const timezone = useAtomValue(timezoneAtom);
 
   const { data: view } = useViewDataQuery();
 
@@ -76,7 +78,13 @@ export const ViewChart = ({}: ViewChartProps) => {
 
   if (isTooBig) {
     return (
-      <Card.Root bg="bg.muted" borderWidth="1px" borderColor="border" color="fg" fontSize="0.75rem">
+      <Card.Root
+        bg="bg.muted"
+        borderWidth="1px"
+        borderColor="border"
+        color="fg"
+        fontSize="0.75rem"
+      >
         <Card.Body padding={2}>
           <p className="intro">
             Too many data points to display ({"> "}
@@ -95,17 +103,25 @@ export const ViewChart = ({}: ViewChartProps) => {
   return (
     <div
       className="highlight-bar-charts"
-      style={{ userSelect: "none", width: "100%", background: token("colors.bg") }}
+      style={{
+        userSelect: "none",
+        width: "100%",
+        background: token("colors.bg"),
+      }}
     >
       <ResponsiveContainer width="100%" minHeight={300}>
         <LineChart width={100} height={300} data={dataPoints}>
-          <CartesianGrid strokeDasharray="4 4" stroke={token("colors.border")} vertical={false} />
+          <CartesianGrid
+            strokeDasharray="4 4"
+            stroke={token("colors.border")}
+            vertical={false}
+          />
           <XAxis
             scale={scale}
             dataKey={view.XAxis}
             ticks={scale.ticks()}
             domain={scale.domain()}
-            tickFormatter={(value) => formatDataTimeShort(value)}
+            tickFormatter={(value) => formatDataTimeShort(value, timezone)}
             type="number"
             tick={{ fill: token("colors.fg.muted"), fontSize: 11 }}
             axisLine={{ stroke: token("colors.border") }}
@@ -119,7 +135,12 @@ export const ViewChart = ({}: ViewChartProps) => {
             width={40}
           />
           <Tooltip
-            content={<CustomTooltip selectedAxises={selectedSerieses} />}
+            content={
+              <CustomTooltip
+                selectedAxises={selectedSerieses}
+                timezone={timezone}
+              />
+            }
           />
           {view.YAxis.map((yAxis, index) => {
             const isSelected =
@@ -155,8 +176,10 @@ const CustomTooltip = ({
   payload,
   label,
   selectedAxises,
+  timezone,
 }: TooltipProps<number, string> & {
   selectedAxises: string[];
+  timezone: import("@cruncher/adapter-utils/formatters").Timezone;
 }) => {
   const sortedPayload = useMemo(() => {
     if (!payload) {
@@ -173,9 +196,15 @@ const CustomTooltip = ({
 
   if (active && payload && payload.length) {
     return (
-      <Card.Root bg="bg.muted" borderWidth="1px" borderColor="border" color="fg" fontSize="0.75rem">
+      <Card.Root
+        bg="bg.muted"
+        borderWidth="1px"
+        borderColor="border"
+        color="fg"
+        fontSize="0.75rem"
+      >
         <Card.Body padding={2}>
-          <p className="label">{formatDataTimeShort(label)}</p>
+          <p className="label">{formatDataTimeShort(label, timezone)}</p>
           {sortedPayload.slice(0, 10).map((item) => {
             const isSelected =
               selectedAxises.length === 0 ||

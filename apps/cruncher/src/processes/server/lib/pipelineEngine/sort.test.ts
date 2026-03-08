@@ -17,7 +17,9 @@ const makeTable = (rows: ProcessedData[]): DisplayResults => ({
   view: undefined,
 });
 
-const row = (fields: Record<string, ProcessedData["object"][string]>): ProcessedData => ({
+const row = (
+  fields: Record<string, ProcessedData["object"][string]>,
+): ProcessedData => ({
   object: fields,
   message: "",
 });
@@ -64,7 +66,11 @@ test("sort strings ascending", () => {
     row({ name: str("bob") }),
   ]);
   const result = processSort(data, [{ name: "name", order: "asc" }]);
-  expect(getValues(result, "name")).toEqual([str("alice"), str("bob"), str("charlie")]);
+  expect(getValues(result, "name")).toEqual([
+    str("alice"),
+    str("bob"),
+    str("charlie"),
+  ]);
 });
 
 test("sort strings descending", () => {
@@ -74,7 +80,11 @@ test("sort strings descending", () => {
     row({ name: str("bob") }),
   ]);
   const result = processSort(data, [{ name: "name", order: "desc" }]);
-  expect(getValues(result, "name")).toEqual([str("charlie"), str("bob"), str("alice")]);
+  expect(getValues(result, "name")).toEqual([
+    str("charlie"),
+    str("bob"),
+    str("alice"),
+  ]);
 });
 
 // ─── Date sorting ─────────────────────────────────────────────────────────────
@@ -108,7 +118,11 @@ test("sort booleans ascending (false first)", () => {
     row({ active: bool(true) }),
   ]);
   const result = processSort(data, [{ name: "active", order: "asc" }]);
-  expect(getValues(result, "active")).toEqual([bool(false), bool(true), bool(true)]);
+  expect(getValues(result, "active")).toEqual([
+    bool(false),
+    bool(true),
+    bool(true),
+  ]);
 });
 
 test("sort booleans descending (true first)", () => {
@@ -118,7 +132,11 @@ test("sort booleans descending (true first)", () => {
     row({ active: bool(false) }),
   ]);
   const result = processSort(data, [{ name: "active", order: "desc" }]);
-  expect(getValues(result, "active")).toEqual([bool(true), bool(false), bool(false)]);
+  expect(getValues(result, "active")).toEqual([
+    bool(true),
+    bool(false),
+    bool(false),
+  ]);
 });
 
 // ─── Null/undefined handling ──────────────────────────────────────────────────
@@ -146,7 +164,7 @@ test("sort descending: null values come last", () => {
 test("sort ascending: missing field treated as null (first)", () => {
   const data = makeEvents([
     row({ score: num(3) }),
-    row({}),           // no "score" key → undefined
+    row({}), // no "score" key → undefined
     row({ score: num(1) }),
   ]);
   const result = processSort(data, [{ name: "score", order: "asc" }]);
@@ -224,10 +242,7 @@ test("sort equal values preserves relative order", () => {
 });
 
 test("sort with no rules returns data unchanged", () => {
-  const data = makeEvents([
-    row({ score: num(3) }),
-    row({ score: num(1) }),
-  ]);
+  const data = makeEvents([row({ score: num(3) }), row({ score: num(1) })]);
   const result = processSort(data, []);
   expect(getValues(result, "score")).toEqual([num(3), num(1)]);
 });
@@ -241,7 +256,11 @@ test("sort by field name correctly finds the column", () => {
     row({ _time: date(2000) }),
   ]);
   const result = processSort(data, [{ name: "_time", order: "asc" }]);
-  expect(getValues(result, "_time")).toEqual([date(1000), date(2000), date(3000)]);
+  expect(getValues(result, "_time")).toEqual([
+    date(1000),
+    date(2000),
+    date(3000),
+  ]);
 });
 
 test("sort mixed types skips comparison (keeps original order for those rows)", () => {

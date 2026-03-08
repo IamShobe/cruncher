@@ -32,7 +32,9 @@ const makeTable = (rows: ProcessedData[]): DisplayResults => ({
   view: undefined,
 });
 
-const row = (fields: Record<string, ProcessedData["object"][string]>): ProcessedData => ({
+const row = (
+  fields: Record<string, ProcessedData["object"][string]>,
+): ProcessedData => ({
   object: fields,
   message: "",
 });
@@ -70,7 +72,10 @@ const simpleCalc = (v: number): CalcExpression =>
 const colCalc = (col: string): CalcExpression =>
   calcExpr(calcTerm(colCalcUnit(col)));
 
-const termAction = (operator: string, right: CalculateUnit): CalcTermAction => ({
+const termAction = (
+  operator: string,
+  right: CalculateUnit,
+): CalcTermAction => ({
   type: "calcTermAction",
   operator,
   right,
@@ -130,7 +135,10 @@ const caseThen = (
   truethy,
 });
 
-const fn = (functionName: string, args: EvalFunctionArg[]): FunctionExpression => ({
+const fn = (
+  functionName: string,
+  args: EvalFunctionArg[],
+): FunctionExpression => ({
   type: "functionExpression",
   functionName,
   args: args as any,
@@ -147,7 +155,10 @@ describe("literal assignment", () => {
 
   test("assigns a literal string", () => {
     const data = makeEvents([row({})]);
-    const result = processEval(data, "label", { type: "string", value: "hello" });
+    const result = processEval(data, "label", {
+      type: "string",
+      value: "hello",
+    });
     expect(result.events.data[0].object["label"]).toEqual(str("hello"));
   });
 
@@ -169,20 +180,37 @@ describe("literal assignment", () => {
 describe("column reference", () => {
   test("copies an existing column value", () => {
     const data = makeEvents([row({ score: num(99) })]);
-    const result = processEval(data, "copy", { type: "columnRef", columnName: "score" });
+    const result = processEval(data, "copy", {
+      type: "columnRef",
+      columnName: "score",
+    });
     expect(result.events.data[0].object["copy"]).toEqual(num(99));
   });
 
   test("returns undefined for a missing column reference", () => {
     const data = makeEvents([row({})]);
-    const result = processEval(data, "copy", { type: "columnRef", columnName: "missing" });
+    const result = processEval(data, "copy", {
+      type: "columnRef",
+      columnName: "missing",
+    });
     expect(result.events.data[0].object["copy"]).toBeUndefined();
   });
 
   test("applies to every row independently", () => {
-    const data = makeEvents([row({ v: num(1) }), row({ v: num(2) }), row({ v: num(3) })]);
-    const result = processEval(data, "dup", { type: "columnRef", columnName: "v" });
-    expect(result.events.data.map((r) => r.object["dup"])).toEqual([num(1), num(2), num(3)]);
+    const data = makeEvents([
+      row({ v: num(1) }),
+      row({ v: num(2) }),
+      row({ v: num(3) }),
+    ]);
+    const result = processEval(data, "dup", {
+      type: "columnRef",
+      columnName: "v",
+    });
+    expect(result.events.data.map((r) => r.object["dup"])).toEqual([
+      num(1),
+      num(2),
+      num(3),
+    ]);
   });
 });
 
@@ -283,9 +311,7 @@ describe("arithmetic - operator precedence via term tail", () => {
   test("multiplication before addition: 2 + 3 * 4 = 14", () => {
     // In grammar: left term is just 2, then + right term (3 * 4)
     const mulTerm = calcTerm(numCalcUnit(3), [termAction("*", numCalcUnit(4))]);
-    const expr = calcExpr(calcTerm(numCalcUnit(2)), [
-      calcAction("+", mulTerm),
-    ]);
+    const expr = calcExpr(calcTerm(numCalcUnit(2)), [calcAction("+", mulTerm)]);
     const data = makeEvents([row({})]);
     const result = processEval(data, "result", expr);
     expect(result.events.data[0].object["result"]).toEqual(num(14));
@@ -335,7 +361,10 @@ describe("logical expression", () => {
 describe("if function", () => {
   test("returns then-branch when condition is true", () => {
     const expr = ifExpr(
-      comparison({ type: "number", value: 1 }, "==", { type: "number", value: 1 }),
+      comparison({ type: "number", value: 1 }, "==", {
+        type: "number",
+        value: 1,
+      }),
       { type: "string", value: "yes" },
       { type: "string", value: "no" },
     );
@@ -346,7 +375,10 @@ describe("if function", () => {
 
   test("returns else-branch when condition is false", () => {
     const expr = ifExpr(
-      comparison({ type: "number", value: 0 }, "==", { type: "number", value: 1 }),
+      comparison({ type: "number", value: 0 }, "==", {
+        type: "number",
+        value: 1,
+      }),
       { type: "string", value: "yes" },
       { type: "string", value: "no" },
     );
@@ -357,7 +389,10 @@ describe("if function", () => {
 
   test("returns undefined when condition is false and no else branch", () => {
     const expr = ifExpr(
-      comparison({ type: "number", value: 0 }, "==", { type: "number", value: 1 }),
+      comparison({ type: "number", value: 0 }, "==", {
+        type: "number",
+        value: 1,
+      }),
       { type: "string", value: "yes" },
     );
     const data = makeEvents([row({})]);
@@ -367,7 +402,10 @@ describe("if function", () => {
 
   test("uses column in condition", () => {
     const expr = ifExpr(
-      comparison({ type: "columnRef", columnName: "level" }, ">", { type: "number", value: 5 }),
+      comparison({ type: "columnRef", columnName: "level" }, ">", {
+        type: "number",
+        value: 5,
+      }),
       { type: "string", value: "high" },
       { type: "string", value: "low" },
     );
@@ -385,11 +423,17 @@ describe("case function", () => {
     const expr = caseExpr(
       [
         caseThen(
-          comparison({ type: "number", value: 1 }, "==", { type: "number", value: 1 }),
+          comparison({ type: "number", value: 1 }, "==", {
+            type: "number",
+            value: 1,
+          }),
           { type: "string", value: "one" },
         ),
         caseThen(
-          comparison({ type: "number", value: 2 }, "==", { type: "number", value: 2 }),
+          comparison({ type: "number", value: 2 }, "==", {
+            type: "number",
+            value: 2,
+          }),
           { type: "string", value: "two" },
         ),
       ],
@@ -404,11 +448,17 @@ describe("case function", () => {
     const expr = caseExpr(
       [
         caseThen(
-          comparison({ type: "number", value: 1 }, "==", { type: "number", value: 2 }),
+          comparison({ type: "number", value: 1 }, "==", {
+            type: "number",
+            value: 2,
+          }),
           { type: "string", value: "first" },
         ),
         caseThen(
-          comparison({ type: "number", value: 1 }, "==", { type: "number", value: 1 }),
+          comparison({ type: "number", value: 1 }, "==", {
+            type: "number",
+            value: 1,
+          }),
           { type: "string", value: "second" },
         ),
       ],
@@ -423,7 +473,10 @@ describe("case function", () => {
     const expr = caseExpr(
       [
         caseThen(
-          comparison({ type: "number", value: 0 }, "==", { type: "number", value: 1 }),
+          comparison({ type: "number", value: 0 }, "==", {
+            type: "number",
+            value: 1,
+          }),
           { type: "string", value: "never" },
         ),
       ],
@@ -437,7 +490,10 @@ describe("case function", () => {
   test("returns undefined when no case matches and no elseCase", () => {
     const expr = caseExpr([
       caseThen(
-        comparison({ type: "number", value: 0 }, "==", { type: "number", value: 1 }),
+        comparison({ type: "number", value: 0 }, "==", {
+          type: "number",
+          value: 1,
+        }),
         { type: "string", value: "never" },
       ),
     ]);
@@ -450,11 +506,17 @@ describe("case function", () => {
     const expr = caseExpr(
       [
         caseThen(
-          comparison({ type: "columnRef", columnName: "status" }, "==", { type: "string", value: "ok" }),
+          comparison({ type: "columnRef", columnName: "status" }, "==", {
+            type: "string",
+            value: "ok",
+          }),
           { type: "number", value: 1 },
         ),
         caseThen(
-          comparison({ type: "columnRef", columnName: "status" }, "==", { type: "string", value: "warn" }),
+          comparison({ type: "columnRef", columnName: "status" }, "==", {
+            type: "string",
+            value: "warn",
+          }),
           { type: "number", value: 2 },
         ),
       ],
@@ -547,9 +609,13 @@ describe("eval operates on table.dataPoints when table is present", () => {
 
   test("column reference in table mode", () => {
     const data = makeTable([row({ score: num(10) })]);
-    const result = processEval(data, "double", calcExpr(
-      calcTerm(colCalcUnit("score"), [termAction("*", numCalcUnit(2))]),
-    ));
+    const result = processEval(
+      data,
+      "double",
+      calcExpr(
+        calcTerm(colCalcUnit("score"), [termAction("*", numCalcUnit(2))]),
+      ),
+    );
     expect(result.table?.dataPoints[0].object["double"]).toEqual(num(20));
   });
 });
@@ -561,7 +627,9 @@ describe("eval operates on table.dataPoints when table is present", () => {
 describe("functions with calc expression args", () => {
   test("ceil(col / literal): ceil(duration_ms / 1000)", () => {
     const divExpr = calcExpr(
-      calcTerm(colCalcUnit("duration_ms"), [termAction("/", numCalcUnit(1000))]),
+      calcTerm(colCalcUnit("duration_ms"), [
+        termAction("/", numCalcUnit(1000)),
+      ]),
     );
     const expr = fn("ceil", [divExpr as any]);
     const data = makeEvents([row({ duration_ms: num(5500) })]);

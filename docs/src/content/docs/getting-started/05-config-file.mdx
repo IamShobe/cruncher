@@ -128,6 +128,42 @@ ui:
   The colour theme used across the entire UI. Supported values: `midnight`, `nord`, `dracula`, `catppuccin`.
 </ConfigField>
 
+<ConfigField
+  name="ui.liveInterval"
+  type="string"
+  required={false}
+  defaultValue="5s"
+>
+  Interval between [Live Mode](/getting-started/09-live-mode) refresh ticks. Must be one of `1s`, `3s`, `5s`, or `10s`.
+</ConfigField>
+
+<ConfigField
+  name="ui.maxLogs"
+  type="number"
+  required={false}
+  defaultValue="100000"
+>
+  Maximum number of log records kept in memory during a session. Oldest records are discarded when the limit is exceeded. Minimum: `1000`.
+</ConfigField>
+
+<ConfigField
+  name="ui.liveAutoStopMinutes"
+  type="number"
+  required={false}
+  defaultValue="30"
+>
+  Minutes after which [Live Mode](/getting-started/09-live-mode) turns itself off automatically. Set to `0` to never auto-stop.
+</ConfigField>
+
+<ConfigField
+  name="ui.timezone"
+  type="string"
+  required={false}
+  defaultValue="local"
+>
+  Controls how all timestamps are displayed across the UI — calendar selector, log rows, histogram, and charts. `local` uses the machine's local timezone; `utc` displays all times in UTC. Both values also affect how times typed in the calendar input are interpreted.
+</ConfigField>
+
 ## Profiles
 
 Cruncher supports the concept of profiles, allowing you to define multiple sets of connectors and settings in the same config file. Each profile can represent a different environment, use case, or set of data sources.
@@ -141,10 +177,14 @@ The optional `ui` section controls appearance preferences:
 
 ```yaml
 ui:
-  theme: nord   # midnight | nord | dracula | catppuccin
+  theme: nord                # midnight | nord | dracula | catppuccin
+  liveInterval: 5s           # 1s | 3s | 5s | 10s
+  maxLogs: 100000
+  liveAutoStopMinutes: 30    # 0 to disable auto-stop
+  timezone: local            # local | utc
 ```
 
-See the [Themes documentation](/getting-started/06-themes) for a full description of each theme.
+See the [Themes documentation](/getting-started/06-themes) for a full description of each theme. See [Live Mode](/getting-started/09-live-mode) for details on `liveInterval` and `maxLogs`.
 
 <Aside type="tip">
 - Use profiles to easily switch between production, development, or test data sources without editing your main config file each time.

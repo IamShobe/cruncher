@@ -23,6 +23,9 @@ import { TableView } from "~features/searcher/data-displays/table/TableView";
 import { EventsHistogram } from "~features/searcher/data-displays/events/EventsHistogram";
 import { ViewChart } from "~features/searcher/data-displays/view/ViewChart";
 import { TabsLineButtons } from "~features/searcher/TabsLineButtons";
+import { isLiveModeAtom } from "~core/store/liveState";
+import { isLoadingAtom, lastRanJobAtom } from "~core/search";
+import { idleHintsEnabledAtom } from "~components/ui/editor/Editor";
 
 const MainContainer = styled.section`
   flex: 1;
@@ -50,6 +53,10 @@ export const Searcher: React.FC<SearcherProps> = () => {
 
   const queryActions = useQueryActions();
   const setDateSelectorIsOpen = useSetAtom(isDateSelectorOpenAtom);
+  const [isLiveMode, setIsLiveMode] = useAtom(isLiveModeAtom);
+  const isLoading = useAtomValue(isLoadingAtom);
+  const lastRanJob = useAtomValue(lastRanJobAtom);
+  const setIdleHintsEnabled = useSetAtom(idleHintsEnabledAtom);
 
   const [viewSelectedForQuery, setViewSelectedForQuery] = useAtom(
     viewSelectedForQueryAtom,
@@ -89,6 +96,14 @@ export const Searcher: React.FC<SearcherProps> = () => {
         break;
       case "toggle-until-now":
         queryActions.toggleUntilNow();
+        break;
+      case "toggle-live-mode":
+        if (!isLoading && lastRanJob) {
+          setIsLiveMode((prev) => !prev);
+        }
+        break;
+      case "toggle-idle-hints":
+        setIdleHintsEnabled((prev) => !prev);
         break;
     }
   });

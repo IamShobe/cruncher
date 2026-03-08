@@ -1,14 +1,47 @@
 import styled from "@emotion/styled";
 import { token } from "../system";
-import React, { useCallback, useEffect, useMemo, useRef, useState, CSSProperties } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  CSSProperties,
+} from "react";
 import { createPortal } from "react-dom";
-import { Badge, Box, Code, HStack, Icon, IconButton, Popover, Portal, Text } from "@chakra-ui/react";
+import {
+  Badge,
+  Box,
+  Code,
+  HStack,
+  Icon,
+  IconButton,
+  Popover,
+  Text,
+} from "@chakra-ui/react";
 import { Tooltip } from "~components/presets/Tooltip";
+import { Portal } from "~components/ui/portal";
+import { useAtom } from "jotai";
+import { atomWithStorage } from "jotai/utils";
 
 import { AutoCompleter, compareSuggestions, Suggestion } from "./AutoCompleter";
-import { HighlightData, LuExternalLink, TextHighlighter, TooltipContent, getTooltipContent } from "./Highlighter";
-import { LuBug } from "react-icons/lu";
+import {
+  HighlightData,
+  LuExternalLink,
+  TextHighlighter,
+  TooltipContent,
+  getTooltipContent,
+} from "./Highlighter";
+import { LuBug, LuLightbulb, LuLightbulbOff } from "react-icons/lu";
+import { searcherShortcuts } from "~core/keymaps";
 import { Coordinates, getCaretCoordinates } from "./getCoordinates";
+
+export const idleHintsEnabledAtom = atomWithStorage(
+  "cruncher:idleHintsEnabled",
+  true,
+);
+
+const POPOVER_POSITIONING = { placement: "bottom" } as const;
 
 const EditorWrapper = styled.div`
   display: grid;
@@ -104,7 +137,10 @@ export type EditorProps = {
 };
 
 export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
-  ({ value, onChange, suggestions, popperRoot, highlightData, onCopyAst }, ref) => {
+  (
+    { value, onChange, suggestions, popperRoot, highlightData, onCopyAst },
+    ref,
+  ) => {
     const [referenceElement, setReferenceElement] =
       React.useState<HTMLTextAreaElement | null>(null);
 
@@ -142,8 +178,9 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
     const [cursorPosition, setCursorPosition] = useState(value.length);
     const [isCompleterOpen, setIsCompleterOpen] = useState(false);
 
-    const [hoveredCompletionItem, setHoveredCompletionItem] =
-      useState<number | undefined>(undefined);
+    const [hoveredCompletionItem, setHoveredCompletionItem] = useState<
+      number | undefined
+    >(undefined);
     const [hasInteractedWithMenu, setHasInteractedWithMenu] = useState(false);
 
     const writtenWord = useMemo(() => {
@@ -189,14 +226,16 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
       const insertText = filteredSuggestions[hoveredCompletionItem ?? 0].value;
       // Avoid double-quoting: if the user already typed the opening `"` and
       // the completion also starts with `"`, roll back one extra character.
-      if (startPos > 0 && value[startPos - 1] === '"' && insertText.startsWith('"')) {
+      if (
+        startPos > 0 &&
+        value[startPos - 1] === '"' &&
+        insertText.startsWith('"')
+      ) {
         startPos -= 1;
       }
       const endPos = startPos + insertText.length;
       onChange(
-        value.slice(0, startPos) +
-          insertText +
-          value.slice(cursorPosition),
+        value.slice(0, startPos) + insertText + value.slice(cursorPosition),
       );
       // set cursor position to end of the word
       setTimeout(() => {
@@ -224,7 +263,8 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
     };
 
     const ghostTextInfo = useMemo(() => {
-      if (!isCompleterOpen || filteredSuggestions.length === 0) return undefined;
+      if (!isCompleterOpen || filteredSuggestions.length === 0)
+        return undefined;
       const suggestion = filteredSuggestions[hoveredCompletionItem ?? 0];
       if (!suggestion) return undefined;
 
@@ -245,23 +285,57 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
 
       if (!ghost) return undefined;
       return { text: ghost, offset: cursorPosition };
-    }, [isCompleterOpen, filteredSuggestions, hoveredCompletionItem, writtenWord, cursorPosition]);
+    }, [
+      isCompleterOpen,
+      filteredSuggestions,
+      hoveredCompletionItem,
+      writtenWord,
+      cursorPosition,
+    ]);
 
     const [popoverOpen, setPopoverOpen] = useState(false);
-    const [tokenContent, setTokenContent] = useState<TooltipContent | null>(null);
+    const [tokenContent, setTokenContent] = useState<TooltipContent | null>(
+      null,
+    );
     const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
     const closeTimerRef = useRef<ReturnType<typeof setTimeout>>();
     const openTimerRef = useRef<ReturnType<typeof setTimeout>>();
-    const lastShiftPressRef = useRef<number>(0);
+    const idleTimerRef = useRef<ReturnType<typeof setTimeout>>();
+    const isAutoHintRef = useRef(false);
+    const [idleHintsEnabled, setIdleHintsEnabled] =
+      useAtom(idleHintsEnabledAtom);
 
-    useEffect(() => () => {
-      clearTimeout(closeTimerRef.current);
-      clearTimeout(openTimerRef.current);
-    }, []);
+    // Kept in refs so timer callbacks always see the latest values without
+    // needing to be recreated on every render.
+    const highlightDataRef = useRef(highlightData);
+    const idleHintsEnabledRef = useRef(idleHintsEnabled);
+    idleHintsEnabledRef.current = idleHintsEnabled;
+    highlightDataRef.current = highlightData;
+    const cursorPosRef = useRef(cursorPosition);
+    cursorPosRef.current = cursorPosition;
+    const referenceElementRef = useRef<HTMLTextAreaElement | null>(null);
+    referenceElementRef.current = referenceElement;
 
+    useEffect(
+      () => () => {
+        clearTimeout(closeTimerRef.current);
+        clearTimeout(openTimerRef.current);
+        clearTimeout(idleTimerRef.current);
+      },
+      [],
+    );
 
     const anchorStyle = useMemo((): CSSProperties => {
-      if (!anchorRect) return { position: "fixed", width: 0, height: 0, top: 0, left: 0, pointerEvents: "none", opacity: 0 };
+      if (!anchorRect)
+        return {
+          position: "fixed",
+          width: 0,
+          height: 0,
+          top: 0,
+          left: 0,
+          pointerEvents: "none",
+          opacity: 0,
+        };
       return {
         position: "fixed",
         left: anchorRect.left,
@@ -284,6 +358,74 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
     const cancelOpen = useCallback(() => {
       clearTimeout(openTimerRef.current);
     }, []);
+
+    const showHintAtCursor = useCallback(() => {
+      if (!idleHintsEnabledRef.current) return;
+      const cursor = cursorPosRef.current;
+      const hd = highlightDataRef.current;
+      const el = referenceElementRef.current;
+      if (!el || !hd.length) return;
+
+      const sorted = [...hd].sort(
+        (a, b) => a.token.startOffset - b.token.startOffset,
+      );
+      const token =
+        sorted.find(
+          (h) =>
+            cursor >= h.token.startOffset &&
+            cursor <= (h.token.endOffset ?? h.token.startOffset),
+        ) ??
+        [...sorted].reverse().find((h) => h.token.startOffset < cursor) ??
+        sorted.find((h) => h.token.startOffset > cursor);
+
+      if (!token) return;
+      const content = getTooltipContent(token.type, token.metadata);
+      if (!content) return;
+
+      const tokenMid = Math.floor(
+        (token.token.startOffset +
+          (token.token.endOffset ?? token.token.startOffset)) /
+          2,
+      );
+      const caretPos = getCaretCoordinates(el, tokenMid);
+      const textareaRect = el.getBoundingClientRect();
+      const rect = new DOMRect(
+        textareaRect.left + caretPos.left - el.scrollLeft,
+        textareaRect.top + caretPos.top - el.scrollTop,
+        1,
+        caretPos.height,
+      );
+      cancelOpen();
+      cancelClose();
+      setAnchorRect(rect);
+      setTokenContent(content);
+      setPopoverOpen(true);
+      isAutoHintRef.current = true;
+    }, [cancelOpen, cancelClose]);
+
+    const scheduleIdleHint = useCallback(() => {
+      clearTimeout(idleTimerRef.current);
+      idleTimerRef.current = setTimeout(showHintAtCursor, 2000);
+    }, [showHintAtCursor]);
+
+    const dismissAutoHint = useCallback(() => {
+      if (isAutoHintRef.current) {
+        setPopoverOpen(false);
+        isAutoHintRef.current = false;
+      }
+    }, []);
+
+    const handlePopoverOpenChange = useCallback(
+      ({ open }: { open: boolean }) => {
+        setPopoverOpen(open);
+      },
+      [],
+    );
+
+    const getInitialFocusEl = useCallback(
+      () => referenceElementRef.current,
+      [],
+    );
 
     const handleMouseMove = useCallback(
       (e: React.MouseEvent<HTMLTextAreaElement>) => {
@@ -310,7 +452,10 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
                 cancelOpen();
                 setAnchorRect(rect);
                 setTokenContent(content);
-                openTimerRef.current = setTimeout(() => setPopoverOpen(true), 700);
+                openTimerRef.current = setTimeout(
+                  () => setPopoverOpen(true),
+                  700,
+                );
               }
             } else {
               cancelOpen();
@@ -350,6 +495,7 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
             position: "relative",
           }}
           onKeyDown={(e) => {
+            scheduleIdleHint();
             // TODO move it to shortcuts system
             // if key is esc - close completer
             if (e.key === "Escape") {
@@ -358,51 +504,6 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
             }
             if (e.key === " " && e.ctrlKey) {
               setIsCompleterOpen(true);
-            }
-
-            if (e.key === "Shift") {
-              const now = Date.now();
-              if (now - lastShiftPressRef.current < 500) {
-                lastShiftPressRef.current = 0;
-                e.preventDefault();
-                const cursor = e.currentTarget.selectionStart;
-                // Exact match first; fall back to nearest token to the left,
-                // then nearest token to the right.
-                const sorted = [...highlightData].sort(
-                  (a, b) => a.token.startOffset - b.token.startOffset,
-                );
-                const token =
-                  sorted.find(
-                    (h) =>
-                      cursor >= h.token.startOffset &&
-                      cursor <= (h.token.endOffset ?? h.token.startOffset),
-                  ) ??
-                  [...sorted]
-                    .reverse()
-                    .find((h) => h.token.startOffset < cursor) ??
-                  sorted.find((h) => h.token.startOffset > cursor);
-                if (token) {
-                  const content = getTooltipContent(token.type, token.metadata);
-                  if (content && referenceElement) {
-                    const caretPos = getCaretCoordinates(referenceElement, cursor);
-                    const textareaRect = referenceElement.getBoundingClientRect();
-                    const rect = new DOMRect(
-                      textareaRect.left + caretPos.left - referenceElement.scrollLeft,
-                      textareaRect.top + caretPos.top - referenceElement.scrollTop,
-                      1,
-                      caretPos.height,
-                    );
-                    cancelOpen();
-                    cancelClose();
-                    setAnchorRect(rect);
-                    setTokenContent(content);
-                    setPopoverOpen(true);
-                    closeTimerRef.current = setTimeout(() => setPopoverOpen(false), 8000);
-                  }
-                }
-              } else {
-                lastShiftPressRef.current = now;
-              }
             }
 
             // if key is Tab - disable default behavior
@@ -440,11 +541,12 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
                 advanceHoveredItem();
               }
             }
-
-            setCursorPosition(e.currentTarget.selectionStart);
           }}
           onMouseMove={handleMouseMove}
-          onMouseLeave={() => { cancelOpen(); scheduleClose(); }}
+          onMouseLeave={() => {
+            cancelOpen();
+            scheduleClose();
+          }}
           onInput={() => {
             syncScroll();
           }}
@@ -464,11 +566,14 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
 
             // Also open on space if there are suggestions that start exactly at
             // the new cursor position (e.g. after a complete controller param).
-            const isSpaceAdded = e.target.value.length > value.length && char === " ";
+            const isSpaceAdded =
+              e.target.value.length > value.length && char === " ";
             const hasFreshSuggestions =
               isSpaceAdded &&
               suggestions.some((s) => s.fromPosition === selectionStart);
 
+            dismissAutoHint();
+            scheduleIdleHint();
             onChange(e.target.value);
             setCursorPosition(e.currentTarget.selectionStart);
             setIsCompleterOpen(isCharAdded || hasFreshSuggestions);
@@ -503,17 +608,17 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
           )}
         <Popover.Root
           open={popoverOpen}
-          onOpenChange={({ open }) => setPopoverOpen(open)}
-          positioning={{ placement: "bottom" }}
+          onOpenChange={handlePopoverOpenChange}
+          positioning={POPOVER_POSITIONING}
           closeOnInteractOutside={false}
-          initialFocusEl={() => referenceElement}
+          initialFocusEl={getInitialFocusEl}
           lazyMount
           unmountOnExit
         >
           <Popover.Trigger asChild>
             <div style={anchorStyle} />
           </Popover.Trigger>
-          <Portal container={{ current: popperRoot as HTMLElement | null }}>
+          <Portal>
             <Popover.Positioner>
               <Popover.Content
                 onMouseEnter={cancelClose}
@@ -524,7 +629,11 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
                   {tokenContent && (
                     <>
                       <HStack gap="2" mb="2" align="center">
-                        <Icon as={tokenContent.icon} boxSize="4" color="fg.muted" />
+                        <Icon
+                          as={tokenContent.icon}
+                          boxSize="4"
+                          color="fg.muted"
+                        />
                         <Text fontWeight="semibold" fontSize="sm" color="fg">
                           {tokenContent.label}
                         </Text>
@@ -541,7 +650,11 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
                               variant="ghost"
                               colorPalette="blue"
                               ms="auto"
-                              onClick={() => window.electronAPI.openExternal(tokenContent.docsUrl!)}
+                              onClick={() =>
+                                window.electronAPI.openExternal(
+                                  tokenContent.docsUrl!,
+                                )
+                              }
                             >
                               <Icon as={LuExternalLink} />
                             </IconButton>
@@ -573,8 +686,17 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
             </Popover.Positioner>
           </Portal>
         </Popover.Root>
-        {onCopyAst && isEditorHovered && (
-          <div style={{ position: "absolute", top: 6, right: 6, zIndex: 3 }}>
+        <div
+          style={{
+            position: "absolute",
+            top: 6,
+            right: 6,
+            zIndex: 3,
+            display: "flex",
+            gap: 2,
+          }}
+        >
+          {onCopyAst && isEditorHovered && (
             <Tooltip text="Copy AST (debug)" position="left">
               <IconButton
                 aria-label="Copy AST (debug)"
@@ -585,8 +707,25 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
                 <LuBug />
               </IconButton>
             </Tooltip>
-          </div>
-        )}
+          )}
+          <Tooltip
+            text={idleHintsEnabled ? "Idle hints on" : "Idle hints off"}
+            shortcut={searcherShortcuts.getAlias("toggle-idle-hints")}
+            position="left"
+          >
+            <IconButton
+              aria-label={
+                idleHintsEnabled ? "Disable idle hints" : "Enable idle hints"
+              }
+              size="2xs"
+              variant="ghost"
+              colorPalette={idleHintsEnabled ? "yellow" : "gray"}
+              onClick={() => setIdleHintsEnabled((v) => !v)}
+            >
+              {idleHintsEnabled ? <LuLightbulb /> : <LuLightbulbOff />}
+            </IconButton>
+          </Tooltip>
+        </div>
       </EditorWrapper>
     );
   },

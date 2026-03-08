@@ -38,7 +38,9 @@ test("controller param without datasource: still suggests controllerParam", () =
 test("index=: suggests paramValue with key='index' after '='", () => {
   // "index=" → EQUAL at 5 (stop=5), fromPosition=6
   const sug = getSuggestions("index=");
-  const pv = sug.find((s) => s.type === "paramValue") as Extract<SuggestionData, { type: "paramValue" }> | undefined;
+  const pv = sug.find((s) => s.type === "paramValue") as
+    | Extract<SuggestionData, { type: "paramValue" }>
+    | undefined;
   expect(pv).toBeDefined();
   expect(pv!.key).toBe("index");
   expect(pv!.fromPosition).toBe(6);
@@ -53,15 +55,25 @@ test('index="main": suggests more controllerParams after a complete param', () =
   expect(sug.find((s) => s.type === "paramValue")).toBeUndefined();
 });
 
-
 // ─── Pipeline keyword suggestions ────────────────────────────────────────────
 
 test("| : suggests all pipeline command keywords after pipe", () => {
   const sug = getSuggestions("| ");
-  const kw = sug.find((s) => s.type === "keywords") as Extract<SuggestionData, { type: "keywords" }> | undefined;
+  const kw = sug.find((s) => s.type === "keywords") as
+    | Extract<SuggestionData, { type: "keywords" }>
+    | undefined;
   expect(kw).toBeDefined();
   expect(kw!.keywords).toEqual(
-    expect.arrayContaining(["table", "stats", "where", "sort", "eval", "regex", "timechart", "unpack"]),
+    expect.arrayContaining([
+      "table",
+      "stats",
+      "where",
+      "sort",
+      "eval",
+      "regex",
+      "timechart",
+      "unpack",
+    ]),
   );
   // fromPosition should be right after the pipe (pos 0 stop → 1)
   expect(kw!.fromPosition).toBe(1);
@@ -301,7 +313,9 @@ test("| stats count(: suggests column inside function args", () => {
 test("| stats count(col): column suggestion is bounded by closing paren", () => {
   // "| stats count(col)" → RPAREN at 17 (stop=17), toPosition should be 17
   const sug = getSuggestions("| stats count(col)");
-  const col = sug.find((s) => s.type === "column" && (s as any).fromPosition === 14);
+  const col = sug.find(
+    (s) => s.type === "column" && (s as any).fromPosition === 14,
+  );
   expect(col).toBeDefined();
   expect((col as any).toPosition).toBe(17);
 });

@@ -14,7 +14,7 @@ import {
   ProcessedData,
 } from "@cruncher/adapter-utils/logTypes";
 import { searchQueryAtom } from "~core/store/queryState";
-import { useIsIndexOpen } from "./state";
+import { getLogId, useIsLogOpen } from "./state";
 
 import { CiCalendarDate } from "react-icons/ci";
 import { GrStatusUnknown } from "react-icons/gr";
@@ -34,15 +34,10 @@ type DataRowProps = {
   rowValue: Field;
 };
 
-export const RowDetails = ({
-  row,
-  index,
-}: {
-  row: ProcessedData;
-  index: number;
-}) => {
-  const isIndexOpen = useIsIndexOpen();
-  const isOpen = useMemo(() => isIndexOpen(index), [index, isIndexOpen]);
+export const RowDetails = ({ row }: { row: ProcessedData }) => {
+  const logId = getLogId(row);
+  const isLogOpen = useIsLogOpen();
+  const isOpen = useMemo(() => isLogOpen(logId), [logId, isLogOpen]);
   if (!isOpen) {
     return null;
   }

@@ -77,6 +77,12 @@ export const appStore = createStore<ApplicationStore>((set, get) => ({
     set({ supportedPlugins: [], initializedInstances: [], datasets: {} });
     const generalSettings = await controller.getGeneralSettings();
     set({ generalSettings });
+    if (generalSettings.configError) {
+      notifyError(
+        "Config file error (running with defaults)",
+        new Error(generalSettings.configError),
+      );
+    }
 
     console.log("Controller initialized successfully.");
     const supportedPlugins = await controller.listPlugins();

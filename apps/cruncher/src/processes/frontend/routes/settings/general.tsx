@@ -16,7 +16,9 @@ function GeneralSettings() {
   return (
     <Stack maxW={600} gap={6}>
       <Box>
-        <Heading size="md" mb={3}>Theme</Heading>
+        <Heading size="md" mb={3}>
+          Theme
+        </Heading>
         <Stack direction="row" gap={3} flexWrap="wrap">
           {(Object.keys(THEMES) as ThemeId[]).map((id) => {
             const t = THEMES[id];
@@ -30,7 +32,9 @@ function GeneralSettings() {
                 overflow="hidden"
                 borderWidth="2px"
                 borderColor={isSelected ? "accent" : "border"}
-                style={{ outline: isSelected ? `2px solid ${t.accent}` : "none" }}
+                style={{
+                  outline: isSelected ? `2px solid ${t.accent}` : "none",
+                }}
                 _hover={{ borderColor: "accent" }}
                 transition="border-color 0.15s"
                 w="120px"
@@ -43,14 +47,23 @@ function GeneralSettings() {
                   flexDirection="column"
                   gap="4px"
                 >
-                  <Box style={{ background: t.bgSubtle }} h="8px" borderRadius="sm" />
+                  <Box
+                    style={{ background: t.bgSubtle }}
+                    h="8px"
+                    borderRadius="sm"
+                  />
                   <Box
                     style={{ background: t.accent }}
                     h="8px"
                     borderRadius="sm"
                     w="60%"
                   />
-                  <Box style={{ background: t.bgMuted }} h="8px" borderRadius="sm" w="80%" />
+                  <Box
+                    style={{ background: t.bgMuted }}
+                    h="8px"
+                    borderRadius="sm"
+                    w="80%"
+                  />
                 </Box>
                 <Box
                   style={{ background: t.bgPanel }}
@@ -68,7 +81,9 @@ function GeneralSettings() {
                     {t.label}
                   </Text>
                   {isSelected && (
-                    <Text fontSize="xs" style={{ color: t.accent }}>✓</Text>
+                    <Text fontSize="xs" style={{ color: t.accent }}>
+                      ✓
+                    </Text>
                   )}
                 </Box>
               </Box>

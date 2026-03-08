@@ -39,9 +39,18 @@ export function Provider(props: ThemeProviderProps) {
 
   // Expose topbar colors to the document scope (topbar is outside shadow DOM)
   useEffect(() => {
-    document.documentElement.style.setProperty("--app-topbar-gradient-start", theme.bgSubtle);
-    document.documentElement.style.setProperty("--app-topbar-gradient-end", theme.titleBarGradient);
-    document.documentElement.style.setProperty("--app-topbar-text", theme.fgSubtle);
+    document.documentElement.style.setProperty(
+      "--app-topbar-gradient-start",
+      theme.bgSubtle,
+    );
+    document.documentElement.style.setProperty(
+      "--app-topbar-gradient-end",
+      theme.titleBarGradient,
+    );
+    document.documentElement.style.setProperty(
+      "--app-topbar-text",
+      theme.fgSubtle,
+    );
   }, [theme]);
 
   const themeStyles = css`
@@ -184,8 +193,8 @@ export function Provider(props: ThemeProviderProps) {
           <EnvironmentProvider value={() => shadow.shadowRoot ?? document}>
             <style type="text/css">{datepickerStyle}</style>
             <CacheProvider value={cache}>
-              <Global styles={themeStyles} />
               <ChakraProvider value={system}>
+                <Global styles={themeStyles} />
                 <ThemeProvider {...props} />
               </ChakraProvider>
             </CacheProvider>

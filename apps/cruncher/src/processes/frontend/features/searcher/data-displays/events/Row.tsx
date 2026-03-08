@@ -1,4 +1,4 @@
-import { css } from "@emotion/react";
+import { css, keyframes } from "@emotion/react";
 import styled from "@emotion/styled";
 import { token } from "~components/ui/system";
 import { parse } from "ansicolor";
@@ -6,13 +6,13 @@ import { useAtomValue, useSetAtom } from "jotai";
 import React, { useMemo } from "react";
 import { formatDataTime } from "@cruncher/adapter-utils/formatters";
 import { asDateField, ProcessedData } from "@cruncher/adapter-utils/logTypes";
-import { openIndexesAtom, useIsIndexOpen } from "./state";
+import { getLogId, openIdsAtom, useIsLogOpen } from "./state";
 import { highlightItemQueryAtom } from "~core/search";
 import { highlightText } from "~core/utils/highlight";
+import { newLogSinceAtom, timezoneAtom } from "~core/store/liveState";
 
 type DataRowProps = {
   row: ProcessedData;
-  index: number;
 };
 
 const getColorFromObject = (
@@ -34,7 +34,12 @@ const getColorFromObject = (
   }
 };
 
-const StyledRow = styled.div`
+const newLogHighlight = keyframes`
+  0%   { background-color: ${token("colors.teal.subtle")}; }
+  100% { background-color: transparent; }
+`;
+
+const StyledRow = styled.div<{ $isNew?: boolean }>`
   display: flex;
   flex-direction: row;
   border-bottom: 1px solid ${token("colors.border.muted")};
@@ -44,6 +49,11 @@ const StyledRow = styled.div`
   & ::selection {
     background-color: ${token("colors.accent.subtle")};
   }
+  ${({ $isNew }) =>
+    $isNew &&
+    css`
+      animation: ${newLogHighlight} 2s ease-out forwards;
+    `}
 `;
 
 const StyledGutter = styled.div<{ row: ProcessedData }>`
@@ -58,23 +68,28 @@ const StyledGutter = styled.div<{ row: ProcessedData }>`
   opacity: 0.85;
 `;
 
-const DataRow: React.FC<DataRowProps> = ({ row, index }) => {
-  const setOpenIndexes = useSetAtom(openIndexesAtom);
-  const isIndexOpen = useIsIndexOpen();
-  const isOpen = useMemo(() => isIndexOpen(index), [index, isIndexOpen]);
+const DataRow: React.FC<DataRowProps> = ({ row }) => {
+  const logId = getLogId(row);
+  const setOpenIds = useSetAtom(openIdsAtom);
+  const isLogOpen = useIsLogOpen();
+  const isOpen = useMemo(() => isLogOpen(logId), [logId, isLogOpen]);
 
   const highlightItemQuery = useAtomValue(highlightItemQueryAtom);
+  const newLogSince = useAtomValue(newLogSinceAtom);
+  const timezone = useAtomValue(timezoneAtom);
+  const logTime = asDateField(row.object._time).value;
+  const isNew = newLogSince !== null && logTime > newLogSince;
 
   const setIsOpen = (value: boolean) => {
     if (value) {
-      setOpenIndexes((prev) => [...prev, index]);
+      setOpenIds((prev) => [...prev, logId]);
     } else {
-      setOpenIndexes((prev) => prev.filter((i) => i !== index));
+      setOpenIds((prev) => prev.filter((id) => id !== logId));
     }
   };
 
   return (
-    <StyledRow>
+    <StyledRow $isNew={isNew}>
       <StyledGutter row={row} />
       <div
         style={{
@@ -101,7 +116,7 @@ const DataRow: React.FC<DataRowProps> = ({ row, index }) => {
               paddingTop: "1px",
             }}
           >
-            {formatDataTime(asDateField(row.object._time).value)}
+            {formatDataTime(asDateField(row.object._time).value, timezone)}
           </div>
           <div
             style={{

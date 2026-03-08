@@ -3,6 +3,8 @@ title: UI Guide
 description: Tour of Cruncher's user interface, components, and features.
 ---
 
+import QQLCode from '../../../components/QQLCode.astro';
+
 This guide walks through Cruncher's interface and explains the main UI components.
 
 ## Main Layout
@@ -21,17 +23,11 @@ The search header contains:
 - **Query Editor**: Multi-line input for your QQL query. Press `Alt+Q` to focus or use keyboard shortcut `Shift+Enter` to re-evaluate the pipeline.
 - **Time Range Selector**: Click to open a date/time picker, or press `Alt+T` to quickly access it.
 - **Execute Button**: Run your full search.
+- **Live Button**: Toggle real-time incremental log streaming. See [Live Mode](/getting-started/09-live-mode).
 - **Share Button**: Copy a shareable link to this search.
-- **Settings**: Access theme preferences and initialized datasets.
+- **Settings**: Access theme preferences, live mode interval, and memory limits.
 
-### Keyboard Shortcuts
-
-- `Alt+Q` — Focus the query editor
-- `Alt+T` — Open time range selector
-- `Shift+Enter` — Re-evaluate the pipeline (fast)
-- `Cmd+Shift+Enter` (Mac) / `Ctrl+Shift+Enter` (Windows) — Full search
-- `Cmd+Shift+C` (Mac) / `Ctrl+Shift+C` (Windows) — Copy share link
-- `Cmd+N` (Mac) / `Ctrl+N` (Windows) — Toggle "until now" mode
+See [Keyboard Shortcuts](/getting-started/07-keyboard-shortcuts) for the full reference.
 
 ## Histogram
 
@@ -69,9 +65,7 @@ When your query ends with a `table` or `stats` command, a Table tab appears show
 - **Row counts**: Shows how many rows are displayed
 
 **Example query that produces Table results:**
-```qql
-| stats count, avg(latency_ms) by service
-```
+<QQLCode code={`| stats count(), avg(latency_ms) by service`} />
 
 ### View Tab (After `| timechart` command)
 
@@ -81,9 +75,7 @@ When your query produces time-series data (via `timechart` command), a View tab 
 - **Grouped by**: Color-coded series for different values
 
 **Example query that produces View results:**
-```qql
-| timechart count by level
-```
+<QQLCode code={`| timechart count() by level`} />
 
 ## Row Details Panel
 
@@ -107,16 +99,15 @@ Each field shows:
 
 ## Settings
 
-Click the **Settings** icon (gear) in the search header to access:
+Click the **Settings** icon (gear) in the search header to open the Settings drawer:
 
-### General Tab
+- **Theme**: Choose your preferred color scheme (Midnight, Nord, Dracula, Catppuccin). See [Themes](/getting-started/06-themes).
+- **Live interval**: How often Live Mode fetches new logs (1s / 3s / 5s / 10s).
+- **Max logs in memory**: Hard cap on records kept in memory; oldest are discarded when exceeded.
+- **Auto-stop live (min, 0=off)**: Number of minutes before Live Mode turns itself off automatically. Default is 30 minutes; set to 0 to disable.
+- **Timezone**: `LOCAL` or `UTC`. Controls how all timestamps are displayed — log rows, histogram x-axis, chart tooltips, and the calendar date input. Both options are fully consistent with each other.
 
-- **Theme**: Choose your preferred color scheme (Midnight, Nord, Dracula, Catppuccin)
-- **Profile**: Switch between different connector profiles
-
-### Initialized Datasets
-
-View and manage datasets that are loaded from your configured adapters.
+All settings are persisted to the [config file](/getting-started/05-config-file). See [Live Mode](/getting-started/09-live-mode) for details on the live-specific options.
 
 ## Tabs
 
@@ -134,4 +125,4 @@ Each tab maintains its own:
 
 ---
 
-For keyboard shortcuts reference, see [Keyboard Shortcuts](/getting-started/07-keyboard-shortcuts).
+See [Keyboard Shortcuts](/getting-started/07-keyboard-shortcuts) for the full shortcuts reference.

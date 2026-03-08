@@ -46,9 +46,9 @@ test("search term with or statements", () => {
 });
 
 test("search term with or and and statements complex", () => {
-  expect(parse(
-    "(hello world OR something) AND (another OR statement)",
-  ).search).toEqual({
+  expect(
+    parse("(hello world OR something) AND (another OR statement)").search,
+  ).toEqual({
     type: "search",
     left: {
       type: "search",

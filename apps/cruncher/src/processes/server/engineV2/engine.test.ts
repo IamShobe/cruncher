@@ -118,9 +118,10 @@ const makeEngine = () => {
     "inst" as InstanceRef,
     {},
   );
-  const profile = engine.initializeSearchProfile("default" as SearchProfileRef, [
-    instance.name,
-  ]);
+  const profile = engine.initializeSearchProfile(
+    "default" as SearchProfileRef,
+    [instance.name],
+  );
   return { engine, profile };
 };
 
@@ -147,7 +148,9 @@ describe("plugin registration", () => {
   });
 
   test("initializePlugin with unknown ref throws", () => {
-    const authProvider: ExternalAuthProvider = { getCookies: () => Promise.resolve({}) };
+    const authProvider: ExternalAuthProvider = {
+      getCookies: () => Promise.resolve({}),
+    };
     const engine = new Engine(authProvider);
     engine.registerPlugin(mockedData);
     expect(() =>
@@ -160,7 +163,9 @@ describe("plugin registration", () => {
 
 describe("search profile", () => {
   test("initializeSearchProfile with unknown instance throws", () => {
-    const authProvider: ExternalAuthProvider = { getCookies: () => Promise.resolve({}) };
+    const authProvider: ExternalAuthProvider = {
+      getCookies: () => Promise.resolve({}),
+    };
     const engine = new Engine(authProvider);
     engine.registerPlugin(mockedData);
     expect(() =>
@@ -290,7 +295,9 @@ describe("pagination", () => {
 
   test("getLogsPaginated on unknown task throws", () => {
     const { engine } = makeEngine();
-    expect(() => engine.getLogsPaginated("no-such" as TaskRef, 0, 10)).toThrow();
+    expect(() =>
+      engine.getLogsPaginated("no-such" as TaskRef, 0, 10),
+    ).toThrow();
   });
 });
 
@@ -329,13 +336,19 @@ describe("pipeline integration", () => {
     expect(state.task.status).toBe("completed");
     expect(state.displayResults.table).toBeDefined();
     expect(state.displayResults.table!.dataPoints).toHaveLength(1);
-    expect(state.displayResults.table!.dataPoints[0].object["count"]).toBeDefined();
+    expect(
+      state.displayResults.table!.dataPoints[0].object["count"],
+    ).toBeDefined();
   });
 
   test("query with where pipeline filters rows", async () => {
     const { engine, profile } = makeEngine();
     // First run without filter to get total
-    const taskAll = await engine.runQuery(profile.name, "", defaultQueryOptions);
+    const taskAll = await engine.runQuery(
+      profile.name,
+      "",
+      defaultQueryOptions,
+    );
     const stateAll = engine.getTaskState(taskAll.id);
     await stateAll.finishedQuerying.wait();
     const totalRows = stateAll.displayResults.events.data.length;
@@ -350,7 +363,9 @@ describe("pipeline integration", () => {
     await stateFiltered.finishedQuerying.wait();
 
     expect(stateFiltered.task.status).toBe("completed");
-    expect(stateFiltered.displayResults.events.data.length).toBeLessThan(totalRows);
+    expect(stateFiltered.displayResults.events.data.length).toBeLessThan(
+      totalRows,
+    );
   });
 });
 

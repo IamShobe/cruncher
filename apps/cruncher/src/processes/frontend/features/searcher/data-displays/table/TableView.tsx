@@ -93,7 +93,9 @@ export const TableView: React.FC<TableViewProps> = ({}) => {
       increaseViewportBy={1500}
       components={components}
       fixedHeaderContent={() => (
-        <Table.Row style={{ borderBottom: `1px solid ${token("colors.border")}` }}>
+        <Table.Row
+          style={{ borderBottom: `1px solid ${token("colors.border")}` }}
+        >
           {columns.map((column, i) => (
             <Table.ColumnHeader
               key={i}

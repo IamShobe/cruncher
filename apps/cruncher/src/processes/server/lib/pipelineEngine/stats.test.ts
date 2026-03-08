@@ -18,7 +18,9 @@ const makeTable = (rows: ProcessedData[]): DisplayResults => ({
   view: undefined,
 });
 
-const row = (fields: Record<string, ProcessedData["object"][string]>): ProcessedData => ({
+const row = (
+  fields: Record<string, ProcessedData["object"][string]>,
+): ProcessedData => ({
   object: fields,
   message: "",
 });
@@ -26,7 +28,11 @@ const row = (fields: Record<string, ProcessedData["object"][string]>): Processed
 const num = (v: number) => ({ type: "number" as const, value: v });
 const str = (v: string) => ({ type: "string" as const, value: v });
 
-const agg = (func: string, column?: string, alias?: string): AggregationFunction => ({
+const agg = (
+  func: string,
+  column?: string,
+  alias?: string,
+): AggregationFunction => ({
   function: func,
   column,
   alias,
@@ -44,7 +50,11 @@ describe("count", () => {
 
   test("count with alias", () => {
     const data = makeEvents([row({}), row({})]);
-    const result = processStats(data, [agg("count", undefined, "total")], undefined);
+    const result = processStats(
+      data,
+      [agg("count", undefined, "total")],
+      undefined,
+    );
     expect(result.table?.dataPoints[0].object["total"]).toEqual(num(2));
   });
 
@@ -69,8 +79,12 @@ describe("count", () => {
     ]);
     const result = processStats(data, [agg("count")], ["status"]);
     expect(result.table?.dataPoints).toHaveLength(2);
-    const okRow = result.table!.dataPoints.find((r) => r.object["status"]?.value === "ok");
-    const errRow = result.table!.dataPoints.find((r) => r.object["status"]?.value === "err");
+    const okRow = result.table!.dataPoints.find(
+      (r) => r.object["status"]?.value === "ok",
+    );
+    const errRow = result.table!.dataPoints.find(
+      (r) => r.object["status"]?.value === "err",
+    );
     expect(okRow?.object["count"]).toEqual(num(2));
     expect(errRow?.object["count"]).toEqual(num(1));
   });
@@ -80,7 +94,11 @@ describe("count", () => {
 
 describe("sum", () => {
   test("sums all values (no groupBy)", () => {
-    const data = makeEvents([row({ v: num(1) }), row({ v: num(2) }), row({ v: num(3) })]);
+    const data = makeEvents([
+      row({ v: num(1) }),
+      row({ v: num(2) }),
+      row({ v: num(3) }),
+    ]);
     const result = processStats(data, [agg("sum", "v")], undefined);
     expect(result.table?.dataPoints[0].object["sum(v)"]).toEqual(num(6));
   });
@@ -93,8 +111,12 @@ describe("sum", () => {
     ]);
     const result = processStats(data, [agg("sum", "v")], ["group"]);
     expect(result.table?.dataPoints).toHaveLength(2);
-    const a = result.table!.dataPoints.find((r) => r.object["group"]?.value === "a");
-    const b = result.table!.dataPoints.find((r) => r.object["group"]?.value === "b");
+    const a = result.table!.dataPoints.find(
+      (r) => r.object["group"]?.value === "a",
+    );
+    const b = result.table!.dataPoints.find(
+      (r) => r.object["group"]?.value === "b",
+    );
     expect(a?.object["sum(v)"]).toEqual(num(30));
     expect(b?.object["sum(v)"]).toEqual(num(5));
   });
@@ -115,7 +137,11 @@ describe("sum", () => {
 
 describe("avg", () => {
   test("averages all values", () => {
-    const data = makeEvents([row({ v: num(10) }), row({ v: num(20) }), row({ v: num(30) })]);
+    const data = makeEvents([
+      row({ v: num(10) }),
+      row({ v: num(20) }),
+      row({ v: num(30) }),
+    ]);
     const result = processStats(data, [agg("avg", "v")], undefined);
     expect(result.table?.dataPoints[0].object["avg(v)"]).toEqual(num(20));
   });
@@ -127,7 +153,9 @@ describe("avg", () => {
       row({ g: str("b"), v: num(100) }),
     ]);
     const result = processStats(data, [agg("avg", "v")], ["g"]);
-    const a = result.table!.dataPoints.find((r) => r.object["g"]?.value === "a");
+    const a = result.table!.dataPoints.find(
+      (r) => r.object["g"]?.value === "a",
+    );
     expect(a?.object["avg(v)"]).toEqual(num(20));
   });
 
@@ -142,7 +170,11 @@ describe("avg", () => {
 
 describe("min", () => {
   test("returns the minimum value", () => {
-    const data = makeEvents([row({ v: num(5) }), row({ v: num(1) }), row({ v: num(3) })]);
+    const data = makeEvents([
+      row({ v: num(5) }),
+      row({ v: num(1) }),
+      row({ v: num(3) }),
+    ]);
     const result = processStats(data, [agg("min", "v")], undefined);
     expect(result.table?.dataPoints[0].object["min(v)"]).toEqual(num(1));
   });
@@ -154,14 +186,20 @@ describe("min", () => {
       row({ g: str("b"), v: num(10) }),
     ]);
     const result = processStats(data, [agg("min", "v")], ["g"]);
-    const a = result.table!.dataPoints.find((r) => r.object["g"]?.value === "a");
+    const a = result.table!.dataPoints.find(
+      (r) => r.object["g"]?.value === "a",
+    );
     expect(a?.object["min(v)"]).toEqual(num(2));
   });
 });
 
 describe("max", () => {
   test("returns the maximum value", () => {
-    const data = makeEvents([row({ v: num(5) }), row({ v: num(1) }), row({ v: num(9) })]);
+    const data = makeEvents([
+      row({ v: num(5) }),
+      row({ v: num(1) }),
+      row({ v: num(9) }),
+    ]);
     const result = processStats(data, [agg("max", "v")], undefined);
     expect(result.table?.dataPoints[0].object["max(v)"]).toEqual(num(9));
   });
@@ -173,7 +211,9 @@ describe("max", () => {
       row({ g: str("b"), v: num(10) }),
     ]);
     const result = processStats(data, [agg("max", "v")], ["g"]);
-    const a = result.table!.dataPoints.find((r) => r.object["g"]?.value === "a");
+    const a = result.table!.dataPoints.find(
+      (r) => r.object["g"]?.value === "a",
+    );
     expect(a?.object["max(v)"]).toEqual(num(99));
   });
 });
@@ -182,7 +222,11 @@ describe("max", () => {
 
 describe("first", () => {
   test("returns the first value", () => {
-    const data = makeEvents([row({ v: num(10) }), row({ v: num(20) }), row({ v: num(30) })]);
+    const data = makeEvents([
+      row({ v: num(10) }),
+      row({ v: num(20) }),
+      row({ v: num(30) }),
+    ]);
     const result = processStats(data, [agg("first", "v")], undefined);
     expect(result.table?.dataPoints[0].object["first(v)"]).toEqual(num(10));
   });
@@ -190,7 +234,11 @@ describe("first", () => {
 
 describe("last", () => {
   test("returns the last value", () => {
-    const data = makeEvents([row({ v: num(10) }), row({ v: num(20) }), row({ v: num(30) })]);
+    const data = makeEvents([
+      row({ v: num(10) }),
+      row({ v: num(20) }),
+      row({ v: num(30) }),
+    ]);
     const result = processStats(data, [agg("last", "v")], undefined);
     expect(result.table?.dataPoints[0].object["last(v)"]).toEqual(num(30));
   });
@@ -201,7 +249,11 @@ describe("last", () => {
 describe("multiple aggregations at once", () => {
   test("computes count and sum in a single pass", () => {
     const data = makeEvents([row({ v: num(10) }), row({ v: num(20) })]);
-    const result = processStats(data, [agg("count"), agg("sum", "v")], undefined);
+    const result = processStats(
+      data,
+      [agg("count"), agg("sum", "v")],
+      undefined,
+    );
     const dp = result.table?.dataPoints[0];
     expect(dp?.object["count"]).toEqual(num(2));
     expect(dp?.object["sum(v)"]).toEqual(num(30));
@@ -215,7 +267,9 @@ describe("multiple aggregations at once", () => {
     ]);
     const result = processStats(data, [agg("count"), agg("sum", "v")], ["g"]);
     expect(result.table?.dataPoints).toHaveLength(2);
-    const a = result.table!.dataPoints.find((r) => r.object["g"]?.value === "a");
+    const a = result.table!.dataPoints.find(
+      (r) => r.object["g"]?.value === "a",
+    );
     expect(a?.object["count"]).toEqual(num(2));
     expect(a?.object["sum(v)"]).toEqual(num(4));
   });

@@ -297,6 +297,7 @@ export class Engine {
       error: null,
       input: {
         searchTerm: searchTerm,
+        searchProfileRef: searchProfileRef,
         queryOptions: queryOptions,
       },
     };
@@ -308,6 +309,7 @@ export class Engine {
       mutex: new Mutex(),
       finishedQuerying: createSignal(),
       index: new BTree<number, ProcessedData[]>(),
+      rawData: [],
       displayResults: {
         events: {
           type: "events",
@@ -358,6 +360,7 @@ export class Engine {
       );
 
       await queryTaskState.mutex.runExclusive(async () => {
+        queryTaskState.rawData = totalData;
         queryTaskState.displayResults = pipelineData;
 
         await measureTime("batch overhead", async () => {
@@ -420,6 +423,9 @@ export class Engine {
         const cachedResult = await this.queryCache.getFromCacheByKey(cacheKey);
 
         data.forEach((item) => {
+          if (!item.id) {
+            item.id = crypto.randomUUID();
+          }
           item.object._source = {
             type: "string",
             value: provider,
@@ -677,7 +683,11 @@ export class Engine {
           options.columns.map((c) => ({ name: c.column, order: c.order })),
         ),
       stats: (_context, currentData, options) =>
-        processStats(currentData, options.aggregationFunctions, options.groupby),
+        processStats(
+          currentData,
+          options.aggregationFunctions,
+          options.groupby,
+        ),
       table: (_context, currentData, options) =>
         processTable(currentData, options.columns),
       timechart: (context, currentData, options) =>
@@ -741,6 +751,135 @@ export class Engine {
         pipelineEnd.getTime() - pipelineStart.getTime(),
       );
     }
+  }
+
+  public async appendQuery(
+    taskId: TaskRef,
+    fromTime: Date,
+    toTime: Date,
+    maxLogs: number = 100000,
+  ): Promise<{ newCount: number; batchStatus: JobBatchFinished }> {
+    const queryTaskState = this.queryTasks[taskId];
+    if (!queryTaskState) {
+      throw new Error(`Query task with id ${taskId} not found`);
+    }
+
+    const { task } = queryTaskState;
+    const parsedTree = parse(task.input.searchTerm);
+    const instancesToSearchOn = this._getInstancesToQueryOn(
+      task.input.searchProfileRef,
+      parsedTree,
+    );
+
+    // Query each adapter for the new time range
+    const newDataFromAdapters = await Promise.all(
+      instancesToSearchOn.map(async (instanceHolder) => {
+        const newData: ProcessedData[] = [];
+        await instanceHolder.provider.query(
+          parsedTree.controllerParams,
+          parsedTree.search,
+          {
+            fromTime,
+            toTime,
+            limit: task.input.queryOptions.limit,
+            cancelToken: queryTaskState.abortController.signal,
+            onBatchDone: async (batch) => {
+              batch.forEach((item) => {
+                if (!item.id) {
+                  item.id = crypto.randomUUID();
+                }
+                item.object._source = {
+                  type: "string",
+                  value: instanceHolder.instance.name,
+                };
+              });
+              newData.push(...batch);
+            },
+          },
+        );
+        return newData;
+      }),
+    );
+
+    const mergedNewData = merge<ProcessedData>(
+      newDataFromAdapters,
+      compareProcessedData,
+    );
+
+    // Merge with pre-pipeline raw data and re-run pipeline
+    const mergedTotal = merge<ProcessedData>(
+      [queryTaskState.rawData, mergedNewData],
+      compareProcessedData,
+    );
+    // Trim to maxLogs (newest-first order — slice from start)
+    const totalData =
+      mergedTotal.length > maxLogs
+        ? mergedTotal.slice(0, maxLogs)
+        : mergedTotal;
+
+    const pipelineData = this.getPipelineItems(
+      queryTaskState,
+      totalData,
+      parsedTree.pipeline,
+    );
+
+    await queryTaskState.mutex.runExclusive(async () => {
+      queryTaskState.rawData = totalData;
+      queryTaskState.displayResults = pipelineData;
+
+      queryTaskState.index.clear();
+      pipelineData.events.data.forEach((data) => {
+        const timestamp = asDateField(data.object._time).value;
+        const toAppendTo = queryTaskState.index.get(timestamp) ?? [];
+        toAppendTo.push(data);
+        queryTaskState.index.set(timestamp, toAppendTo);
+      });
+
+      const scale = getScale(
+        new Date(task.input.queryOptions.fromTime),
+        toTime,
+      );
+      const buckets = calculateBuckets(scale, pipelineData.events.data);
+
+      const availableColumns = new Set<string>();
+      pipelineData.events.data.forEach((dataPoint) => {
+        for (const key in dataPoint.object) {
+          availableColumns.add(key);
+        }
+      });
+
+      queryTaskState.lastBatchStatus = {
+        scale: {
+          from: task.input.queryOptions.fromTime,
+          to: toTime.getTime(),
+        },
+        views: {
+          events: {
+            total: pipelineData.events.data.length,
+            buckets: buckets,
+            autoCompleteKeys: Array.from(availableColumns),
+          },
+          table: pipelineData.table
+            ? {
+                totalRows: pipelineData.table.dataPoints.length,
+                columns: pipelineData.table.columns,
+                columnLengths: getTableColumnLengths(
+                  pipelineData.table.columns,
+                  pipelineData.table.dataPoints,
+                ),
+              }
+            : undefined,
+          view: pipelineData.view ? {} : undefined,
+        },
+      };
+
+      queryTaskState.ee.emit("add", queryTaskState.lastBatchStatus);
+    });
+
+    return {
+      newCount: mergedNewData.length,
+      batchStatus: queryTaskState.lastBatchStatus!,
+    };
   }
 
   public cancelQuery(taskId: TaskRef): void {

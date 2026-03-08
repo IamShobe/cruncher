@@ -3,6 +3,8 @@ title: Logical Expressions
 sidebar_label: logicalExpression
 ---
 
+import QQLCode from '../../../components/QQLCode.astro';
+
 Logical expressions are used in QQL to combine and evaluate boolean conditions, typically in commands like `where` and `eval`. They support logical operators such as `AND`, `OR`, and `NOT`, as well as grouping with parentheses.
 
 ## Description
@@ -32,28 +34,18 @@ A logical expression can be:
 ## Usage Examples
 
 **Simple AND:**
-```
-where status == "error" && duration > 1000
-```
+<QQLCode code={`| where status == "error" && duration > 1000`} />
 
 **Simple OR:**
-```
-where status == "error" || status == "warn"
-```
+<QQLCode code={`| where status == "error" || status == "warn"`} />
 
 **Negation:**
-```
-where !(level == "info")
-```
+<QQLCode code={`| where !(level == "info")`} />
 
 **Grouping:**
-```
-where (status == "error" || status == "warn") && duration > 1000
-```
+<QQLCode code={`| where (status == "error" || status == "warn") && duration > 1000`} />
 
 **With functions:**
-```
-where isNull(optional_field) || contains(message, "timeout")
-```
+<QQLCode code={`| where isNull(optional_field) || contains(message, "timeout")`} />
 
 Logical expressions are parsed and evaluated according to standard boolean logic, with parentheses controlling precedence.

@@ -23,55 +23,67 @@ export const appGeneralSettings: AppGeneralSettings = {
   theme: "midnight",
 };
 
+export type ReadConfigResult =
+  | { ok: true; config: CruncherConfig; error: null }
+  | { ok: false; config: CruncherConfig; error: string };
+
+const DEFAULT_CONFIG: CruncherConfig = { connectors: [] };
+
 export const readConfig = (
   appGeneralSettings: AppGeneralSettings,
-): CruncherConfig => {
-  // load default plugins from cruncher.config.yaml file
-
-  // read file content
+): ReadConfigResult => {
   if (!fs.existsSync(appGeneralSettings.configFilePath)) {
     console.warn(
       `Configuration file not found at ${appGeneralSettings.configFilePath}`,
     );
-    return {
-      connectors: [],
-    };
+    return { ok: true, config: DEFAULT_CONFIG, error: null };
   }
 
-  const fileContent = fs.readFileSync(
-    appGeneralSettings.configFilePath,
-    "utf8",
-  );
-
-  // parse YAML content
-  const config = YAML.parse(fileContent);
-
-  const validated = CruncherConfigSchema.safeParse(config);
-  if (!validated.success) {
-    console.error("Invalid configuration file:", validated.error);
-    throw new Error(
-      `Configuration file validation failed\n${z.prettifyError(validated.error)}`,
+  let raw: unknown;
+  try {
+    const fileContent = fs.readFileSync(
+      appGeneralSettings.configFilePath,
+      "utf8",
     );
+    raw = YAML.parse(fileContent);
+  } catch (e) {
+    const msg = `Failed to read config file: ${e instanceof Error ? e.message : String(e)}`;
+    console.error(msg);
+    return { ok: false, config: DEFAULT_CONFIG, error: msg };
   }
 
-  return validated.data;
+  const validated = CruncherConfigSchema.safeParse(raw);
+  if (!validated.success) {
+    const msg = `Configuration file validation failed\n${z.prettifyError(validated.error)}`;
+    console.error(msg);
+    return { ok: false, config: DEFAULT_CONFIG, error: msg };
+  }
+
+  return { ok: true, config: validated.data, error: null };
 };
 
 export const writeConfig = (
   appGeneralSettings: AppGeneralSettings,
   updater: (config: CruncherConfig) => CruncherConfig,
 ): void => {
-  const current = readConfig(appGeneralSettings);
+  const { config: current } = readConfig(appGeneralSettings);
   const updated = updater(current);
   fs.mkdirSync(dirname(appGeneralSettings.configFilePath), { recursive: true });
-  fs.writeFileSync(appGeneralSettings.configFilePath, YAML.stringify(updated), "utf8");
+  fs.writeFileSync(
+    appGeneralSettings.configFilePath,
+    YAML.stringify(updated),
+    "utf8",
+  );
 };
 
 export const setupPluginsFromConfig = (
   appGeneralSettings: AppGeneralSettings,
   engineV2: Engine,
 ) => {
-  const config = readConfig(appGeneralSettings);
+  const { config, error } = readConfig(appGeneralSettings);
+  if (error) {
+    console.error("Config errors (running with defaults):", error);
+  }
   engineV2.reset();
   for (const plugin of config.connectors) {
     try {

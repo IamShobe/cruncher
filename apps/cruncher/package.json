@@ -53,6 +53,7 @@
     "@types/regex-escape": "^3.4.1",
     "@types/ws": "^8.18.1",
     "@vitejs/plugin-react": "^5.1.4",
+    "babel-plugin-react-compiler": "^1.0.0",
     "electron": "^40.8.0",
     "less": "^4.5.1",
     "prettier": "^3.8.1",

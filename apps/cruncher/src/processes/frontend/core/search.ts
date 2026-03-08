@@ -8,7 +8,7 @@ import { dateAsString, DateType, FullDate, isTimeNow } from "~lib/dateUtils";
 import { parse } from "@cruncher/qql";
 import { ControllerIndexParam, Search } from "@cruncher/qql/grammar";
 import { invalidateJobQueries } from "./api";
-import { openIndexesAtom } from "~features/searcher/data-displays/events/state";
+import { openIdsAtom } from "~features/searcher/data-displays/events/state";
 import { notifyError, notifySuccess } from "./notifyError";
 import {
   ApplicationStore,
@@ -21,6 +21,15 @@ import {
   endFullDateAtom,
   startFullDateAtom,
 } from "./store/dateState";
+import {
+  isLiveFetchingAtom,
+  isLiveModeAtom,
+  lastLiveRefreshTimeAtom,
+  liveIntervalAtom,
+  maxLogsAtom,
+  newLogSinceAtom,
+} from "./store/liveState";
+import { LIVE_INTERVAL_MS } from "src/processes/server/config/schema";
 import {
   jobMetadataAtom,
   searchQueryAtom,
@@ -274,6 +283,72 @@ export const useRunQuery = () => {
   );
 };
 
+export const useLiveMode = () => {
+  const isLiveMode = useAtomValue(isLiveModeAtom);
+  const liveInterval = useAtomValue(liveIntervalAtom);
+  const intervalMs = LIVE_INTERVAL_MS[liveInterval];
+  const job = useAtomValue(lastRanJobAtom);
+  const isLoading = useAtomValue(isLoadingAtom);
+  const controller = useInitializedController();
+  const store = useQuerySpecificStoreInternal();
+
+  useEffect(() => {
+    if (!isLiveMode || !job || isLoading) return;
+
+    let cancelled = false;
+    let timeoutId: ReturnType<typeof setTimeout>;
+
+    const scheduleTick = () => {
+      if (cancelled) return;
+      timeoutId = setTimeout(
+        async () => {
+          if (cancelled) return;
+
+          const lastRefresh = store.get(lastLiveRefreshTimeAtom);
+          if (!lastRefresh || cancelled) return;
+
+          const fromTime = lastRefresh;
+          const now = new Date();
+
+          store.set(isLiveFetchingAtom, true);
+          store.set(newLogSinceAtom, fromTime.getTime());
+          store.set(lastLiveRefreshTimeAtom, now);
+
+          try {
+            const maxLogs = store.get(maxLogsAtom);
+            const result = await controller.appendQueryResults(
+              job.id,
+              fromTime,
+              now,
+              maxLogs,
+            );
+            store.set(actualEndTimeAtom, now);
+            store.set(endFullDateAtom, now);
+            store.set(jobMetadataAtom, result.batchStatus);
+            await invalidateJobQueries(job.id);
+          } catch (e) {
+            console.error("Live refresh failed:", e);
+          } finally {
+            store.set(isLiveFetchingAtom, false);
+          }
+
+          // Schedule next tick only after this one completes
+          scheduleTick();
+        },
+        intervalMs + (Math.random() - 0.5) * intervalMs * 0.2,
+      );
+    };
+
+    scheduleTick();
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timeoutId);
+      store.set(isLiveFetchingAtom, false);
+    };
+  }, [isLiveMode, job, isLoading, intervalMs, controller, store]);
+};
+
 export type AwaitableTask = {
   job: QueryTask;
   promise: Promise<void>;
@@ -285,9 +360,14 @@ export const runQueryForStore = async (
 ) => {
   const controller = store.get(appStoreAtom).controller;
   const resetBeforeNewBackendQuery = () => {
-    store.set(openIndexesAtom, []);
+    store.set(openIdsAtom, []);
     store.set(viewSelectedForQueryAtom, false);
   };
+
+  // Disable live mode when user manually triggers a new query
+  store.set(isLiveModeAtom, false);
+  store.set(newLogSinceAtom, null);
+  store.set(isLiveFetchingAtom, false);
 
   const isLoading = store.get(isLoadingAtom);
   if (isLoading) {
@@ -390,6 +470,7 @@ export const runQueryForStore = async (
           );
           await awaitableJob.promise;
           store.set(isQuerySuccessAtom, true);
+          store.set(lastLiveRefreshTimeAtom, toTime); // Seed for first live delta window
           notifySuccess("Query executed successfully");
         } catch (error) {
           store.set(isQuerySuccessAtom, false);

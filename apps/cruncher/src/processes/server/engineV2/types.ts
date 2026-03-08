@@ -26,6 +26,7 @@ export const finishedStatuses = new Set<QueryTask["status"]>([
 
 export type QueryInput = {
   searchTerm: string;
+  searchProfileRef: SearchProfileRef;
   queryOptions: SerializeableParams;
 };
 
@@ -35,6 +36,7 @@ export type QueryTaskState = {
   subTasks: SubTask[];
   abortController: AbortController;
   index: BTree<number, ProcessedData[]>;
+  rawData: ProcessedData[]; // Pre-pipeline merged data, used for live mode appends
   displayResults: DisplayResults;
   lastBatchStatus: JobBatchFinished | null;
   finishedQuerying: Signal;
