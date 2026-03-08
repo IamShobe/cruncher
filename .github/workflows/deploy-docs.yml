@@ -27,6 +27,18 @@ jobs:
 
       - uses: pnpm/action-setup@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install root dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: pnpm --filter @cruncher/qql build
+
       - name: Install, build, and upload your site
         uses: withastro/action@v3
         with:
