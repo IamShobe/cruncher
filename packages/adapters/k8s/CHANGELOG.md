@@ -1,5 +1,13 @@
 # @cruncher/adapter-k8s
 
+## 0.2.1
+
+### Patch Changes
+
+- Updated dependencies [[`c8060e6`](https://github.com/IamShobe/cruncher/commit/c8060e6eb1e610273bded9d7c43628d843848047)]:
+  - @cruncher/qql@0.4.0
+  - @cruncher/adapter-utils@0.3.2
+
 ## 0.2.0
 
 ### Minor Changes

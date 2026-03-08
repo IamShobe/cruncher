@@ -1,3 +1,21 @@
+## 2.0.0
+
+### Major Changes
+
+- [`c8060e6`](https://github.com/IamShobe/cruncher/commit/c8060e6eb1e610273bded9d7c43628d843848047) Thanks [@IamShobe](https://github.com/IamShobe)! - Complete refactor for QQL engine + much better highlight and autocomplete engines
+
+### Patch Changes
+
+- Updated dependencies [[`c8060e6`](https://github.com/IamShobe/cruncher/commit/c8060e6eb1e610273bded9d7c43628d843848047)]:
+  - @cruncher/qql@0.4.0
+  - @cruncher/adapter-coralogix@0.3.2
+  - @cruncher/adapter-docker@0.3.2
+  - @cruncher/adapter-grafana-loki-browser@0.3.2
+  - @cruncher/adapter-k8s@0.2.1
+  - @cruncher/adapter-loki@0.2.2
+  - @cruncher/adapter-mock@0.3.2
+  - @cruncher/adapter-utils@0.3.2
+
 ## 1.8.0
 
 ### Minor Changes

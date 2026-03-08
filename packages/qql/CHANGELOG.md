@@ -1,3 +1,9 @@
+## 0.4.0
+
+### Minor Changes
+
+- [`c8060e6`](https://github.com/IamShobe/cruncher/commit/c8060e6eb1e610273bded9d7c43628d843848047) Thanks [@IamShobe](https://github.com/IamShobe)! - Complete refactor for QQL engine + much better highlight and autocomplete engines
+
 ## 0.3.1
 
 ### Patch Changes
