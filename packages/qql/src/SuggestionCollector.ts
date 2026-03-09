@@ -243,6 +243,33 @@ export class SuggestionCollector extends AbstractParseTreeVisitor<void> {
     else if (ctx.regexCmd?.()) this.visitRegexCmd(ctx.regexCmd());
     else if (ctx.timechartCmd?.()) this.visitTimechartCmd(ctx.timechartCmd());
     else if (ctx.unpackCmd?.()) this.visitUnpackCmd(ctx.unpackCmd());
+    else if (this.tokenStream) {
+      // Fallback: ANTLR error recovery dropped the sub-command context (e.g.
+      // "| eval " or "| regex " with no expression/literal following the keyword).
+      // Scan the token stream for the command keyword so we can still emit the
+      // right suggestions.
+      for (const tok of this.tokenStream.getTokens()) {
+        if ((tok.start ?? -1) <= pipeStop) continue;
+        if (tok.type === QQLLexer.PIPE) break;
+        if (tok.type === QQLLexer.EVAL) {
+          this.addSuggestion({
+            type: "column",
+            fromPosition: (tok.stop ?? 0) + 1,
+            disabled: false,
+          });
+          break;
+        }
+        if (tok.type === QQLLexer.REGEX) {
+          this.addSuggestion({
+            type: "keywords",
+            keywords: ["field="],
+            fromPosition: (tok.stop ?? 0) + 1,
+            disabled: false,
+          });
+          break;
+        }
+      }
+    }
   };
 
   visitTableCmd = (ctx: any) => {

@@ -89,3 +89,38 @@ jobs:
         run: pnpm run publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  release-electron:
+    name: Publish Electron release
+    needs: [release-npm, publish-electron]
+    runs-on: ubuntu-latest
+    if: always() && needs.publish-electron.result == 'success' && (needs.release-npm.outputs.published == 'true' || github.event_name == 'workflow_dispatch')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get app version
+        id: version
+        run: |
+          VERSION=$(node -p "require('./apps/cruncher/package.json').version")
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Extract changelog for current version
+        id: changelog
+        run: |
+          {
+            echo 'changelog<<EOF'
+            awk '/^## /{if(found) exit; found=1; next} found{print}' apps/cruncher/CHANGELOG.md
+            echo 'EOF'
+          } >> $GITHUB_OUTPUT
+
+      - name: Publish draft release with changelog
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
+          CHANGELOG: ${{ steps.changelog.outputs.changelog }}
+        run: |
+          echo "${CHANGELOG}" > /tmp/release-notes.md
+          gh release edit "v${VERSION}" \
+            --draft=false \
+            --notes-file /tmp/release-notes.md

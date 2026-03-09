@@ -840,9 +840,26 @@ export class Engine {
       compareProcessedData,
     );
 
+    // Deduplicate new data against existing raw data using _uniqueId
+    const existingUniqueIds = new Set<string>();
+    for (const item of queryTaskState.rawData) {
+      const uid = item.object._uniqueId;
+      if (uid && uid.type === "string" && uid.value) {
+        existingUniqueIds.add(uid.value as string);
+      }
+    }
+    const dedupedNewData =
+      existingUniqueIds.size === 0
+        ? mergedNewData
+        : mergedNewData.filter((item) => {
+            const uid = item.object._uniqueId;
+            if (!uid || uid.type !== "string" || !uid.value) return true;
+            return !existingUniqueIds.has(uid.value as string);
+          });
+
     // Merge with pre-pipeline raw data and re-run pipeline
     const mergedTotal = merge<ProcessedData>(
-      [queryTaskState.rawData, mergedNewData],
+      [queryTaskState.rawData, dedupedNewData],
       compareProcessedData,
     );
     // Trim to maxLogs (newest-first order — slice from start)

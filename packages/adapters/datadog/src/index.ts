@@ -14,6 +14,7 @@ const paramsSchema = z.object({
   site: z.enum(DD_SITES).default("datadoghq.com"),
   indexes: z.array(z.string()).default([]), // empty = all indexes ("*")
   query_prefix: z.string().default(""), // always-applied Lucene filter
+  indexing_delay_seconds: z.number().min(0).default(30), // Datadog analytics indexing lag
 });
 
 export type DatadogParams = z.infer<typeof paramsSchema>;

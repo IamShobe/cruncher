@@ -471,12 +471,24 @@ export class ASTBuilder extends AbstractParseTreeVisitor<QueryNode> {
 
   visitEvalCmd = (ctx: Parser.EvalCmdContext): EvalCmd => {
     const exprCtx = ctx.evalExpression();
-    if (!exprCtx)
-      throw new Error("eval command missing evalExpression context");
+    if (!exprCtx) {
+      this.addError("eval command missing evalExpression context", ctx);
+      return {
+        type: "eval" as const,
+        variableName: "",
+        expression: { type: "columnRef" as const, columnName: "" },
+      };
+    }
     const variableName = extractIdentifierValue(exprCtx.identifierOrString());
     const evalFuncArgCtx = exprCtx.evalFunctionArg();
-    if (!evalFuncArgCtx)
-      throw new Error("eval command missing evalFunctionArg context");
+    if (!evalFuncArgCtx) {
+      this.addError("eval command missing evalFunctionArg context", ctx);
+      return {
+        type: "eval" as const,
+        variableName,
+        expression: { type: "columnRef" as const, columnName: "" },
+      };
+    }
     const expression = this.visitEvalFunctionArg(evalFuncArgCtx);
 
     return {
@@ -493,8 +505,14 @@ export class ASTBuilder extends AbstractParseTreeVisitor<QueryNode> {
       ? extractIdentifierValue(identCtx)
       : undefined;
     const regexLiteralCtx = ctx.regexLiteral();
-    if (!regexLiteralCtx)
-      throw new Error("regex command missing regexLiteral context");
+    if (!regexLiteralCtx) {
+      this.addError("regex command missing regexLiteral context", ctx);
+      return {
+        type: "regex" as const,
+        columnSelected,
+        pattern: { type: "regex" as const, pattern: "" },
+      };
+    }
     const pattern = this.visitRegexLiteral(regexLiteralCtx);
     return { type: "regex" as const, columnSelected, pattern };
   };

@@ -355,6 +355,12 @@ export class DatadogController implements QueryProvider {
     const { fromTime, toTime, limit, cancelToken, onBatchDone } = queryOptions;
     const apiUrl = `${getAppUrl(this.params.site)}/api/v1/logs-analytics/list?type=logs`;
 
+    const delayMs = this.params.indexing_delay_seconds * 1000;
+    const effectiveFromTime =
+      delayMs > 0 ? new Date(fromTime.getTime() - delayMs) : fromTime;
+    const effectiveToTime =
+      delayMs > 0 ? new Date(toTime.getTime() - delayMs) : toTime;
+
     // Extract `index` params and route them to the payload's `indexes` field.
     // All other params are serialized into the Lucene query string.
     const indexValues = controllerParams
@@ -393,8 +399,8 @@ export class DatadogController implements QueryProvider {
       const payload = buildRequestPayload(
         luceneQuery,
         indexes,
-        fromTime,
-        toTime,
+        effectiveFromTime,
+        effectiveToTime,
         pageLimit,
         csrf,
         cursor,
