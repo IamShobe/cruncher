@@ -84,7 +84,7 @@ export class QQLParser {
         line: number,
         column: number,
         msg: string,
-        e: any,
+        _e: any,
       ) => {
         this.errors.push({
           message: msg,

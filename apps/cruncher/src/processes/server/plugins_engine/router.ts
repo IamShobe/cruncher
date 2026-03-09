@@ -13,6 +13,7 @@ import {
   readConfig,
 } from "./config";
 import { LIVE_INTERVAL_OPTIONS, TIMEZONE_OPTIONS } from "../config/schema";
+import { DEFAULT_THEME } from "../lib/themeDefaults.js";
 import { QueryBatchDone, QueryJobUpdated, UrlNavigation } from "./protocolOut";
 import { publicProcedure, router } from "./trpc";
 
@@ -165,7 +166,7 @@ export const appRouter = router({
     const { config, error } = readConfig(appGeneralSettings);
     return {
       ...appGeneralSettings,
-      theme: config.ui?.theme ?? "midnight",
+      theme: config.ui?.theme ?? DEFAULT_THEME,
       liveInterval: config.ui?.liveInterval ?? "5s",
       maxLogs: config.ui?.maxLogs ?? 100000,
       liveAutoStopMinutes: config.ui?.liveAutoStopMinutes ?? 30,
@@ -186,6 +187,7 @@ export const appRouter = router({
       writeConfig(appGeneralSettings, (config) => ({
         ...config,
         ui: {
+          theme: config.ui?.theme ?? DEFAULT_THEME,
           ...config.ui,
           liveInterval: input.liveInterval,
           maxLogs: input.maxLogs,
@@ -204,7 +206,13 @@ export const appRouter = router({
     .mutation(async ({ input }) => {
       writeConfig(appGeneralSettings, (config) => ({
         ...config,
-        ui: { ...config.ui, theme: input.theme },
+        ui: {
+          theme: input.theme,
+          liveInterval: config.ui?.liveInterval ?? "5s",
+          maxLogs: config.ui?.maxLogs ?? 100000,
+          liveAutoStopMinutes: config.ui?.liveAutoStopMinutes ?? 30,
+          timezone: config.ui?.timezone ?? "local",
+        },
       }));
       return { success: true };
     }),

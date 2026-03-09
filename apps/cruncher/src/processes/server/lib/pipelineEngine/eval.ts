@@ -88,7 +88,6 @@ const processEvalFunctionArg = (
       return processCalcExpression(expression, context);
 
     default:
-      // @ts-expect-error - this should never happen
       throw new Error(`Unsupported expression type: ${expression.type}`);
   }
 };

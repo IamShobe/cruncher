@@ -23,7 +23,7 @@ import { Bucket } from "~lib/displayTypes";
 const LIMIT = 10000;
 
 export type ViewChartProps = {};
-export const ViewChart = ({}: ViewChartProps) => {
+export const ViewChart = (_props: ViewChartProps) => {
   // TODO: use fixed values instead of the actual atoms
   const selectedStartTime = useAtomValue(actualStartTimeAtom);
   const selectedEndTime = useAtomValue(actualEndTimeAtom);

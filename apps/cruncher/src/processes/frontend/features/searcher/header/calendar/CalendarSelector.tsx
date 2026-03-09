@@ -79,7 +79,13 @@ export function CalendarSelector({ selectedRange, onSelect }: InputTimeProps) {
             );
           },
           DayButton: (props: DayButtonProps) => {
-            const { day, modifiers, style, className, ...rest } = props;
+            const {
+              day: _day,
+              modifiers,
+              style: _style,
+              className: _className,
+              ...rest
+            } = props;
 
             let variant: React.ComponentProps<typeof IconButton>["variant"] =
               "ghost";
@@ -104,7 +110,13 @@ export function CalendarSelector({ selectedRange, onSelect }: InputTimeProps) {
             );
           },
           Day: (props: DayProps) => {
-            const { day, modifiers, style, className, ...rest } = props;
+            const {
+              day: _day,
+              modifiers,
+              style: _style,
+              className: _className,
+              ...rest
+            } = props;
 
             let backgroundColor = "transparent";
             if (modifiers.range_middle) {

@@ -36,7 +36,7 @@ const row = (
 
 const num = (v: number) => ({ type: "number" as const, value: v });
 const str = (v: string) => ({ type: "string" as const, value: v });
-const bool = (v: boolean) => ({ type: "boolean" as const, value: v });
+const _bool = (v: boolean) => ({ type: "boolean" as const, value: v });
 
 const comparison = (
   left: any,

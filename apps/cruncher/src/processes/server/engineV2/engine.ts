@@ -424,7 +424,7 @@ export class Engine {
             },
           };
 
-          emitter.emit<JobBatchFinished>("add", queryTaskState.lastBatchStatus);
+          emitter.emit("add", queryTaskState.lastBatchStatus);
         });
       });
     };
@@ -537,46 +537,49 @@ export class Engine {
       queryTaskState.subTasks.push(subTask);
     }
 
-    Promise.allSettled(
-      queryTaskState.subTasks.map((task) => task.isReady),
-    ).then((statuses) => {
-      const allReady = statuses.every(
-        (status) => status.status === "fulfilled",
-      );
-      if (!allReady) {
-        // get the first error that occurred
-        const error = statuses.find(
-          (status) => status.status === "rejected",
-        )?.reason;
-        // If any subtask fails, we mark the main task as failed
-        task.status = "failed";
-        queryTaskState.task.error = error?.message ?? null;
-        console.error(`Query task ${taskId} failed:`, error);
-      } else {
-        // All subtasks are ready, we can mark the main task as completed
-        task.status = "completed";
-        console.log(`Query task ${taskId} completed successfully`);
-      }
-
-      return onTaskDone()
-        .then(() => {
-          queryTaskState.finishedQuerying.signal();
-        })
-        .catch((error) => {
-          console.error(
-            `Error occurred while finalizing task ${taskId}:`,
-            error,
-          );
-          // If an error occurs, we can mark the task as failed
+    Promise.allSettled(queryTaskState.subTasks.map((task) => task.isReady))
+      .then((statuses) => {
+        const allReady = statuses.every(
+          (status) => status.status === "fulfilled",
+        );
+        if (!allReady) {
+          // get the first error that occurred
+          const error = statuses.find(
+            (status) => status.status === "rejected",
+          )?.reason;
+          // If any subtask fails, we mark the main task as failed
           task.status = "failed";
-          queryTaskState.task.error = error.message;
-          queryTaskState.finishedQuerying.signal(); // Signal that the task is done
-        });
-    }).catch((error) => {
-      console.error(`Unexpected error in task ${taskId} finalization:`, error);
-      task.status = "failed";
-      queryTaskState.finishedQuerying.signal();
-    });
+          queryTaskState.task.error = error?.message ?? null;
+          console.error(`Query task ${taskId} failed:`, error);
+        } else {
+          // All subtasks are ready, we can mark the main task as completed
+          task.status = "completed";
+          console.log(`Query task ${taskId} completed successfully`);
+        }
+
+        return onTaskDone()
+          .then(() => {
+            queryTaskState.finishedQuerying.signal();
+          })
+          .catch((error) => {
+            console.error(
+              `Error occurred while finalizing task ${taskId}:`,
+              error,
+            );
+            // If an error occurs, we can mark the task as failed
+            task.status = "failed";
+            queryTaskState.task.error = error.message;
+            queryTaskState.finishedQuerying.signal(); // Signal that the task is done
+          });
+      })
+      .catch((error) => {
+        console.error(
+          `Unexpected error in task ${taskId} finalization:`,
+          error,
+        );
+        task.status = "failed";
+        queryTaskState.finishedQuerying.signal();
+      });
 
     return task;
   }
@@ -705,7 +708,7 @@ export class Engine {
       regex: (_context, currentData, options) =>
         processRegex(
           currentData,
-          new RegExp(options.pattern),
+          new RegExp(options.pattern.pattern),
           options.columnSelected,
         ),
       sort: (_context, currentData, options) =>
@@ -733,7 +736,7 @@ export class Engine {
       where: (_context, currentData, options) =>
         processWhere(currentData, options.expression),
       unpack: (_context, currentData, options) =>
-        processUnpack(currentData, options.columns),
+        processUnpack(currentData, [options.field]),
     };
   }
 

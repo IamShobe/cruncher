@@ -8,6 +8,7 @@ import { appStore } from "./store/appStore";
 export const ApplicationProvider: React.FC<{
   children: React.ReactNode;
 }> = ({ children }) => {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const initialize = useCallback(
     debounceInitialize(async () => {
       for (let i = 0; i < 3; i++) {
@@ -73,6 +74,7 @@ export const ApplicationProvider: React.FC<{
       console.log("Cleaning up ApplicationProvider...");
       initializeResult.then((result) => result.cleanup());
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return children;

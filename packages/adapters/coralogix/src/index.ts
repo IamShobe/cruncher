@@ -1,5 +1,5 @@
 import { Adapter, newPluginRef, QueryProvider } from "@cruncher/adapter-utils";
-import { CoralogixController } from "./controller";
+import { CoralogixController } from "./controller.js";
 import { z } from "zod/v4";
 
 const paramsSchema = z.object({

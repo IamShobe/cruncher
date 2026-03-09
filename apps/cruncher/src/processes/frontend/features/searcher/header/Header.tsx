@@ -37,11 +37,7 @@ import { DateType } from "~lib/dateUtils";
 import { DateSelector, isDateSelectorOpenAtom } from "./calendar/DateSelector";
 import { SettingsDrawer } from "~features/searcher/header/settings-drawer/Drawer";
 import { Editor, EditorErrorBoundary } from "./Editor";
-import {
-  createShortcutsHandler,
-  headerShortcuts,
-  searcherShortcuts,
-} from "../../../core/keymaps";
+import { createShortcutsHandler, headerShortcuts } from "../../../core/keymaps";
 import { notifySuccess } from "../../../core/notifyError";
 import {
   FormValues,

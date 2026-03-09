@@ -23,7 +23,7 @@ const prepareItem = (dataPoint: ProcessedData, columns: string[]) => {
   return object;
 };
 
-export const TableView: React.FC<TableViewProps> = ({}) => {
+export const TableView: React.FC<TableViewProps> = (_props: TableViewProps) => {
   const { data, fetchNextPage } = useTableDataInfiniteQuery();
 
   const dataPoints = useMemo(() => {

@@ -8,6 +8,7 @@ import { createContext, useEffect, useState } from "react";
 import root from "react-shadow/emotion";
 import { system } from "./system";
 import { useAppTheme, type ThemeId } from "./useAppTheme";
+import { DEFAULT_THEME } from "~lib/themeDefaults";
 import datepickerStyle from "react-day-picker/style.css?inline";
 
 type ThemeContextValue = {
@@ -16,7 +17,7 @@ type ThemeContextValue = {
 };
 
 export const ThemeContext = createContext<ThemeContextValue>({
-  themeId: "midnight",
+  themeId: DEFAULT_THEME,
   setThemeId: () => {},
 });
 

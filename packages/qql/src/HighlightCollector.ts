@@ -10,31 +10,6 @@ import {
 import type { HighlightData, HighlightType } from "./types";
 import * as Parser from "./syntax/QQL";
 
-const KEYWORDS = new Set([
-  "table",
-  "stats",
-  "where",
-  "sort",
-  "eval",
-  "regex",
-  "timechart",
-  "unpack",
-  "as",
-  "by",
-  "span",
-  "timeCol",
-  "maxGroups",
-  "asc",
-  "desc",
-  "in",
-  "true",
-  "false",
-  "if",
-  "case",
-  "and",
-  "or",
-]);
-
 export class HighlightCollector extends AbstractParseTreeVisitor<void> {
   private highlightData: HighlightData[] = [];
 

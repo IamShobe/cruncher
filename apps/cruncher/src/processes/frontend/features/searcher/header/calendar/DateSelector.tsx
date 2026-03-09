@@ -91,7 +91,7 @@ export const DateSelector = () => {
   }, [isOpen]);
 
   const wrapperRef = useOutsideDetector(
-    useCallback(() => setIsOpen(false), []),
+    useCallback(() => setIsOpen(false), [setIsOpen]),
   );
 
   return (

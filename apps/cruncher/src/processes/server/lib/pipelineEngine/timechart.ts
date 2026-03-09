@@ -5,7 +5,9 @@ import {
   isHashableField,
   ProcessedData,
 } from "@cruncher/adapter-utils/logTypes";
-import { AggregationFunction, TimeChartParams } from "@cruncher/qql/grammar";
+import { AggregationFunction } from "@cruncher/qql/grammar";
+
+type TimechartParams = { span?: string; timeCol?: string; maxGroups?: number };
 import { bucketData } from "./aggregateData";
 
 export const processTimeChart = (
@@ -14,12 +16,12 @@ export const processTimeChart = (
   groupBy: string[] | undefined,
   fromTime: Date,
   toTime: Date,
-  params: TimeChartParams,
+  params: TimechartParams,
 ): DisplayResults => {
   const { events, table } = data;
   const dataPoints = table ? table.dataPoints : events.data;
 
-  const timeCol = params.timeColumn ?? "_time";
+  const timeCol = params.timeCol ?? "_time";
   const timeBuckets = parseTimeSpan(params.span ?? "5m");
   const maxBuckets = params.maxGroups ?? 10;
 

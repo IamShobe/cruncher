@@ -1,7 +1,6 @@
 // Generated from /Users/elran777/git/IamShobe/cruncher/packages/qql/src/syntax/QQLLexer.g4 by ANTLR 4.13.1
 
 import * as antlr from "antlr4ng";
-import { Token } from "antlr4ng";
 
 export class QQLLexer extends antlr.Lexer {
   public static readonly PIPE = 1;

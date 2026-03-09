@@ -159,14 +159,17 @@ export const Editor = ({ value, onChange }: EditorProps) => {
 
   // Treat values from a different cacheKey as stale (don't show them).
   // null entries are in-flight — show empty until resolved.
-  const dynamicValues: Record<string, string[]> =
-    dynamicCache.cacheKey === currentCacheKey
-      ? Object.fromEntries(
-          Object.entries(dynamicCache.values).flatMap(([k, v]) =>
-            v !== null ? [[k, v]] : [],
-          ),
-        )
-      : {};
+  const dynamicValues = useMemo<Record<string, string[]>>(
+    () =>
+      dynamicCache.cacheKey === currentCacheKey
+        ? Object.fromEntries(
+            Object.entries(dynamicCache.values).flatMap(([k, v]) =>
+              v !== null ? [[k, v]] : [],
+            ),
+          )
+        : {},
+    [dynamicCache, currentCacheKey],
+  );
 
   // Stable string dep so the effect doesn't re-run on every keystroke
   const paramValueKeysStr = useMemo(
@@ -208,10 +211,14 @@ export const Editor = ({ value, onChange }: EditorProps) => {
         const merged = [...new Set(results.flat())];
         setDynamicCache((prev) => {
           if (prev.cacheKey !== currentCacheKey) return prev;
-          return { cacheKey: currentCacheKey, values: { ...prev.values, [field]: merged } };
+          return {
+            cacheKey: currentCacheKey,
+            values: { ...prev.values, [field]: merged },
+          };
         });
       });
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paramValueKeysStr, currentCacheKey, selectedProfile, controller]);
 
   // Get the controller params from the context
@@ -327,7 +334,7 @@ export const Editor = ({ value, onChange }: EditorProps) => {
       }
     }
     return results;
-  }, [data, dynamicValues, controllerParams]);
+  }, [data, dynamicValues, controllerParams, availableColumns]);
 
   const popperRoot = getPopperRoot();
 

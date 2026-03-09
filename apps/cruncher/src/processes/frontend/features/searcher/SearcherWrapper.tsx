@@ -197,6 +197,7 @@ export const SearcherWrapper = () => {
     await runQueryForStore(createdTab.createdTab.store, true);
   });
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const initializeProfiles = useCallback(
     debounceInitialize(async () => {
       const profileNames = new Set(

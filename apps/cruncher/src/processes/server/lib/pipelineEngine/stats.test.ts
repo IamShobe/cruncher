@@ -35,6 +35,7 @@ const agg = (
 ): AggregationFunction => ({
   function: func,
   column,
+  columnExpression: undefined,
   alias,
 });
 

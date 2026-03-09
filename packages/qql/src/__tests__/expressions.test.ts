@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { parse, QQLParserError } from "../index";
+import { parse } from "../index";
 
 test("support eval assignment", () => {
   const result = parse(`hello world | eval column1 = column2`);

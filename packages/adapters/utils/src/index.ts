@@ -13,10 +13,7 @@ export type QueryOptions = {
 
 export interface QueryProvider {
   getControllerParams(): Promise<Record<string, string[]>>;
-  getDynamicSuggestions?(
-    field: string,
-    indexes: string[],
-  ): Promise<string[]>;
+  getDynamicSuggestions?(field: string, indexes: string[]): Promise<string[]>;
   query(
     params: ControllerIndexParam[],
     searchTerm: Search,

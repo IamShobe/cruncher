@@ -1,7 +1,6 @@
 // Generated from /Users/elran777/git/IamShobe/cruncher/packages/qql/src/syntax/QQL.g4 by ANTLR 4.13.1
 
 import * as antlr from "antlr4ng";
-import { Token } from "antlr4ng";
 
 import { QQLVisitor } from "./QQLVisitor.js";
 

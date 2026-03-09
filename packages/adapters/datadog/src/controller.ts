@@ -198,7 +198,10 @@ export class DatadogController implements QueryProvider {
     try {
       csrf = await this.getCsrf();
     } catch (error) {
-      console.warn("[datadog] getControllerParams: skipping Phase 2 (CSRF unavailable):", error);
+      console.warn(
+        "[datadog] getControllerParams: skipping Phase 2 (CSRF unavailable):",
+        error,
+      );
       for (const [key, values] of Object.entries(result)) {
         if (key !== "index" && values.length === 0) delete result[key];
       }
@@ -336,7 +339,10 @@ export class DatadogController implements QueryProvider {
         .map((s) => s.text ?? "")
         .filter(Boolean);
     } catch (error) {
-      console.error(`[datadog] getDynamicSuggestions: auth failed for "${field}":`, error);
+      console.error(
+        `[datadog] getDynamicSuggestions: auth failed for "${field}":`,
+        error,
+      );
       return [];
     }
   }

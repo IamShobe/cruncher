@@ -11,7 +11,6 @@ import {
   Badge,
   Separator,
 } from "@chakra-ui/react";
-import { css } from "@emotion/react";
 import styled from "@emotion/styled";
 import { token } from "~components/ui/system";
 import { notifyError } from "~core/notifyError";

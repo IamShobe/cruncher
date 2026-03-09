@@ -6,7 +6,11 @@ import {
   processDatadogResponse,
   DatadogLogsResponse,
 } from "./query";
-import { ControllerIndexParam, Search, SearchLiteral } from "@cruncher/qql/grammar";
+import {
+  ControllerIndexParam,
+  Search,
+  SearchLiteral,
+} from "@cruncher/qql/grammar";
 
 // Schema to safely extract a typed field value from ObjectFields
 const FieldSchema = z.object({ value: z.unknown() });
@@ -52,7 +56,7 @@ describe("buildDatadogQuery", () => {
     expect(result).toBe("");
   });
 
-  test("= operator produces field:\"value\" syntax", () => {
+  test('= operator produces field:"value" syntax', () => {
     const result = buildDatadogQuery(
       [makeParam("service", "payments", "=")],
       emptySearch,
@@ -61,7 +65,7 @@ describe("buildDatadogQuery", () => {
     expect(result).toBe('service:"payments"');
   });
 
-  test("!= operator produces NOT field:\"value\" syntax", () => {
+  test('!= operator produces NOT field:"value" syntax', () => {
     const result = buildDatadogQuery(
       [makeParam("service", "internal", "!=")],
       emptySearch,
@@ -146,31 +150,39 @@ describe("buildRequestPayload", () => {
     const payload = buildRequestPayload("*", ["main"], from, to, 100, "tok");
     const parsed = PayloadSchema.parse(payload);
     const paths = parsed.list.columns.map((c) => c.field.path);
-    expect(paths).toEqual(["status_line", "timestamp", "host", "service", "content"]);
+    expect(paths).toEqual([
+      "status_line",
+      "timestamp",
+      "host",
+      "service",
+      "content",
+    ]);
   });
 
-  test("indexes:[] falls back to [\"*\"]", () => {
+  test('indexes:[] falls back to ["*"]', () => {
     const payload = buildRequestPayload("*", [], from, to, 100, "tok");
     const parsed = PayloadSchema.parse(payload);
     expect(parsed.list.indexes).toEqual(["*"]);
   });
 
   test("non-empty indexes are passed through", () => {
-    const payload = buildRequestPayload("*", ["main", "secondary"], from, to, 100, "tok");
+    const payload = buildRequestPayload(
+      "*",
+      ["main", "secondary"],
+      from,
+      to,
+      100,
+      "tok",
+    );
     const parsed = PayloadSchema.parse(payload);
     expect(parsed.list.indexes).toEqual(["main", "secondary"]);
   });
 
   test("pagination cursor is included when provided", () => {
-    const payload = buildRequestPayload(
-      "*",
-      ["*"],
-      from,
-      to,
-      100,
-      "tok",
-      { after: "cursor123", values: [] },
-    );
+    const payload = buildRequestPayload("*", ["*"], from, to, 100, "tok", {
+      after: "cursor123",
+      values: [],
+    });
     const parsed = PayloadSchema.parse(payload);
     expect(parsed.list.paging?.after).toBe("cursor123");
   });
@@ -182,7 +194,14 @@ describe("buildRequestPayload", () => {
   });
 
   test("_authentication_token is set from csrfToken argument", () => {
-    const payload = buildRequestPayload("*", ["*"], from, to, 100, "my-csrf-token");
+    const payload = buildRequestPayload(
+      "*",
+      ["*"],
+      from,
+      to,
+      100,
+      "my-csrf-token",
+    );
     const parsed = PayloadSchema.parse(payload);
     expect(parsed._authentication_token).toBe("my-csrf-token");
   });

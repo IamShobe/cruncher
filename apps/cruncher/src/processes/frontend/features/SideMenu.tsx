@@ -1,4 +1,4 @@
-import { Badge, Box, IconButton, Separator, Stack } from "@chakra-ui/react";
+import { Badge, IconButton, Separator, Stack } from "@chakra-ui/react";
 import { Link } from "@tanstack/react-router";
 import { ReactNode } from "react";
 import { LuBolt, LuFileSearch, LuKeyboard } from "react-icons/lu";

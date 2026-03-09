@@ -53,7 +53,7 @@ export const Searcher: React.FC<SearcherProps> = () => {
 
   const queryActions = useQueryActions();
   const setDateSelectorIsOpen = useSetAtom(isDateSelectorOpenAtom);
-  const [isLiveMode, setIsLiveMode] = useAtom(isLiveModeAtom);
+  const [_isLiveMode, setIsLiveMode] = useAtom(isLiveModeAtom);
   const isLoading = useAtomValue(isLoadingAtom);
   const lastRanJob = useAtomValue(lastRanJobAtom);
   const setIdleHintsEnabled = useSetAtom(idleHintsEnabledAtom);

@@ -4,7 +4,7 @@ import {
   QueryProvider,
 } from "@cruncher/adapter-utils";
 import { ControllerIndexParam, Search } from "@cruncher/qql/grammar";
-import type { CoralogixParams } from ".";
+import type { CoralogixParams } from "./index.js";
 import {
   ProcessedData,
   ObjectFields,
@@ -278,7 +278,7 @@ export class CoralogixController implements QueryProvider {
             objectFields[key] = processField(value);
           });
         }
-      } catch (e) {
+      } catch {
         // If parsing fails, keep the original text
       }
 

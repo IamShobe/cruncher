@@ -4,7 +4,13 @@ import type { Range } from "@tanstack/react-virtual";
 import { defaultRangeExtractor, useVirtualizer } from "@tanstack/react-virtual";
 import { atom, useAtomValue, useSetAtom } from "jotai";
 import type React from "react";
-import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+} from "react";
 import { useLogsInfiniteQuery } from "~core/api";
 import { asDateField } from "@cruncher/adapter-utils/logTypes";
 import DataRow from "./Row";
@@ -24,7 +30,7 @@ const DataLog: React.FC<DataRowProps> = () => {
   const isLiveMode = useAtomValue(isLiveModeAtom);
   const isLiveFetching = useAtomValue(isLiveFetchingAtom);
 
-  const logs = data ? data.pages.flatMap((d) => d.data) : [];
+  const logs = useMemo(() => data?.pages.flatMap((d) => d.data) ?? [], [data]);
   const total = data ? data.pages[0].total : 0;
 
   const parentRef = useRef<HTMLElement>(null);
@@ -84,8 +90,10 @@ const DataLog: React.FC<DataRowProps> = () => {
     }, []),
   });
 
+  const virtualItems = rowVirtualizer.getVirtualItems();
+
   useEffect(() => {
-    const [lastItem] = [...rowVirtualizer.getVirtualItems()].reverse();
+    const [lastItem] = [...virtualItems].reverse();
 
     if (!lastItem) {
       return;
@@ -103,14 +111,14 @@ const DataLog: React.FC<DataRowProps> = () => {
     fetchNextPage,
     logs.length,
     isFetchingNextPage,
-    rowVirtualizer.getVirtualItems(),
+    virtualItems,
   ]);
 
   useEffect(() => {
     setScrollToIndex(
       () => (index: number) => rowVirtualizer.scrollToIndex(index * 2),
     );
-  }, [rowVirtualizer.scrollToIndex, setScrollToIndex]);
+  }, [rowVirtualizer, rowVirtualizer.scrollToIndex, setScrollToIndex]);
 
   // Step 1 — fires when live fetching starts, before the network request.
   // Capture the exact virtual index at the top of the viewport and how many
@@ -224,7 +232,7 @@ const DataLog: React.FC<DataRowProps> = () => {
       start: startDate,
       end: endDate,
     });
-  }, [rowVirtualizer.range, setRangeInView, logs]);
+  }, [rowVirtualizer, rowVirtualizer.range, setRangeInView, logs]);
 
   return (
     <section

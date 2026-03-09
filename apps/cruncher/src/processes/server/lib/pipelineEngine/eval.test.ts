@@ -66,10 +66,10 @@ const calcExpr = (left: CalcTerm, tail?: CalcAction[]): CalcExpression => ({
   tail,
 });
 
-const simpleCalc = (v: number): CalcExpression =>
+const _simpleCalc = (v: number): CalcExpression =>
   calcExpr(calcTerm(numCalcUnit(v)));
 
-const colCalc = (col: string): CalcExpression =>
+const _colCalc = (col: string): CalcExpression =>
   calcExpr(calcTerm(colCalcUnit(col)));
 
 const termAction = (

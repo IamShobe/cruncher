@@ -176,7 +176,7 @@ export const useShortcuts = <T extends ShortcutDefinitions>(
     return () => {
       window.removeEventListener("keydown", onKeyDown);
     };
-  }, [handler]);
+  }, [handler, shortcuts]);
 };
 
 export const createShortcutsHandler = <T extends ShortcutDefinitions>(

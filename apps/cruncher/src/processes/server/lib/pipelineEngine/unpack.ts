@@ -17,7 +17,7 @@ export const processUnpack = (
             const newKey = `${column}.${key}`;
             try {
               dp.object[newKey] = processField(value);
-            } catch (e) {
+            } catch {
               // If processing fails, log the error and skip this field
             }
           });
@@ -31,7 +31,7 @@ export const processUnpack = (
             try {
               const payload = JSON.parse(columnField.value);
               addObjectFields(payload);
-            } catch (e) {
+            } catch {
               throw new Error(
                 `Column "${column}" is a string but could not be parsed as JSON.`,
               );
@@ -42,7 +42,7 @@ export const processUnpack = (
               `Column "${column}" has an unsupported type: ${columnField?.type}.`,
             );
         }
-      } catch (e) {
+      } catch (e: unknown) {
         console.error(`Error processing column "${column}":`, e);
         return {};
       }

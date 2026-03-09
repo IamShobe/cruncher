@@ -289,13 +289,13 @@ export type SortCmd = {
 export type EvalCmd = {
   type: "eval";
   variableName: string;
-  expression: EvalFunctionArg | null;
+  expression: EvalFunctionArg;
 };
 
 export type RegexCmd = {
   type: "regex";
   columnSelected: string | undefined;
-  pattern: RegexLiteral | null;
+  pattern: RegexLiteral;
 };
 
 export type TimechartParams = {

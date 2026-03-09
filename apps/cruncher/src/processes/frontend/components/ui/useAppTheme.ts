@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { ThemeId, THEMES } from "./themes";
+import { DEFAULT_THEME } from "~lib/themeDefaults";
 import { appStore, useApplicationStore } from "~core/store/appStore";
 
 export { type ThemeId };
 
 export const useAppTheme = () => {
   const generalSettings = useApplicationStore((state) => state.generalSettings);
-  const [themeId, setThemeIdState] = useState<ThemeId>("midnight");
+  const [themeId, setThemeIdState] = useState<ThemeId>(DEFAULT_THEME);
 
   // Sync with the config-file value once generalSettings is loaded
   useEffect(() => {

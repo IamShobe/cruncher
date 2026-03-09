@@ -1,6 +1,9 @@
 import { describe, expect, test } from "vitest";
 import adapter from ".";
-import { AggregateResponseSchema, SuggestionsResponseSchema } from "./controller";
+import {
+  AggregateResponseSchema,
+  SuggestionsResponseSchema,
+} from "./controller";
 
 test("import", () => {
   expect(adapter).toBeDefined();
@@ -15,8 +18,8 @@ describe("AggregateResponseSchema", () => {
     const input = {
       result: {
         buckets: [
-          { by: { "kube_service": "payments" } },
-          { by: { "kube_service": "auth" } },
+          { by: { kube_service: "payments" } },
+          { by: { kube_service: "auth" } },
         ],
       },
     };
@@ -71,7 +74,9 @@ describe("SuggestionsResponseSchema", () => {
     };
     const parsed = SuggestionsResponseSchema.safeParse(input);
     expect(parsed.success).toBe(true);
-    expect(parsed.data?.data?.attributes?.suggestions?.[0]?.text).toBeUndefined();
+    expect(
+      parsed.data?.data?.attributes?.suggestions?.[0]?.text,
+    ).toBeUndefined();
   });
 
   test("totally wrong shape succeeds with empty data (schema uses .optional() defensively)", () => {

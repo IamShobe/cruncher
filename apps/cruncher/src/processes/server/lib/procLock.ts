@@ -7,7 +7,7 @@ export function acquireLock(lockFilePath: string): boolean {
       process.kill(pid, 0); // check if process is alive
       console.log("Loki is being managed by process", pid);
       return false;
-    } catch (e) {
+    } catch {
       // Process doesn't exist
       console.log("Stale lock file found. Proceeding...");
     }

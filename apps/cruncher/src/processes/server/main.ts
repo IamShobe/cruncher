@@ -100,8 +100,8 @@ const startServer = async (engineV2: Engine, eventEmitter: EventEmitter) => {
 };
 
 const initializeServer = async (authProvider: ExternalAuthProvider) => {
-  const config = readConfig(appGeneralSettings);
-  initLoki(config.loki).catch((error) => {
+  const { config: appConfig } = readConfig(appGeneralSettings);
+  initLoki(appConfig.loki).catch((error) => {
     console.error("Failed to initialize Loki:", error);
   });
   console.log("Initializing server...");

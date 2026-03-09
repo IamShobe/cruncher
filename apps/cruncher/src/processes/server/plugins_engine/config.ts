@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import { DEFAULT_THEME } from "../lib/themeDefaults.js";
 import { CruncherConfig, CruncherConfigSchema } from "../config/schema";
 import { Engine } from "../engineV2/engine";
 import { InstanceRef, SearchProfileRef } from "../engineV2/types";
@@ -20,7 +21,7 @@ export type AppGeneralSettings = {
 
 export const appGeneralSettings: AppGeneralSettings = {
   configFilePath: defaultConfigFilePath,
-  theme: "midnight",
+  theme: DEFAULT_THEME,
 };
 
 export type ReadConfigResult =

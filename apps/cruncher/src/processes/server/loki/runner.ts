@@ -28,7 +28,7 @@ const readPidFromFile = (pidFilePath: string): number | null => {
         try {
           process.kill(pid, 0); // Check if the process is alive
           return pid; // Process is alive, return its PID
-        } catch (e) {
+        } catch {
           // Process doesn't exist, return null
           console.log(
             "Stale PID file found. Proceeding to start a new Loki instance.",

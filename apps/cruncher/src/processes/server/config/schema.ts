@@ -1,4 +1,5 @@
 import { z } from "zod/v4";
+import { DEFAULT_THEME } from "../lib/themeDefaults.js";
 
 export const ConnectorConfigSchema = z.object({
   type: z.string(), // e.g., 'grafana_browser'
@@ -37,7 +38,7 @@ export const UIConfigSchema = z.object({
   theme: z
     .enum(["midnight", "nord", "dracula", "catppuccin"])
     .optional()
-    .default("midnight"),
+    .default(DEFAULT_THEME),
   liveInterval: z.enum(LIVE_INTERVAL_OPTIONS).optional().default("5s"),
   maxLogs: z.number().optional().default(100000),
   liveAutoStopMinutes: z.number().nullable().optional().default(30),
