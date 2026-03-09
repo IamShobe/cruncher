@@ -6,6 +6,8 @@ sidebar:
 ---
 
 import QQLCode from '../../../components/QQLCode.astro';
+import ParamItem from '../../../components/ParamItem.astro';
+import QueryPipeline from '../../../components/QueryPipeline.astro';
 
 Cruncher uses QQL (Quick Query Language) to let you query, filter, and transform your data efficiently. A QQL query is composed of several parts:
 
@@ -13,6 +15,37 @@ Cruncher uses QQL (Quick Query Language) to let you query, filter, and transform
 - **Controller parameters** (controllerParams): Special key-value pairs at the start of the query that act as filters for the underlying data adapter, enabling more efficient data retrieval.
 - **Search expression**: A free-text or structured search to filter records.
 - **Pipeline commands**: A sequence of commands (like `where`, `stats`, `table`, etc.) to further process and shape your results.
+
+## Query Structure
+
+<QueryPipeline
+  steps={[
+    {
+      label: "Datasource",
+      description: "@name — scope the query to a specific adapter (not yet implemented)",
+      icon: "🔌",
+    },
+    {
+      label: "Controller Parameters",
+      description: "key=\"value\" pairs pushed to the backend adapter for early server-side filtering",
+      icon: "🎛️",
+    },
+    {
+      label: "Search Expression",
+      description: "Free-text words or phrases matched against all fields in each record",
+      icon: "🔍",
+    },
+    {
+      label: "Pipeline Commands",
+      description: "| where … | stats … | table … — transform and shape the results",
+      icon: "⚙️",
+    },
+  ]}
+/>
+
+A typical QQL query looks like:
+
+<QQLCode code={`controllerParam1="value1" controllerParam2="42" search terms | where ... | stats ... | table ...`} />
 
 ## Datasource Selection
 
@@ -33,18 +66,25 @@ When multiple adapters are configured, you will be able to scope a query to a sp
 
 Controller parameters are written at the beginning of your query, before the main search or pipeline. They support equality, exclusion, and regex matching:
 
-| Syntax | Meaning |
-|--------|---------|
-| `key="value"` | Include only records where `key` equals `value` |
-| `key!="value"` | Exclude records where `key` equals `value` |
-| `` key=`pattern` `` | Include records where `key` matches the regex `pattern` |
-| `` key!=`pattern` `` | Exclude records where `key` matches the regex `pattern` |
+<ParamItem label={`key="value"`} type="equality">
+  Include only records where `key` equals `value`.
+</ParamItem>
 
-- `key`: The name of the controller parameter (must match a label or field supported by the adapter).
-- `value`: A double-quoted string literal.
-- `pattern`: A backtick-wrapped regular expression.
+<ParamItem label={`key!="value"`} type="exclusion">
+  Exclude records where `key` equals `value`.
+</ParamItem>
+
+<ParamItem label="key=`pattern`" type="regex match">
+  Include records where `key` matches the regex `pattern` (backtick-wrapped).
+</ParamItem>
+
+<ParamItem label="key!=`pattern`" type="regex exclusion">
+  Exclude records where `key` matches the regex `pattern` (backtick-wrapped).
+</ParamItem>
 
 Controller parameters are sent directly to the adapter backend, allowing it to filter data as early as possible. This can greatly improve query performance, especially on large datasets, by reducing the amount of data that needs to be loaded and processed.
+
+> **Tip:** Always use controller parameters for fields that are indexed or supported by your data source for best performance.
 
 ### Examples
 
@@ -69,7 +109,7 @@ Exclude records where `namespace` matches `^test-.*`.
 After controller parameters, you can add a search expression. The search expression is a sequence of words or phrases that are matched against your data.
 
 - **Each word is treated as a separate token**. By default, there is an implicit AND between all tokens: all words must be present in a record for it to match.
-- To match a full sentence or exact phrase, wrap it in double quotes (`"...")`.
+- To match a full sentence or exact phrase, wrap it in double quotes (`"..."`).
 - You can use the `OR` and `AND` operators to build more complex search logic:
   - `error OR warning` matches records containing either "error" or "warning".
   - `error AND timeout` (or just `error timeout`) matches records containing both "error" and "timeout".
@@ -122,26 +162,6 @@ QQL supports single-line comments starting with `//`. Everything from `//` to th
     | stats count() by service`} />
 
 Comments can appear anywhere in the query — at the start, inline after a command, or on their own line. They are useful for annotating complex queries.
-
-## Query Structure
-
-A typical QQL query might look like:
-
-```
-controllerParam1="value1" controllerParam2="42" search terms | where ... | stats ... | table ...
-```
-
-- **Controller parameters**: `controllerParam1="value1" controllerParam2="42"`
-- **Search**: `search terms` (optional)
-- **Pipeline**: `| where ... | stats ... | table ...`
-
-## Why Use Controller Parameters?
-
-- They push filtering down to the adapter/backend, reducing data transfer and processing time.
-- They are especially useful for adapters that support server-side filtering (such as log aggregators, databases, or APIs).
-- Using controller parameters can make your queries much faster and more efficient.
-
-> **Tip:** Always use controller parameters for fields that are indexed or supported by your data source for best performance.
 
 ---
 

@@ -37,3 +37,8 @@ Creates a boolean field `has_user` that is `true` if `user_id` is present.
 <QQLCode code={`| where isNull(error_code)`} />
 
 Filters to successful records (no error code).
+
+## Used In
+
+- [`where`](/qql-reference/commands/where) — as a filter condition
+- [`eval`](/qql-reference/commands/eval) — to create a boolean field

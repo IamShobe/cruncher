@@ -3,6 +3,7 @@ title: Coralogix
 description: How to use Cruncher with Coralogix.
 ---
 import ParamItem from '../../../components/ParamItem.astro';
+import AdapterCard from '../../../components/AdapterCard.astro';
 
 import { Badge } from '@astrojs/starlight/components';
 
@@ -52,3 +53,15 @@ connectors:
 ---
 
 For more information on how to obtain your Coralogix dashboard URL and region, see the Coralogix documentation or ask your Coralogix administrator.
+
+## Related Adapters
+
+<div class="not-content" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin: 1.5rem 0;">
+  <AdapterCard
+    name="Datadog"
+    type="datadog"
+    description="Query Datadog Logs via browser-session auth — another cloud SaaS log platform"
+    link="/adapters/datadog"
+    icon="🐶"
+  />
+</div>

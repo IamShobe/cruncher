@@ -7,6 +7,7 @@ sidebar:
         variant: tip
 ---
 import ParamItem from '../../../components/ParamItem.astro';
+import AdapterCard from '../../../components/AdapterCard.astro';
 
 import { Badge } from '@astrojs/starlight/components';
 
@@ -84,3 +85,15 @@ Cruncher automatically fetches your Datadog log facets and index names to provid
 - The `indexes` param scopes queries to specific log indexes. Leave it empty to search all indexes.
 - The `query_prefix` is combined with the QQL search term using `AND`, so it always applies.
 - The `index` controller param (set inline in the QQL query bar) overrides the `indexes` config param for that query.
+
+## Related Adapters
+
+<div class="not-content" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin: 1.5rem 0;">
+  <AdapterCard
+    name="Coralogix"
+    type="coralogix"
+    description="Query Coralogix logs via browser-session auth — another cloud SaaS log platform"
+    link="/adapters/coralogix"
+    icon="🔵"
+  />
+</div>

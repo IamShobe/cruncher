@@ -23,10 +23,10 @@ import QQLCode from '/src/components/QQLCode.astro';
 You can use arithmetic, logical, and conditional expressions, as well as functions, in `eval` assignments. Common supported functions include:
 
 - Mathematical: `+`, `-`, `*`, `/`
-- String: `lower(str)`, `upper(str)`, `length(str)`
-- Number: `abs(x)`, `round(x)`, `ceil(x)`, `floor(x)`
-- Boolean: `contains(str, substr)`, `startsWith(str, prefix)`, `endsWith(str, suffix)`, `match(str, regex)`, `isNull(x)`, `isNotNull(x)`
-- Conditional: `if(condition, then, else)`, `case((cond1, val1), ..., elseVal)`
+- String: [`lower(str)`](/qql-reference/functions/strings/lower), [`upper(str)`](/qql-reference/functions/strings/upper), [`length(str)`](/qql-reference/functions/strings/length), [`trim(str)`](/qql-reference/functions/strings/trim)
+- Number: [`abs(x)`](/qql-reference/functions/numbers/abs), [`round(x)`](/qql-reference/functions/numbers/round), [`ceil(x)`](/qql-reference/functions/numbers/ceil), [`floor(x)`](/qql-reference/functions/numbers/floor)
+- Boolean: [`contains(str, substr)`](/qql-reference/functions/booleans/contains), [`startsWith(str, prefix)`](/qql-reference/functions/booleans/startsWith), [`endsWith(str, suffix)`](/qql-reference/functions/booleans/endsWith), [`match(str, regex)`](/qql-reference/functions/booleans/match), [`isNull(x)`](/qql-reference/functions/booleans/isNull), [`isNotNull(x)`](/qql-reference/functions/booleans/isNotNull)
+- Conditional: [`if(condition, then, else)`](/qql-reference/functions/conditional/if), [`case((cond1, val1), ..., elseVal)`](/qql-reference/functions/conditional/case)
 
 > Only functions supported by your Cruncher deployment are available. See the main documentation for a full list.
 
@@ -61,3 +61,8 @@ This creates a boolean field `match_found` that is `true` when `message` matches
 <QQLCode code={`| eval group = case(status == "error", "A", status == "warn", "B", "C")`} />
 
 This creates a field `group` with value `"A"` for errors, `"B"` for warnings, and `"C"` otherwise.
+
+## See Also
+
+- [`where`](/qql-reference/commands/where) — filter records by boolean condition
+- [`regex`](/qql-reference/commands/regex) — extract fields using regex patterns

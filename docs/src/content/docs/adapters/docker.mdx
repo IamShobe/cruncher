@@ -6,6 +6,7 @@ import { Code } from '@astrojs/starlight/components';
 import code1 from './examples/docker.cruncher.config.yaml?raw';
 import code2 from './examples/docker-patterns.cruncher.config.yaml?raw';
 import ParamItem from '../../../components/ParamItem.astro';
+import AdapterCard from '../../../components/AdapterCard.astro';
 
 import { Badge } from '@astrojs/starlight/components';
 
@@ -41,7 +42,7 @@ import { Badge } from '@astrojs/starlight/components';
     **Example:**
     ```yaml
     containerOverride:
-        messageFieldName: 'message'  
+        messageFieldName: 'message'
     ```
 </ParamItem>
 <ParamItem label="logPatterns" type="array">
@@ -74,3 +75,15 @@ import { Badge } from '@astrojs/starlight/components';
 
 ### Config with log patterns
 <Code code={code2} lang="yaml" title="cruncher.config.yaml" />
+
+## Related Adapters
+
+<div class="not-content" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin: 1.5rem 0;">
+  <AdapterCard
+    name="Kubernetes"
+    type="k8s"
+    description="Query pod logs via kubectl — for containerized workloads running in Kubernetes"
+    link="/adapters/kubernetes"
+    icon="☸️"
+  />
+</div>

@@ -1,5 +1,6 @@
 ---
 title: where
+description: Filter log records by boolean condition. Only records where the expression evaluates to true pass through the pipeline.
 ---
 
 import CommandCard from '/src/components/CommandCard.astro';
@@ -29,12 +30,12 @@ The `where` command filters records based on a boolean expression. Only records 
 
 The following functions can be used in `where` expressions:
 
-- `contains(str, substr)`: Returns true if `str` contains `substr`.
-- `startsWith(str, prefix)`: Returns true if `str` starts with `prefix`.
-- `endsWith(str, suffix)`: Returns true if `str` ends with `suffix`.
-- `match(str, regex)`: Returns true if `str` matches the given regular expression.
-- `isNull(x)`: Returns true if `x` is null or undefined.
-- `isNotNull(x)`: Returns true if `x` is not null or undefined.
+- [`contains(str, substr)`](/qql-reference/functions/booleans/contains): Returns true if `str` contains `substr`.
+- [`startsWith(str, prefix)`](/qql-reference/functions/booleans/startsWith): Returns true if `str` starts with `prefix`.
+- [`endsWith(str, suffix)`](/qql-reference/functions/booleans/endsWith): Returns true if `str` ends with `suffix`.
+- [`match(str, regex)`](/qql-reference/functions/booleans/match): Returns true if `str` matches the given regular expression.
+- [`isNull(x)`](/qql-reference/functions/booleans/isNull): Returns true if `x` is null or undefined.
+- [`isNotNull(x)`](/qql-reference/functions/booleans/isNotNull): Returns true if `x` is not null or undefined.
 
 > Only these functions are supported in boolean expressions for `where`.
 
@@ -83,3 +84,8 @@ This keeps records where the `message` field matches the regular expression `^Er
 <QQLCode code={`| where isNull(optional_field)`} />
 
 This keeps records where `optional_field` is null or undefined.
+
+## See Also
+
+- [`eval`](/qql-reference/commands/eval) — create or modify fields using expressions
+- [`regex`](/qql-reference/commands/regex) — extract fields using regex patterns

@@ -46,3 +46,8 @@ Matches hostnames that start with either "prod-" or "staging-".
 <QQLCode code={'| eval is_uuid = match(id, `^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)'} />
 
 Checks if `id` looks like a UUID.
+
+## Used In
+
+- [`where`](/qql-reference/commands/where) — as a filter condition
+- [`eval`](/qql-reference/commands/eval) — to create a boolean field

@@ -35,3 +35,8 @@ Creates a boolean field `is_api_call` that is `true` if `request_path` starts wi
 <QQLCode code={`| where startsWith(hostname, "prod-")`} />
 
 Filters to production hostnames only.
+
+## Used In
+
+- [`where`](/qql-reference/commands/where) — as a filter condition
+- [`eval`](/qql-reference/commands/eval) — to create a boolean field

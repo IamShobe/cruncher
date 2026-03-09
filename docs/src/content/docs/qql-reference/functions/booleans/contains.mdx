@@ -35,3 +35,8 @@ Creates a boolean field `has_timeout` that is `true` if `error_message` contains
 <QQLCode code={`| eval is_json = contains(raw_log, "{")`} />
 
 Detects if `raw_log` contains JSON (looks for opening brace).
+
+## Used In
+
+- [`where`](/qql-reference/commands/where) — as a filter condition
+- [`eval`](/qql-reference/commands/eval) — to create a boolean field

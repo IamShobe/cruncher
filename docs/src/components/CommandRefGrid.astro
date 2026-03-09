@@ -1,0 +1,99 @@
+---
+interface Command {
+  name: string;
+  purpose: string;
+  example: string;
+  link?: string;
+}
+
+interface Props {
+  commands: Command[];
+}
+
+const { commands } = Astro.props;
+---
+
+<div class="cmd-grid">
+  {commands.map((cmd) => (
+    <a class="cmd-row" href={cmd.link ?? undefined}>
+      <code class="cmd-name">{cmd.name}</code>
+      <span class="cmd-purpose">{cmd.purpose}</span>
+      <code class="cmd-example">{cmd.example}</code>
+    </a>
+  ))}
+</div>
+
+<style>
+  .cmd-grid,
+  .cmd-grid * {
+    margin: 0;
+    padding: 0;
+  }
+
+  .cmd-grid {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 1rem 0 !important;
+  }
+
+  .cmd-row {
+    display: grid;
+    grid-template-columns: 7rem 1fr auto;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.55rem 1rem;
+    text-decoration: none;
+    color: inherit;
+    border-bottom: 1px solid var(--sl-color-gray-6);
+    transition: background 0.12s;
+  }
+
+  .cmd-row:last-child {
+    border-bottom: none;
+  }
+
+  .cmd-row:hover {
+    background: color-mix(in srgb, var(--sl-color-accent) 6%, var(--sl-color-bg-panel));
+  }
+
+  .cmd-name {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--sl-color-accent);
+    background: color-mix(in srgb, var(--sl-color-accent) 10%, transparent);
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+
+  .cmd-purpose {
+    font-size: 0.82rem;
+    color: var(--sl-color-text);
+    line-height: 1.3;
+  }
+
+  .cmd-example {
+    font-size: 0.75rem;
+    color: var(--sl-color-gray-2);
+    background: var(--sl-color-gray-7);
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    white-space: nowrap;
+    font-family: var(--sl-font-mono, monospace);
+  }
+
+  @media (max-width: 640px) {
+    .cmd-row {
+      grid-template-columns: 6rem 1fr;
+      grid-template-rows: auto auto;
+    }
+
+    .cmd-example {
+      grid-column: 2;
+      white-space: normal;
+    }
+  }
+</style>

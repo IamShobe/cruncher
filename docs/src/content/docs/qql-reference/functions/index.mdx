@@ -1,0 +1,52 @@
+---
+title: Functions
+description: All QQL functions organized by category — boolean, string, number, and conditional.
+---
+
+import CommandRefGrid from '../../../../components/CommandRefGrid.astro';
+
+QQL provides built-in functions for boolean logic, string manipulation, math operations, and conditional expressions. Functions can be used inside [`eval`](/qql-reference/commands/eval) and [`where`](/qql-reference/commands/where) commands.
+
+## Boolean Functions
+
+Boolean functions return `true` or `false`. They are commonly used in [`where`](/qql-reference/commands/where) filter expressions and in [`eval`](/qql-reference/commands/eval) to create boolean fields.
+
+<CommandRefGrid commands={[
+  { name: "contains()", purpose: "Check if a string contains a substring", example: 'contains(message, "error")', link: "/qql-reference/functions/booleans/contains" },
+  { name: "startsWith()", purpose: "Check if a string starts with a prefix", example: 'startsWith(path, "/api")', link: "/qql-reference/functions/booleans/startsWith" },
+  { name: "endsWith()", purpose: "Check if a string ends with a suffix", example: 'endsWith(file, ".log")', link: "/qql-reference/functions/booleans/endsWith" },
+  { name: "match()", purpose: "Check if a string matches a regex pattern", example: "match(message, \"^Error:\")", link: "/qql-reference/functions/booleans/match" },
+  { name: "isNull()", purpose: "Check if a value is null or missing", example: "isNull(optional_field)", link: "/qql-reference/functions/booleans/isNull" },
+  { name: "isNotNull()", purpose: "Check if a value is not null", example: "isNotNull(user)", link: "/qql-reference/functions/booleans/isNotNull" },
+]} />
+
+## String Functions
+
+String functions transform text values. Use them in [`eval`](/qql-reference/commands/eval) to create or modify string fields.
+
+<CommandRefGrid commands={[
+  { name: "lower()", purpose: "Convert a string to lowercase", example: "lower(user)", link: "/qql-reference/functions/strings/lower" },
+  { name: "upper()", purpose: "Convert a string to uppercase", example: "upper(level)", link: "/qql-reference/functions/strings/upper" },
+  { name: "length()", purpose: "Return the character count of a string", example: "length(message)", link: "/qql-reference/functions/strings/length" },
+  { name: "trim()", purpose: "Remove leading and trailing whitespace", example: "trim(raw_field)", link: "/qql-reference/functions/strings/trim" },
+]} />
+
+## Number Functions
+
+Number functions perform math operations on numeric values. Use them in [`eval`](/qql-reference/commands/eval) to transform numeric fields.
+
+<CommandRefGrid commands={[
+  { name: "abs()", purpose: "Return the absolute value of a number", example: "abs(delta)", link: "/qql-reference/functions/numbers/abs" },
+  { name: "round()", purpose: "Round a number to the nearest integer", example: "round(duration_ms)", link: "/qql-reference/functions/numbers/round" },
+  { name: "ceil()", purpose: "Round a number up to the nearest integer", example: "ceil(ratio)", link: "/qql-reference/functions/numbers/ceil" },
+  { name: "floor()", purpose: "Round a number down to the nearest integer", example: "floor(ratio)", link: "/qql-reference/functions/numbers/floor" },
+]} />
+
+## Conditional Functions
+
+Conditional functions return different values based on conditions. Use them in [`eval`](/qql-reference/commands/eval) to create derived fields with branching logic.
+
+<CommandRefGrid commands={[
+  { name: "if()", purpose: "Return one of two values based on a condition", example: 'if(status == "error", "critical", "ok")', link: "/qql-reference/functions/conditional/if" },
+  { name: "case()", purpose: "Return a value from multiple condition branches", example: 'case(status == "error", "A", "B")', link: "/qql-reference/functions/conditional/case" },
+]} />

@@ -6,13 +6,13 @@ interface DataType {
 }
 
 const types: DataType[] = [
-  { name: 'NumberField', description: 'Integers and floats', example: '42, 3.14, -7' },
-  { name: 'StringField', description: 'Text of any length', example: '"hello", "user@example.com"' },
-  { name: 'DateField', description: 'Unix timestamps (milliseconds)', example: '1677628800000' },
-  { name: 'BooleanField', description: 'True or false values', example: 'true, false' },
-  { name: 'ArrayField', description: 'Arrays of mixed types', example: '["a", "b", "c"]' },
-  { name: 'ObjectField', description: 'Nested objects with properties', example: '{"key": "value"}' },
-  { name: 'NullField', description: 'Missing or undefined values', example: 'null' },
+  { name: 'string', description: 'Text of any length', example: '"hello", "user@example.com"' },
+  { name: 'number', description: 'Integers and floats', example: '42, 3.14, -7' },
+  { name: 'boolean', description: 'True or false values', example: 'true, false' },
+  { name: 'null', description: 'Missing or undefined values', example: 'null' },
+  { name: 'object', description: 'Nested objects with properties', example: '{"key": "value"}' },
+  { name: 'array', description: 'Arrays of mixed types', example: '["a", "b", "c"]' },
+  { name: 'regex', description: 'Regular expression patterns', example: '`^Error:.*`' },
 ];
 ---
 

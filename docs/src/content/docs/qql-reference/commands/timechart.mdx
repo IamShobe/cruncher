@@ -50,3 +50,7 @@ When `span` is omitted, the bucket size is chosen automatically based on the sel
 <QQLCode code={`| timechart span=5m timeCol=event_time maxGroups=10 count() as total, avg(duration) as avg_duration by status`} />
 
 This creates a time series of event counts and average duration per `status` in 5-minute intervals, using `event_time` as the time axis, and limits to 10 groups.
+
+## See Also
+
+- [`stats`](/qql-reference/commands/stats) — tabular aggregation (alternative to timechart for non-time-series summaries)

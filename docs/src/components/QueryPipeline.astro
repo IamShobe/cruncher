@@ -3,6 +3,7 @@ interface Stage {
   label: string;
   description: string;
   icon?: string;
+  optional?: boolean;
 }
 
 interface StageGroup {
@@ -31,22 +32,22 @@ const numbered = steps.map((step) => ({ step, num: ++ordinal }));
 <div class="pipeline-wrap">
   {title && <p class="pipeline-title">{title}</p>}
 
+  <div class="pipeline-scroll">
   <div class="pipeline">
     {numbered.map(({ step, num }, i) => (
       <>
         {isGroup(step) ? (
-          <div class="stage-group">
-            <div class="group-badge">
-              <span class="stage-num">{num}</span>
-              <span>{step.label}</span>
-              <span class="group-hint">any order · repeatable</span>
+          <div class="stage stage-group">
+            <div class="stage-top">
+              <span class="step-badge">{num}</span>
             </div>
+            <div class="stage-label">{step.label}</div>
             <div class="group-stages">
               {step.stages.map((s) => (
                 <div class="group-stage">
-                  <span class="stage-icon">{s.icon || "⚙️"}</span>
+                  <span class="group-stage-icon">{s.icon || "⚙️"}</span>
                   <div>
-                    <div class="stage-label">{s.label}</div>
+                    <div class="group-stage-label">{s.label}</div>
                     <div class="stage-desc">{s.description}</div>
                   </div>
                 </div>
@@ -55,30 +56,45 @@ const numbered = steps.map((step) => ({ step, num: ++ordinal }));
           </div>
         ) : (
           <div class="stage">
-            <span class="stage-num">{num}</span>
-            <span class="stage-icon">{(step as Stage).icon || "⚙️"}</span>
-            <div class="stage-body">
-              <div class="stage-label">{(step as Stage).label}</div>
-              <div class="stage-desc">{(step as Stage).description}</div>
+            <div class="stage-top">
+              <span class="step-badge">{num}</span>
+              {(step as Stage).optional && <span class="optional-badge">optional</span>}
             </div>
+            <div class="stage-icon-wrap">
+              <span class="stage-icon">{(step as Stage).icon || "⚙️"}</span>
+            </div>
+            <div class="stage-label">{(step as Stage).label}</div>
+            <div class="stage-desc">{(step as Stage).description}</div>
           </div>
         )}
         {i < steps.length - 1 && (
           <div class="connector" aria-hidden="true">
-            <div class="connector-line" />
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 5v14M6 13l6 6 6-6"/>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 12h14M13 6l6 6-6 6"/>
             </svg>
           </div>
         )}
       </>
     ))}
   </div>
+  </div>
 </div>
 
 <style>
+  .pipeline-wrap,
+  .pipeline-wrap * {
+    margin: 0;
+    padding: 0;
+  }
+
   .pipeline-wrap {
-    margin: 1.5rem 0;
+    margin: 1.5rem 0 !important;
+  }
+
+  .pipeline-scroll {
+    overflow-x: auto;
+    display: flex;
+    justify-content: center;
   }
 
   .pipeline-title {
@@ -87,38 +103,52 @@ const numbered = steps.map((step) => ({ step, num: ++ordinal }));
     text-transform: uppercase;
     letter-spacing: 0.07em;
     color: var(--sl-color-gray-3);
-    margin: 0 0 0.75rem 0;
+    margin: 0 0 1rem 0 !important;
+    text-align: center;
   }
 
   .pipeline {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: stretch;
     gap: 0;
+    min-width: max-content;
   }
 
   /* ── Regular stage ── */
   .stage {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 0.75rem;
-    padding: 0.85rem 1rem;
+    text-align: center;
+    padding: 1.25rem 1rem;
     background: var(--sl-color-bg-panel);
     border: 1px solid var(--sl-color-gray-5);
-    border-radius: 8px;
-    transition: background 0.15s;
+    border-radius: 12px;
+    width: 11rem;
+    flex-shrink: 0;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    gap: 0.5rem;
   }
 
   .stage:hover {
-    background: var(--sl-color-bg-sidebar);
+    border-color: var(--sl-color-accent);
+    box-shadow: 0 2px 12px color-mix(in srgb, var(--sl-color-accent) 15%, transparent);
   }
 
-  .stage-num {
+  .stage-top {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    justify-content: center;
+  }
+
+  .step-badge {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 1.35rem;
-    height: 1.35rem;
+    width: 1.4rem;
+    height: 1.4rem;
     background: var(--sl-color-accent);
     color: var(--sl-color-bg);
     font-size: 0.65rem;
@@ -128,115 +158,143 @@ const numbered = steps.map((step) => ({ step, num: ++ordinal }));
     line-height: 1;
   }
 
+  .optional-badge {
+    font-size: 0.6rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: var(--sl-color-gray-3);
+    background: var(--sl-color-gray-6);
+    padding: 0.1rem 0.4rem;
+    border-radius: 10px;
+  }
+
+  .stage-icon-wrap {
+    width: 2.75rem;
+    height: 2.75rem;
+    background: color-mix(in srgb, var(--sl-color-accent) 10%, var(--sl-color-bg));
+    border: 1px solid color-mix(in srgb, var(--sl-color-accent) 20%, transparent);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0.25rem 0;
+  }
+
   .stage-icon {
-    font-size: 1.1rem;
-    flex-shrink: 0;
+    font-size: 1.3rem;
     line-height: 1;
   }
 
-  .stage-body {
-    display: flex;
-    align-items: baseline;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-    min-width: 0;
-  }
-
   .stage-label {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: var(--sl-color-text);
-    white-space: nowrap;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--sl-color-text-heading);
+    line-height: 1.2;
   }
 
   .stage-desc {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     color: var(--sl-color-gray-2);
-    line-height: 1.4;
-  }
-
-  /* ── Group ── */
-  .stage-group {
-    border: 1px solid var(--sl-color-gray-5);
-    border-radius: 8px;
-    overflow: hidden;
-  }
-
-  .group-badge {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    background: var(--sl-color-bg-nav);
-    border-bottom: 1px dashed var(--sl-color-gray-5);
-    font-size: 0.72rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--sl-color-text-accent);
-  }
-
-  .group-hint {
-    margin-left: auto;
-    font-weight: 400;
-    font-style: italic;
-    text-transform: none;
-    letter-spacing: 0;
-    color: var(--sl-color-gray-3);
-    font-size: 0.7rem;
-  }
-
-  .group-stages {
-    display: flex;
-  }
-
-  .group-stage {
-    flex: 1;
-    padding: 0.85rem 1rem;
-    display: flex;
-    gap: 0.6rem;
-    align-items: flex-start;
-    background: var(--sl-color-bg-panel);
-    border-right: 1px dashed var(--sl-color-gray-5);
-    transition: background 0.15s;
-  }
-
-  .group-stage:last-child {
-    border-right: none;
-  }
-
-  .group-stage:hover {
-    background: var(--sl-color-bg-sidebar);
-  }
-
-  .group-stage .stage-icon {
-    font-size: 1rem;
-    flex-shrink: 0;
-    margin-top: 0.1rem;
+    line-height: 1.45;
   }
 
   /* ── Connector ── */
   .connector {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    gap: 0;
-    color: var(--sl-color-accent);
-    height: 2rem;
     justify-content: center;
-    opacity: 0.7;
+    padding: 0 0.25rem;
+    color: var(--sl-color-gray-3);
+    flex-shrink: 0;
   }
 
   .connector svg {
-    width: 1rem;
-    height: 1rem;
-    margin-top: -2px;
+    width: 1.5rem;
+    height: 1.5rem;
   }
 
-  .connector-line {
-    width: 1px;
-    flex: 1;
-    background: var(--sl-color-accent);
-    opacity: 0.4;
+  /* ── Group ── */
+  .stage.stage-group {
+    align-items: stretch;
+    text-align: left;
+    gap: 0.4rem;
+  }
+
+  .stage.stage-group .stage-label {
+    text-align: center;
+  }
+
+  .group-stages {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    width: 100%;
+    border-top: 1px solid var(--sl-color-gray-6);
+    padding-top: 0.5rem;
+  }
+
+  .group-stage {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .group-stage-icon {
+    font-size: 0.85rem;
+    flex-shrink: 0;
+    line-height: 1;
+  }
+
+  .group-stage-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--sl-color-text);
+    white-space: nowrap;
+  }
+
+  /* ── Responsive: stack vertically on narrow screens ── */
+  @media (max-width: 700px) {
+    .pipeline-wrap {
+      overflow-x: visible;
+    }
+
+    .pipeline {
+      flex-direction: column;
+      align-items: stretch;
+      min-width: unset;
+    }
+
+    .stage {
+      flex-direction: row;
+      text-align: left;
+      align-items: flex-start;
+      width: auto;
+      gap: 0.75rem;
+      padding: 1rem;
+    }
+
+    .stage-top {
+      flex-direction: column;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .stage-icon-wrap {
+      width: 2.25rem;
+      height: 2.25rem;
+      flex-shrink: 0;
+      margin: 0;
+    }
+
+    .stage-icon {
+      font-size: 1.1rem;
+    }
+
+    .connector {
+      justify-content: center;
+      padding: 0.25rem 0;
+      transform: rotate(90deg);
+    }
   }
 </style>

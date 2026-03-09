@@ -3,10 +3,13 @@ title: Grafana Loki Browser
 description: How to use Cruncher with Grafana Loki.
 ---
 import ParamItem from '../../../components/ParamItem.astro';
+import AdapterCard from '../../../components/AdapterCard.astro';
 
 import { Badge } from '@astrojs/starlight/components';
 
 <Badge text="grafana-loki" />
+
+The **Grafana Loki Browser** adapter queries Loki through your existing Grafana instance. Cruncher opens a browser session to authenticate with Grafana, then uses the Grafana API to run LogQL queries against your Loki data source. Use this adapter if your Loki is hosted and accessed through Grafana.
 
 ## Params
 
@@ -65,3 +68,15 @@ connectors:
 ---
 
 For more information on how to obtain your Grafana Loki data source UID, see the Grafana documentation or ask your Grafana administrator.
+
+## Related Adapters
+
+<div class="not-content" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin: 1.5rem 0;">
+  <AdapterCard
+    name="Loki Direct"
+    type="loki"
+    description="Query Loki directly without Grafana — better for standalone Loki deployments"
+    link="/adapters/loki"
+    icon="🔶"
+  />
+</div>

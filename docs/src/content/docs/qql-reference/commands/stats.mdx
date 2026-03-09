@@ -43,3 +43,9 @@ The `stats` command supports the following patterns:
 <QQLCode code={`| stats count() as total, avg(duration) as avg_duration, first(user) as first_user by status`} />
 
 This counts all records, calculates the average `duration`, and returns the first `user` for each `status` group.
+
+## See Also
+
+- [`timechart`](/qql-reference/commands/timechart) — time-series aggregation (alternative to stats for trend visualization)
+- [`sort`](/qql-reference/commands/sort) — sort aggregated results
+- [`table`](/qql-reference/commands/table) — select and display specific columns

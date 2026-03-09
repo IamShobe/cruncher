@@ -10,6 +10,7 @@ import { Code } from '@astrojs/starlight/components';
 import code1 from './examples/k8s.cruncher.config.yaml?raw';
 import code2 from './examples/k8s-patterns.cruncher.config.yaml?raw';
 import ParamItem from '../../../components/ParamItem.astro';
+import AdapterCard from '../../../components/AdapterCard.astro';
 
 import { Badge } from '@astrojs/starlight/components';
 
@@ -110,3 +111,15 @@ The following dropdowns are available in the Cruncher UI to filter results:
 ### Config with log patterns
 
 <Code code={code2} lang="yaml" title="cruncher.config.yaml" />
+
+## Related Adapters
+
+<div class="not-content" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin: 1.5rem 0;">
+  <AdapterCard
+    name="Docker"
+    type="docker"
+    description="Query container logs directly from Docker — for local or single-host container workloads"
+    link="/adapters/docker"
+    icon="🐳"
+  />
+</div>

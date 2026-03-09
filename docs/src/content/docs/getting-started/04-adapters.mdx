@@ -13,7 +13,7 @@ An adapter is a module that knows how to communicate with a specific backend or 
 
 ## Built-in Adapters
 
-Cruncher comes with six built-in adapters to connect with various log sources and data backends:
+Cruncher comes with seven built-in adapters to connect with various log sources and data backends:
 
 <div class="not-content" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1rem; margin: 1.5rem 0;">
   <AdapterCard
@@ -50,6 +50,13 @@ Cruncher comes with six built-in adapters to connect with various log sources an
     description="Connect to the Coralogix observability platform. Query logs stored in Coralogix."
     link="/adapters/coralogix"
     icon="🌐"
+  />
+  <AdapterCard
+    name="Datadog"
+    type="datadog"
+    description="Query logs from the Datadog observability platform using browser-session authentication. Supports index filtering, facet autocomplete, and live mode."
+    link="/adapters/datadog"
+    icon="🐶"
   />
   <AdapterCard
     name="Mocked Data"

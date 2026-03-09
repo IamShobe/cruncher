@@ -36,3 +36,8 @@ Creates a boolean field `has_metadata` that is `true` if `metadata_json` exists.
 <QQLCode code={`| where isNotNull(user_id) && isNotNull(request_id)`} />
 
 Filters to records with both user and request identifiers.
+
+## Used In
+
+- [`where`](/qql-reference/commands/where) — as a filter condition
+- [`eval`](/qql-reference/commands/eval) — to create a boolean field
