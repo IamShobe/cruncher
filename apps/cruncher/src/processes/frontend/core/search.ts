@@ -164,6 +164,11 @@ export const queryEndTimeAtom = atom<Date | undefined>(undefined);
 export const isQuerySuccessAtom = atom(true);
 export const lastRanJobAtom = atom<QueryTask | undefined>(undefined);
 
+export const dynamicSuggestionsCacheAtom = atom<{
+  cacheKey: string; // JSON.stringify({profile, indexes})
+  values: Record<string, string[] | null>; // null = in-flight
+}>({ cacheKey: "", values: {} });
+
 export const useInitializedController = () => {
   const controller = useApplicationStore((state) => state.controller);
   const isInitialized = useApplicationStore((state) => state.isInitialized);

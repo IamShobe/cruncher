@@ -183,6 +183,8 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
     >(undefined);
     const [hasInteractedWithMenu, setHasInteractedWithMenu] = useState(false);
 
+    const ctrlSpaceOpenRef = useRef(false);
+
     const writtenWord = useMemo(() => {
       const text = value.slice(0, cursorPosition);
       const lastSpace = text.lastIndexOf(" ");
@@ -201,7 +203,11 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
       for (const suggestion of suggestions) {
         // filter suggestions based on cursor position
         if (cursorPosition < suggestion.fromPosition) continue;
-        if (suggestion.toPosition && cursorPosition > suggestion.toPosition)
+        if (
+          suggestion.toPosition &&
+          !ctrlSpaceOpenRef.current &&
+          cursorPosition > suggestion.toPosition
+        )
           continue;
 
         results.add(suggestion);
@@ -244,6 +250,7 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
         }
       }, 0);
 
+      ctrlSpaceOpenRef.current = false;
       setIsCompleterOpen(false);
       setHasInteractedWithMenu(false);
     };
@@ -499,10 +506,12 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
             // TODO move it to shortcuts system
             // if key is esc - close completer
             if (e.key === "Escape") {
+              ctrlSpaceOpenRef.current = false;
               setIsCompleterOpen(false);
               setHasInteractedWithMenu(false);
             }
             if (e.key === " " && e.ctrlKey) {
+              ctrlSpaceOpenRef.current = true;
               setIsCompleterOpen(true);
             }
 
@@ -576,6 +585,9 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
             scheduleIdleHint();
             onChange(e.target.value);
             setCursorPosition(e.currentTarget.selectionStart);
+            if (!isCharAdded && !hasFreshSuggestions) {
+              ctrlSpaceOpenRef.current = false;
+            }
             setIsCompleterOpen(isCharAdded || hasFreshSuggestions);
             setHoveredCompletionItem(undefined);
             setHasInteractedWithMenu(false);

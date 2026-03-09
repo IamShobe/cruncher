@@ -23,6 +23,7 @@
   ],
   "scripts": {
     "build": "tsc --project tsconfig.json",
+    "test": "vitest run",
     "format": "oxfmt src/",
     "format:check": "oxfmt --check src/",
     "prepublishOnly": "npm run build"
@@ -46,6 +47,7 @@
   },
   "devDependencies": {
     "@types/node": "^25.3.5",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
   }
 }

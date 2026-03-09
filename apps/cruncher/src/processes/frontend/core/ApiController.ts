@@ -78,6 +78,18 @@ export class ApiController {
     });
   };
 
+  getParamValueSuggestions = async (
+    instanceRef: InstanceRef,
+    field: string,
+    indexes: string[],
+  ): Promise<string[]> => {
+    return await this.connection.getParamValueSuggestions.query({
+      instanceRef,
+      field,
+      indexes,
+    });
+  };
+
   onUrlNavigation = (callback: (url: string) => void) => {
     return this.connection.onUrlNavigation.subscribe(undefined, {
       onData: (message) => {
