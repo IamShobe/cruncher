@@ -9,6 +9,7 @@ import loki from "@cruncher/adapter-loki";
 import grafanaLokiBrowser from "@cruncher/adapter-grafana-loki-browser";
 import mock from "@cruncher/adapter-mock";
 import coralogix from "@cruncher/adapter-coralogix";
+import datadog from "@cruncher/adapter-datadog";
 import { Engine } from "./engineV2/engine";
 import {
   DefaultExternalAuthProvider,
@@ -120,6 +121,7 @@ const initializeServer = async (authProvider: ExternalAuthProvider) => {
   engineV2.registerPlugin(docker);
   engineV2.registerPlugin(k8s);
   engineV2.registerPlugin(coralogix);
+  engineV2.registerPlugin(datadog);
 
   //   const routes = await getRoutes(engineV2);
   //   await setupEngine(serverContainer, routes);

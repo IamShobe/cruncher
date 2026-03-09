@@ -191,6 +191,7 @@ function startServerProcess() {
       const authUrl = msg.authUrl as string;
       const requestedCookies = msg.cookies as string[];
       const jobId = msg.jobId as string;
+      const scriptExtractors = (msg.scriptExtractors ?? []) as { key: string; js: string; waitForResult?: boolean; runOnNavigation?: boolean }[];
       console.log(
         "Received authentication request from server process, sending cookies...",
       );
@@ -207,7 +208,7 @@ function startServerProcess() {
           );
 
           return result.status;
-        });
+        }, scriptExtractors);
       } catch (error) {
         if (processActive) {
           console.error("Error during authentication", error);
