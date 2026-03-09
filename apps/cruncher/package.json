@@ -99,6 +99,7 @@
     "chevrotain": "^11.2.0",
     "chokidar": "^5.0.0",
     "compare-versions": "^6.1.1",
+    "d3-array": "^3.2.4",
     "d3-scale": "^4.0.2",
     "date-fns": "^4.1.0",
     "electron-log": "^5.4.3",

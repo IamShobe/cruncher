@@ -1,4 +1,5 @@
-import { useEffect } from "react";
+import { useMemo } from "react";
+import { useEvent } from "react-use";
 
 type KeyTypes = "Meta" | "Shift" | "Alt" | "Control" | "Slash";
 
@@ -170,13 +171,11 @@ export const useShortcuts = <T extends ShortcutDefinitions>(
   shortcuts: ShortcutHolder<T>,
   handler: ShortcutHandler<T>,
 ) => {
-  useEffect(() => {
-    const onKeyDown = createShortcutsHandler(shortcuts, handler);
-    window.addEventListener("keydown", onKeyDown);
-    return () => {
-      window.removeEventListener("keydown", onKeyDown);
-    };
-  }, [handler, shortcuts]);
+  const onKeyDown = useMemo(
+    () => createShortcutsHandler(shortcuts, handler),
+    [shortcuts, handler],
+  );
+  useEvent("keydown", onKeyDown);
 };
 
 export const createShortcutsHandler = <T extends ShortcutDefinitions>(

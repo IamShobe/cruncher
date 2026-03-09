@@ -7,7 +7,7 @@ import { QueryExecutionHistory, TaskRef } from "./types";
 export type CacheRecord = {
   id: string; // Unique identifier for the cache record
   referencingTasks: Set<TaskRef>;
-  data: ProcessedData[];
+  batches: ProcessedData[][];
   lastAccessed: Date;
   key: string;
   identifier: QueryExecutionHistory;
@@ -57,7 +57,7 @@ export class QueryCacheHolder {
         id: uuidv4(), // Generate a unique ID for the cache record
         key: key,
         referencingTasks: new Set([taskId]),
-        data: [],
+        batches: [],
         status: "running", // Initial status can be set to running
         lastAccessed: new Date(),
         identifier: identifier,

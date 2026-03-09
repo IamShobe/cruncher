@@ -4,21 +4,9 @@ import {
   Field,
   HashableField,
   isNotDefined,
-  NumberField,
   ProcessedData,
 } from "@cruncher/adapter-utils/logTypes";
 import { AggregationFunction } from "@cruncher/qql/grammar";
-
-const assertDataValuesAsNumbers = (
-  input: Field[],
-): input is (NumberField | undefined | null)[] => {
-  return input.every(
-    (value) =>
-      value === undefined ||
-      value === null ||
-      asNumberField(value).errors === undefined,
-  );
-};
 
 export const SUPPORTED_AGG_FUNCTIONS = [
   "first",
@@ -32,7 +20,17 @@ export const SUPPORTED_AGG_FUNCTIONS = [
 
 type SupportedAggFunction = (typeof SUPPORTED_AGG_FUNCTIONS)[number];
 
-// TODO: IMPLEMENT IT MORE EFFICIENTLY!
+type FuncAccumulator = {
+  func: SupportedAggFunction;
+  column: string | undefined;
+  resultColumnName: string;
+  firstVal: Field | undefined;
+  lastVal: Field | undefined;
+  sum: number;
+  min: number;
+  max: number;
+};
+
 export const aggregateData = (
   dataPoints: ProcessedData[],
   functions: AggregationFunction[],
@@ -61,6 +59,17 @@ export const aggregateData = (
     return func.column ? `${func.function}(${func.column})` : func.function;
   };
 
+  // Validate all function names upfront
+  for (const funcDef of functions) {
+    if (
+      !SUPPORTED_AGG_FUNCTIONS.includes(
+        funcDef.function as SupportedAggFunction,
+      )
+    ) {
+      throw new Error(`Function '${funcDef.function}' is not supported`);
+    }
+  }
+
   const processedData: ProcessedData[] = [];
   for (const groupKey in groups) {
     const groupData = groups[groupKey];
@@ -70,110 +79,94 @@ export const aggregateData = (
     };
 
     for (const column of groupBy ?? []) {
-      // populate the value of the column - all objects in the group should have the same value - so we can just take the first one
       dataPoint.object[column] = groupData?.[0].object[column];
     }
 
-    for (const funcDef of functions) {
-      const columnData = groupData.map((dataPoint) => {
-        if (funcDef.column === undefined) {
-          return undefined;
+    // Initialize accumulators for all functions
+    const accumulators: FuncAccumulator[] = functions.map((funcDef) => ({
+      func: funcDef.function as SupportedAggFunction,
+      column: funcDef.column,
+      resultColumnName: getFuncColName(funcDef),
+      firstVal: undefined,
+      lastVal: undefined,
+      sum: 0,
+      min: Infinity,
+      max: -Infinity,
+    }));
+
+    // Single pass over groupData — update all accumulators simultaneously
+    for (const dp of groupData) {
+      for (const acc of accumulators) {
+        const val =
+          acc.column !== undefined ? dp.object[acc.column] : undefined;
+
+        if (acc.firstVal === undefined && val !== undefined) {
+          acc.firstVal = val;
+        }
+        if (val !== undefined) {
+          acc.lastVal = val;
         }
 
-        return dataPoint.object[funcDef.column];
-      });
-
-      const resultColumnName = getFuncColName(funcDef);
-
-      if (
-        !SUPPORTED_AGG_FUNCTIONS.includes(
-          funcDef.function as SupportedAggFunction,
-        )
-      ) {
-        throw new Error(`Function '${funcDef.function}' is not supported`);
+        if (
+          (acc.func === "sum" ||
+            acc.func === "avg" ||
+            acc.func === "min" ||
+            acc.func === "max") &&
+          val !== undefined &&
+          val !== null
+        ) {
+          const num = asNumberField(val);
+          if (num.errors !== undefined) {
+            throw new Error("Data values are not numbers");
+          }
+          acc.sum += num.value;
+          if (num.value < acc.min) acc.min = num.value;
+          if (num.value > acc.max) acc.max = num.value;
+        }
       }
+    }
 
-      const func = funcDef.function as SupportedAggFunction;
-
-      switch (func) {
+    // Emit accumulator results
+    for (const acc of accumulators) {
+      switch (acc.func) {
         case "first":
-          dataPoint.object[resultColumnName] = columnData.find(
-            (value) => value !== undefined,
-          );
+          dataPoint.object[acc.resultColumnName] = acc.firstVal;
           break;
-
         case "last":
-          dataPoint.object[resultColumnName] = columnData
-            .reverse()
-            .find((value) => value !== undefined);
+          dataPoint.object[acc.resultColumnName] = acc.lastVal;
           break;
-
         case "count":
-          dataPoint.object[resultColumnName] = {
+          dataPoint.object[acc.resultColumnName] = {
             type: "number",
-            value: columnData.length,
+            value: groupData.length,
           };
           break;
         case "sum":
-          if (!assertDataValuesAsNumbers(columnData)) {
-            throw new Error("Data values are not numbers");
-          }
-
-          dataPoint.object[resultColumnName] = {
+          dataPoint.object[acc.resultColumnName] = {
             type: "number",
-            value: columnData.reduce(
-              (acc, value) => (acc ?? 0) + (value?.value ?? 0),
-              0,
-            ),
+            value: acc.sum,
           };
           break;
-        case "avg": {
-          if (!assertDataValuesAsNumbers(columnData)) {
-            throw new Error("Data values are not numbers");
-          }
-
-          const res = columnData.reduce(
-            (acc, value) => (acc ?? 0) + (value?.value ?? 0),
-            0,
-          );
-
-          dataPoint.object[resultColumnName] = {
+        case "avg":
+          dataPoint.object[acc.resultColumnName] = {
             type: "number",
-            value: res / columnData.length,
+            value: acc.sum / groupData.length,
           };
           break;
-        }
         case "min":
-          if (!assertDataValuesAsNumbers(columnData)) {
-            throw new Error("Data values are not numbers");
-          }
-
-          dataPoint.object[resultColumnName] = {
+          dataPoint.object[acc.resultColumnName] = {
             type: "number",
-            value: Math.min(
-              ...columnData
-                .filter((value) => value !== undefined && value !== null)
-                .map((value) => value.value),
-            ),
+            value: acc.min,
           };
           break;
         case "max":
-          if (!assertDataValuesAsNumbers(columnData)) {
-            throw new Error("Data values are not numbers");
-          }
-
-          dataPoint.object[resultColumnName] = {
+          dataPoint.object[acc.resultColumnName] = {
             type: "number",
-            value: Math.max(
-              ...columnData
-                .filter((value) => value !== undefined && value !== null)
-                .map((value) => value.value),
-            ),
+            value: acc.max,
           };
           break;
-
         default:
-          throw new Error(`Function '${func}' not implemented`);
+          throw new Error(`Function '${acc.func}' not implemented`);
       }
     }
 

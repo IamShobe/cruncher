@@ -23,6 +23,7 @@ import { Tooltip } from "~components/presets/Tooltip";
 import { Portal } from "~components/ui/portal";
 import { useAtom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
+import { useIdle } from "react-use";
 
 import { AutoCompleter, compareSuggestions, Suggestion } from "./AutoCompleter";
 import {
@@ -307,7 +308,7 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
     const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
     const closeTimerRef = useRef<ReturnType<typeof setTimeout>>();
     const openTimerRef = useRef<ReturnType<typeof setTimeout>>();
-    const idleTimerRef = useRef<ReturnType<typeof setTimeout>>();
+    const dismissAutoHintTimerRef = useRef<ReturnType<typeof setTimeout>>();
     const isAutoHintRef = useRef(false);
     const [idleHintsEnabled, setIdleHintsEnabled] =
       useAtom(idleHintsEnabledAtom);
@@ -322,12 +323,13 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
     cursorPosRef.current = cursorPosition;
     const referenceElementRef = useRef<HTMLTextAreaElement | null>(null);
     referenceElementRef.current = referenceElement;
+    const isFocusedRef = useRef(false);
 
     useEffect(
       () => () => {
         clearTimeout(closeTimerRef.current);
         clearTimeout(openTimerRef.current);
-        clearTimeout(idleTimerRef.current);
+        clearTimeout(dismissAutoHintTimerRef.current);
       },
       [],
     );
@@ -360,6 +362,7 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
 
     const cancelClose = useCallback(() => {
       clearTimeout(closeTimerRef.current);
+      clearTimeout(dismissAutoHintTimerRef.current);
     }, []);
 
     const cancelOpen = useCallback(() => {
@@ -410,17 +413,23 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
       isAutoHintRef.current = true;
     }, [cancelOpen, cancelClose]);
 
-    const scheduleIdleHint = useCallback(() => {
-      clearTimeout(idleTimerRef.current);
-      idleTimerRef.current = setTimeout(showHintAtCursor, 2000);
-    }, [showHintAtCursor]);
-
     const dismissAutoHint = useCallback(() => {
       if (isAutoHintRef.current) {
         setPopoverOpen(false);
         isAutoHintRef.current = false;
       }
     }, []);
+
+    const isIdle = useIdle(2_000);
+
+    useEffect(() => {
+      if (isIdle && isFocusedRef.current) {
+        clearTimeout(dismissAutoHintTimerRef.current);
+        showHintAtCursor();
+      } else {
+        dismissAutoHintTimerRef.current = setTimeout(dismissAutoHint, 600);
+      }
+    }, [isIdle, showHintAtCursor, dismissAutoHint]);
 
     const handlePopoverOpenChange = useCallback(
       ({ open }: { open: boolean }) => {
@@ -502,7 +511,6 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
             position: "relative",
           }}
           onKeyDown={(e) => {
-            scheduleIdleHint();
             // TODO move it to shortcuts system
             // if key is esc - close completer
             if (e.key === "Escape") {
@@ -551,6 +559,13 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
               }
             }
           }}
+          onFocus={() => {
+            isFocusedRef.current = true;
+          }}
+          onBlur={() => {
+            isFocusedRef.current = false;
+            dismissAutoHint();
+          }}
           onMouseMove={handleMouseMove}
           onMouseLeave={() => {
             cancelOpen();
@@ -582,7 +597,6 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
               suggestions.some((s) => s.fromPosition === selectionStart);
 
             dismissAutoHint();
-            scheduleIdleHint();
             onChange(e.target.value);
             setCursorPosition(e.currentTarget.selectionStart);
             if (!isCharAdded && !hasFreshSuggestions) {

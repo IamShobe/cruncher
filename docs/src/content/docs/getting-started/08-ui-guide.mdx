@@ -26,6 +26,11 @@ The search header contains:
 - **Live Button**: Toggle real-time incremental log streaming. See [Live Mode](/getting-started/09-live-mode).
 - **Share Button**: Copy a shareable link to this search.
 - **Settings**: Access theme preferences, live mode interval, and memory limits.
+- **Data Source Selector**: Choose the active search profile. A small status indicator shows the connection state:
+  - Spinner — loading / initializing
+  - Green ✓ — all connectors loaded successfully
+  - Red ✗ — one or more connectors encountered an error
+- **Connectors button** (database icon): Jump directly to the [Connectors page](/getting-started/08-ui-guide#connectors-page) in Settings.
 
 See [Keyboard Shortcuts](/getting-started/07-keyboard-shortcuts) for the full reference.
 
@@ -51,8 +56,22 @@ Results are displayed in tabs below the histogram. The available tabs depend on 
 Shows individual log records in chronological order. Each row displays:
 
 - **Timestamp**: When the log was created
-- **Message/Fields**: The main content of the log
+- **Message**: The main content of the log, clamped to 3 lines by default
 - **Level/Severity**: Log level (error, warn, info, etc.), if available
+
+#### Message Expand / Collapse
+
+Long messages are clamped to 3 lines. A small **chevron button** appears inline when a message overflows:
+
+- Click **↓** to expand that row and see the full message
+- Click **↑** to collapse it back to 3 lines
+
+The **Logs Toolbar** (just above the log list) lets you change the global default for all rows at once:
+
+- **Expand all** (⇓): unfold every message by default
+- **Collapse all** (⇑): return to the 3-line clamp
+
+Per-row overrides take priority over the global setting.
 
 **Click a row** to open the Row Details panel on the right.
 
@@ -96,6 +115,34 @@ Each field shows:
 - **Copy value**: Click the copy icon next to any field value
 - **Append to query**: Click the arrow button to add a filter like `field="value"` to your query
 - **Close panel**: Click the X or click elsewhere in the results
+
+## Connectors Page
+
+Open **Settings → Connectors** (or click the database icon in the header) to see the status of every configured connector.
+
+The page is split into two panels:
+
+### Profiles (left panel)
+
+Lists every search profile defined in your config. Each profile shows:
+- Its name
+- A coloured dot per connector instance indicating current status (green = loaded, yellow = loading, red = error, grey = not yet initialised)
+- A **Play** button to re-initialise the profile's connectors on demand
+
+### Connectors (right panel)
+
+A table of every connector instance across all profiles, with columns:
+
+| Column | Description |
+|---|---|
+| Status | Coloured dot (hover for tooltip) |
+| Name | Instance name from the config |
+| Plugin | Human-readable adapter type |
+| Param Keys | Which parameter keys were loaded (e.g. `index`, `service`) |
+| Last Init | Time the connector was last initialised |
+| Description / Error | Adapter description, or the error message if initialisation failed |
+
+A **Reload all** button in the panel header re-initialises every connector at once.
 
 ## Settings
 

@@ -1,19 +1,17 @@
-import React, { useEffect } from "react";
+import React, { useCallback } from "react";
+import { useEvent } from "react-use";
 import { getCruncherRoot } from "~core/utils/shadowUtils";
 
 export function useOutsideDetector(onOutsideClick = () => {}) {
   const ref = React.useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const root = getCruncherRoot();
-    if (!root) {
-      console.warn("Root not found - useOutsideDetector will not work");
-      return;
-    }
+  const root = getCruncherRoot();
 
-    /**
-     * Alert if clicked on outside of element
-     */
-    function handleClickOutside(event: MouseEvent) {
+  if (!root) {
+    console.warn("Root not found - useOutsideDetector will not work");
+  }
+
+  const handleClickOutside = useCallback(
+    (event: MouseEvent) => {
       if (
         ref.current &&
         event.target &&
@@ -21,14 +19,11 @@ export function useOutsideDetector(onOutsideClick = () => {}) {
       ) {
         onOutsideClick();
       }
-    }
-    // Bind the event listener
-    root.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      // Unbind the event listener on clean up
-      root.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [ref, onOutsideClick]);
+    },
+    [onOutsideClick],
+  );
+
+  useEvent("mousedown", root ? handleClickOutside : null, root ?? undefined);
 
   return ref;
 }

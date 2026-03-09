@@ -1,4 +1,4 @@
-import type { QQLParserErrorDetail, SuggestionData } from "@cruncher/qql";
+import type { QQLParserErrorDetail } from "@cruncher/qql";
 import { atom, useAtom, useAtomValue, useSetAtom } from "jotai";
 import React, { ReactNode, useEffect, useMemo } from "react";
 import { Suggestion } from "~components/ui/editor/AutoCompleter";
@@ -177,9 +177,7 @@ export const Editor = ({ value, onChange }: EditorProps) => {
       JSON.stringify(
         (data.suggestions ?? [])
           .filter((s) => s.type === "paramValue")
-          .map(
-            (s) => (s as Extract<SuggestionData, { type: "paramValue" }>).key,
-          ),
+          .map((s) => s.key),
       ),
     [data.suggestions],
   );
@@ -205,7 +203,7 @@ export const Editor = ({ value, onChange }: EditorProps) => {
         selectedProfile.instances.map((instance) =>
           controller
             .getParamValueSuggestions(instance, field, indexes)
-            .catch(() => [] as string[]),
+            .catch((): string[] => []),
         ),
       ).then((results) => {
         const merged = [...new Set(results.flat())];

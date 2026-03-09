@@ -91,6 +91,21 @@ See the [configuration reference](/getting-started/05-config-file) for the compl
 
 Cruncher is designed to be extensible. You can implement your own adapter by following the patterns in the `packages/adapters/` directory. Custom adapters must implement the required interface for data extraction, field typing, and the controller API.
 
+The `query()` method receives a `QueryOptions` object that includes an `isLiveQuery` flag:
+
+```typescript
+interface QueryOptions {
+  fromTime: Date;
+  toTime: Date;
+  limit: number;
+  isLiveQuery: boolean;   // true when called from live-mode polling
+  cancelToken: AbortSignal;
+  onBatchDone: (data: ProcessedData[]) => void;
+}
+```
+
+Use `isLiveQuery` to differentiate between an initial full-range data load (`false`) and a live-mode incremental poll (`true`). For live queries, only return *new* events since the last poll rather than re-fetching the entire range.
+
 See the [create-adapter](/create-adapter) tool for a guided workflow to scaffold a new adapter package.
 
 ---

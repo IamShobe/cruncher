@@ -23,13 +23,17 @@ import type { ValueChangeDetails } from "node_modules/@chakra-ui/react/dist/type
 import { useMemo } from "react";
 import { CiExport } from "react-icons/ci";
 import {
+  LuCheck,
   LuClipboardCopy,
+  LuDatabase,
   LuDownload,
   LuLink,
   LuSearch,
   LuSearchX,
   LuSigma,
+  LuX,
 } from "react-icons/lu";
+import { Link } from "@tanstack/react-router";
 import { SearchProfileRef } from "../../../../server/engineV2/types";
 import { Shortcut } from "~components/ui/shortcut";
 import { Tooltip } from "~components/ui/tooltip";
@@ -62,6 +66,7 @@ import {
 import LiveModeButton from "./LiveModeButton";
 import {
   ApplicationStore,
+  DatasetStatus,
   useApplicationStore,
 } from "../../../core/store/appStore";
 import {
@@ -299,11 +304,28 @@ const createSearchProfileIsLoadingSelector = (
   };
 };
 
+const createSearchProfileStatusSelector = (
+  profileRef: SearchProfileRef,
+): ((state: ApplicationStore) => DatasetStatus) => {
+  return (state: ApplicationStore) => {
+    const profile = state.searchProfiles.find((p) => p.name === profileRef);
+    if (!profile || profile.instances.length === 0) return "uninitialized";
+
+    const statuses = profile.instances.map(
+      (instance) => state.datasets[instance]?.status ?? "uninitialized",
+    );
+    if (statuses.some((s) => s === "error")) return "error";
+    if (statuses.some((s) => s === "loading")) return "loading";
+    if (statuses.every((s) => s === "loaded")) return "loaded";
+    return "uninitialized";
+  };
+};
+
 const ProviderSelector = () => {
   const setSearchProfileIndex = useSetAtom(selectedSearchProfileIndexAtom);
   const selectedSearchProfile = useSelectedSearchProfile();
-  const isSelectedLoading = useApplicationStore(
-    createSearchProfileIsLoadingSelector(
+  const profileStatus = useApplicationStore(
+    createSearchProfileStatusSelector(
       selectedSearchProfile?.name ?? ("" as SearchProfileRef),
     ),
   );
@@ -347,51 +369,75 @@ const ProviderSelector = () => {
   };
 
   return (
-    <Field.Root>
-      <Select.Root
-        size="xs"
-        minW={"200px"}
-        maxW={"300px"}
-        collection={profiles}
-        value={selectedSearchProfile ? [selectedSearchProfile.name] : []}
-        onValueChange={onSelect}
-        disabled={hasError || initializedSearchProfiles.length === 0}
-      >
-        <Select.HiddenSelect />
-        <Tooltip
-          content={<span>Select Search Profile</span>}
-          showArrow
-          positioning={{ placement: "bottom" }}
+    <Stack direction="row" gap={1} alignItems="center">
+      <Field.Root>
+        <Select.Root
+          size="xs"
+          minW={"200px"}
+          maxW={"300px"}
+          collection={profiles}
+          value={selectedSearchProfile ? [selectedSearchProfile.name] : []}
+          onValueChange={onSelect}
+          disabled={hasError || initializedSearchProfiles.length === 0}
         >
-          <Select.Control>
-            <Select.Trigger>
-              <Select.ValueText
-                placeholder={
-                  initializedSearchProfiles.length === 0
-                    ? "No Search Profiles"
-                    : "Select Search Profile"
-                }
-              />
-            </Select.Trigger>
-            <Select.IndicatorGroup>
-              {isSelectedLoading && (
-                <Spinner size="xs" borderWidth="1.5px" color="fg.muted" />
-              )}
-              <Select.Indicator />
-              {/* <Select.ClearTrigger /> */}
-            </Select.IndicatorGroup>
-          </Select.Control>
-        </Tooltip>
+          <Select.HiddenSelect />
+          <Tooltip
+            content={<span>Select Search Profile</span>}
+            showArrow
+            positioning={{ placement: "bottom" }}
+          >
+            <Select.Control>
+              <Select.Trigger>
+                <Select.ValueText
+                  placeholder={
+                    initializedSearchProfiles.length === 0
+                      ? "No Search Profiles"
+                      : "Select Search Profile"
+                  }
+                />
+              </Select.Trigger>
+              <Select.IndicatorGroup>
+                {profileStatus === "loading" && (
+                  <Spinner size="xs" borderWidth="1.5px" color="fg.muted" />
+                )}
+                {profileStatus === "loaded" && (
+                  <Box color="green.500" display="flex" alignItems="center">
+                    <LuCheck />
+                  </Box>
+                )}
+                {profileStatus === "error" && (
+                  <Box color="red.500" display="flex" alignItems="center">
+                    <LuX />
+                  </Box>
+                )}
+                <Select.Indicator />
+              </Select.IndicatorGroup>
+            </Select.Control>
+          </Tooltip>
 
-        <Select.Positioner>
-          <Select.Content>
-            {profiles.items.map((item) => (
-              <InstanceSelectItem item={item} key={item.value} />
-            ))}
-          </Select.Content>
-        </Select.Positioner>
-      </Select.Root>
-    </Field.Root>
+          <Portal>
+            <Select.Positioner>
+              <Select.Content maxH="100px" overflowY="auto">
+                {profiles.items.map((item) => (
+                  <InstanceSelectItem item={item} key={item.value} />
+                ))}
+              </Select.Content>
+            </Select.Positioner>
+          </Portal>
+        </Select.Root>
+      </Field.Root>
+      <Tooltip
+        content={<span>Connectors</span>}
+        showArrow
+        positioning={{ placement: "bottom" }}
+      >
+        <Link to="/settings/initialized-datasets">
+          <IconButton aria-label="Connectors" size="2xs" variant="ghost">
+            <LuDatabase />
+          </IconButton>
+        </Link>
+      </Tooltip>
+    </Stack>
   );
 };
 

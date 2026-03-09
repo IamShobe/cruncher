@@ -18,6 +18,8 @@ export type DatasetStatus = "uninitialized" | "loading" | "loaded" | "error";
 export type DatasetMetadata = {
   status: DatasetStatus;
   controllerParams: ControllerParams;
+  errorMessage?: string;
+  initializedAt?: Date;
 };
 
 export type ApplicationStore = {
@@ -119,6 +121,7 @@ export const appStore = createStore<ApplicationStore>((set, get) => ({
       const params = await controller.getControllerParams(instanceId);
       metadata.status = "loaded";
       metadata.controllerParams = params;
+      metadata.initializedAt = new Date();
       get().setDatasetMetadata(instanceId, metadata);
       console.log(
         `Dataset initialized for instance '${instanceId}':`,
@@ -126,6 +129,9 @@ export const appStore = createStore<ApplicationStore>((set, get) => ({
       );
     } catch (error) {
       metadata.status = "error";
+      metadata.initializedAt = new Date();
+      metadata.errorMessage =
+        error instanceof Error ? error.message : String(error);
       console.error(
         `Error initializing dataset for instance '${instanceId}':`,
         error,
@@ -189,9 +195,9 @@ export const appStore = createStore<ApplicationStore>((set, get) => ({
   },
 
   setDatasetMetadata: (instanceId: string, metadata: DatasetMetadata) => {
-    const currentDatasets = get().datasets;
-    currentDatasets[instanceId] = { ...metadata };
-    set({ datasets: currentDatasets });
+    set((state) => ({
+      datasets: { ...state.datasets, [instanceId]: { ...metadata } },
+    }));
   },
 
   providers: {},

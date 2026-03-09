@@ -1,12 +1,20 @@
+import { IconButton } from "@chakra-ui/react";
 import { css, keyframes } from "@emotion/react";
 import styled from "@emotion/styled";
 import { token } from "~components/ui/system";
+import { Tooltip } from "~components/ui/tooltip";
 import { parse } from "ansicolor";
 import { useAtomValue, useSetAtom } from "jotai";
-import React, { useMemo } from "react";
+import React, { useEffect, useRef, useMemo, useState } from "react";
+import { LuChevronDown, LuChevronUp } from "react-icons/lu";
 import { formatDataTime } from "@cruncher/adapter-utils/formatters";
 import { asDateField, ProcessedData } from "@cruncher/adapter-utils/logTypes";
-import { getLogId, openIdsAtom, useIsLogOpen } from "./state";
+import {
+  getLogId,
+  msgExpandedByDefaultAtom,
+  openIdsAtom,
+  useIsLogOpen,
+} from "./state";
 import { highlightItemQueryAtom } from "~core/search";
 import { highlightText } from "~core/utils/highlight";
 import { newLogSinceAtom, timezoneAtom } from "~core/store/liveState";
@@ -73,6 +81,24 @@ const DataRow: React.FC<DataRowProps> = ({ row }) => {
   const setOpenIds = useSetAtom(openIdsAtom);
   const isLogOpen = useIsLogOpen();
   const isOpen = useMemo(() => isLogOpen(logId), [logId, isLogOpen]);
+  // null = follow global default; true/false = user explicitly toggled this row
+  const [localOverride, setLocalOverride] = useState<boolean | null>(null);
+  const globalExpanded = useAtomValue(msgExpandedByDefaultAtom);
+  const msgExpanded = localOverride ?? globalExpanded;
+  const [isClamped, setIsClamped] = useState(false);
+  const measureRef = useRef<HTMLDivElement>(null);
+
+  // Measure clamping from a permanently-clamped hidden div so isClamped stays
+  // accurate regardless of whether the row is currently expanded or not.
+  useEffect(() => {
+    const el = measureRef.current;
+    if (!el) return;
+    const check = () => setIsClamped(el.scrollHeight > el.clientHeight);
+    const observer = new ResizeObserver(check);
+    observer.observe(el);
+    check();
+    return () => observer.disconnect();
+  }, []);
 
   const highlightItemQuery = useAtomValue(highlightItemQueryAtom);
   const newLogSince = useAtomValue(newLogSinceAtom);
@@ -94,49 +120,113 @@ const DataRow: React.FC<DataRowProps> = ({ row }) => {
       <div
         style={{
           display: "flex",
-          flexDirection: "column",
+          flexDirection: "row",
           flex: 1,
+          minWidth: 0,
         }}
       >
+        {/* Left column: timestamp */}
         <div
           onClick={() => setIsOpen(!isOpen)}
           style={{
+            width: 170,
+            flexShrink: 0,
             cursor: "pointer",
-            display: "flex",
-            flexDirection: "row",
+            color: token("colors.fg.muted"),
+            fontFamily: "monospace",
+            fontSize: "0.75rem",
           }}
         >
+          {formatDataTime(asDateField(row.object._time).value, timezone)}
+        </div>
+
+        {/* Right column: message + inline expand button */}
+        <div
+          style={{
+            flex: 1,
+            minWidth: 0,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+            position: "relative",
+          }}
+        >
+          {/* Hidden always-clamped div — used only to measure if text exceeds 3 lines.
+              Stays clamped regardless of expand state so isClamped is always accurate. */}
           <div
+            ref={measureRef}
+            aria-hidden
             style={{
-              width: 170,
-              color: token("colors.fg.muted"),
-              fontFamily: "monospace",
-              fontSize: "0.75rem",
-              flexShrink: 0,
-              paddingTop: "1px",
+              position: "absolute",
+              visibility: "hidden",
+              pointerEvents: "none",
+              top: 0,
+              left: 0,
+              right: 0,
+              overflow: "hidden",
+              display: "-webkit-box",
+              WebkitLineClamp: 3,
+              WebkitBoxOrient: "vertical",
+              wordBreak: "break-word",
+              overflowWrap: "break-word",
             }}
           >
-            {formatDataTime(asDateField(row.object._time).value, timezone)}
+            {row.message}
           </div>
+
           <div
+            onClick={() => setIsOpen(!isOpen)}
             style={{
-              flex: 1,
+              cursor: "pointer",
               color: token("colors.fg"),
+              wordBreak: "break-word",
+              overflowWrap: "break-word",
+              width: "100%",
+              ...(msgExpanded
+                ? undefined
+                : {
+                    overflow: "hidden",
+                    display: "-webkit-box",
+                    WebkitLineClamp: 3,
+                    WebkitBoxOrient: "vertical",
+                  }),
             }}
           >
-            {parse(row.message).spans.map((span, spanIndex) => {
-              return (
-                <span
-                  key={spanIndex}
-                  css={css`
-                    ${span.css}
-                  `}
-                >
-                  {highlightText(span.text, highlightItemQuery)}
-                </span>
-              );
-            })}
+            {parse(row.message).spans.map((span, spanIndex) => (
+              <span
+                key={spanIndex}
+                css={css`
+                  ${span.css}
+                `}
+              >
+                {highlightText(span.text, highlightItemQuery)}
+              </span>
+            ))}
           </div>
+
+          {isClamped && (
+            <Tooltip
+              content={msgExpanded ? "Show less" : "Show more"}
+              openDelay={300}
+              portalled
+            >
+              <IconButton
+                size="2xs"
+                variant="ghost"
+                aria-label={msgExpanded ? "Show less" : "Show more"}
+                color="fg.subtle"
+                h="14px"
+                w="14px"
+                minW="unset"
+                minH="unset"
+                onClick={() =>
+                  setLocalOverride((prev) => !(prev ?? globalExpanded))
+                }
+              >
+                {msgExpanded ? <LuChevronUp /> : <LuChevronDown />}
+              </IconButton>
+            </Tooltip>
+          )}
         </div>
       </div>
     </StyledRow>

@@ -7,6 +7,7 @@ export type QueryOptions = {
   fromTime: Date;
   toTime: Date;
   limit: number;
+  isLiveQuery: boolean;
   cancelToken: AbortSignal;
   onBatchDone: (data: ProcessedData[]) => void;
 };

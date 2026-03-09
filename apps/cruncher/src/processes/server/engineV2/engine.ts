@@ -1,3 +1,4 @@
+import { bisector } from "d3-array";
 import { Mutex } from "async-mutex";
 import { generateCsv, mkConfig } from "export-to-csv";
 import { produce } from "immer";
@@ -57,6 +58,11 @@ import {
 } from "./types";
 import { calculateBuckets, getScale } from "./utils";
 import { processUnpack } from "~lib/pipelineEngine/unpack";
+
+// Binary search on descending-by-time array using negated accessor
+const eventTimeBisector = bisector(
+  (d: ProcessedData) => -asDateField(d.object._time).value,
+);
 
 export class Engine {
   private supportedPlugins: Adapter[] = [];
@@ -263,14 +269,12 @@ export class Engine {
     const lower = task.index.nextLowerKey(refDate) ?? null;
     const upper = task.index.nextHigherKey(refDate) ?? null;
 
-    const lowerIndex = task.displayResults.events.data.findIndex((item) => {
-      const timestamp = asDateField(item.object._time).value;
-      return timestamp === lower;
-    });
-    const upperIndex = task.displayResults.events.data.findIndex((item) => {
-      const timestamp = asDateField(item.object._time).value;
-      return timestamp === upper;
-    });
+    const eventsData = task.displayResults.events.data;
+    // Binary search on descending array using negated comparator (O(log n))
+    const lowerIndex =
+      lower !== null ? eventTimeBisector.left(eventsData, -lower) : -1;
+    const upperIndex =
+      upper !== null ? eventTimeBisector.left(eventsData, -upper) : -1;
 
     // return the closest event based on the refDate
     if (lower === null && upper === null) {
@@ -361,7 +365,7 @@ export class Engine {
         }),
       );
       const totalData = merge<ProcessedData>(
-        allCachedData.map((record) => record.data),
+        allCachedData.flatMap((record) => record.batches),
         compareProcessedData,
       );
 
@@ -444,10 +448,7 @@ export class Engine {
           };
         });
 
-        cachedResult.data = merge<ProcessedData>(
-          [cachedResult.data, data],
-          compareProcessedData,
-        );
+        cachedResult.batches.push(data);
 
         // Handle batch done - emit event to client
         try {
@@ -496,6 +497,7 @@ export class Engine {
                   fromTime: new Date(queryOptions.fromTime),
                   toTime: new Date(queryOptions.toTime),
                   limit: queryOptions.limit,
+                  isLiveQuery: false,
                   cancelToken: queryTaskState.abortController.signal,
                   onBatchDone: onProviderBatchDone(
                     record.key,
@@ -816,6 +818,7 @@ export class Engine {
             fromTime,
             toTime,
             limit: task.input.queryOptions.limit,
+            isLiveQuery: true,
             cancelToken: queryTaskState.abortController.signal,
             onBatchDone: async (batch) => {
               batch.forEach((item) => {

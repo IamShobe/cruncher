@@ -202,9 +202,6 @@ export class DatadogController implements QueryProvider {
         "[datadog] getControllerParams: skipping Phase 2 (CSRF unavailable):",
         error,
       );
-      for (const [key, values] of Object.entries(result)) {
-        if (key !== "index" && values.length === 0) delete result[key];
-      }
       return result;
     }
     await Promise.all(
@@ -216,11 +213,6 @@ export class DatadogController implements QueryProvider {
           .catch(() => {}),
       ),
     );
-
-    // Drop facets that ended up with no values (empty ghosts confuse the UI).
-    for (const [key, values] of Object.entries(result)) {
-      if (key !== "index" && values.length === 0) delete result[key];
-    }
 
     return result;
   }

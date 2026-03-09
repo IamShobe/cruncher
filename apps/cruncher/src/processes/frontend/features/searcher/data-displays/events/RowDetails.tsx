@@ -89,6 +89,8 @@ const getRowIcon = (row: Field) => {
 export const RowDetail: React.FC<DataRowProps> = ({ rowKey, rowValue }) => {
   const setSearchQuery = useSetAtom(searchQueryAtom);
   const highlightItemQuery = useAtomValue(highlightItemQueryAtom);
+  const displayString = asDisplayString(rowValue);
+
   return (
     <div
       css={css`
@@ -146,7 +148,7 @@ export const RowDetail: React.FC<DataRowProps> = ({ rowKey, rowValue }) => {
             line-height: 1.5;
           `}
         >
-          {highlightText(asDisplayString(rowValue), highlightItemQuery)}
+          {highlightText(displayString, highlightItemQuery)}
         </span>
       </div>
       {/* <PopoverRoot

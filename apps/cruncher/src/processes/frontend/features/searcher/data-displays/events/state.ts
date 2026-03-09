@@ -7,6 +7,9 @@ export const getLogId = (log: ProcessedData): string => {
 
 export const openIdsAtom = atom<string[]>([]);
 
+// Global default: whether raw log messages are expanded by default
+export const msgExpandedByDefaultAtom = atom<boolean>(false);
+
 export const useIsLogOpen = () => {
   const openIds = useAtomValue(openIdsAtom);
   return (id: string) => openIds.includes(id);

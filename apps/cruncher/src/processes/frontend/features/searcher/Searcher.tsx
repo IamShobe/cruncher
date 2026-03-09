@@ -1,10 +1,18 @@
-import { Badge, Tabs } from "@chakra-ui/react";
+import { Badge, IconButton, Stack, Tabs } from "@chakra-ui/react";
 import { css } from "@emotion/react";
 import styled from "@emotion/styled";
 import { token } from "~components/ui/system";
+import { Tooltip } from "~components/ui/tooltip";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { useEffect, useState } from "react";
-import { LuChartArea, LuLogs, LuTable } from "react-icons/lu";
+import {
+  LuChartArea,
+  LuChevronsDown,
+  LuChevronsUp,
+  LuLogs,
+  LuTable,
+} from "react-icons/lu";
+import { msgExpandedByDefaultAtom } from "~features/searcher/data-displays/events/state";
 import { isDateSelectorOpenAtom } from "~features/searcher/header/calendar/DateSelector";
 import { queryEditorAtom } from "~features/searcher/header/Editor";
 import DataLog from "~features/searcher/data-displays/events/DataLog";
@@ -26,6 +34,37 @@ import { TabsLineButtons } from "~features/searcher/TabsLineButtons";
 import { isLiveModeAtom } from "~core/store/liveState";
 import { isLoadingAtom, lastRanJobAtom } from "~core/search";
 import { idleHintsEnabledAtom } from "~components/ui/editor/Editor";
+
+const LogsToolbar = () => {
+  const [expanded, setExpanded] = useAtom(msgExpandedByDefaultAtom);
+  return (
+    <Stack
+      direction="row"
+      alignItems="center"
+      px={2}
+      py={0.5}
+      borderBottom={`1px solid ${token("colors.border.muted")}`}
+      gap={1}
+    >
+      <Tooltip
+        content={expanded ? "Collapse all messages" : "Expand all messages"}
+        openDelay={300}
+        portalled
+      >
+        <IconButton
+          aria-label={
+            expanded ? "Collapse all messages" : "Expand all messages"
+          }
+          size="2xs"
+          variant="ghost"
+          onClick={() => setExpanded((prev) => !prev)}
+        >
+          {expanded ? <LuChevronsUp /> : <LuChevronsDown />}
+        </IconButton>
+      </Tooltip>
+    </Stack>
+  );
+};
 
 const MainContainer = styled.section`
   flex: 1;
@@ -163,6 +202,7 @@ export const Searcher: React.FC<SearcherProps> = () => {
           p={0}
         >
           <EventsHistogram />
+          <LogsToolbar />
           <DataLog />
         </Tabs.Content>
         <Tabs.Content

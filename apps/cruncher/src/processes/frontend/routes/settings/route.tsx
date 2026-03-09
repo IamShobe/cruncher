@@ -26,7 +26,7 @@ function Settings() {
         </Link>
         <Link to="/settings/initialized-datasets">
           {({ isActive }) => (
-            <SettingsTab label={"Initialized Datasets"} isActive={isActive} />
+            <SettingsTab label={"Connectors"} isActive={isActive} />
           )}
         </Link>
       </Stack>
