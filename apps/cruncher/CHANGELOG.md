@@ -1,3 +1,10 @@
+## 2.1.1
+
+### Patch Changes
+
+- Updated dependencies [[`52d3af6`](https://github.com/IamShobe/cruncher/commit/52d3af6648fed1e7623a61781e97169856440fd3)]:
+  - @cruncher/adapter-datadog@0.2.0
+
 ## 2.1.0
 
 ### Minor Changes
