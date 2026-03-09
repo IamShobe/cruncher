@@ -1,3 +1,18 @@
+## 2.1.3
+
+### Patch Changes
+
+- Updated dependencies [[`127cf8d`](https://github.com/IamShobe/cruncher/commit/127cf8d2cc13e77fdde59f7b5b1c027df0a61cea), [`127cf8d`](https://github.com/IamShobe/cruncher/commit/127cf8d2cc13e77fdde59f7b5b1c027df0a61cea), [`9ca2116`](https://github.com/IamShobe/cruncher/commit/9ca211603b87ca75a6d7b96b51ae321e2dd98f1d)]:
+  - @cruncher/adapter-datadog@0.2.2
+  - @cruncher/qql@0.4.3
+  - @cruncher/adapter-utils@0.5.0
+  - @cruncher/adapter-mock@0.5.0
+  - @cruncher/adapter-coralogix@0.3.5
+  - @cruncher/adapter-docker@0.3.5
+  - @cruncher/adapter-grafana-loki-browser@0.3.5
+  - @cruncher/adapter-k8s@0.2.4
+  - @cruncher/adapter-loki@0.2.5
+
 ## 2.1.2
 
 ### Patch Changes

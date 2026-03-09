@@ -1,3 +1,9 @@
+## 0.4.3
+
+### Patch Changes
+
+- [`127cf8d`](https://github.com/IamShobe/cruncher/commit/127cf8d2cc13e77fdde59f7b5b1c027df0a61cea) Thanks [@IamShobe](https://github.com/IamShobe)! - fix: ASTBuilder no longer throws on incomplete `eval`/`regex` pipeline commands — uses `addError()` + dummy return instead, allowing suggestion collection to proceed and autocomplete to work after typing `| eval` or `| regex` with no expression yet
+
 ## 0.4.2
 
 ### Patch Changes

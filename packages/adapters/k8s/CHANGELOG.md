@@ -1,5 +1,13 @@
 # @cruncher/adapter-k8s
 
+## 0.2.4
+
+### Patch Changes
+
+- Updated dependencies [[`127cf8d`](https://github.com/IamShobe/cruncher/commit/127cf8d2cc13e77fdde59f7b5b1c027df0a61cea), [`9ca2116`](https://github.com/IamShobe/cruncher/commit/9ca211603b87ca75a6d7b96b51ae321e2dd98f1d)]:
+  - @cruncher/qql@0.4.3
+  - @cruncher/adapter-utils@0.5.0
+
 ## 0.2.3
 
 ### Patch Changes
