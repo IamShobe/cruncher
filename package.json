@@ -27,6 +27,7 @@
     "serve": "turbo watch build serve generate:watch --filter=!docs-cruncher --filter=!cruncher-tools",
     "serve:docs": "pnpm run -F ./docs serve",
     "build": "turbo run build",
+    "typecheck": "turbo run typecheck",
     "publish": "pnpm run --filter=cruncher publish",
     "package": "pnpm run --filter=cruncher package",
     "lint": "oxlint packages/ apps/ tools/",

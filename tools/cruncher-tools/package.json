@@ -6,7 +6,8 @@
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
   "scripts": {
-    "build": "tsc --project tsconfig.lib.json && copyfiles -u 1 'src/**/!(*.ts)' ../../dist/tools/cruncher-tools && copyfiles generators.json '*.md' ../../dist/tools/cruncher-tools"
+    "build": "tsc --project tsconfig.lib.json && copyfiles -u 1 'src/**/!(*.ts)' ../../dist/tools/cruncher-tools && copyfiles generators.json '*.md' ../../dist/tools/cruncher-tools",
+    "typecheck": "tsc --project tsconfig.json --noEmit"
   },
   "dependencies": {
     "@nx/devkit": "22.5.4",

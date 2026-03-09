@@ -18,6 +18,10 @@
       "dependsOn": ["^build"],
       "cache": false
     },
+    "typecheck": {
+      "dependsOn": ["^build"],
+      "cache": true
+    },
     "lint": {
       "cache": true
     },

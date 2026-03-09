@@ -31,6 +31,7 @@
   ],
   "scripts": {
     "build": "tsc --project tsconfig.json",
+    "typecheck": "tsc --project tsconfig.json --noEmit",
     "format": "oxfmt src/",
     "format:check": "oxfmt --check src/",
     "prepublishOnly": "npm run build"

@@ -23,7 +23,8 @@
     "test": "vitest run",
     "format": "oxfmt src/",
     "format:check": "oxfmt --check src/",
-    "build:server": "vite build --config vite.server.config.mts"
+    "build:server": "vite build --config vite.server.config.mts",
+    "typecheck": "tsc -p tsconfig.app.json && tsc -p tsconfig.node.json --noEmit"
   },
   "keywords": [],
   "author": {

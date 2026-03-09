@@ -7,14 +7,17 @@
     "dev": "astro dev",
     "serve": "astro dev",
     "build": "astro build",
+    "typecheck": "astro check",
     "preview": "astro preview",
     "astro": "astro"
   },
   "dependencies": {
+    "@astrojs/check": "^0.9.6",
     "@astrojs/starlight": "^0.37.7",
     "@cruncher/qql": "workspace:*",
     "astro": "^5.18.0",
     "sharp": "^0.34.5",
+    "typescript": "^5.9.3",
     "zod": "^3"
   }
 }
