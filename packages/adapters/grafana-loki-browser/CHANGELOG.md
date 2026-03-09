@@ -1,3 +1,12 @@
+## 0.3.4
+
+### Patch Changes
+
+- Updated dependencies [[`5146558`](https://github.com/IamShobe/cruncher/commit/51465584e2584714ae1d8929d96e0ddd2cda4594)]:
+  - @cruncher/qql@0.4.2
+  - @cruncher/adapter-utils@0.4.1
+  - @cruncher/adapter-loki@0.2.4
+
 ## 0.3.3
 
 ### Patch Changes
