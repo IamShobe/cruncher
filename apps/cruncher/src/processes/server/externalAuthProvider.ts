@@ -1,4 +1,4 @@
-import { ExternalAuthProvider } from "@cruncher/adapter-utils";
+import { ExternalAuthProvider, ScriptExtractor } from "@cruncher/adapter-utils";
 import { IPCMessage } from "./types";
 
 export class ElectronExternalAuthProvider implements ExternalAuthProvider {
@@ -7,6 +7,7 @@ export class ElectronExternalAuthProvider implements ExternalAuthProvider {
     requestedUrl: string,
     cookies: string[],
     validate: (cookies: Record<string, string>) => Promise<boolean>,
+    scriptExtractors?: ScriptExtractor[],
   ): Promise<Record<string, string>> {
     return new Promise((resolve, reject) => {
       const jobId = crypto.randomUUID();
@@ -58,6 +59,7 @@ export class ElectronExternalAuthProvider implements ExternalAuthProvider {
         authUrl: requestedUrl,
         jobId: jobId,
         cookies,
+        scriptExtractors: scriptExtractors ?? [],
       });
     });
   }

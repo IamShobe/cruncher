@@ -67,6 +67,7 @@
     "@babel/runtime": "^7.28.6",
     "@chakra-ui/react": "^3.34.0",
     "@cruncher/adapter-coralogix": "workspace:*",
+    "@cruncher/adapter-datadog": "workspace:*",
     "@cruncher/adapter-docker": "workspace:*",
     "@cruncher/adapter-grafana-loki-browser": "workspace:*",
     "@cruncher/adapter-k8s": "workspace:*",

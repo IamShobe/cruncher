@@ -1,0 +1,82 @@
+---
+title: Datadog
+description: How to use Cruncher with Datadog Logs.
+---
+import ParamItem from '../../../components/ParamItem.astro';
+
+import { Badge } from '@astrojs/starlight/components';
+
+<Badge text="datadog" />
+
+## Params
+
+<ParamItem label="site" type="string" optional default="datadoghq.com">
+  The Datadog site to connect to. Choose the site that matches your Datadog organization.
+
+  Supported values:
+  - `datadoghq.com` — US1 (default)
+  - `us3.datadoghq.com` — US3
+  - `us5.datadoghq.com` — US5
+  - `datadoghq.eu` — EU1
+  - `ap1.datadoghq.com` — AP1
+</ParamItem>
+
+<ParamItem label="indexes" type="string[]" optional default="[]">
+  List of Datadog log index names to query. An empty list (the default) searches across all indexes (`*`).
+</ParamItem>
+
+<ParamItem label="query_prefix" type="string" optional default='""'>
+  A Lucene query string that is always prepended to every search. Useful for scoping a connector to a specific service, environment, or team without requiring users to type it every time.
+
+  Example: `service:my-service AND env:production`
+</ParamItem>
+
+## Examples
+
+### Minimal Configuration
+
+```yaml
+connectors:
+  - type: datadog
+    name: my_datadog
+```
+
+### With a Specific Site
+
+```yaml
+connectors:
+  - type: datadog
+    name: my_datadog_eu
+    params:
+      site: "datadoghq.eu"
+```
+
+### Scoped to Specific Indexes and a Query Prefix
+
+```yaml
+connectors:
+  - type: datadog
+    name: my_datadog
+    params:
+      site: "datadoghq.com"
+      indexes:
+        - "main"
+        - "prod-logs"
+      query_prefix: "env:production"
+```
+
+## Authentication
+
+The Datadog adapter uses **browser-session authentication**. When you run a query for the first time, Cruncher opens a browser window pointing to your Datadog site. Log in as usual (including SSO/SAML if required), and Cruncher will automatically capture the session cookies and CSRF token it needs.
+
+Once authenticated, the session is reused for all subsequent queries. If the session expires, Cruncher will automatically re-open the login window.
+
+## Facet Autocomplete
+
+Cruncher automatically fetches your Datadog log facets and index names to provide autocomplete suggestions in the query editor. Facets with a fixed set of values (e.g. `status`) are resolved directly; facets with dynamic values (e.g. `kube_namespace`) are populated by querying the top 10 most frequent values from the last 15 minutes.
+
+## Usage Notes
+
+- The `indexes` param scopes queries to specific log indexes. Leave it empty to search all indexes.
+- The `query_prefix` is combined with the QQL search term using `AND`, so it always applies.
+- The `index` controller param (set inline in the QQL query bar) overrides the `indexes` config param for that query.
