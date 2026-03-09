@@ -1,6 +1,6 @@
-import type { QQLParserErrorDetail } from "@cruncher/qql";
-import { atom, useAtomValue, useSetAtom } from "jotai";
-import React, { ReactNode, useMemo } from "react";
+import type { QQLParserErrorDetail, SuggestionData } from "@cruncher/qql";
+import { atom, useAtom, useAtomValue, useSetAtom } from "jotai";
+import React, { ReactNode, useEffect, useMemo } from "react";
 import { Suggestion } from "~components/ui/editor/AutoCompleter";
 import { Editor as EditorComponent } from "~components/ui/editor/Editor";
 import { HighlightData } from "~components/ui/editor/Highlighter";
@@ -12,7 +12,12 @@ import {
 import { HighlightData as ParserHighlightData } from "@cruncher/qql/grammar";
 import { getPopperRoot } from "~core/utils/shadowUtils";
 import { availableColumnsAtom, queryDataAtom } from "~core/store/queryState";
-import { useControllerParams } from "~core/search";
+import {
+  dynamicSuggestionsCacheAtom,
+  selectedSearchProfileAtom,
+  useControllerParams,
+  useInitializedController,
+} from "~core/search";
 import { notifySuccess } from "../../../core/notifyError";
 import styled from "@emotion/styled";
 import { token } from "~components/ui/system";
@@ -138,6 +143,77 @@ export const Editor = ({ value, onChange }: EditorProps) => {
     return controllerParamsResp.data;
   }, [controllerParamsResp]);
 
+  const controller = useInitializedController();
+  const selectedProfile = useAtomValue(selectedSearchProfileAtom);
+  const [dynamicCache, setDynamicCache] = useAtom(dynamicSuggestionsCacheAtom);
+
+  // Stable cache key: changes only when profile name or index list changes
+  const currentCacheKey = useMemo(
+    () =>
+      JSON.stringify({
+        profile: selectedProfile?.name,
+        indexes: [...(controllerParams.index ?? [])].sort(),
+      }),
+    [selectedProfile?.name, controllerParams.index],
+  );
+
+  // Treat values from a different cacheKey as stale (don't show them).
+  // null entries are in-flight — show empty until resolved.
+  const dynamicValues: Record<string, string[]> =
+    dynamicCache.cacheKey === currentCacheKey
+      ? Object.fromEntries(
+          Object.entries(dynamicCache.values).flatMap(([k, v]) =>
+            v !== null ? [[k, v]] : [],
+          ),
+        )
+      : {};
+
+  // Stable string dep so the effect doesn't re-run on every keystroke
+  const paramValueKeysStr = useMemo(
+    () =>
+      JSON.stringify(
+        (data.suggestions ?? [])
+          .filter((s) => s.type === "paramValue")
+          .map(
+            (s) => (s as Extract<SuggestionData, { type: "paramValue" }>).key,
+          ),
+      ),
+    [data.suggestions],
+  );
+
+  useEffect(() => {
+    if (!selectedProfile) return;
+    const keys: string[] = JSON.parse(paramValueKeysStr);
+    const currentValues =
+      dynamicCache.cacheKey === currentCacheKey ? dynamicCache.values : {};
+    const uncachedKeys = keys.filter((k) => !(k in currentValues));
+    if (uncachedKeys.length === 0) return;
+
+    // Mark uncached keys as in-flight atomically BEFORE firing fetches
+    setDynamicCache((prev) => {
+      const base = prev.cacheKey === currentCacheKey ? prev.values : {};
+      const pending = Object.fromEntries(uncachedKeys.map((k) => [k, null]));
+      return { cacheKey: currentCacheKey, values: { ...base, ...pending } };
+    });
+
+    const indexes = controllerParams.index ?? [];
+    uncachedKeys.forEach((field) => {
+      Promise.all(
+        selectedProfile.instances.map((instance) =>
+          controller
+            .getParamValueSuggestions(instance, field, indexes)
+            .catch(() => [] as string[]),
+        ),
+      ).then((results) => {
+        const merged = [...new Set(results.flat())];
+        setDynamicCache((prev) => {
+          if (prev.cacheKey !== currentCacheKey) return prev;
+          return { cacheKey: currentCacheKey, values: { ...prev.values, [field]: merged } };
+        });
+      });
+    });
+  }, [paramValueKeysStr, currentCacheKey, selectedProfile, controller]);
+
   // Get the controller params from the context
   const highlightData = useMemo<HighlightData[]>(() => {
     const errorHighlightData = (data.parserError ?? []).map(
@@ -235,12 +311,10 @@ export const Editor = ({ value, onChange }: EditorProps) => {
           break;
         }
         case "paramValue": {
-          const paramValues = controllerParams[suggestion.key];
-          if (!paramValues) {
-            continue;
-          }
-
-          paramValues.forEach((value) =>
+          const staticVals = controllerParams[suggestion.key] ?? [];
+          const dynamicVals = dynamicValues[suggestion.key] ?? [];
+          const merged = [...new Set([...staticVals, ...dynamicVals])];
+          merged.forEach((value) =>
             results.push({
               type: "variable",
               value: `"${value}"`,
@@ -253,7 +327,7 @@ export const Editor = ({ value, onChange }: EditorProps) => {
       }
     }
     return results;
-  }, [data]);
+  }, [data, dynamicValues, controllerParams]);
 
   const popperRoot = getPopperRoot();
 

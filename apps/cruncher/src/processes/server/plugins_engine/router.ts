@@ -22,7 +22,7 @@ export const appRouter = router({
     return { success: true };
   }),
   resetQueries: publicProcedure.mutation(async ({ ctx }) => {
-    ctx.engine.resetQueries();
+    await ctx.engine.resetQueries();
     return { success: true };
   }),
   getSupportedPlugins: publicProcedure.query(async ({ ctx }) => {
@@ -63,6 +63,21 @@ export const appRouter = router({
     .query(async ({ ctx, input }) => {
       return await ctx.engine.getControllerParams(
         input.instanceRef as InstanceRef,
+      );
+    }),
+  getParamValueSuggestions: publicProcedure
+    .input(
+      z.object({
+        instanceRef: z.string(),
+        field: z.string(),
+        indexes: z.array(z.string()),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      return await ctx.engine.getParamValueSuggestions(
+        input.instanceRef as InstanceRef,
+        input.field,
+        input.indexes,
       );
     }),
   cancelQuery: publicProcedure
@@ -134,7 +149,7 @@ export const appRouter = router({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      ctx.engine.releaseTaskResources(input.jobId as TaskRef);
+      await ctx.engine.releaseTaskResources(input.jobId as TaskRef);
       return { success: true };
     }),
   ping: publicProcedure

@@ -19,18 +19,32 @@ import {
 type EventColumns = [unknown, unknown, unknown, unknown, unknown];
 
 export type DatadogEvent = {
-  id?: string;
   event_id?: string;
+  id?: string;
+  message?: string;
+  status?: string;
+  timestamp?: string;
+  host?: string;
+  service?: string;
+  source?: string;
+  "datadog.index"?: string;
   columns: EventColumns;
   event?: Record<string, unknown>;
+  custom?: Record<string, unknown>;
+  tag?: Record<string, unknown>;
+  tags?: string[];
+};
+
+export type DatadogPaging = {
+  after?: string;
+  values?: unknown[];
 };
 
 export type DatadogLogsResponse = {
   result?: {
     events?: DatadogEvent[];
-    nextPageToken?: string;
+    paging?: DatadogPaging;
   };
-  hitCount?: number;
 };
 
 // ---------------------------------------------------------------------------
@@ -65,6 +79,11 @@ function buildSearchPattern(search: Search): string {
   return buildSearchTreeCallback(search, luceneBuilder)("");
 }
 
+function escapeLuceneValue(val: string): string {
+  // Escape backslash first, then double-quote
+  return val.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+}
+
 export function buildDatadogQuery(
   controllerParams: ControllerIndexParam[],
   searchTerm: Search,
@@ -72,9 +91,10 @@ export function buildDatadogQuery(
 ): string {
   const paramParts = controllerParams.map((param) => {
     const val =
-      param.value.type === "regex" ? param.value.pattern : param.value;
-    if (param.operator === "=") return `${param.name}:"${val}"`;
-    if (param.operator === "!=") return `NOT ${param.name}:"${val}"`;
+      param.value.type === "regex" ? param.value.pattern : param.value.value;
+    const escaped = escapeLuceneValue(val);
+    if (param.operator === "=") return `${param.name}:"${escaped}"`;
+    if (param.operator === "!=") return `NOT ${param.name}:"${escaped}"`;
     return "";
   });
 
@@ -93,7 +113,7 @@ export function buildRequestPayload(
   toTime: Date,
   pageLimit: number,
   csrfToken: string,
-  cursor?: string,
+  cursor?: DatadogPaging,
 ) {
   return {
     list: {
@@ -116,7 +136,8 @@ export function buildRequestPayload(
       computeCount: false,
       indexes: indexes.length > 0 ? indexes : ["*"],
       executionInfo: {},
-      ...(cursor ? { startAt: cursor } : {}),
+      // Cursor for subsequent pages: { after: string, values: unknown[] }
+      ...(cursor?.after ? { paging: cursor } : {}),
     },
     querySourceId: "logs_explorer",
     userQueryId: crypto.randomUUID(),
@@ -134,25 +155,29 @@ export function processDatadogResponse(
   const events = data.result?.events ?? [];
 
   return events.map((entry) => {
-    // Destructure columns in the order they were requested.
-    const [statusLine, rawTimestamp, host, service] = entry.columns;
+    // Prefer top-level timestamp (ISO string); fall back to columns[1].
+    const ts = entry.timestamp
+      ? new Date(entry.timestamp).getTime()
+      : (() => {
+          const rawTimestamp = entry.columns[1];
+          return typeof rawTimestamp === "number"
+            ? rawTimestamp
+            : typeof rawTimestamp === "string"
+              ? new Date(rawTimestamp).getTime()
+              : Date.now();
+        })();
 
-    const ts =
-      typeof rawTimestamp === "number"
-        ? rawTimestamp
-        : typeof rawTimestamp === "string"
-          ? new Date(rawTimestamp).getTime()
-          : Date.now();
+    // event_id is the real unique log ID; id is a cursor-like pagination token.
+    const uniqueId = entry.event_id ?? entry.id ?? "";
 
-    const uniqueId = entry.id ?? entry.event_id ?? "";
     const eventData = entry.event ?? {};
-
     const message =
-      typeof eventData["message"] === "string"
+      entry.message ??
+      (typeof eventData["message"] === "string"
         ? eventData["message"]
         : typeof eventData["msg"] === "string"
           ? eventData["msg"]
-          : JSON.stringify(eventData);
+          : JSON.stringify(eventData));
 
     const objectFields: ObjectFields = {
       _time: { type: "date", value: ts },
@@ -162,12 +187,31 @@ export function processDatadogResponse(
       _raw: { type: "string", value: JSON.stringify(entry) },
     };
 
-    if (statusLine != null)
-      objectFields.status = { type: "string", value: String(statusLine) };
-    if (host != null)
-      objectFields.host = { type: "string", value: String(host) };
-    if (service != null)
-      objectFields.service = { type: "string", value: String(service) };
+    // Map top-level fields directly.
+    if (entry.status != null)
+      objectFields.status = { type: "string", value: entry.status };
+    if (entry.host != null)
+      objectFields.host = { type: "string", value: entry.host };
+    if (entry.service != null)
+      objectFields.service = { type: "string", value: entry.service };
+    if (entry.source != null)
+      objectFields.source = { type: "string", value: entry.source };
+    if (entry["datadog.index"] != null)
+      objectFields._index = { type: "string", value: entry["datadog.index"] };
+    if (entry.tags != null)
+      objectFields.tags = { type: "string", value: entry.tags.join(", ") };
+
+    // Flatten custom fields.
+    for (const [key, value] of Object.entries(entry.custom ?? {})) {
+      if (!(key in objectFields)) objectFields[key] = processField(value);
+    }
+
+    // Flatten event fields, skipping already-mapped ones.
+    const skipEvent = new Set(["message", "msg"]);
+    for (const [key, value] of Object.entries(eventData)) {
+      if (!skipEvent.has(key) && !(key in objectFields))
+        objectFields[key] = processField(value);
+    }
 
     // If the message is a JSON object, flatten its fields into objectFields.
     if (typeof message === "string") {
@@ -181,21 +225,11 @@ export function processDatadogResponse(
           for (const [key, value] of Object.entries(
             parsed as Record<string, unknown>,
           )) {
-            if (!(key in objectFields)) {
-              objectFields[key] = processField(value);
-            }
+            if (!(key in objectFields)) objectFields[key] = processField(value);
           }
         }
       } catch {
         // message wasn't JSON — keep as-is
-      }
-    }
-
-    // Flatten all remaining event fields, skipping already-mapped ones.
-    const skip = new Set(["message", "msg"]);
-    for (const [key, value] of Object.entries(eventData)) {
-      if (!skip.has(key) && !(key in objectFields)) {
-        objectFields[key] = processField(value);
       }
     }
 

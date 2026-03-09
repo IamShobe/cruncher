@@ -104,6 +104,18 @@ export class Engine {
     return await provider.getControllerParams();
   }
 
+  public async getParamValueSuggestions(
+    instanceId: InstanceRef,
+    field: string,
+    indexes: string[],
+  ): Promise<string[]> {
+    const container = this.initializedPlugins.find(
+      (p) => p.instance.name === instanceId,
+    );
+    if (!container?.provider.getDynamicSuggestions) return [];
+    return await container.provider.getDynamicSuggestions(field, indexes);
+  }
+
   public getInitializedPlugins(): PluginInstance[] {
     return this.initializedPlugins.map((p) => p.instance);
   }
@@ -546,7 +558,7 @@ export class Engine {
         console.log(`Query task ${taskId} completed successfully`);
       }
 
-      onTaskDone()
+      return onTaskDone()
         .then(() => {
           queryTaskState.finishedQuerying.signal();
         })
@@ -560,6 +572,10 @@ export class Engine {
           queryTaskState.task.error = error.message;
           queryTaskState.finishedQuerying.signal(); // Signal that the task is done
         });
+    }).catch((error) => {
+      console.error(`Unexpected error in task ${taskId} finalization:`, error);
+      task.status = "failed";
+      queryTaskState.finishedQuerying.signal();
     });
 
     return task;
@@ -614,13 +630,17 @@ export class Engine {
     };
   }
 
-  public async resetQueries() {
+  public resetQueries() {
+    // Stop all tasks first, then drop everything at once.
+    // Individual cache-entry removal via releaseTaskResources would be redundant:
+    // the QueryCacheHolder replacement below frees all cache data in one shot.
     for (const taskId of this.executedJobs) {
-      await this.releaseTaskResources(taskId);
+      const taskState = this.queryTasks[taskId];
+      if (taskState) this._stopTask(taskState);
     }
     this.queryTasks = {};
-    this.queryCache = new QueryCacheHolder(); // Reset the query cache
-    this.executedJobs = []; // Clear the executed jobs
+    this.queryCache = new QueryCacheHolder();
+    this.executedJobs = [];
   }
 
   public async releaseTaskResources(taskId: TaskRef) {
@@ -629,18 +649,29 @@ export class Engine {
       console.warn(
         `No resources to release for task ${taskId} - task not found`,
       );
-      return; // No resources to release if the task does not exist
+      return;
     }
+
+    this._stopTask(taskState);
 
     for (const subTask of taskState.subTasks) {
       await this.queryCache.removeFromCacheByKey(subTask.cacheKey, taskId);
     }
 
-    // Clean up resources associated with the task
-    taskState.abortController.abort(); // Abort the ongoing query
-    delete this.queryTasks[taskId]; // Remove the task from the state
-    this.executedJobs = this.executedJobs.filter((id) => id !== taskId); // Remove from executed jobs
+    delete this.queryTasks[taskId];
+    this.executedJobs = this.executedJobs.filter((id) => id !== taskId);
     console.log(`Resources released for query task ${taskId}`);
+  }
+
+  // Cancels an in-flight task: aborts its network requests, marks it canceled,
+  // and unblocks any subscriptions waiting on finishedQuerying.
+  // Both abort() and signal() are idempotent — safe to call on already-finished tasks.
+  private _stopTask(taskState: QueryTaskState): void {
+    if (!finishedStatuses.has(taskState.task.status)) {
+      taskState.task.status = "canceled";
+    }
+    taskState.abortController.abort();
+    taskState.finishedQuerying.signal();
   }
 
   private _getInstancesToQueryOn(
@@ -887,11 +918,9 @@ export class Engine {
     if (!taskState) {
       throw new Error(`Query task with id ${taskId} not found`);
     }
-    taskState.abortController.abort(); // This will cancel the ongoing query
-    taskState.task.status = "canceled"; // or you can set it to "cancelled" if you prefer
+    taskState.task.error = "Query was cancelled";
+    this._stopTask(taskState);
     console.log(`Query task ${taskId} cancelled`);
-    taskState.task.error = "Query was cancelled"; // Set an error message for the cancellation
-    taskState.finishedQuerying.signal();
   }
 
   public async *getJobUpdates(

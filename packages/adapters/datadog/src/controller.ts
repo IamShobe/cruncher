@@ -13,6 +13,7 @@ import {
   buildRequestPayload,
   processDatadogResponse,
   DatadogLogsResponse,
+  DatadogPaging,
 } from "./query";
 
 // ---------------------------------------------------------------------------
@@ -38,15 +39,31 @@ const FacetsResponseSchema = z.object({
   facets: z.record(z.string(), z.array(FacetEntrySchema)).optional(),
 });
 
-// aggregate endpoint: { result: { buckets: [{ by: { "<facetPath>": "<value>" } }] } }
+// aggregate endpoint response: { result: { buckets: [{ by: { "<facetPath>": "<value>" } }] } }
 const AggregateBucketSchema = z.object({
-  by: z.record(z.string(), z.string()),
+  by: z.record(z.string(), z.string()).optional(),
+  // facet_info-style response: top-level value string
+  value: z.string().optional(),
 });
 
-const AggregateResponseSchema = z.object({
+export const AggregateResponseSchema = z.object({
   result: z
     .object({
       buckets: z.array(AggregateBucketSchema).optional(),
+    })
+    .optional(),
+});
+
+export const SuggestionsResponseSchema = z.object({
+  data: z
+    .object({
+      attributes: z
+        .object({
+          suggestions: z
+            .array(z.object({ text: z.string().optional() }))
+            .optional(),
+        })
+        .optional(),
     })
     .optional(),
 });
@@ -177,7 +194,16 @@ export class DatadogController implements QueryProvider {
 
     // Phase 2: for facets with no pre-defined values, query the aggregate
     // endpoint to surface the most common values from recent logs.
-    const csrf = await this.getCsrf();
+    let csrf: string;
+    try {
+      csrf = await this.getCsrf();
+    } catch (error) {
+      console.warn("[datadog] getControllerParams: skipping Phase 2 (CSRF unavailable):", error);
+      for (const [key, values] of Object.entries(result)) {
+        if (key !== "index" && values.length === 0) delete result[key];
+      }
+      return result;
+    }
     await Promise.all(
       dynamicFacetPaths.map((path) =>
         this._fetchFacetTopValues(appUrl, path, csrf)
@@ -187,6 +213,11 @@ export class DatadogController implements QueryProvider {
           .catch(() => {}),
       ),
     );
+
+    // Drop facets that ended up with no values (empty ghosts confuse the UI).
+    for (const [key, values] of Object.entries(result)) {
+      if (key !== "index" && values.length === 0) delete result[key];
+    }
 
     return result;
   }
@@ -198,28 +229,26 @@ export class DatadogController implements QueryProvider {
     facetPath: string,
     csrfToken: string,
   ): Promise<string[]> {
-    const now = Date.now();
-    const from = now - 15 * 60 * 1000;
+    const indexes = this.params.indexes?.length ? this.params.indexes : ["*"];
 
     const response = await this._fetchWrapper(
-      `${appUrl}/api/v1/logs-analytics/aggregate?type=logs`,
+      `${appUrl}/api/v1/logs-analytics/facet_info?type=logs`,
       {
         method: "POST",
         body: JSON.stringify({
-          aggregate: {
-            groupBy: [
-              {
-                facet: facetPath,
-                limit: 10,
-                sort: { aggregation: "count", order: "desc" },
-              },
-            ],
-            compute: [{ aggregation: "count" }],
-            search: { query: "*" },
-            time: { from, to: now },
-            indexes: this.params.indexes?.length ? this.params.indexes : ["*"],
+          facet_info: {
+            metric: "count",
+            limit: 50,
+            indexes,
+            time: { from: "now-900s", to: "now" },
+            aggregation: "count",
+            search: { query: "" },
+            termSearch: { query: "" },
+            executionInfo: {},
+            calculatedFields: [],
+            extractions: [],
+            path: facetPath,
           },
-          querySourceId: "logs_explorer",
           _authentication_token: csrfToken,
         }),
       },
@@ -227,23 +256,89 @@ export class DatadogController implements QueryProvider {
 
     if (!response.ok) {
       console.error(
-        `[datadog] aggregate for ${facetPath} returned ${response.status}`,
+        `[datadog] facet_info for ${facetPath} returned ${response.status}`,
       );
       return [];
     }
 
     const raw = (await response.json()) as unknown;
-    console.log(
-      `[datadog] aggregate response for ${facetPath}:`,
-      JSON.stringify(raw),
-    );
-
     const parsed = AggregateResponseSchema.safeParse(raw);
     if (!parsed.success) return [];
 
     return (parsed.data.result?.buckets ?? [])
-      .map((b) => b.by[facetPath] ?? "")
+      .map((b) => b.by?.[facetPath] ?? b.value ?? "")
       .filter(Boolean);
+  }
+
+  async getDynamicSuggestions(
+    field: string,
+    indexes: string[],
+  ): Promise<string[]> {
+    try {
+      const appUrl = getAppUrl(this.params.site);
+      const csrf = await this.getCsrf();
+      const effectiveIndexes = indexes.length
+        ? indexes
+        : (this.params.indexes ?? ["*"]);
+
+      const response = await this._fetchWrapper(
+        `${appUrl}/api/ui/search/suggestions/logs`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            data: {
+              type: "query_autocomplete_request",
+              attributes: {
+                query_tokens: [`${field}:`],
+                raw_query: `${field}: `,
+                start_index: 0,
+                end_index: 0,
+                limit: 10,
+                product: "logs",
+                context: "unified-explorer",
+                id: crypto.randomUUID(),
+                suggestion_groups: ["facet_value"],
+                triggerContext: {
+                  type: "field_value",
+                  text: "",
+                  field,
+                  previousValues: [],
+                  indexes: effectiveIndexes,
+                  filter: `${field}:*`,
+                  cacheableQuery: `${field}:*`,
+                },
+                userContext: { recentSearches: [] },
+              },
+            },
+            _authentication_token: csrf,
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        console.error(
+          `[datadog] getDynamicSuggestions for field="${field}" returned ${response.status}`,
+        );
+        return [];
+      }
+
+      const raw = (await response.json()) as unknown;
+      const parsed = SuggestionsResponseSchema.safeParse(raw);
+      if (!parsed.success) {
+        console.error(
+          `[datadog] getDynamicSuggestions response parse failed for field="${field}":`,
+          parsed.error,
+        );
+        return [];
+      }
+
+      return (parsed.data.data?.attributes?.suggestions ?? [])
+        .map((s) => s.text ?? "")
+        .filter(Boolean);
+    } catch (error) {
+      console.error(`[datadog] getDynamicSuggestions: auth failed for "${field}":`, error);
+      return [];
+    }
   }
 
   async query(
@@ -258,9 +353,7 @@ export class DatadogController implements QueryProvider {
     // All other params are serialized into the Lucene query string.
     const indexValues = controllerParams
       .filter((p) => p.name === "index" && p.operator === "=")
-      .map(
-        (p) => (p.value.type === "regex" ? p.value.pattern : p.value) as string,
-      );
+      .map((p) => (p.value.type === "regex" ? p.value.pattern : p.value.value));
     const otherParams = controllerParams.filter((p) => p.name !== "index");
 
     const luceneQuery = buildDatadogQuery(
@@ -272,11 +365,21 @@ export class DatadogController implements QueryProvider {
     // User-specified indexes override the profile-level defaults.
     const indexes = indexValues.length > 0 ? indexValues : this.params.indexes;
 
-    let cursor: string | undefined;
+    let cursor: DatadogPaging | undefined = undefined;
     let totalProcessed = 0;
+    let pageNum = 0;
 
     while (true) {
       if (cancelToken.aborted) break;
+
+      // Throttle with jitter between pages to avoid bot detection.
+      if (pageNum > 0) {
+        const jitterMs = 300 + Math.random() * 400; // 300–700 ms
+        await new Promise((resolve) => setTimeout(resolve, jitterMs));
+        if (cancelToken.aborted) break;
+      }
+      pageNum++;
+
       const pageLimit = Math.min(1000, limit - totalProcessed);
       // Ensure session is established before building the payload so the CSRF
       // token is always fresh (getCsrf() calls _ensureSession internally).
@@ -308,7 +411,12 @@ export class DatadogController implements QueryProvider {
       totalProcessed += logs.length;
       onBatchDone(logs);
 
-      cursor = data.result?.nextPageToken;
+      const paging = data.result?.paging;
+      console.log(
+        `[datadog] page ${pageNum}: got ${logs.length} logs, cursor after=${paging?.after?.slice(0, 20)}...`,
+      );
+
+      cursor = paging?.after ? paging : undefined;
       if (!cursor || logs.length === 0 || totalProcessed >= limit) break;
     }
   }
