@@ -1,3 +1,13 @@
+## 0.4.2
+
+### Patch Changes
+
+- [`5146558`](https://github.com/IamShobe/cruncher/commit/51465584e2584714ae1d8929d96e0ddd2cda4594) Thanks [@IamShobe](https://github.com/IamShobe)! - Code quality fixes: resolve typecheck errors, lint warnings, and formatting
+  - `@cruncher/qql`: Fix `EvalCmd.expression` and `RegexCmd.pattern` types from nullable to required; ASTBuilder now throws on missing contexts instead of silently returning null; remove unused imports and variables
+  - `@cruncher/adapter-coralogix`: Fix import extensions to use `.js` suffix for node16 module resolution compatibility
+  - `@cruncher/adapter-datadog`: Apply consistent code formatting
+  - `@cruncher/adapter-utils`: Apply consistent code formatting
+
 ## 0.4.1
 
 ### Patch Changes
