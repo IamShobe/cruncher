@@ -44,9 +44,11 @@ const AggregateBucketSchema = z.object({
 });
 
 const AggregateResponseSchema = z.object({
-  result: z.object({
-    buckets: z.array(AggregateBucketSchema).optional(),
-  }).optional(),
+  result: z
+    .object({
+      buckets: z.array(AggregateBucketSchema).optional(),
+    })
+    .optional(),
 });
 
 // ---------------------------------------------------------------------------
@@ -114,7 +116,7 @@ type RequestInitModified = Omit<RequestInit, "headers"> & {
 
 type SessionState = {
   all: Record<string, string>; // all session cookies
-  csrf: string;                // CSRF token captured from the page
+  csrf: string; // CSRF token captured from the page
 };
 
 export class DatadogController implements QueryProvider {
@@ -142,14 +144,18 @@ export class DatadogController implements QueryProvider {
           if (!r.ok) return;
           const parsed = IndexesResponseSchema.safeParse(await r.json());
           if (!parsed.success) return;
-          const names = (parsed.data.indexes ?? []).map((i) => i.name).filter(Boolean);
+          const names = (parsed.data.indexes ?? [])
+            .map((i) => i.name)
+            .filter(Boolean);
           if (names.length) result.index = names;
         })
         .catch(() => {}),
 
       // Fetch configured log facets.
       // Response shape: { facets: { [category]: FacetEntry[] } }
-      this._fetchWrapper(`${appUrl}/api/ui/event-platform/logs/facets?type=logs`)
+      this._fetchWrapper(
+        `${appUrl}/api/ui/event-platform/logs/facets?type=logs`,
+      )
         .then(async (r) => {
           if (!r.ok) return;
           const parsed = FacetsResponseSchema.safeParse(await r.json());
@@ -175,7 +181,9 @@ export class DatadogController implements QueryProvider {
     await Promise.all(
       dynamicFacetPaths.map((path) =>
         this._fetchFacetTopValues(appUrl, path, csrf)
-          .then((values) => { if (values.length) result[path] = values; })
+          .then((values) => {
+            if (values.length) result[path] = values;
+          })
           .catch(() => {}),
       ),
     );
@@ -199,7 +207,13 @@ export class DatadogController implements QueryProvider {
         method: "POST",
         body: JSON.stringify({
           aggregate: {
-            groupBy: [{ facet: facetPath, limit: 10, sort: { aggregation: "count", order: "desc" } }],
+            groupBy: [
+              {
+                facet: facetPath,
+                limit: 10,
+                sort: { aggregation: "count", order: "desc" },
+              },
+            ],
             compute: [{ aggregation: "count" }],
             search: { query: "*" },
             time: { from, to: now },
@@ -212,12 +226,17 @@ export class DatadogController implements QueryProvider {
     );
 
     if (!response.ok) {
-      console.error(`[datadog] aggregate for ${facetPath} returned ${response.status}`);
+      console.error(
+        `[datadog] aggregate for ${facetPath} returned ${response.status}`,
+      );
       return [];
     }
 
-    const raw = await response.json() as unknown;
-    console.log(`[datadog] aggregate response for ${facetPath}:`, JSON.stringify(raw));
+    const raw = (await response.json()) as unknown;
+    console.log(
+      `[datadog] aggregate response for ${facetPath}:`,
+      JSON.stringify(raw),
+    );
 
     const parsed = AggregateResponseSchema.safeParse(raw);
     if (!parsed.success) return [];
@@ -239,7 +258,9 @@ export class DatadogController implements QueryProvider {
     // All other params are serialized into the Lucene query string.
     const indexValues = controllerParams
       .filter((p) => p.name === "index" && p.operator === "=")
-      .map((p) => (p.value.type === "regex" ? p.value.pattern : p.value) as string);
+      .map(
+        (p) => (p.value.type === "regex" ? p.value.pattern : p.value) as string,
+      );
     const otherParams = controllerParams.filter((p) => p.name !== "index");
 
     const luceneQuery = buildDatadogQuery(
@@ -305,7 +326,14 @@ export class DatadogController implements QueryProvider {
         getAppUrl(this.params.site),
         [SESSION_COOKIE],
         (cookies) => Promise.resolve(!!cookies[SESSION_COOKIE]),
-        [{ key: CSRF_KEY, js: CSRF_JS, waitForResult: true, runOnNavigation: true }],
+        [
+          {
+            key: CSRF_KEY,
+            js: CSRF_JS,
+            waitForResult: true,
+            runOnNavigation: true,
+          },
+        ],
       );
 
       const csrf = allCookies[CSRF_KEY] ?? "";
@@ -356,7 +384,9 @@ export class DatadogController implements QueryProvider {
 
     if (response.status === 401 || response.status === 403) {
       // Session has expired — clear it so _ensureSession re-authenticates.
-      await mutex.runExclusive(async () => { this.session = null; });
+      await mutex.runExclusive(async () => {
+        this.session = null;
+      });
       return this._fetchWrapper(url, options, retryAmount + 1);
     }
 

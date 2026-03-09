@@ -3,17 +3,17 @@ import { Adapter, newPluginRef, QueryProvider } from "@cruncher/adapter-utils";
 import { DatadogController } from "./controller";
 
 const DD_SITES = [
-  "datadoghq.com",     // US1 — app.datadoghq.com
+  "datadoghq.com", // US1 — app.datadoghq.com
   "us3.datadoghq.com", // US3
   "us5.datadoghq.com", // US5
-  "datadoghq.eu",      // EU1 — app.datadoghq.eu
+  "datadoghq.eu", // EU1 — app.datadoghq.eu
   "ap1.datadoghq.com", // AP1
 ] as const;
 
 const paramsSchema = z.object({
   site: z.enum(DD_SITES).default("datadoghq.com"),
-  indexes: z.array(z.string()).default([]),   // empty = all indexes ("*")
-  query_prefix: z.string().default(""),       // always-applied Lucene filter
+  indexes: z.array(z.string()).default([]), // empty = all indexes ("*")
+  query_prefix: z.string().default(""), // always-applied Lucene filter
 });
 
 export type DatadogParams = z.infer<typeof paramsSchema>;

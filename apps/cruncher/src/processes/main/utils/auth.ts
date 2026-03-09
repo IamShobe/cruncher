@@ -4,7 +4,12 @@ export const createAuthWindow = async (
   url: string,
   requestedCookies: string[],
   checkValidCookies: (cookies: Record<string, string>) => Promise<boolean>,
-  scriptExtractors: { key: string; js: string; waitForResult?: boolean; runOnNavigation?: boolean }[] = [],
+  scriptExtractors: {
+    key: string;
+    js: string;
+    waitForResult?: boolean;
+    runOnNavigation?: boolean;
+  }[] = [],
 ) => {
   const authWindow = new BrowserWindow({
     width: 400,
@@ -37,7 +42,9 @@ export const createAuthWindow = async (
     // so the CSRF interceptor result seen during an earlier navigation is reused.
     const navCaptured: Record<string, string> = {};
 
-    const navigationExtractors = scriptExtractors.filter((e) => e.runOnNavigation);
+    const navigationExtractors = scriptExtractors.filter(
+      (e) => e.runOnNavigation,
+    );
 
     // Run result extractors, starting from anything already in navCaptured.
     const runExtractors = async (values: Record<string, string>) => {
@@ -50,7 +57,10 @@ export const createAuthWindow = async (
             while (!result && Date.now() < deadline) {
               try {
                 const r = await authWindow.webContents.executeJavaScript(js);
-                if (r) { result = String(r); break; }
+                if (r) {
+                  result = String(r);
+                  break;
+                }
               } catch {
                 break; // window destroyed
               }
@@ -85,7 +95,10 @@ export const createAuthWindow = async (
       const session = authWindow.webContents.session;
       const cookies = await session.cookies.get({ url: url });
       const values = cookies.reduce(
-        (acc, cookie) => { acc[cookie.name] = cookie.value; return acc; },
+        (acc, cookie) => {
+          acc[cookie.name] = cookie.value;
+          return acc;
+        },
         {} as Record<string, string>,
       );
 
@@ -123,7 +136,9 @@ export const createAuthWindow = async (
       } else {
         // Validation failed after enrichment (shouldn't happen if hasCookies passed,
         // but handle gracefully by resetting and letting the user retry).
-        console.warn("Auth: server rejected enriched cookies, showing window for retry.");
+        console.warn(
+          "Auth: server rejected enriched cookies, showing window for retry.",
+        );
         settled = false;
         authWindow.webContents.on("did-frame-navigate", eventHandler);
         authWindow.show();

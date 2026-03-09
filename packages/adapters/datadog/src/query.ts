@@ -41,12 +41,18 @@ function buildSearchPattern(search: Search): string {
   const luceneBuilder: SearchTreeBuilder<string> = {
     buildAnd: (leftCallback, searchAnd) => (item: string) => {
       const left = leftCallback(item);
-      const right = buildSearchTreeCallback(searchAnd.right, luceneBuilder)(item);
+      const right = buildSearchTreeCallback(
+        searchAnd.right,
+        luceneBuilder,
+      )(item);
       return [left, right].filter(Boolean).join(" AND ");
     },
     buildOr: (leftCallback, searchOr) => (item: string) => {
       const left = leftCallback(item);
-      const right = buildSearchTreeCallback(searchOr.right, luceneBuilder)(item);
+      const right = buildSearchTreeCallback(
+        searchOr.right,
+        luceneBuilder,
+      )(item);
       return [left, right].filter(Boolean).join(" OR ");
     },
     buildLiteral: (searchLiteral) => () => {
@@ -122,7 +128,9 @@ export function buildRequestPayload(
 // Response processing
 // ---------------------------------------------------------------------------
 
-export function processDatadogResponse(data: DatadogLogsResponse): ProcessedData[] {
+export function processDatadogResponse(
+  data: DatadogLogsResponse,
+): ProcessedData[] {
   const events = data.result?.events ?? [];
 
   return events.map((entry) => {
@@ -154,16 +162,25 @@ export function processDatadogResponse(data: DatadogLogsResponse): ProcessedData
       _raw: { type: "string", value: JSON.stringify(entry) },
     };
 
-    if (statusLine != null) objectFields.status = { type: "string", value: String(statusLine) };
-    if (host != null) objectFields.host = { type: "string", value: String(host) };
-    if (service != null) objectFields.service = { type: "string", value: String(service) };
+    if (statusLine != null)
+      objectFields.status = { type: "string", value: String(statusLine) };
+    if (host != null)
+      objectFields.host = { type: "string", value: String(host) };
+    if (service != null)
+      objectFields.service = { type: "string", value: String(service) };
 
     // If the message is a JSON object, flatten its fields into objectFields.
     if (typeof message === "string") {
       try {
         const parsed = JSON.parse(message);
-        if (parsed !== null && typeof parsed === "object" && !Array.isArray(parsed)) {
-          for (const [key, value] of Object.entries(parsed as Record<string, unknown>)) {
+        if (
+          parsed !== null &&
+          typeof parsed === "object" &&
+          !Array.isArray(parsed)
+        ) {
+          for (const [key, value] of Object.entries(
+            parsed as Record<string, unknown>,
+          )) {
             if (!(key in objectFields)) {
               objectFields[key] = processField(value);
             }

@@ -65,7 +65,7 @@ export type PluginRef = Brand<string, "PluginRef">; // A unique identifier for a
 
 export type ScriptExtractor = {
   key: string; // key added to the returned cookies dict
-  js: string;  // JS expression evaluated in the auth window; result must be a string
+  js: string; // JS expression evaluated in the auth window; result must be a string
   // If true, auth.ts retries the JS expression every 300 ms (up to 10 s) until it
   // returns a truthy value. Use this when the value is set asynchronously by the
   // page's JavaScript (e.g. React SPA initialisation, dynamic CSRF token injection).

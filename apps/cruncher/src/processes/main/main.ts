@@ -191,24 +191,34 @@ function startServerProcess() {
       const authUrl = msg.authUrl as string;
       const requestedCookies = msg.cookies as string[];
       const jobId = msg.jobId as string;
-      const scriptExtractors = (msg.scriptExtractors ?? []) as { key: string; js: string; waitForResult?: boolean; runOnNavigation?: boolean }[];
+      const scriptExtractors = (msg.scriptExtractors ?? []) as {
+        key: string;
+        js: string;
+        waitForResult?: boolean;
+        runOnNavigation?: boolean;
+      }[];
       console.log(
         "Received authentication request from server process, sending cookies...",
       );
 
       try {
-        await createAuthWindow(authUrl, requestedCookies, async (cookies) => {
-          const result = await requestFromServer<{
-            type: string;
-            status: boolean;
-          }>(
-            port2,
-            { type: "authResult", jobId: jobId, cookies: cookies },
-            "authResult",
-          );
+        await createAuthWindow(
+          authUrl,
+          requestedCookies,
+          async (cookies) => {
+            const result = await requestFromServer<{
+              type: string;
+              status: boolean;
+            }>(
+              port2,
+              { type: "authResult", jobId: jobId, cookies: cookies },
+              "authResult",
+            );
 
-          return result.status;
-        }, scriptExtractors);
+            return result.status;
+          },
+          scriptExtractors,
+        );
       } catch (error) {
         if (processActive) {
           console.error("Error during authentication", error);
