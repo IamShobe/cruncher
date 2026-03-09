@@ -1,3 +1,26 @@
+## 0.5.0
+
+### Minor Changes
+
+- [`9ca2116`](https://github.com/IamShobe/cruncher/commit/9ca211603b87ca75a6d7b96b51ae321e2dd98f1d) Thanks [@IamShobe](https://github.com/IamShobe)! - feat: log row expand/collapse, batched streaming, and connector status UI
+
+  ### adapter-utils
+  - Added `isLiveQuery: boolean` to `QueryOptions` to distinguish live polling from initial data loads
+
+  ### adapter-mock
+  - Initial queries now stream data in batches of 2000 events (up to 10 k) for a more realistic experience
+  - Live polling returns only 1–10 new events per tick (matching real adapter behaviour)
+  - Added long-message test entries so the line-clamp / "show more" UI can be tested without a real backend
+
+  ### adapter-datadog
+  - Removed incorrect post-processing that dropped empty facets from `getControllerParams` results
+
+### Patch Changes
+
+- Updated dependencies [[`127cf8d`](https://github.com/IamShobe/cruncher/commit/127cf8d2cc13e77fdde59f7b5b1c027df0a61cea), [`9ca2116`](https://github.com/IamShobe/cruncher/commit/9ca211603b87ca75a6d7b96b51ae321e2dd98f1d)]:
+  - @cruncher/qql@0.4.3
+  - @cruncher/adapter-utils@0.5.0
+
 ## 0.4.1
 
 ### Patch Changes
