@@ -1,3 +1,33 @@
+## 2.2.0
+
+### Minor Changes
+
+- [`d3912fe`](https://github.com/IamShobe/cruncher/commit/d3912fe3522787ba7ba9551e00df5b1848e89258) Thanks [@IamShobe](https://github.com/IamShobe)! - Add customizable keybindings settings (Settings → Keybindings).
+
+  Users can now override any keyboard shortcut directly from the UI. Click a key badge to record a new combo, choose whether to save it to the local config (`cruncher.config.local.yaml`) or the shared global config, and see a source badge (Local / Global) next to any overridden binding. The × icon resets individual overrides; Reset All clears every override at once. Overrides take effect immediately across all shortcut handlers and tooltips — no restart required.
+
+### Patch Changes
+
+- [`d3912fe`](https://github.com/IamShobe/cruncher/commit/d3912fe3522787ba7ba9551e00df5b1848e89258) Thanks [@IamShobe](https://github.com/IamShobe)! - Fix autocomplete dropdown positioning in the query editor.
+
+  Replace the manual fixed-position calculation with `@floating-ui/react`, resolving two bugs: the dropdown drifted when the textarea was scrolled horizontally, and Ctrl+Space before typing placed it at the wrong position. The dropdown now also flips above the caret near the bottom of the viewport and shifts horizontally near the edges to stay in view.
+
+- [`d3912fe`](https://github.com/IamShobe/cruncher/commit/d3912fe3522787ba7ba9551e00df5b1848e89258) Thanks [@IamShobe](https://github.com/IamShobe)! - Performance improvements to the query editor and TypeScript build.
+  - Ghost text (autocomplete preview) updates are now deferred with `useDeferredValue` so ArrowUp/ArrowDown through suggestions feels instant while the expensive text-highlight recalculation runs at lower priority.
+  - Replaced manual `setTimeout`/`clearTimeout` patterns with `useDebouncer` and `useTimeoutFn` from `@tanstack/react-pacer` and `react-use` for cleaner lifecycle management.
+  - Removed an unused `RefAttributes` intersection on `IconButtonProps` that caused TypeScript to perform 5.6 M type instantiations and consume 4.76 GB of memory, cutting typecheck time from ~43 s to ~8 s and eliminating OOM failures at the default Node.js heap size.
+
+- Updated dependencies [[`069e9dd`](https://github.com/IamShobe/cruncher/commit/069e9ddf615ed4cde05d838108e152dccb5b97b7)]:
+  - @cruncher/qql@0.4.4
+  - @cruncher/adapter-coralogix@0.3.6
+  - @cruncher/adapter-datadog@0.2.3
+  - @cruncher/adapter-docker@0.3.6
+  - @cruncher/adapter-grafana-loki-browser@0.3.6
+  - @cruncher/adapter-k8s@0.2.5
+  - @cruncher/adapter-loki@0.2.6
+  - @cruncher/adapter-mock@0.5.1
+  - @cruncher/adapter-utils@0.5.1
+
 ## 2.1.3
 
 ### Patch Changes
