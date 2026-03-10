@@ -184,7 +184,7 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
     >(undefined);
     const [hasInteractedWithMenu, setHasInteractedWithMenu] = useState(false);
 
-    const ctrlSpaceOpenRef = useRef(false);
+    const [ctrlSpaceOpen, setCtrlSpaceOpen] = useState(false);
 
     const writtenWord = useMemo(() => {
       const text = value.slice(0, cursorPosition);
@@ -206,7 +206,7 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
         if (cursorPosition < suggestion.fromPosition) continue;
         if (
           suggestion.toPosition &&
-          !ctrlSpaceOpenRef.current &&
+          !ctrlSpaceOpen &&
           cursorPosition > suggestion.toPosition
         )
           continue;
@@ -226,7 +226,7 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
           return valueToMatch.startsWith(writtenWord);
         })
         .sort(compareSuggestions);
-    }, [suggestions, cursorPosition, writtenWord]);
+    }, [suggestions, cursorPosition, writtenWord, ctrlSpaceOpen]);
 
     const acceptCompletion = () => {
       let startPos = cursorPosition - writtenWord.length;
@@ -251,7 +251,7 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
         }
       }, 0);
 
-      ctrlSpaceOpenRef.current = false;
+      setCtrlSpaceOpen(false);
       setIsCompleterOpen(false);
       setHasInteractedWithMenu(false);
     };
@@ -514,12 +514,16 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
             // TODO move it to shortcuts system
             // if key is esc - close completer
             if (e.key === "Escape") {
-              ctrlSpaceOpenRef.current = false;
+              setCtrlSpaceOpen(false);
               setIsCompleterOpen(false);
               setHasInteractedWithMenu(false);
             }
-            if (e.key === " " && e.ctrlKey) {
-              ctrlSpaceOpenRef.current = true;
+            if (
+              (e.key === " " && e.ctrlKey) ||
+              e.key === "\u00a0" // Option+Space on macOS
+            ) {
+              e.preventDefault();
+              setCtrlSpaceOpen(true);
               setIsCompleterOpen(true);
             }
 
@@ -600,7 +604,7 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
             onChange(e.target.value);
             setCursorPosition(e.currentTarget.selectionStart);
             if (!isCharAdded && !hasFreshSuggestions) {
-              ctrlSpaceOpenRef.current = false;
+              setCtrlSpaceOpen(false);
             }
             setIsCompleterOpen(isCharAdded || hasFreshSuggestions);
             setHoveredCompletionItem(undefined);
