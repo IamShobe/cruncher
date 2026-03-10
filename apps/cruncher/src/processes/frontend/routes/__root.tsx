@@ -63,6 +63,9 @@ export const Route = createRootRoute({
         </Provider>
       </QueryClientProvider>
       <TanStackDevtools
+        config={{
+          hideUntilHover: true,
+        }}
         plugins={[
           {
             name: "TanStack Query",
@@ -77,6 +80,7 @@ export const Route = createRootRoute({
     </div>
   ),
 });
+
 
 const MainContent = () => {
   const isInitialized = useApplicationStore((state) => state.isInitialized);
