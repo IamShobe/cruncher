@@ -10,15 +10,22 @@ export type IconButtonProps = OIconButtonProps & {
   tooltipShortcut?: TooltipProps["shortcut"];
 };
 
-export const MiniIconButton: React.FC<IconButtonProps> = (props) => {
+export const MiniIconButton: React.FC<IconButtonProps> = ({
+  tooltip,
+  tooltipPosition,
+  tooltipShortcut,
+  ...props
+}) => {
+  // @ts-expect-error -- Chakra UI v3 css prop (SystemStyleObject) conflicts with @emotion/react JSX extension (Interpolation<Theme>)
+  const button = <OIconButton size="2xs" variant="surface" {...props} />;
   return (
     <Tooltip
-      text={props.tooltip}
-      position={props.tooltipPosition ?? "bottom"}
-      shortcut={props.tooltipShortcut}
-      aria-label={props["aria-label"] || props.tooltip}
+      text={tooltip}
+      position={tooltipPosition ?? "bottom"}
+      shortcut={tooltipShortcut}
+      aria-label={props["aria-label"] || tooltip}
     >
-      <OIconButton size="2xs" variant="surface" {...props} />
+      {button}
     </Tooltip>
   );
 };

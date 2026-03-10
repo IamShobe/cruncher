@@ -179,7 +179,9 @@ export const RowDetail: React.FC<DataRowProps> = ({ rowKey, rowValue }) => {
                   navigator.clipboard
                     .writeText(asDisplayString(rowValue))
                     .then(() => notifySuccess("Copied to clipboard"))
-                    .catch((e) => notifyError("Failed to copy to clipboard", e));
+                    .catch((e) =>
+                      notifyError("Failed to copy to clipboard", e),
+                    );
                 }}
                 cursor={"pointer"}
               >

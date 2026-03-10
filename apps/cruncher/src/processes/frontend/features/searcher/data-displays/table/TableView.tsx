@@ -96,7 +96,7 @@ export const TableView: React.FC<TableViewProps> = (_props: TableViewProps) => {
         <Table.Row
           style={{ borderBottom: `1px solid ${token("colors.border")}` }}
         >
-          {columns.map((column, i) => (
+          {columns.map((column) => (
             <Table.ColumnHeader
               key={column}
               style={{

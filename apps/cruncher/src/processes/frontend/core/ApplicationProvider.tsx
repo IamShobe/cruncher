@@ -51,10 +51,7 @@ const initializeConnection = debounceInitialize(async () => {
         },
       }; // Exit the loop if successful
     } catch (error) {
-      console.error(
-        "Failed to initialize stream server connection:",
-        error,
-      );
+      console.error("Failed to initialize stream server connection:", error);
       await new Promise((resolve) => setTimeout(resolve, 2000));
     }
   }
@@ -71,7 +68,10 @@ export const ApplicationProvider: FC<{
     const initializeResult = initializeConnection();
 
     initializeResult.catch((error) => {
-      notifyError("Failed to establish server connection after 3 attempts", error);
+      notifyError(
+        "Failed to establish server connection after 3 attempts",
+        error,
+      );
     });
 
     return () => {

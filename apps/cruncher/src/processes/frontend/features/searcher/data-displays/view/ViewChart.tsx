@@ -142,7 +142,7 @@ export const ViewChart = (_props: ViewChartProps) => {
               />
             }
           />
-          {view.YAxis.map((yAxis, index) => {
+          {view.YAxis.map((yAxis) => {
             const isSelected =
               selectedSerieses.length === 0 ||
               selectedSerieses.includes(yAxis.name);
@@ -178,6 +178,8 @@ const CustomTooltip = ({
   selectedAxises,
   timezone,
 }: TooltipProps<number, string> & {
+  payload?: Array<{ dataKey?: string | number; value?: number }>;
+  label?: number;
   selectedAxises: string[];
   timezone: import("@cruncher/adapter-utils/formatters").Timezone;
 }) => {
@@ -204,7 +206,9 @@ const CustomTooltip = ({
         fontSize="0.75rem"
       >
         <Card.Body padding={2}>
-          <p className="label">{formatDataTimeShort(label, timezone)}</p>
+          {label !== undefined && (
+            <p className="label">{formatDataTimeShort(label, timezone)}</p>
+          )}
           {sortedPayload.slice(0, 10).map((item) => {
             const isSelected =
               selectedAxises.length === 0 ||
@@ -245,7 +249,7 @@ const Legend = ({
         justifyContent: "center",
       }}
     >
-      {allAxises.map((yAxis, index) => {
+      {allAxises.map((yAxis) => {
         const isSelected =
           selectedAxises.length === 0 || selectedAxises.includes(yAxis);
 

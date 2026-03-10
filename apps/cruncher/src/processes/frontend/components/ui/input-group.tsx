@@ -7,7 +7,7 @@ export interface InputGroupProps extends BoxProps {
   endElementProps?: InputElementProps;
   startElement?: React.ReactNode;
   endElement?: React.ReactNode;
-  children: React.ReactElement;
+  children: React.ReactElement<Record<string, unknown>>;
   startOffset?: InputElementProps["paddingStart"];
   endOffset?: InputElementProps["paddingEnd"];
 }
@@ -35,11 +35,14 @@ export const InputGroup = React.forwardRef<HTMLDivElement, InputGroupProps>(
           </InputElement>
         )}
         {React.cloneElement(children, {
-          ...(startElement && {
-            ps: `calc(var(--input-height) - ${startOffset})`,
-          }),
-          ...(endElement && { pe: `calc(var(--input-height) - ${endOffset})` }),
-          ...children.props,
+          ...(startElement &&
+            !("ps" in children.props) && {
+              ps: `calc(var(--input-height) - ${startOffset})`,
+            }),
+          ...(endElement &&
+            !("pe" in children.props) && {
+              pe: `calc(var(--input-height) - ${endOffset})`,
+            }),
         })}
         {endElement && (
           // @ts-expect-error - lib component

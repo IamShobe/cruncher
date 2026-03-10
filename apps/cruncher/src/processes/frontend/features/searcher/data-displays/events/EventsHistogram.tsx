@@ -173,6 +173,8 @@ const CustomTooltip = ({
   rightArea,
   timezone,
 }: TooltipProps<number, string> & {
+  payload?: Array<{ dataKey?: string | number; value?: number }>;
+  label?: number;
   leftArea: undefined | number;
   rightArea: undefined | number;
   timezone: import("@cruncher/adapter-utils/formatters").Timezone;
@@ -194,7 +196,9 @@ const CustomTooltip = ({
             </p>
           ) : (
             <>
-              <p className="label">{formatDataTimeShort(label, timezone)}</p>
+              {label !== undefined && (
+                <p className="label">{formatDataTimeShort(label, timezone)}</p>
+              )}
               {payload.map((item) => (
                 <p key={item.dataKey} className="intro">
                   {item.dataKey} : {item.value}

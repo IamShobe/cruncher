@@ -11,11 +11,11 @@ export function useOutsideDetector(onOutsideClick = () => {}) {
   }
 
   const handleClickOutside = useCallback(
-    (event: MouseEvent) => {
+    (event: Event) => {
       if (
         ref.current &&
-        event.target &&
-        !ref.current.contains(event.target as Node)
+        event.target instanceof Node &&
+        !ref.current.contains(event.target)
       ) {
         onOutsideClick();
       }

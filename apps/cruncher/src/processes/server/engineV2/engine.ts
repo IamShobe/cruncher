@@ -69,8 +69,6 @@ export class Engine {
   private initializedPlugins: PluginInstanceContainer[] = [];
   private queryTasks: Record<TaskRef, QueryTaskState> = {};
   private searchProfiles: Record<SearchProfileRef, SearchProfile> = {};
-  private readonly defaultSearchProfile: SearchProfileRef =
-    "default" as SearchProfileRef;
 
   private queryCache: QueryCacheHolder = new QueryCacheHolder();
 

@@ -39,6 +39,9 @@ import {
 import { LuBug, LuLightbulb, LuLightbulbOff } from "react-icons/lu";
 import { searcherShortcuts } from "~core/keymaps";
 import { Coordinates, getCaretCoordinates } from "./getCoordinates";
+import { useFloating, offset, flip, shift } from "@floating-ui/react";
+import { autoUpdate } from "@floating-ui/dom";
+import type { VirtualElement } from "@floating-ui/dom";
 
 export const idleHintsEnabledAtom = atomWithStorage(
   "cruncher:idleHintsEnabled",
@@ -162,25 +165,73 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
       }
     }, [referenceElement, ref]);
 
+    useEffect(() => {
+      if (!referenceElement) return;
+      setPos(
+        getCaretCoordinates(
+          referenceElement,
+          referenceElement.selectionStart ?? 0,
+        ),
+      );
+    }, [referenceElement]);
+
     const [pos, setPos] = useState<Coordinates>({
       top: 0,
       left: 0,
       height: 0,
     });
 
-    const popperStyle = useMemo((): React.CSSProperties => {
-      if (!referenceElement) return { display: "none" };
-      const rect = referenceElement.getBoundingClientRect();
-      return {
-        position: "fixed",
-        left: rect.left + pos.left,
-        top: rect.top + pos.top + 20,
-        zIndex: 9999,
-      };
-    }, [referenceElement, pos]);
+    const posRef = useLatest(pos);
+
+    const caretVirtualEl = useMemo<VirtualElement>(
+      () => ({
+        getBoundingClientRect() {
+          const el = referenceElementRef.current;
+          if (!el) return new DOMRect();
+          const rect = el.getBoundingClientRect();
+          const p = posRef.current;
+          const lineHeight =
+            p.height || parseFloat(getComputedStyle(el).lineHeight) || 16;
+          return new DOMRect(
+            rect.left + p.left - el.scrollLeft,
+            rect.top + p.top - el.scrollTop,
+            0,
+            lineHeight,
+          );
+        },
+      }),
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      [],
+    );
+
+    const {
+      refs,
+      floatingStyles,
+      update: updateFloating,
+    } = useFloating({
+      strategy: "fixed",
+      placement: "bottom-start",
+      middleware: [offset(4), flip({ padding: 8 }), shift({ padding: 8 })],
+    });
+
+    const updateFloatingRef = useLatest(updateFloating);
+
+    useEffect(() => {
+      refs.setReference(caretVirtualEl);
+    }, [refs, caretVirtualEl]);
 
     const [cursorPosition, setCursorPosition] = useState(value.length);
     const [isCompleterOpen, setIsCompleterOpen] = useState(false);
+
+    useEffect(() => {
+      if (isCompleterOpen) updateFloatingRef.current();
+    }, [pos, isCompleterOpen, updateFloatingRef]);
+
+    useEffect(() => {
+      const floating = refs.floating.current;
+      if (!isCompleterOpen || !floating) return;
+      return autoUpdate(caretVirtualEl, floating, updateFloatingRef.current);
+    }, [isCompleterOpen, refs.floating, caretVirtualEl, updateFloatingRef]);
 
     const [hoveredCompletionItem, setHoveredCompletionItem] = useState<
       number | undefined
@@ -208,11 +259,7 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
       for (const suggestion of suggestions) {
         // filter suggestions based on cursor position
         if (cursorPosition < suggestion.fromPosition) continue;
-        if (
-          suggestion.toPosition &&
-          !ctrlSpaceOpenRef.current &&
-          cursorPosition > suggestion.toPosition
-        )
+        if (suggestion.toPosition && cursorPosition > suggestion.toPosition)
           continue;
 
         const key = `${suggestion.type}:${suggestion.value}`;
@@ -281,6 +328,14 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
       const suggestion = filteredSuggestions[deferredHoveredItem ?? 0];
       if (!suggestion) return undefined;
 
+      // Suppress ghost text inside string literals unless at a word boundary
+      if (isInsideString(value, cursorPosition)) {
+        const nextChar = value[cursorPosition];
+        const isWordBoundary =
+          nextChar === undefined || nextChar === " " || nextChar === "\n";
+        if (!isWordBoundary) return undefined;
+      }
+
       const sv = suggestion.value;
       let ghost: string;
       if (sv.startsWith('"') && !writtenWord.startsWith('"')) {
@@ -304,6 +359,7 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
       deferredHoveredItem,
       writtenWord,
       cursorPosition,
+      value,
     ]);
 
     const [popoverOpen, setPopoverOpen] = useState(false);
@@ -423,7 +479,14 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
       setTokenContent(content);
       setPopoverOpen(true);
       isAutoHintRef.current = true;
-    }, [cancelOpen, cancelClose, highlightDataRef, cursorPosRef, idleHintsEnabledRef, referenceElementRef]);
+    }, [
+      cancelOpen,
+      cancelClose,
+      highlightDataRef,
+      cursorPosRef,
+      idleHintsEnabledRef,
+      referenceElementRef,
+    ]);
 
     const isIdle = useIdle(2_000);
 
@@ -569,13 +632,16 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
             scheduleClose();
           }}
           onSelect={(e) => {
-            setCursorPosition(e.currentTarget.selectionStart);
+            const selStart = e.currentTarget.selectionStart;
+            setCursorPosition(selStart);
+            setPos(getCaretCoordinates(e.currentTarget, selStart));
           }}
           onInput={() => {
             syncScroll();
           }}
           onScroll={() => {
             syncScroll();
+            if (isCompleterOpen) updateFloatingRef.current();
           }}
           onChange={(e) => {
             if (!referenceElement) return;
@@ -628,7 +694,10 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
         {isCompleterOpen &&
           popperRoot &&
           createPortal(
-            <div style={popperStyle}>
+            <div
+              ref={refs.setFloating}
+              style={{ ...floatingStyles, zIndex: 9999 }}
+            >
               <AutoCompleter
                 suggestions={filteredSuggestions}
                 hoveredItem={hoveredCompletionItem}
@@ -799,4 +868,12 @@ const lastIndexOfRegex = (word: string, regex: RegExp): number => {
   }
 
   return match;
+};
+
+const isInsideString = (text: string, position: number): boolean => {
+  let count = 0;
+  for (let i = 0; i < position; i++) {
+    if (text[i] === '"' && (i === 0 || text[i - 1] !== "\\")) count++;
+  }
+  return count % 2 === 1;
 };

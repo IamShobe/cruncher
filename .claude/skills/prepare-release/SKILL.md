@@ -70,7 +70,7 @@ pnpm typecheck
 ## 6 — Changesets
 
 Create a changeset only for packages that:
-- Live under `packages/` **and**
+- Live under `packages/` **and** `apps`
 - Are actually published to npm (check `.changeset/config.json` → `ignore` list)
 
 Run interactively or write the `.md` file directly in `.changeset/`:
