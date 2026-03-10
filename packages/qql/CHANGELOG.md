@@ -1,3 +1,9 @@
+## 0.4.4
+
+### Patch Changes
+
+- [`069e9dd`](https://github.com/IamShobe/cruncher/commit/069e9ddf615ed4cde05d838108e152dccb5b97b7) Thanks [@IamShobe](https://github.com/IamShobe)! - Fix highlighting crash on error-recovery synthetic tokens, and improve autocomplete suggestion ordering so columns are ranked above boolean functions after `&&`.
+
 ## 0.4.3
 
 ### Patch Changes

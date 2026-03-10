@@ -1,7 +1,7 @@
 {
   "name": "@cruncher/adapter-coralogix",
   "type": "module",
-  "version": "0.3.5",
+  "version": "0.3.6",
   "repository": {
     "type": "git",
     "url": "https://github.com/IamShobe/cruncher"

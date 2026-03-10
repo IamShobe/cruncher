@@ -1,5 +1,13 @@
 # @cruncher/adapter-datadog
 
+## 0.2.3
+
+### Patch Changes
+
+- Updated dependencies [[`069e9dd`](https://github.com/IamShobe/cruncher/commit/069e9ddf615ed4cde05d838108e152dccb5b97b7)]:
+  - @cruncher/qql@0.4.4
+  - @cruncher/adapter-utils@0.5.1
+
 ## 0.2.2
 
 ### Patch Changes
