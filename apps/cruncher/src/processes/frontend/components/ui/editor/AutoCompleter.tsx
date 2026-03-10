@@ -5,11 +5,18 @@ import {
   LuSettings2,
   LuSquareFunction,
   LuTag,
+  LuToggleLeft,
   LuWrench,
 } from "react-icons/lu";
 
 export type Suggestion = {
-  type: "keyword" | "function" | "variable" | "param" | "controllerParam";
+  type:
+    | "keyword"
+    | "function"
+    | "booleanFunction"
+    | "variable"
+    | "param"
+    | "controllerParam";
   value: string;
   fromPosition: number;
   toPosition?: number;
@@ -20,7 +27,8 @@ const SUGGESTION_PRIORITY: Partial<Record<Suggestion["type"], number>> = {
   function: 1,
   param: 2,
   controllerParam: 3,
-  variable: 4,
+  booleanFunction: 4,
+  variable: 5,
 };
 
 export const compareSuggestions = (a: Suggestion, b: Suggestion): number => {
@@ -43,6 +51,7 @@ type SuggestionMeta = {
 const SUGGESTION_META: Record<Suggestion["type"], SuggestionMeta> = {
   keyword: { icon: LuCode, colorPalette: "purple", label: "keyword" },
   function: { icon: LuSquareFunction, colorPalette: "blue", label: "fn" },
+  booleanFunction: { icon: LuToggleLeft, colorPalette: "blue", label: "fn" },
   variable: { icon: LuTag, colorPalette: "green", label: "field" },
   param: { icon: LuSettings2, colorPalette: "orange", label: "param" },
   controllerParam: { icon: LuWrench, colorPalette: "orange", label: "param" },

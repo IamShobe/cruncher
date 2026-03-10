@@ -294,7 +294,7 @@ export const Editor = ({ value, onChange }: EditorProps) => {
         case "booleanFunction":
           SUPPORTED_BOOLEAN_FUNCTIONS.forEach((func) =>
             results.push({
-              type: "function",
+              type: "booleanFunction",
               value: func,
               fromPosition: suggestion.fromPosition,
               toPosition: suggestion.toPosition,

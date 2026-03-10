@@ -81,7 +81,6 @@ export const Route = createRootRoute({
   ),
 });
 
-
 const MainContent = () => {
   const isInitialized = useApplicationStore((state) => state.isInitialized);
 

@@ -201,12 +201,12 @@ export class HighlightCollector extends AbstractParseTreeVisitor<void> {
   visitAggregationFunction = (ctx: Parser.AggregationFunctionContext) => {
     const idOrStrs = ctx.identifierOrString();
     if (idOrStrs.length > 0) {
-      // First identifierOrString is the function name
-      this.addHighlight(
-        "function",
-        this.ctxStart(idOrStrs[0]),
-        this.ctxStop(idOrStrs[0]),
-      );
+      const start = this.ctxStart(idOrStrs[0]);
+      const stop = this.ctxStop(idOrStrs[0]);
+      // Skip error-recovery synthetic tokens (stop < start means empty/inverted span)
+      if (stop === undefined || stop >= start) {
+        this.addHighlight("function", start, stop);
+      }
     }
 
     // Column argument is now inside the aggFunctionArg sub-rule

@@ -68,7 +68,8 @@ export const splitTextToChunks = (
       startOffset === undefined ||
       Number.isNaN(startOffset) ||
       endOffset === undefined ||
-      Number.isNaN(endOffset)
+      Number.isNaN(endOffset) ||
+      endOffset < startOffset
     ) {
       return;
     }
@@ -430,11 +431,6 @@ export const TextHighlighter = React.forwardRef<
         },
       ];
     }
-
-    // Entity-encode after all text manipulation
-    text = text
-      .replace(new RegExp("&", "g"), "&amp;")
-      .replace(new RegExp("<", "g"), "&lt;");
 
     return { displayText: text, displayHighlightData: data };
   }, [value, highlightData, ghostText, ghostTextOffset]);

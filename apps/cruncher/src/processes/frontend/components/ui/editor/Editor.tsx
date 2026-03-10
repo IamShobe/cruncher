@@ -16,6 +16,7 @@ import {
   HStack,
   Icon,
   IconButton,
+  Menu,
   Popover,
   Text,
 } from "@chakra-ui/react";
@@ -200,7 +201,7 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
     }, [cursorPosition, value]);
 
     const filteredSuggestions = useMemo(() => {
-      const results = new Set<Suggestion>();
+      const results = new Map<string, Suggestion>();
       for (const suggestion of suggestions) {
         // filter suggestions based on cursor position
         if (cursorPosition < suggestion.fromPosition) continue;
@@ -211,10 +212,11 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
         )
           continue;
 
-        results.add(suggestion);
+        const key = `${suggestion.type}:${suggestion.value}`;
+        if (!results.has(key)) results.set(key, suggestion);
       }
 
-      return Array.from(results)
+      return Array.from(results.values())
         .filter((suggestion) => {
           if (!writtenWord) return true;
           // For quoted values like `"main"`, match the inner text when the user
@@ -519,6 +521,7 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
               setHasInteractedWithMenu(false);
             }
             if (e.key === " " && e.ctrlKey) {
+              e.preventDefault();
               ctrlSpaceOpenRef.current = true;
               setIsCompleterOpen(true);
             }
@@ -545,17 +548,11 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
                 acceptCompletion();
               }
 
-              // if key is Tab - accept completion
-              if (e.key === "Tab") {
-                acceptCompletion();
-              }
-
               if (e.key === "Tab" && e.shiftKey) {
                 e.preventDefault();
                 retreatHoveredItem();
-              } else if (e.key == "Tab") {
-                e.preventDefault();
-                advanceHoveredItem();
+              } else if (e.key === "Tab") {
+                acceptCompletion();
               }
             }
           }}
@@ -570,6 +567,9 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
           onMouseLeave={() => {
             cancelOpen();
             scheduleClose();
+          }}
+          onSelect={(e) => {
+            setCursorPosition(e.currentTarget.selectionStart);
           }}
           onInput={() => {
             syncScroll();
@@ -588,13 +588,17 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
               e.target.value.length > value.length &&
               !["\n", " "].includes(char);
 
-            // Also open on space if there are suggestions that start exactly at
-            // the new cursor position (e.g. after a complete controller param).
+            // Also open on space if there are any active suggestions at the new
+            // cursor position (fromPosition <= cursor <= toPosition).
             const isSpaceAdded =
               e.target.value.length > value.length && char === " ";
             const hasFreshSuggestions =
               isSpaceAdded &&
-              suggestions.some((s) => s.fromPosition === selectionStart);
+              suggestions.some(
+                (s) =>
+                  s.fromPosition <= selectionStart &&
+                  (s.toPosition == null || selectionStart <= s.toPosition),
+              );
 
             dismissAutoHint();
             onChange(e.target.value);
@@ -722,17 +726,45 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
             gap: 2,
           }}
         >
-          {onCopyAst && isEditorHovered && (
-            <Tooltip text="Copy AST (debug)" position="left">
-              <IconButton
-                aria-label="Copy AST (debug)"
-                size="2xs"
-                variant="ghost"
-                onClick={onCopyAst}
-              >
-                <LuBug />
-              </IconButton>
-            </Tooltip>
+          {isEditorHovered && (
+            <Menu.Root positioning={{ placement: "bottom-end" }}>
+              <Menu.Trigger asChild>
+                <IconButton aria-label="Debug menu" size="2xs" variant="ghost">
+                  <LuBug />
+                </IconButton>
+              </Menu.Trigger>
+              <Portal>
+                <Menu.Positioner>
+                  <Menu.Content>
+                    <Menu.Item
+                      value="copy-highlight"
+                      onClick={() =>
+                        navigator.clipboard.writeText(
+                          JSON.stringify(highlightData, null, 2),
+                        )
+                      }
+                    >
+                      Copy Highlight information
+                    </Menu.Item>
+                    {onCopyAst && (
+                      <Menu.Item value="copy-ast" onClick={onCopyAst}>
+                        Copy AST
+                      </Menu.Item>
+                    )}
+                    <Menu.Item
+                      value="copy-suggestions"
+                      onClick={() =>
+                        navigator.clipboard.writeText(
+                          JSON.stringify(suggestions, null, 2),
+                        )
+                      }
+                    >
+                      Copy Suggestion information
+                    </Menu.Item>
+                  </Menu.Content>
+                </Menu.Positioner>
+              </Portal>
+            </Menu.Root>
           )}
           <Tooltip
             text={idleHintsEnabled ? "Idle hints on" : "Idle hints off"}
