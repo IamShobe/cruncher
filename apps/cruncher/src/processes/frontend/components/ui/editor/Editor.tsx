@@ -37,7 +37,11 @@ import {
   getTooltipContent,
 } from "./Highlighter";
 import { LuBug, LuLightbulb, LuLightbulbOff } from "react-icons/lu";
-import { searcherShortcuts } from "~core/keymaps";
+import {
+  headerShortcuts,
+  searcherShortcuts,
+  useResolvedShortcuts,
+} from "~core/keymaps";
 import { Coordinates, getCaretCoordinates } from "./getCoordinates";
 import { useFloating, offset, flip, shift } from "@floating-ui/react";
 import { autoUpdate } from "@floating-ui/dom";
@@ -240,6 +244,8 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
     const [hasInteractedWithMenu, setHasInteractedWithMenu] = useState(false);
 
     const ctrlSpaceOpenRef = useRef(false);
+    const resolvedHeaderShortcuts = useResolvedShortcuts(headerShortcuts);
+    const resolvedSearcherShortcuts = useResolvedShortcuts(searcherShortcuts);
 
     const writtenWord = useMemo(() => {
       const text = value.slice(0, cursorPosition);
@@ -583,7 +589,7 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
               setIsCompleterOpen(false);
               setHasInteractedWithMenu(false);
             }
-            if (e.key === " " && e.ctrlKey) {
+            if (resolvedHeaderShortcuts.isPressed(e, "trigger-autocomplete")) {
               e.preventDefault();
               ctrlSpaceOpenRef.current = true;
               setIsCompleterOpen(true);
@@ -837,7 +843,7 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
           )}
           <Tooltip
             text={idleHintsEnabled ? "Idle hints on" : "Idle hints off"}
-            shortcut={searcherShortcuts.getAlias("toggle-idle-hints")}
+            shortcut={resolvedSearcherShortcuts.getAlias("toggle-idle-hints")}
             position="left"
           >
             <IconButton

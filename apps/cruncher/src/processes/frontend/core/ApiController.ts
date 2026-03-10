@@ -70,6 +70,28 @@ export class ApiController {
     });
   };
 
+  setKeybinding = async (
+    shortcut: string,
+    mac: string,
+    windows: string,
+    target: "global" | "local",
+  ) => {
+    return await this.connection.setKeybinding.mutate({
+      shortcut,
+      Mac: mac,
+      Windows: windows,
+      target,
+    });
+  };
+
+  resetKeybinding = async (shortcut: string) => {
+    return await this.connection.resetKeybinding.mutate({ shortcut });
+  };
+
+  resetAllKeybindings = async () => {
+    return await this.connection.resetAllKeybindings.mutate();
+  };
+
   getControllerParams = async (
     pluginInstanceRef: InstanceRef,
   ): Promise<Record<string, string[]>> => {

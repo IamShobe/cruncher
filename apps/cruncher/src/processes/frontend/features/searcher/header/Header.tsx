@@ -41,7 +41,11 @@ import { DateType } from "~lib/dateUtils";
 import { DateSelector, isDateSelectorOpenAtom } from "./calendar/DateSelector";
 import { SettingsDrawer } from "~features/searcher/header/settings-drawer/Drawer";
 import { Editor, EditorErrorBoundary } from "./Editor";
-import { createShortcutsHandler, headerShortcuts } from "../../../core/keymaps";
+import {
+  createShortcutsHandler,
+  headerShortcuts,
+  useResolvedShortcuts,
+} from "../../../core/keymaps";
 import { notifySuccess } from "../../../core/notifyError";
 import {
   FormValues,
@@ -145,8 +149,11 @@ const Header: React.FC<HeaderProps> = () => {
       await runQuery(isForced);
     };
 
+  const resolvedHeaderShortcutsForHandler =
+    useResolvedShortcuts(headerShortcuts);
+
   const onHeaderKeyDown = createShortcutsHandler(
-    headerShortcuts,
+    resolvedHeaderShortcutsForHandler,
     (shortcut) => {
       switch (shortcut) {
         case "search":
@@ -468,6 +475,7 @@ const MainSearchButton: React.FC<SearchBarButtonsProps> = ({
   onTerminateSearch,
   onForceSubmit,
 }) => {
+  const resolvedHeaderShortcuts = useResolvedShortcuts(headerShortcuts);
   return (
     <>
       {isLoading ? (
@@ -489,7 +497,8 @@ const MainSearchButton: React.FC<SearchBarButtonsProps> = ({
         <Tooltip
           content={
             <span>
-              Search <Shortcut keys={headerShortcuts.getAlias("search")} />
+              Search{" "}
+              <Shortcut keys={resolvedHeaderShortcuts.getAlias("search")} />
             </span>
           }
           showArrow
@@ -512,6 +521,7 @@ const MainSearchButton: React.FC<SearchBarButtonsProps> = ({
 const ReEvaluateButton: React.FC<{
   isLoading: boolean;
 }> = ({ isLoading }) => {
+  const resolvedHeaderShortcuts = useResolvedShortcuts(headerShortcuts);
   const endTime = useAtomValue(endFullDateAtom);
   const startTime = useAtomValue(startFullDateAtom);
   const isRelativeTimeSelected = useMemo(() => {
@@ -524,7 +534,7 @@ const ReEvaluateButton: React.FC<{
         content={
           <span>
             Process Pipeline {!isRelativeTimeSelected && "Only"}{" "}
-            <Shortcut keys={headerShortcuts.getAlias("re-evaluate")} />
+            <Shortcut keys={resolvedHeaderShortcuts.getAlias("re-evaluate")} />
           </span>
         }
         showArrow

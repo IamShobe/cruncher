@@ -9,7 +9,7 @@ import { isLiveModeAtom, liveAutoStopMinutesAtom } from "~core/store/liveState";
 import { isLoadingAtom, lastRanJobAtom } from "~core/search";
 import { Tooltip } from "~components/ui/tooltip";
 import { Shortcut } from "~components/ui/shortcut";
-import { searcherShortcuts } from "~core/keymaps";
+import { searcherShortcuts, useResolvedShortcuts } from "~core/keymaps";
 
 const pulseAnimation = keyframes`
   0%   { opacity: 1; transform: scale(1); }
@@ -43,6 +43,7 @@ const LiveButton = styled(Button)<{ $isLive: boolean }>`
 `;
 
 const LiveModeButton: React.FC = () => {
+  const resolvedSearcherShortcuts = useResolvedShortcuts(searcherShortcuts);
   const [isLiveMode, setIsLiveMode] = useAtom(isLiveModeAtom);
   const isLoading = useAtomValue(isLoadingAtom);
   const job = useAtomValue(lastRanJobAtom);
@@ -72,7 +73,9 @@ const LiveModeButton: React.FC = () => {
       content={
         <span>
           {isLiveMode ? "Live — click to disable" : "Enable live mode"}{" "}
-          <Shortcut keys={searcherShortcuts.getAlias("toggle-live-mode")} />
+          <Shortcut
+            keys={resolvedSearcherShortcuts.getAlias("toggle-live-mode")}
+          />
         </span>
       }
       showArrow

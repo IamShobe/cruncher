@@ -1,9 +1,10 @@
-import { useMemo } from "react";
+import { useContext, useMemo } from "react";
 import { useEvent } from "react-use";
+import { KeybindingsContext } from "./KeybindingsContext";
 
-type KeyTypes = "Meta" | "Shift" | "Alt" | "Control" | "Slash";
+type KeyTypes = "Meta" | "Shift" | "Alt" | "Control" | "Slash" | "Space";
 
-type PlatformTypes = "Mac" | "Windows";
+export type PlatformTypes = "Mac" | "Windows";
 
 type ShortcutAliases = Record<PlatformTypes, Record<KeyTypes, string>>;
 
@@ -16,6 +17,7 @@ const keyMapsAliases: ShortcutAliases = {
     Alt: "⌥",
     Control: "⌃",
     Slash: "/",
+    Space: "Space",
   },
   Windows: {
     Meta: "Win",
@@ -23,6 +25,7 @@ const keyMapsAliases: ShortcutAliases = {
     Alt: "Alt",
     Control: "Ctrl",
     Slash: "/",
+    Space: "Space",
   },
 };
 
@@ -57,6 +60,8 @@ export class ShortcutHolder<T extends ShortcutDefinitions> {
           return event.code === "Enter";
         case "Slash":
           return event.code === "Slash";
+        case "Space":
+          return event.code === "Space";
 
         default:
           return event.code === `Key${key}`;
@@ -71,9 +76,21 @@ export class ShortcutHolder<T extends ShortcutDefinitions> {
       return platformKeys?.[key as KeyTypes] ?? key;
     });
   }
+
+  withOverrides(
+    overrides: Record<string, { Mac: string; Windows: string }>,
+  ): ShortcutHolder<T> {
+    const merged = { ...this.shortcuts } as T;
+    for (const [key, value] of Object.entries(overrides)) {
+      if (key in merged) {
+        (merged as Record<string, Record<PlatformTypes, string>>)[key] = value;
+      }
+    }
+    return new ShortcutHolder<T>(merged);
+  }
 }
 
-const getUserPlatform = (): PlatformTypes => {
+export const getUserPlatform = (): PlatformTypes => {
   return navigator.userAgent.includes("Macintosh") ? "Mac" : "Windows";
 };
 
@@ -85,6 +102,10 @@ export const headerShortcuts = new ShortcutHolder({
   "re-evaluate": {
     Mac: "Shift + Enter",
     Windows: "Shift + Enter",
+  },
+  "trigger-autocomplete": {
+    Mac: "Control + Space",
+    Windows: "Control + Space",
   },
 });
 
@@ -167,13 +188,24 @@ export const matchShortcut = <T extends ShortcutDefinitions>(
   return null;
 };
 
+export const useResolvedShortcuts = <T extends ShortcutDefinitions>(
+  shortcuts: ShortcutHolder<T>,
+): ShortcutHolder<T> => {
+  const { overrides } = useContext(KeybindingsContext);
+  return useMemo(
+    () => shortcuts.withOverrides(overrides),
+    [shortcuts, overrides],
+  );
+};
+
 export const useShortcuts = <T extends ShortcutDefinitions>(
   shortcuts: ShortcutHolder<T>,
   handler: ShortcutHandler<T>,
 ) => {
+  const resolved = useResolvedShortcuts(shortcuts);
   const onKeyDown = useMemo(
-    () => createShortcutsHandler(shortcuts, handler),
-    [shortcuts, handler],
+    () => createShortcutsHandler(resolved, handler),
+    [resolved, handler],
   );
   useEvent("keydown", onKeyDown);
 };

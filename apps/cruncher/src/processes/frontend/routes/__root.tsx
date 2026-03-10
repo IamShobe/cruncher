@@ -13,6 +13,7 @@ import { Toaster } from "~components/ui/toaster";
 import { ApplicationProvider } from "~core/ApplicationProvider";
 import { queryClient } from "~core/client";
 import { globalShortcuts, useShortcuts } from "~core/keymaps";
+import { KeybindingsProvider } from "~core/KeybindingsContext";
 import { Shortcuts } from "~features/shortcuts/Shortcuts";
 import { SideMenu } from "~features/SideMenu";
 import { TopBar } from "~features/TopBar";
@@ -56,8 +57,10 @@ export const Route = createRootRoute({
           <Toaster />
           <ApplicationProvider>
             <JotaiProvider>
-              <TopBar />
-              <MainContent />
+              <KeybindingsProvider>
+                <TopBar />
+                <MainContent />
+              </KeybindingsProvider>
             </JotaiProvider>
           </ApplicationProvider>
         </Provider>

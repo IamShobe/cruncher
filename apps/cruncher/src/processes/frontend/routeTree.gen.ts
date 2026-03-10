@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteRouteImport } from './routes/settings/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SettingsIndexRouteImport } from './routes/settings/index'
+import { Route as SettingsKeybindingsRouteImport } from './routes/settings/keybindings'
 import { Route as SettingsInitializedDatasetsRouteImport } from './routes/settings/initialized-datasets'
 import { Route as SettingsGeneralRouteImport } from './routes/settings/general'
 
@@ -28,6 +29,11 @@ const IndexRoute = IndexRouteImport.update({
 const SettingsIndexRoute = SettingsIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
+const SettingsKeybindingsRoute = SettingsKeybindingsRouteImport.update({
+  id: '/keybindings',
+  path: '/keybindings',
   getParentRoute: () => SettingsRouteRoute,
 } as any)
 const SettingsInitializedDatasetsRoute =
@@ -47,12 +53,14 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRouteRouteWithChildren
   '/settings/general': typeof SettingsGeneralRoute
   '/settings/initialized-datasets': typeof SettingsInitializedDatasetsRoute
+  '/settings/keybindings': typeof SettingsKeybindingsRoute
   '/settings/': typeof SettingsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/settings/general': typeof SettingsGeneralRoute
   '/settings/initialized-datasets': typeof SettingsInitializedDatasetsRoute
+  '/settings/keybindings': typeof SettingsKeybindingsRoute
   '/settings': typeof SettingsIndexRoute
 }
 export interface FileRoutesById {
@@ -61,6 +69,7 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRouteRouteWithChildren
   '/settings/general': typeof SettingsGeneralRoute
   '/settings/initialized-datasets': typeof SettingsInitializedDatasetsRoute
+  '/settings/keybindings': typeof SettingsKeybindingsRoute
   '/settings/': typeof SettingsIndexRoute
 }
 export interface FileRouteTypes {
@@ -70,15 +79,22 @@ export interface FileRouteTypes {
     | '/settings'
     | '/settings/general'
     | '/settings/initialized-datasets'
+    | '/settings/keybindings'
     | '/settings/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/settings/general' | '/settings/initialized-datasets' | '/settings'
+  to:
+    | '/'
+    | '/settings/general'
+    | '/settings/initialized-datasets'
+    | '/settings/keybindings'
+    | '/settings'
   id:
     | '__root__'
     | '/'
     | '/settings'
     | '/settings/general'
     | '/settings/initialized-datasets'
+    | '/settings/keybindings'
     | '/settings/'
   fileRoutesById: FileRoutesById
 }
@@ -110,6 +126,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsIndexRouteImport
       parentRoute: typeof SettingsRouteRoute
     }
+    '/settings/keybindings': {
+      id: '/settings/keybindings'
+      path: '/keybindings'
+      fullPath: '/settings/keybindings'
+      preLoaderRoute: typeof SettingsKeybindingsRouteImport
+      parentRoute: typeof SettingsRouteRoute
+    }
     '/settings/initialized-datasets': {
       id: '/settings/initialized-datasets'
       path: '/initialized-datasets'
@@ -130,12 +153,14 @@ declare module '@tanstack/react-router' {
 interface SettingsRouteRouteChildren {
   SettingsGeneralRoute: typeof SettingsGeneralRoute
   SettingsInitializedDatasetsRoute: typeof SettingsInitializedDatasetsRoute
+  SettingsKeybindingsRoute: typeof SettingsKeybindingsRoute
   SettingsIndexRoute: typeof SettingsIndexRoute
 }
 
 const SettingsRouteRouteChildren: SettingsRouteRouteChildren = {
   SettingsGeneralRoute: SettingsGeneralRoute,
   SettingsInitializedDatasetsRoute: SettingsInitializedDatasetsRoute,
+  SettingsKeybindingsRoute: SettingsKeybindingsRoute,
   SettingsIndexRoute: SettingsIndexRoute,
 }
 

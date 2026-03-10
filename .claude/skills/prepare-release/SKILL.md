@@ -26,6 +26,15 @@ Read `git diff HEAD` (or the staged diff) across all modified files before doing
 
 The Electron app (`cruncher`), docs (`docs-cruncher`), and tools (`cruncher-tools`) are **never published** — they never need a changeset entry.
 
+
+---
+
+## 2 - Code cleanups
+
+Read the diff you written - make sure everything is as elgant as you can - make sure all algorithms are optimized!
+If you detect something wrong - immediatly report to the user - dont continue to next steps!!!
+Suggest improvements before continuing!
+
 ---
 
 ## 2 — Lint
@@ -102,7 +111,7 @@ Keep it factual and user-focused — not a list of files touched.
 
 ## 7 — Docs
 
-Update docs **only for user-visible changes**. Skip entirely if the change is internal-only (refactor, perf, test data, internal types).
+Update docs **only for user-visible changes** - especially Cruncher app itself at apps/cruncher/. Skip entirely if the change is internal-only (refactor, perf, test data, internal types).
 
 Docs live in `docs/src/content/docs/`:
 - `getting-started/` — UI behaviour, settings, keyboard shortcuts, live mode

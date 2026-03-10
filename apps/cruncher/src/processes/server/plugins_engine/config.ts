@@ -10,9 +10,11 @@ import { getConfigDirPath } from "~lib/config";
 import { resolve, dirname } from "node:path";
 
 const configFilePath = "cruncher.config.yaml";
+const localConfigFileName = "cruncher.config.local.yaml";
 
 // file should be in ~/.config/cruncher/cruncher.config.yaml
 const defaultConfigFilePath = resolve(getConfigDirPath(), configFilePath);
+const localConfigFilePath = resolve(getConfigDirPath(), localConfigFileName);
 
 export type AppGeneralSettings = {
   configFilePath: string;
@@ -75,6 +77,85 @@ export const writeConfig = (
     YAML.stringify(updated),
     "utf8",
   );
+};
+
+const readConfigFromPath = (filePath: string): ReadConfigResult => {
+  if (!fs.existsSync(filePath)) {
+    return { ok: true, config: DEFAULT_CONFIG, error: null };
+  }
+
+  let raw: unknown;
+  try {
+    const fileContent = fs.readFileSync(filePath, "utf8");
+    raw = YAML.parse(fileContent);
+  } catch (e) {
+    const msg = `Failed to read config file: ${e instanceof Error ? e.message : String(e)}`;
+    console.error(msg);
+    return { ok: false, config: DEFAULT_CONFIG, error: msg };
+  }
+
+  const validated = CruncherConfigSchema.safeParse(raw);
+  if (!validated.success) {
+    const msg = `Configuration file validation failed\n${z.prettifyError(validated.error)}`;
+    console.error(msg);
+    return { ok: false, config: DEFAULT_CONFIG, error: msg };
+  }
+
+  return { ok: true, config: validated.data, error: null };
+};
+
+const writeConfigToPath = (
+  filePath: string,
+  updater: (config: CruncherConfig) => CruncherConfig,
+): void => {
+  const { config: current } = readConfigFromPath(filePath);
+  const updated = updater(current);
+  fs.mkdirSync(dirname(filePath), { recursive: true });
+  fs.writeFileSync(filePath, YAML.stringify(updated), "utf8");
+};
+
+export type MergedConfigResult = {
+  merged: CruncherConfig;
+  globalConfig: CruncherConfig;
+  localConfig: CruncherConfig;
+  error: string | null;
+};
+
+export const readMergedConfig = (
+  appGeneralSettings: AppGeneralSettings,
+): MergedConfigResult => {
+  const { config: globalConfig, error } = readConfig(appGeneralSettings);
+  const { config: localConfig } = readConfigFromPath(localConfigFilePath);
+
+  const mergedKeybindings = {
+    ...globalConfig.ui?.keybindings,
+    ...localConfig.ui?.keybindings,
+  };
+
+  const merged: CruncherConfig = {
+    ...globalConfig,
+    ui: {
+      theme: localConfig.ui?.theme ?? globalConfig.ui?.theme ?? DEFAULT_THEME,
+      liveInterval:
+        localConfig.ui?.liveInterval ?? globalConfig.ui?.liveInterval ?? "5s",
+      maxLogs: localConfig.ui?.maxLogs ?? globalConfig.ui?.maxLogs ?? 100000,
+      liveAutoStopMinutes:
+        localConfig.ui?.liveAutoStopMinutes ??
+        globalConfig.ui?.liveAutoStopMinutes ??
+        30,
+      timezone:
+        localConfig.ui?.timezone ?? globalConfig.ui?.timezone ?? "local",
+      keybindings: mergedKeybindings,
+    },
+  };
+
+  return { merged, globalConfig, localConfig, error };
+};
+
+export const writeLocalConfig = (
+  updater: (config: CruncherConfig) => CruncherConfig,
+): void => {
+  writeConfigToPath(localConfigFilePath, updater);
 };
 
 export const setupPluginsFromConfig = (

@@ -29,6 +29,11 @@ function Settings() {
             <SettingsTab label={"Connectors"} isActive={isActive} />
           )}
         </Link>
+        <Link to="/settings/keybindings">
+          {({ isActive }) => (
+            <SettingsTab label={"Keybindings"} isActive={isActive} />
+          )}
+        </Link>
       </Stack>
       <Box overflow="auto" flex={1} display="flex" flexDirection="column">
         <Outlet />

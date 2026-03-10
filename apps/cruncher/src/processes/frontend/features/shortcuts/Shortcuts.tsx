@@ -14,6 +14,7 @@ import {
   searcherShortcuts,
   ShortcutDefinitions,
   ShortcutHolder,
+  useResolvedShortcuts,
 } from "~core/keymaps";
 import { Shortcut } from "~components/ui/shortcut";
 
@@ -79,16 +80,17 @@ function ShortcutsDisplay<T extends ShortcutDefinitions>({
   shortcuts: ShortcutHolder<T>;
   title: string;
 }) {
+  const resolved = useResolvedShortcuts(shortcuts);
   return (
     <Box maxW="20rem">
       <Heading size="md">{title}</Heading>
-      {Object.keys(shortcuts.getShortcuts()).map((value) => {
+      {Object.keys(resolved.getShortcuts()).map((value) => {
         return (
           <Box display="flex" justifyContent="space-between" key={value}>
             <span>{value}</span>
             <Shortcut
-              keys={shortcuts.getAlias(
-                value as keyof ReturnType<typeof shortcuts.getShortcuts>,
+              keys={resolved.getAlias(
+                value as keyof ReturnType<typeof resolved.getShortcuts>,
               )}
             />
           </Box>

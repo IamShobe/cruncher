@@ -12,7 +12,11 @@ import { parseDate } from "src/processes/server/lib/dateUtils";
 import { Signal } from "@cruncher/utils";
 import { useDebouncer } from "@tanstack/react-pacer";
 import { Searcher } from "./Searcher";
-import { searcherGlobalShortcuts, useShortcuts } from "~core/keymaps";
+import {
+  searcherGlobalShortcuts,
+  useResolvedShortcuts,
+  useShortcuts,
+} from "~core/keymaps";
 import { notifyError } from "~core/notifyError";
 import {
   appStoreAtom,
@@ -144,6 +148,9 @@ const useInitializeAtoms = (tab: Tab) => {
 export const SearcherWrapper = () => {
   // TODO: Implement tab selection logic
   const { tabs, addTab, removeTab, selectedTab, setSelectedTab } = useTabs();
+  const resolvedSearcherGlobalShortcuts = useResolvedShortcuts(
+    searcherGlobalShortcuts,
+  );
 
   useUrlNavigation(async (url) => {
     console.log("URL Navigation message received:", url);
@@ -281,7 +288,9 @@ export const SearcherWrapper = () => {
           ))}
           <MiniIconButton
             tooltip="Add Tab"
-            tooltipShortcut={searcherGlobalShortcuts.getAlias("create-new-tab")}
+            tooltipShortcut={resolvedSearcherGlobalShortcuts.getAlias(
+              "create-new-tab",
+            )}
             aria-label="Add new tab"
             onClick={() => {
               const created = addTab();
@@ -313,6 +322,9 @@ export const DisplayTab: React.FC<{
   index: number;
 }> = ({ tab, index }) => {
   const { removeTab, selectedTab, setSelectedTab, renameTab } = useTabs();
+  const resolvedSearcherGlobalShortcuts = useResolvedShortcuts(
+    searcherGlobalShortcuts,
+  );
   const [editingTabKey, setEditingTabKey] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState("");
   useInitializeAtoms(tab);
@@ -415,7 +427,7 @@ export const DisplayTab: React.FC<{
       )}
       <MiniIconButton
         tooltip={`Close ${selectedTab === index ? "Active" : ""} Tab`}
-        tooltipShortcut={searcherGlobalShortcuts.getAlias("close-tab")}
+        tooltipShortcut={resolvedSearcherGlobalShortcuts.getAlias("close-tab")}
         aria-label="Close tab"
         variant="ghost"
         className="close-btn"

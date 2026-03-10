@@ -30,7 +30,7 @@ import { Shortcut } from "~components/ui/shortcut";
 import { Tooltip } from "~components/ui/tooltip";
 import { useOutsideDetector } from "~components/ui/useOutsideDetector";
 import { CalendarSelector } from "./CalendarSelector";
-import { searcherShortcuts } from "~core/keymaps";
+import { searcherShortcuts, useResolvedShortcuts } from "~core/keymaps";
 
 const ringGlow = keyframes`
   0%, 100% { box-shadow: 0 0 0 1.5px ${token("colors.teal.600")}, 0 0 8px ${token("colors.teal.600")}55; }
@@ -74,6 +74,7 @@ const useDateOperations = () => {
 export const isDateSelectorOpenAtom = atom(false);
 
 export const DateSelector = () => {
+  const resolvedSearcherShortcuts = useResolvedShortcuts(searcherShortcuts);
   const [selectedRenderedStartDate] = useAtom(renderedStartDateAtom);
   const [selectedRenderedEndDate] = useAtom(renderedEndDateAtom);
   const [isOpen, setIsOpen] = useAtom(isDateSelectorOpenAtom);
@@ -108,7 +109,9 @@ export const DateSelector = () => {
           content={
             <span>
               Change time range
-              <Shortcut keys={searcherShortcuts.getAlias("select-time")} />
+              <Shortcut
+                keys={resolvedSearcherShortcuts.getAlias("select-time")}
+              />
             </span>
           }
           portalled
@@ -160,6 +163,7 @@ const CalendarPopUp = forwardRef(
     { setIsOpen }: CalendarPopUpProps,
     ref: React.ForwardedRef<HTMLInputElement>,
   ) => {
+    const resolvedSearcherShortcuts = useResolvedShortcuts(searcherShortcuts);
     const [selectedRange, setSelectedRange] = useAtom(dateRangeAtom);
 
     const { toggleUntilNow } = useQueryActions();
@@ -352,7 +356,9 @@ const CalendarPopUp = forwardRef(
               content={
                 <span>
                   <Shortcut
-                    keys={searcherShortcuts.getAlias("toggle-until-now")}
+                    keys={resolvedSearcherShortcuts.getAlias(
+                      "toggle-until-now",
+                    )}
                   />
                 </span>
               }

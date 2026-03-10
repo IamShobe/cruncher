@@ -19,6 +19,7 @@ import KeyboardShortcuts from '../../../components/KeyboardShortcuts.astro';
     shortcuts: [
       { action: "Full search",            mac: "⌘ + ⇧ + Enter", windows: "Ctrl + Shift + Enter" },
       { action: "Re-evaluate pipeline",   mac: "⇧ + Enter",     windows: "Shift + Enter" },
+      { action: "Trigger autocomplete",   mac: "⌃ + Space",     windows: "Ctrl + Space" },
       { action: "Focus query editor",     mac: "⌥ + Q",         windows: "Alt + Q" },
       { action: "Open time range picker", mac: "⌥ + T",         windows: "Alt + T" },
     ]
@@ -37,3 +38,7 @@ import KeyboardShortcuts from '../../../components/KeyboardShortcuts.astro';
 ]} />
 
 **Re-evaluate vs Full Search** — `⇧ Enter` re-runs your pipeline without changing the time range. `⌘ ⇧ Enter` performs a full search and may reset the time window.
+
+## Customizing keybindings
+
+All shortcuts can be overridden in **Settings → Keybindings**. Click any key badge to record a new combo, then choose whether to save it to your **Local** config (`~/.config/cruncher/cruncher.config.local.yaml`) or the shared **Global** config (`~/.config/cruncher/cruncher.config.yaml`). Local overrides always take precedence over global ones. Click the **×** next to a binding to reset it to the default, or use **Reset All** to clear every override at once.

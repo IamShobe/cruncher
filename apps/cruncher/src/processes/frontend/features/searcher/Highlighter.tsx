@@ -4,7 +4,7 @@ import { forwardRef, useImperativeHandle, useRef } from "react";
 import { LuHighlighter } from "react-icons/lu";
 import { highlightItemQueryAtom } from "~core/search";
 import { Shortcut } from "~components/ui/shortcut";
-import { searcherShortcuts } from "~core/keymaps";
+import { searcherShortcuts, useResolvedShortcuts } from "~core/keymaps";
 
 export type HighlighterRef = {
   focus: () => void;
@@ -12,6 +12,7 @@ export type HighlighterRef = {
 };
 
 export const Highlighter = forwardRef<HighlighterRef>((_props, ref) => {
+  const resolvedSearcherShortcuts = useResolvedShortcuts(searcherShortcuts);
   const [highlightItemQuery, setHighlightItemQuery] = useAtom(
     highlightItemQueryAtom,
   );
@@ -37,7 +38,9 @@ export const Highlighter = forwardRef<HighlighterRef>((_props, ref) => {
     <InputGroup
       flex="1"
       startElement={<LuHighlighter />}
-      endElement={<Shortcut keys={searcherShortcuts.getAlias("highlight")} />}
+      endElement={
+        <Shortcut keys={resolvedSearcherShortcuts.getAlias("highlight")} />
+      }
     >
       <Input
         ref={inputRef}

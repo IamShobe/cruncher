@@ -10,9 +10,14 @@ import {
   appGeneralSettings,
   setupPluginsFromConfig,
   writeConfig,
-  readConfig,
+  writeLocalConfig,
+  readMergedConfig,
 } from "./config";
-import { LIVE_INTERVAL_OPTIONS, TIMEZONE_OPTIONS } from "../config/schema";
+import {
+  CruncherConfig,
+  LIVE_INTERVAL_OPTIONS,
+  TIMEZONE_OPTIONS,
+} from "../config/schema";
 import { DEFAULT_THEME } from "../lib/themeDefaults.js";
 import { QueryBatchDone, QueryJobUpdated, UrlNavigation } from "./protocolOut";
 import { publicProcedure, router } from "./trpc";
@@ -163,16 +168,88 @@ export const appRouter = router({
       console.log(`Hello, ${input.name}!`);
     }),
   getGeneralSettings: publicProcedure.query(async () => {
-    const { config, error } = readConfig(appGeneralSettings);
+    const { merged, globalConfig, localConfig, error } =
+      readMergedConfig(appGeneralSettings);
     return {
       ...appGeneralSettings,
-      theme: config.ui?.theme ?? DEFAULT_THEME,
-      liveInterval: config.ui?.liveInterval ?? "5s",
-      maxLogs: config.ui?.maxLogs ?? 100000,
-      liveAutoStopMinutes: config.ui?.liveAutoStopMinutes ?? 30,
-      timezone: config.ui?.timezone ?? "local",
+      theme: merged.ui?.theme ?? DEFAULT_THEME,
+      liveInterval: merged.ui?.liveInterval ?? "5s",
+      maxLogs: merged.ui?.maxLogs ?? 100000,
+      liveAutoStopMinutes: merged.ui?.liveAutoStopMinutes ?? 30,
+      timezone: merged.ui?.timezone ?? "local",
+      keybindings: merged.ui?.keybindings ?? {},
+      globalKeybindings: globalConfig.ui?.keybindings ?? {},
+      localKeybindings: localConfig.ui?.keybindings ?? {},
       configError: error,
     };
+  }),
+  setKeybinding: publicProcedure
+    .input(
+      z.object({
+        shortcut: z.string(),
+        Mac: z.string(),
+        Windows: z.string(),
+        target: z.enum(["global", "local"]),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const write =
+        input.target === "global"
+          ? writeConfig.bind(null, appGeneralSettings)
+          : writeLocalConfig;
+      write((config) => ({
+        ...config,
+        ui: {
+          theme: config.ui?.theme ?? DEFAULT_THEME,
+          liveInterval: config.ui?.liveInterval ?? "5s",
+          maxLogs: config.ui?.maxLogs ?? 100000,
+          liveAutoStopMinutes: config.ui?.liveAutoStopMinutes ?? 30,
+          timezone: config.ui?.timezone ?? "local",
+          keybindings: {
+            ...config.ui?.keybindings,
+            [input.shortcut]: { Mac: input.Mac, Windows: input.Windows },
+          },
+        },
+      }));
+      return { success: true };
+    }),
+  resetKeybinding: publicProcedure
+    .input(z.object({ shortcut: z.string() }))
+    .mutation(async ({ input }) => {
+      const removeFromConfig = (config: CruncherConfig): CruncherConfig => {
+        const keybindings = { ...config.ui?.keybindings };
+        delete keybindings[input.shortcut];
+        return {
+          ...config,
+          ui: {
+            theme: config.ui?.theme ?? DEFAULT_THEME,
+            liveInterval: config.ui?.liveInterval ?? "5s",
+            maxLogs: config.ui?.maxLogs ?? 100000,
+            liveAutoStopMinutes: config.ui?.liveAutoStopMinutes ?? 30,
+            timezone: config.ui?.timezone ?? "local",
+            keybindings,
+          },
+        };
+      };
+      writeConfig(appGeneralSettings, removeFromConfig);
+      writeLocalConfig(removeFromConfig);
+      return { success: true };
+    }),
+  resetAllKeybindings: publicProcedure.mutation(async () => {
+    const clearKeybindings = (config: CruncherConfig): CruncherConfig => ({
+      ...config,
+      ui: {
+        theme: config.ui?.theme ?? DEFAULT_THEME,
+        liveInterval: config.ui?.liveInterval ?? "5s",
+        maxLogs: config.ui?.maxLogs ?? 100000,
+        liveAutoStopMinutes: config.ui?.liveAutoStopMinutes ?? 30,
+        timezone: config.ui?.timezone ?? "local",
+        keybindings: {},
+      },
+    });
+    writeConfig(appGeneralSettings, clearKeybindings);
+    writeLocalConfig(clearKeybindings);
+    return { success: true };
   }),
   setLiveSettings: publicProcedure
     .input(
@@ -188,6 +265,7 @@ export const appRouter = router({
         ...config,
         ui: {
           theme: config.ui?.theme ?? DEFAULT_THEME,
+          keybindings: config.ui?.keybindings ?? {},
           ...config.ui,
           liveInterval: input.liveInterval,
           maxLogs: input.maxLogs,
@@ -212,6 +290,7 @@ export const appRouter = router({
           maxLogs: config.ui?.maxLogs ?? 100000,
           liveAutoStopMinutes: config.ui?.liveAutoStopMinutes ?? 30,
           timezone: config.ui?.timezone ?? "local",
+          keybindings: config.ui?.keybindings ?? {},
         },
       }));
       return { success: true };

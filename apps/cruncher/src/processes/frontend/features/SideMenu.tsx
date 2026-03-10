@@ -8,7 +8,7 @@ import {
   useSetShortcutsShown,
 } from "~core/store/appStore";
 import { Tooltip } from "../components/presets/Tooltip";
-import { globalShortcuts } from "~core/keymaps";
+import { globalShortcuts, useResolvedShortcuts } from "~core/keymaps";
 
 export type MenuItem = "searcher" | "settings";
 
@@ -24,6 +24,7 @@ const versionSelector = (state: ApplicationStore) => {
 export const SideMenu = () => {
   const version = useApplicationStore(versionSelector);
   const setShortcutsShown = useSetShortcutsShown();
+  const resolvedGlobalShortcuts = useResolvedShortcuts(globalShortcuts);
 
   return (
     <Stack direction="row" gap={0} bg="bg.subtle">
@@ -47,7 +48,7 @@ export const SideMenu = () => {
           <Tooltip
             text="Keyboard Shortcuts"
             position="right"
-            shortcut={globalShortcuts.getAlias("toggle-help")}
+            shortcut={resolvedGlobalShortcuts.getAlias("toggle-help")}
           >
             <IconButton
               variant={"ghost"}
