@@ -13,6 +13,7 @@ import { IconButton } from "@chakra-ui/react";
 import { css } from "@emotion/react";
 import { useMemo } from "react";
 import { LuArrowLeft, LuArrowRight } from "react-icons/lu";
+import { token } from "~components/ui/system";
 
 type InputTimeProps = {
   selectedRange: ReturnType<typeof dateRangeAtom.read> | undefined;
@@ -96,7 +97,7 @@ export function CalendarSelector({ selectedRange, onSelect }: InputTimeProps) {
             let todayStyle = {};
             if (modifiers.today) {
               todayStyle = {
-                color: "red",
+                color: token("colors.log.error"),
                 fontWeight: "bold",
               };
             }
@@ -120,7 +121,7 @@ export function CalendarSelector({ selectedRange, onSelect }: InputTimeProps) {
 
             let backgroundColor = "transparent";
             if (modifiers.range_middle) {
-              backgroundColor = "rgba(255, 255, 255, 0.1)";
+              backgroundColor = token("colors.bg.emphasized");
             }
 
             return (

@@ -98,7 +98,7 @@ export const TableView: React.FC<TableViewProps> = (_props: TableViewProps) => {
         >
           {columns.map((column, i) => (
             <Table.ColumnHeader
-              key={i}
+              key={column}
               style={{
                 width: `${columnSizes[column] ?? 3}ch`,
                 background: token("colors.bg.subtle"),
@@ -122,7 +122,7 @@ export const TableView: React.FC<TableViewProps> = (_props: TableViewProps) => {
         <>
           {prepareItem(item, columns).map((value, i) => (
             <Table.Cell
-              key={i}
+              key={columns[i]}
               style={{
                 whiteSpace: "pre-wrap",
                 verticalAlign: "top",

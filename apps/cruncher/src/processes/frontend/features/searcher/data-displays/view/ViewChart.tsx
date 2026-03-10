@@ -152,7 +152,7 @@ export const ViewChart = (_props: ViewChartProps) => {
                 yAxisId="1"
                 type="linear"
                 strokeWidth={2}
-                key={index}
+                key={yAxis.name}
                 dataKey={yAxis.name}
                 stroke={yAxis.color}
                 activeDot={{ r: 8, opacity: isSelected ? 1 : 0.02 }}
@@ -251,7 +251,7 @@ const Legend = ({
 
         return (
           <div
-            key={index}
+            key={yAxis.name}
             onClick={() => onClick(yAxis.name)}
             style={{
               cursor: "pointer",

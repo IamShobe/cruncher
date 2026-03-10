@@ -394,8 +394,8 @@ export const DisplayTab: React.FC<{
           value={editingValue}
           style={{
             width: Math.max(80, editingValue.length * 8),
-            background: "rgba(0,0,0,0.3)",
-            color: "white",
+            background: token("colors.bg.emphasized"),
+            color: token("colors.fg"),
             border: `1px solid ${token("colors.border.emphasized")}`,
             borderRadius: 4,
             padding: "2px 6px",

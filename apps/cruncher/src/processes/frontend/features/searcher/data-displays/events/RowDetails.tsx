@@ -27,6 +27,7 @@ import {
 } from "react-icons/vsc";
 import { highlightItemQueryAtom } from "~core/search";
 import { Portal } from "~components/ui/portal";
+import { notifyError, notifySuccess } from "~core/notifyError";
 import { highlightText } from "~core/utils/highlight";
 
 type DataRowProps = {
@@ -175,7 +176,10 @@ export const RowDetail: React.FC<DataRowProps> = ({ rowKey, rowValue }) => {
               <Menu.Item
                 value="copy-value"
                 onClick={() => {
-                  navigator.clipboard.writeText(asDisplayString(rowValue));
+                  navigator.clipboard
+                    .writeText(asDisplayString(rowValue))
+                    .then(() => notifySuccess("Copied to clipboard"))
+                    .catch((e) => notifyError("Failed to copy to clipboard", e));
                 }}
                 cursor={"pointer"}
               >

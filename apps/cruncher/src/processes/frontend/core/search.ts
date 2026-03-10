@@ -390,16 +390,16 @@ export const runQueryForStore = async (
     const searchTerm = store.get(searchQueryAtom);
     const selectedProfile = store.get(selectedSearchProfileAtom);
     if (!selectedProfile) {
-      // TODO: return error
+      notifyError("No search profile selected", new Error("Please select a search profile before running a query."));
       return;
     }
     if (startFullDate === undefined) {
-      // TODO: return error
+      notifyError("Start date is required", new Error("Please set a start date before running a query."));
       return;
     }
 
     if (endFullDate === undefined) {
-      // TODO: return error
+      notifyError("End date is required", new Error("Please set an end date before running a query."));
       return;
     }
 
@@ -407,7 +407,7 @@ export const runQueryForStore = async (
     const toTime = isTimeNow(endFullDate) ? new Date() : endFullDate;
 
     if (fromTime.getTime() > toTime.getTime()) {
-      // TODO: return error
+      notifyError("Invalid date range", new Error("Start date must be before end date."));
       return;
     }
 

@@ -549,7 +549,7 @@ const ReEvaluateButton: React.FC<{
           contentProps={{ css: { "--tooltip-bg": "tomato" } }}
         >
           <Float placement="top-end">
-            <Circle size="3" bg="red" color="white"></Circle>
+            <Circle size="3" bg="red.500"></Circle>
           </Float>
         </Tooltip>
       )}

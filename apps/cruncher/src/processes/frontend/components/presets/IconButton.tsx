@@ -4,12 +4,11 @@ import {
 } from "@chakra-ui/react";
 import { Tooltip, TooltipProps } from "./Tooltip";
 
-export type IconButtonProps = OIconButtonProps &
-  import("react").RefAttributes<HTMLButtonElement> & {
-    tooltip?: TooltipProps["text"];
-    tooltipPosition?: TooltipProps["position"];
-    tooltipShortcut?: TooltipProps["shortcut"];
-  };
+export type IconButtonProps = OIconButtonProps & {
+  tooltip?: TooltipProps["text"];
+  tooltipPosition?: TooltipProps["position"];
+  tooltipShortcut?: TooltipProps["shortcut"];
+};
 
 export const MiniIconButton: React.FC<IconButtonProps> = (props) => {
   return (
