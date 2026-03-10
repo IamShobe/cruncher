@@ -84,9 +84,10 @@ export const DateSelector = () => {
   useEffect(() => {
     // When the popover is opened, focus the first input
     if (isOpen) {
-      setTimeout(() => {
+      const timerId = setTimeout(() => {
         firstFocusRef.current?.focus();
       }, 0);
+      return () => clearTimeout(timerId);
     }
   }, [isOpen]);
 

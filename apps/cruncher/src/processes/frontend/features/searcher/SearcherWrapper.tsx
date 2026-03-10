@@ -3,13 +3,14 @@ import { css } from "@emotion/react";
 import { token } from "~components/ui/system";
 import { atom, createStore, Provider, useAtom, useAtomValue } from "jotai";
 import { v4 as uuidv4 } from "uuid";
-import React, { useCallback, useState } from "react";
+import React, { useState } from "react";
 import { VscAdd, VscClose } from "react-icons/vsc";
 import { createSignal } from "@cruncher/utils";
 import { useMount } from "react-use";
 import { MiniIconButton } from "~components/presets/IconButton";
 import { parseDate } from "src/processes/server/lib/dateUtils";
-import { debounceInitialize, Signal } from "@cruncher/utils";
+import { Signal } from "@cruncher/utils";
+import { useDebouncer } from "@tanstack/react-pacer";
 import { Searcher } from "./Searcher";
 import { searcherGlobalShortcuts, useShortcuts } from "~core/keymaps";
 import { notifyError } from "~core/notifyError";
@@ -197,9 +198,8 @@ export const SearcherWrapper = () => {
     await runQueryForStore(createdTab.createdTab.store, true);
   });
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const initializeProfiles = useCallback(
-    debounceInitialize(async () => {
+  const initializeProfilesDebouncer = useDebouncer(
+    async () => {
       const profileNames = new Set(
         tabs.map((tab) => {
           const selectedSearchProfile = tab.store.get(
@@ -221,12 +221,12 @@ export const SearcherWrapper = () => {
         // Initialize datasets for each profile
         await appStore.getState().initializeProfileDatasets(profileName);
       }
-    }, 200),
-    [tabs],
+    },
+    { wait: 200 },
   );
 
   useMount(() => {
-    initializeProfiles();
+    initializeProfilesDebouncer.maybeExecute();
   });
 
   useShortcuts(searcherGlobalShortcuts, (shortcut) => {

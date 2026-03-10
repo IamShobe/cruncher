@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 
 import { Global, css } from "@emotion/react";
 import { Card } from "@chakra-ui/react";
@@ -25,8 +25,6 @@ import { timezoneAtom } from "~core/store/liveState";
 
 export const EventsHistogram = () => {
   const scrollToIndex = useAtomValue(scrollToIndexAtom);
-
-  const ref = useRef(null);
 
   const [refAreaLeft, setRefAreaLeft] = useState<number>();
   const [refAreaRight, setRefAreaRight] = useState<number>();
@@ -69,7 +67,6 @@ export const EventsHistogram = () => {
         <ResponsiveContainer width="100%" height={100}>
           <BarChart
             width={800}
-            ref={ref}
             height={400}
             data={dataBuckets}
             style={{ background: token("colors.bg") }}

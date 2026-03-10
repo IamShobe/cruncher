@@ -5,6 +5,10 @@
   "packageManager": "pnpm@10.12.1",
   "description": "Cruncher monorepo.",
   "pnpm": {
+    "overrides": {
+      "@tanstack/store": "^0.9.1",
+      "@tanstack/react-store": "^0.9.1"
+    },
     "onlyBuiltDependencies": [
       "@swc/core",
       "bufferutil",

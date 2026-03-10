@@ -3,7 +3,8 @@ import { css, keyframes } from "@emotion/react";
 import { token } from "~components/ui/system";
 import { Button } from "@chakra-ui/react";
 import { useAtom, useAtomValue } from "jotai";
-import React, { useEffect, useRef } from "react";
+import React, { useEffect } from "react";
+import { useTimeoutFn } from "react-use";
 import { isLiveModeAtom, liveAutoStopMinutesAtom } from "~core/store/liveState";
 import { isLoadingAtom, lastRanJobAtom } from "~core/search";
 import { Tooltip } from "~components/ui/tooltip";
@@ -46,30 +47,23 @@ const LiveModeButton: React.FC = () => {
   const isLoading = useAtomValue(isLoadingAtom);
   const job = useAtomValue(lastRanJobAtom);
   const liveAutoStopMinutes = useAtomValue(liveAutoStopMinutesAtom);
-  const autoStopTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const delay =
+    isLiveMode && liveAutoStopMinutes && liveAutoStopMinutes > 0
+      ? liveAutoStopMinutes * 60 * 1000
+      : undefined;
+
+  const [, cancelAutoStop, resetAutoStop] = useTimeoutFn(
+    () => setIsLiveMode(false),
+    delay ?? 0,
+  );
 
   useEffect(() => {
-    if (autoStopTimerRef.current) {
-      clearTimeout(autoStopTimerRef.current);
-      autoStopTimerRef.current = null;
+    if (delay) {
+      resetAutoStop();
+    } else {
+      cancelAutoStop();
     }
-
-    if (isLiveMode && liveAutoStopMinutes && liveAutoStopMinutes > 0) {
-      autoStopTimerRef.current = setTimeout(
-        () => {
-          setIsLiveMode(false);
-        },
-        liveAutoStopMinutes * 60 * 1000,
-      );
-    }
-
-    return () => {
-      if (autoStopTimerRef.current) {
-        clearTimeout(autoStopTimerRef.current);
-        autoStopTimerRef.current = null;
-      }
-    };
-  }, [isLiveMode, liveAutoStopMinutes, setIsLiveMode]);
+  }, [delay, resetAutoStop, cancelAutoStop]);
 
   const disabled = isLoading || !job;
 

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { ThemeId, THEMES } from "./themes";
 import { DEFAULT_THEME } from "~lib/themeDefaults";
 import { appStore, useApplicationStore } from "~core/store/appStore";
+import { notifyError } from "~core/notifyError";
 
 export { type ThemeId };
 
@@ -21,7 +22,14 @@ export const useAppTheme = () => {
     setThemeIdState(id); // optimistic update
     const controller = appStore.getState().controller;
     if (controller) {
-      controller.setTheme(id).catch(console.error);
+      controller
+        .setTheme(id)
+        .catch((err) =>
+          notifyError(
+            "Failed to save theme",
+            err instanceof Error ? err : new Error(String(err)),
+          ),
+        );
     }
   };
 

@@ -6,8 +6,10 @@ import React, {
   useMemo,
   useRef,
   useState,
+  useDeferredValue,
   CSSProperties,
 } from "react";
+import { useDebouncer } from "@tanstack/react-pacer";
 import { createPortal } from "react-dom";
 import {
   Badge,
@@ -24,7 +26,7 @@ import { Tooltip } from "~components/presets/Tooltip";
 import { Portal } from "~components/ui/portal";
 import { useAtom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
-import { useIdle } from "react-use";
+import { useIdle, useLatest } from "react-use";
 
 import { AutoCompleter, compareSuggestions, Suggestion } from "./AutoCompleter";
 import {
@@ -183,6 +185,7 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
     const [hoveredCompletionItem, setHoveredCompletionItem] = useState<
       number | undefined
     >(undefined);
+    const deferredHoveredItem = useDeferredValue(hoveredCompletionItem);
     const [hasInteractedWithMenu, setHasInteractedWithMenu] = useState(false);
 
     const ctrlSpaceOpenRef = useRef(false);
@@ -275,7 +278,7 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
     const ghostTextInfo = useMemo(() => {
       if (!isCompleterOpen || filteredSuggestions.length === 0)
         return undefined;
-      const suggestion = filteredSuggestions[hoveredCompletionItem ?? 0];
+      const suggestion = filteredSuggestions[deferredHoveredItem ?? 0];
       if (!suggestion) return undefined;
 
       const sv = suggestion.value;
@@ -298,7 +301,7 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
     }, [
       isCompleterOpen,
       filteredSuggestions,
-      hoveredCompletionItem,
+      deferredHoveredItem,
       writtenWord,
       cursorPosition,
     ]);
@@ -308,33 +311,38 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
       null,
     );
     const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
-    const closeTimerRef = useRef<ReturnType<typeof setTimeout>>();
-    const openTimerRef = useRef<ReturnType<typeof setTimeout>>();
-    const dismissAutoHintTimerRef = useRef<ReturnType<typeof setTimeout>>();
     const isAutoHintRef = useRef(false);
     const [idleHintsEnabled, setIdleHintsEnabled] =
       useAtom(idleHintsEnabledAtom);
 
     // Kept in refs so timer callbacks always see the latest values without
     // needing to be recreated on every render.
-    const highlightDataRef = useRef(highlightData);
-    const idleHintsEnabledRef = useRef(idleHintsEnabled);
-    idleHintsEnabledRef.current = idleHintsEnabled;
-    highlightDataRef.current = highlightData;
-    const cursorPosRef = useRef(cursorPosition);
-    cursorPosRef.current = cursorPosition;
-    const referenceElementRef = useRef<HTMLTextAreaElement | null>(null);
-    referenceElementRef.current = referenceElement;
+    const highlightDataRef = useLatest(highlightData);
+    const idleHintsEnabledRef = useLatest(idleHintsEnabled);
+    const cursorPosRef = useLatest(cursorPosition);
+    const referenceElementRef = useLatest(referenceElement);
     const isFocusedRef = useRef(false);
 
-    useEffect(
-      () => () => {
-        clearTimeout(closeTimerRef.current);
-        clearTimeout(openTimerRef.current);
-        clearTimeout(dismissAutoHintTimerRef.current);
-      },
-      [],
-    );
+    const dismissAutoHint = useCallback(() => {
+      if (isAutoHintRef.current) {
+        setPopoverOpen(false);
+        isAutoHintRef.current = false;
+      }
+    }, []);
+
+    const closeDebouncer = useDebouncer(() => setPopoverOpen(false), {
+      wait: 400,
+    });
+    const openDebouncer = useDebouncer(() => setPopoverOpen(true), {
+      wait: 700,
+    });
+    const dismissHintDebouncer = useDebouncer(dismissAutoHint, { wait: 600 });
+
+    // useDebouncer returns a new object each render (useMemo with unstable state),
+    // so we hold stable refs to break the useCallback/useEffect dependency cascade.
+    const closeDebouncerRef = useLatest(closeDebouncer);
+    const openDebouncerRef = useLatest(openDebouncer);
+    const dismissHintDebouncerRef = useLatest(dismissHintDebouncer);
 
     const anchorStyle = useMemo((): CSSProperties => {
       if (!anchorRect)
@@ -358,18 +366,20 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
       };
     }, [anchorRect]);
 
-    const scheduleClose = useCallback(() => {
-      closeTimerRef.current = setTimeout(() => setPopoverOpen(false), 400);
-    }, []);
+    const scheduleClose = useCallback(
+      () => closeDebouncerRef.current.maybeExecute(),
+      [closeDebouncerRef],
+    );
 
     const cancelClose = useCallback(() => {
-      clearTimeout(closeTimerRef.current);
-      clearTimeout(dismissAutoHintTimerRef.current);
-    }, []);
+      closeDebouncerRef.current.cancel();
+      dismissHintDebouncerRef.current.cancel();
+    }, [closeDebouncerRef, dismissHintDebouncerRef]);
 
-    const cancelOpen = useCallback(() => {
-      clearTimeout(openTimerRef.current);
-    }, []);
+    const cancelOpen = useCallback(
+      () => openDebouncerRef.current.cancel(),
+      [openDebouncerRef],
+    );
 
     const showHintAtCursor = useCallback(() => {
       if (!idleHintsEnabledRef.current) return;
@@ -413,25 +423,18 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
       setTokenContent(content);
       setPopoverOpen(true);
       isAutoHintRef.current = true;
-    }, [cancelOpen, cancelClose]);
-
-    const dismissAutoHint = useCallback(() => {
-      if (isAutoHintRef.current) {
-        setPopoverOpen(false);
-        isAutoHintRef.current = false;
-      }
-    }, []);
+    }, [cancelOpen, cancelClose, highlightDataRef, cursorPosRef, idleHintsEnabledRef, referenceElementRef]);
 
     const isIdle = useIdle(2_000);
 
     useEffect(() => {
       if (isIdle && isFocusedRef.current) {
-        clearTimeout(dismissAutoHintTimerRef.current);
+        dismissHintDebouncerRef.current.cancel();
         showHintAtCursor();
       } else {
-        dismissAutoHintTimerRef.current = setTimeout(dismissAutoHint, 600);
+        dismissHintDebouncerRef.current.maybeExecute();
       }
-    }, [isIdle, showHintAtCursor, dismissAutoHint]);
+    }, [isIdle, showHintAtCursor, dismissHintDebouncerRef]);
 
     const handlePopoverOpenChange = useCallback(
       ({ open }: { open: boolean }) => {
@@ -442,7 +445,7 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
 
     const getInitialFocusEl = useCallback(
       () => referenceElementRef.current,
-      [],
+      [referenceElementRef],
     );
 
     const handleMouseMove = useCallback(
@@ -470,10 +473,7 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
                 cancelOpen();
                 setAnchorRect(rect);
                 setTokenContent(content);
-                openTimerRef.current = setTimeout(
-                  () => setPopoverOpen(true),
-                  700,
-                );
+                openDebouncerRef.current.maybeExecute();
               }
             } else {
               cancelOpen();
@@ -486,7 +486,7 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
         // can move toward it without it closing.
         cancelOpen();
       },
-      [cancelClose, cancelOpen, popoverOpen, anchorRect],
+      [cancelClose, cancelOpen, openDebouncerRef, popoverOpen, anchorRect],
     );
 
     const [isEditorHovered, setIsEditorHovered] = useState(false);
