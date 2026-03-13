@@ -1,7 +1,6 @@
 import { css } from "@emotion/react";
 import { token } from "~components/ui/system";
-import type { Range } from "@tanstack/react-virtual";
-import { defaultRangeExtractor, useVirtualizer } from "@tanstack/react-virtual";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { atom, useAtomValue, useSetAtom } from "jotai";
 import type React from "react";
 import {
@@ -11,11 +10,14 @@ import {
   useMemo,
   useRef,
 } from "react";
+import { useScroll } from "react-use";
+import { LuArrowUp } from "react-icons/lu";
+import { MiniIconButton } from "~components/presets/IconButton";
 import { useLogsInfiniteQuery } from "~core/api";
 import { asDateField } from "@cruncher/adapter-utils/logTypes";
 import DataRow from "./Row";
 import { RowDetails } from "./RowDetails";
-import { getLogId, rangeInViewAtom, useIsLogOpen } from "./state";
+import { getLogId, rangeInViewAtom } from "./state";
 import { isLiveFetchingAtom, isLiveModeAtom } from "~core/store/liveState";
 
 export const scrollToIndexAtom = atom<(index: number) => void>();
@@ -33,12 +35,17 @@ const DataLog: React.FC<DataRowProps> = () => {
   const logs = useMemo(() => data?.pages.flatMap((d) => d.data) ?? [], [data]);
   const total = data ? data.pages[0].total : 0;
 
+  const logsRef = useRef(logs);
+  logsRef.current = logs;
+
   const parentRef = useRef<HTMLElement>(null);
+  const { y: scrollY } = useScroll(parentRef as React.RefObject<HTMLElement>);
+  const isScrolledDown = scrollY > 200;
 
   // Step 1 snapshot: taken when live fetching begins, before network request.
   const liveAnchorRef = useRef<{
-    virtualIndex: number; // exact virtual index — preserves even (row) vs odd (detail)
-    offsetInItem: number; // pixels from item.start to el.scrollTop
+    virtualIndex: number;
+    offsetInItem: number;
     totalBefore: number;
   } | null>(null);
 
@@ -50,44 +57,21 @@ const DataLog: React.FC<DataRowProps> = () => {
     offsetInItem: number;
   } | null>(null);
 
-  const activeStickyIndexRef = useRef(0);
-  const isLogOpen = useIsLogOpen();
-
-  const isSticky = (index: number) => {
-    const dataIndex = Math.floor(index / 2);
-    const log = logs[dataIndex];
-    const isOpen = log ? isLogOpen(getLogId(log)) : false;
-    return activeStickyIndexRef.current === index && isOpen;
-  };
-
-  const isActiveSticky = (index: number) => {
-    const dataIndex = Math.floor(index / 2);
-    const log = logs[dataIndex];
-    const isOpen = log ? isLogOpen(getLogId(log)) : false;
-    return activeStickyIndexRef.current === index && isOpen;
-  };
-
   const rowVirtualizer = useVirtualizer({
-    count: total * 2,
+    count: total,
     getScrollElement: useCallback(
       () => parentRef.current as HTMLElement | null,
       [parentRef],
     ),
     estimateSize: useCallback(() => 35, []),
     overscan: 100,
-    rangeExtractor: useCallback((range: Range) => {
-      activeStickyIndexRef.current = range.startIndex;
-      if (range.startIndex % 2 === 1) {
-        activeStickyIndexRef.current -= 1;
-      }
-
-      const next = new Set([
-        activeStickyIndexRef.current,
-        ...defaultRangeExtractor(range),
-      ]);
-
-      return [...next].sort((a, b) => a - b);
-    }, []),
+    getItemKey: useCallback(
+      (index: number) => {
+        const log = logsRef.current[index];
+        return log ? getLogId(log) : index;
+      },
+      [], // stable — reads current logs through logsRef
+    ),
   });
 
   const virtualItems = rowVirtualizer.getVirtualItems();
@@ -100,7 +84,7 @@ const DataLog: React.FC<DataRowProps> = () => {
     }
 
     if (
-      lastItem.index >= 2 * (logs.length - 1) &&
+      lastItem.index >= logs.length - 1 &&
       hasNextPage &&
       !isFetchingNextPage
     ) {
@@ -116,7 +100,7 @@ const DataLog: React.FC<DataRowProps> = () => {
 
   useEffect(() => {
     setScrollToIndex(
-      () => (index: number) => rowVirtualizer.scrollToIndex(index * 2),
+      () => (index: number) => rowVirtualizer.scrollToIndex(index),
     );
   }, [rowVirtualizer, rowVirtualizer.scrollToIndex, setScrollToIndex]);
 
@@ -162,19 +146,22 @@ const DataLog: React.FC<DataRowProps> = () => {
       return;
     }
 
-    // Each new log occupies 2 virtual slots → shift virtual index by delta * 2.
-    // This correctly preserves even (row) vs odd (detail) parity.
-    const newVirtualIndex = anchor.virtualIndex + delta * 2;
-
-    // scrollToIndex puts the item at the top of the viewport (align: 'start'),
-    // then we add the partial pixel offset back.
-    rowVirtualizer.scrollToIndex(newVirtualIndex, { align: "start" });
+    const newVirtualIndex = anchor.virtualIndex + delta;
     const el = parentRef.current;
-    if (el) el.scrollTop += anchor.offsetInItem;
+    if (!el) {
+      liveAnchorRef.current = null;
+      return;
+    }
 
-    // Arm the post-measurement corrector. ResizeObserver will measure the new
-    // rows shortly after this paint; their actual heights may differ from the
-    // 35px estimate, shifting our item's position. The corrector re-aligns.
+    // getItemKey keeps measurements accurate across index shifts — read position directly.
+    const anchorItem = rowVirtualizer
+      .getVirtualItems()
+      .find((v) => v.index === newVirtualIndex);
+
+    el.scrollTop = anchorItem
+      ? anchorItem.start + anchor.offsetInItem
+      : el.scrollTop + delta * 35; // fallback: anchor not yet in rendered range
+
     anchorTargetRef.current = {
       virtualIndex: newVirtualIndex,
       offsetInItem: anchor.offsetInItem,
@@ -222,8 +209,8 @@ const DataLog: React.FC<DataRowProps> = () => {
       return;
     }
 
-    const dataIndexStart = Math.floor(rowVirtualizer.range.startIndex / 2);
-    const dataIndexEnd = Math.floor(rowVirtualizer.range.endIndex / 2);
+    const dataIndexStart = rowVirtualizer.range.startIndex;
+    const dataIndexEnd = rowVirtualizer.range.endIndex;
 
     const startDate = asDateField(logs[dataIndexStart]?.object._time).value;
     const endDate = asDateField(logs[dataIndexEnd]?.object._time).value;
@@ -234,99 +221,103 @@ const DataLog: React.FC<DataRowProps> = () => {
     });
   }, [rowVirtualizer, rowVirtualizer.range, setRangeInView, logs]);
 
+  const scrollToTop = useCallback(() => {
+    if (parentRef.current) parentRef.current.scrollTop = 0;
+  }, []);
+
   return (
-    <section
-      id="data"
-      ref={parentRef}
+    <div
       css={css`
         display: flex;
-        font-size: 0.8rem;
         flex: 1;
-        overflow: auto;
-        transform: translateZ(0);
+        position: relative;
+        overflow: hidden;
       `}
     >
-      <div
-        style={{
-          height: `${rowVirtualizer.getTotalSize()}px`,
-          width: "100%",
-          position: "relative",
-        }}
+      <section
+        id="data"
+        ref={parentRef}
+        css={css`
+          display: flex;
+          font-size: 0.8rem;
+          flex: 1;
+          overflow: auto;
+          transform: translateZ(0);
+        `}
       >
-        {rowVirtualizer.getVirtualItems().map((virtualItem) => {
-          const isLoaderRow = virtualItem.index > 2 * logs.length - 1;
-          const index = Math.floor(virtualItem.index / 2);
-          const isDetails = virtualItem.index % 2 === 1;
-          if (isLoaderRow) {
-            return (
-              <div
-                key={virtualItem.key}
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  width: "100%",
-                  height: "100%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                {hasNextPage ? "Loading more logs..." : "No more logs"}
-              </div>
-            );
-          }
+        <div
+          style={{
+            height: `${rowVirtualizer.getTotalSize()}px`,
+            width: "100%",
+            position: "relative",
+          }}
+        >
+          {rowVirtualizer.getVirtualItems().map((virtualItem) => {
+            const isLoaderRow = virtualItem.index > logs.length - 1;
+            if (isLoaderRow) {
+              return (
+                <div
+                  key={virtualItem.key}
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    width: "100%",
+                    height: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  {hasNextPage ? "Loading more logs..." : "No more logs"}
+                </div>
+              );
+            }
 
-          if (isDetails) {
             return (
               <div
-                data-index={virtualItem.index}
                 key={virtualItem.key}
+                data-index={virtualItem.index}
                 ref={rowVirtualizer.measureElement}
                 style={{
-                  top: 0,
+                  position: "absolute",
+                  top: `${virtualItem.start}px`,
                   left: 0,
                   width: "100%",
-                  position: "absolute",
-                  transform: `translateY(${virtualItem.start}px)`,
                 }}
               >
-                <RowDetails row={logs[index]} />
+                <div
+                  style={{
+                    position: "sticky",
+                    top: 0,
+                    zIndex: 2,
+                    backgroundColor: token("colors.bg"),
+                  }}
+                >
+                  <DataRow row={logs[virtualItem.index]} />
+                </div>
+                <RowDetails row={logs[virtualItem.index]} />
               </div>
             );
-          }
-
-          return (
-            <div
-              data-index={virtualItem.index}
-              key={virtualItem.key}
-              ref={rowVirtualizer.measureElement}
-              style={{
-                ...(isSticky(virtualItem.index)
-                  ? {
-                      zIndex: 2,
-                    }
-                  : {}),
-                ...(isActiveSticky(virtualItem.index)
-                  ? {
-                      position: "sticky",
-                    }
-                  : {
-                      position: "absolute",
-                      transform: `translateY(${virtualItem.start}px)`,
-                    }),
-                top: 0,
-                left: 0,
-                width: "100%",
-                backgroundColor: token("colors.bg"),
-              }}
-            >
-              <DataRow row={logs[index]} />
-            </div>
-          );
-        })}
-      </div>
-    </section>
+          })}
+        </div>
+      </section>
+      {isScrolledDown && (
+        <MiniIconButton
+          aria-label="Scroll to top"
+          tooltip="Scroll to top"
+          onClick={scrollToTop}
+          css={css`
+            position: absolute;
+            top: 8px;
+            right: 16px;
+            z-index: 10;
+          `}
+        >
+          <LuArrowUp />
+        </MiniIconButton>
+      )}
+    </div>
   );
 };
 
