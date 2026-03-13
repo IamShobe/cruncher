@@ -1,3 +1,17 @@
+## 2.3.0
+
+### Minor Changes
+
+- [#37](https://github.com/IamShobe/cruncher/pull/37) [`00f8b43`](https://github.com/IamShobe/cruncher/commit/00f8b43f95a63c000fa36d363eac66e661f910d4) Thanks [@IamShobe](https://github.com/IamShobe)! - Autocomplete now uses fuzzy matching — suggestions appear even when you type non-contiguous characters, with matched characters highlighted in the dropdown. The token hint tooltip arrow now automatically flips direction when the card appears above the cursor (near the top of the viewport).
+
+- [#39](https://github.com/IamShobe/cruncher/pull/39) [`333577b`](https://github.com/IamShobe/cruncher/commit/333577b5f587c87138fe4a2218795656d42b7d33) Thanks [@IamShobe](https://github.com/IamShobe)! - Fix live mode scroll anchor movement when expanded log details are visible. TanStack Virtual's item size cache is now keyed by log ID instead of index, so measurements survive prepends without ResizeObserver corrections causing visible jumps.
+
+  Add a "Scroll to top" button that appears in the top-right corner of the log view when scrolled down.
+
+### Patch Changes
+
+- [#39](https://github.com/IamShobe/cruncher/pull/39) [`333577b`](https://github.com/IamShobe/cruncher/commit/333577b5f587c87138fe4a2218795656d42b7d33) Thanks [@IamShobe](https://github.com/IamShobe)! - Fix sticky row header overlap when scrolling through expanded log details. Open log headers now correctly pin to the top of the viewport while their details are visible, and scroll away cleanly once the section leaves view.
+
 ## 2.2.0
 
 ### Minor Changes
