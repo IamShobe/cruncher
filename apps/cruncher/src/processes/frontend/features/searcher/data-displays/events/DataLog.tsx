@@ -1,7 +1,6 @@
 import { css } from "@emotion/react";
 import { token } from "~components/ui/system";
-import type { Range } from "@tanstack/react-virtual";
-import { defaultRangeExtractor, useVirtualizer } from "@tanstack/react-virtual";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { atom, useAtomValue, useSetAtom } from "jotai";
 import type React from "react";
 import {
@@ -15,7 +14,7 @@ import { useLogsInfiniteQuery } from "~core/api";
 import { asDateField } from "@cruncher/adapter-utils/logTypes";
 import DataRow from "./Row";
 import { RowDetails } from "./RowDetails";
-import { getLogId, rangeInViewAtom, useIsLogOpen } from "./state";
+import { rangeInViewAtom } from "./state";
 import { isLiveFetchingAtom, isLiveModeAtom } from "~core/store/liveState";
 
 export const scrollToIndexAtom = atom<(index: number) => void>();
@@ -37,8 +36,8 @@ const DataLog: React.FC<DataRowProps> = () => {
 
   // Step 1 snapshot: taken when live fetching begins, before network request.
   const liveAnchorRef = useRef<{
-    virtualIndex: number; // exact virtual index — preserves even (row) vs odd (detail)
-    offsetInItem: number; // pixels from item.start to el.scrollTop
+    virtualIndex: number;
+    offsetInItem: number;
     totalBefore: number;
   } | null>(null);
 
@@ -50,44 +49,14 @@ const DataLog: React.FC<DataRowProps> = () => {
     offsetInItem: number;
   } | null>(null);
 
-  const activeStickyIndexRef = useRef(0);
-  const isLogOpen = useIsLogOpen();
-
-  const isSticky = (index: number) => {
-    const dataIndex = Math.floor(index / 2);
-    const log = logs[dataIndex];
-    const isOpen = log ? isLogOpen(getLogId(log)) : false;
-    return activeStickyIndexRef.current === index && isOpen;
-  };
-
-  const isActiveSticky = (index: number) => {
-    const dataIndex = Math.floor(index / 2);
-    const log = logs[dataIndex];
-    const isOpen = log ? isLogOpen(getLogId(log)) : false;
-    return activeStickyIndexRef.current === index && isOpen;
-  };
-
   const rowVirtualizer = useVirtualizer({
-    count: total * 2,
+    count: total,
     getScrollElement: useCallback(
       () => parentRef.current as HTMLElement | null,
       [parentRef],
     ),
     estimateSize: useCallback(() => 35, []),
     overscan: 100,
-    rangeExtractor: useCallback((range: Range) => {
-      activeStickyIndexRef.current = range.startIndex;
-      if (range.startIndex % 2 === 1) {
-        activeStickyIndexRef.current -= 1;
-      }
-
-      const next = new Set([
-        activeStickyIndexRef.current,
-        ...defaultRangeExtractor(range),
-      ]);
-
-      return [...next].sort((a, b) => a - b);
-    }, []),
   });
 
   const virtualItems = rowVirtualizer.getVirtualItems();
@@ -100,7 +69,7 @@ const DataLog: React.FC<DataRowProps> = () => {
     }
 
     if (
-      lastItem.index >= 2 * (logs.length - 1) &&
+      lastItem.index >= logs.length - 1 &&
       hasNextPage &&
       !isFetchingNextPage
     ) {
@@ -116,7 +85,7 @@ const DataLog: React.FC<DataRowProps> = () => {
 
   useEffect(() => {
     setScrollToIndex(
-      () => (index: number) => rowVirtualizer.scrollToIndex(index * 2),
+      () => (index: number) => rowVirtualizer.scrollToIndex(index),
     );
   }, [rowVirtualizer, rowVirtualizer.scrollToIndex, setScrollToIndex]);
 
@@ -162,9 +131,7 @@ const DataLog: React.FC<DataRowProps> = () => {
       return;
     }
 
-    // Each new log occupies 2 virtual slots → shift virtual index by delta * 2.
-    // This correctly preserves even (row) vs odd (detail) parity.
-    const newVirtualIndex = anchor.virtualIndex + delta * 2;
+    const newVirtualIndex = anchor.virtualIndex + delta;
 
     // scrollToIndex puts the item at the top of the viewport (align: 'start'),
     // then we add the partial pixel offset back.
@@ -222,8 +189,8 @@ const DataLog: React.FC<DataRowProps> = () => {
       return;
     }
 
-    const dataIndexStart = Math.floor(rowVirtualizer.range.startIndex / 2);
-    const dataIndexEnd = Math.floor(rowVirtualizer.range.endIndex / 2);
+    const dataIndexStart = rowVirtualizer.range.startIndex;
+    const dataIndexEnd = rowVirtualizer.range.endIndex;
 
     const startDate = asDateField(logs[dataIndexStart]?.object._time).value;
     const endDate = asDateField(logs[dataIndexEnd]?.object._time).value;
@@ -254,9 +221,7 @@ const DataLog: React.FC<DataRowProps> = () => {
         }}
       >
         {rowVirtualizer.getVirtualItems().map((virtualItem) => {
-          const isLoaderRow = virtualItem.index > 2 * logs.length - 1;
-          const index = Math.floor(virtualItem.index / 2);
-          const isDetails = virtualItem.index % 2 === 1;
+          const isLoaderRow = virtualItem.index > logs.length - 1;
           if (isLoaderRow) {
             return (
               <div
@@ -277,51 +242,29 @@ const DataLog: React.FC<DataRowProps> = () => {
             );
           }
 
-          if (isDetails) {
-            return (
-              <div
-                data-index={virtualItem.index}
-                key={virtualItem.key}
-                ref={rowVirtualizer.measureElement}
-                style={{
-                  top: 0,
-                  left: 0,
-                  width: "100%",
-                  position: "absolute",
-                  transform: `translateY(${virtualItem.start}px)`,
-                }}
-              >
-                <RowDetails row={logs[index]} />
-              </div>
-            );
-          }
-
           return (
             <div
-              data-index={virtualItem.index}
               key={virtualItem.key}
+              data-index={virtualItem.index}
               ref={rowVirtualizer.measureElement}
               style={{
-                ...(isSticky(virtualItem.index)
-                  ? {
-                      zIndex: 2,
-                    }
-                  : {}),
-                ...(isActiveSticky(virtualItem.index)
-                  ? {
-                      position: "sticky",
-                    }
-                  : {
-                      position: "absolute",
-                      transform: `translateY(${virtualItem.start}px)`,
-                    }),
-                top: 0,
+                position: "absolute",
+                top: `${virtualItem.start}px`,
                 left: 0,
                 width: "100%",
-                backgroundColor: token("colors.bg"),
               }}
             >
-              <DataRow row={logs[index]} />
+              <div
+                style={{
+                  position: "sticky",
+                  top: 0,
+                  zIndex: 2,
+                  backgroundColor: token("colors.bg"),
+                }}
+              >
+                <DataRow row={logs[virtualItem.index]} />
+              </div>
+              <RowDetails row={logs[virtualItem.index]} />
             </div>
           );
         })}
