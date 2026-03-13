@@ -37,9 +37,26 @@ export const compareSuggestions = (a: Suggestion, b: Suggestion): number => {
   return pa - pb;
 };
 
+export function fuzzyMatch(
+  text: string,
+  query: string,
+): { matched: boolean; indices: number[] } {
+  if (!query) return { matched: true, indices: [] };
+  const indices: number[] = [];
+  let qi = 0;
+  for (let i = 0; i < text.length && qi < query.length; i++) {
+    if (text[i].toLowerCase() === query[qi].toLowerCase()) {
+      indices.push(i);
+      qi++;
+    }
+  }
+  return { matched: qi === query.length, indices };
+}
+
 export type AutoCompleterProps = {
   suggestions: Suggestion[];
   hoveredItem?: number;
+  writtenWord?: string;
 };
 
 type SuggestionMeta = {
@@ -57,9 +74,59 @@ const SUGGESTION_META: Record<Suggestion["type"], SuggestionMeta> = {
   controllerParam: { icon: LuWrench, colorPalette: "orange", label: "param" },
 };
 
+const HighlightedValue = ({
+  value,
+  query,
+  colorPalette,
+  isActive,
+}: {
+  value: string;
+  query: string;
+  colorPalette: string;
+  isActive: boolean;
+}) => {
+  const valueToMatch =
+    value.startsWith('"') && !query.startsWith('"')
+      ? value.slice(1, -1)
+      : value;
+  const offset = value.startsWith('"') && !query.startsWith('"') ? 1 : 0;
+
+  if (!query) {
+    return <>{value}</>;
+  }
+
+  const { indices } = fuzzyMatch(valueToMatch, query);
+  const matchSet = new Set(indices.map((i) => i + offset));
+
+  return (
+    <>
+      {value.split("").map((char, i) => {
+        if (matchSet.has(i)) {
+          return (
+            <Text
+              key={i}
+              as="span"
+              color={isActive ? `${colorPalette}.fg` : `${colorPalette}.500`}
+              fontWeight="semibold"
+            >
+              {char}
+            </Text>
+          );
+        }
+        return (
+          <Text key={i} as="span" color="fg.muted">
+            {char}
+          </Text>
+        );
+      })}
+    </>
+  );
+};
+
 export const AutoCompleter = ({
   suggestions,
   hoveredItem,
+  writtenWord = "",
 }: AutoCompleterProps) => {
   const scrollerRef = useRef<HTMLDivElement>(null);
 
@@ -82,7 +149,7 @@ export const AutoCompleter = ({
       borderColor="border"
       shadow="lg"
     >
-      <Box ref={scrollerRef} p="1" overflow="auto" maxH="140px">
+      <Box ref={scrollerRef} p="1" overflow="auto" maxH="192px">
         {suggestions.map((suggestion, index) => {
           const meta = SUGGESTION_META[suggestion.type];
           const isActive = hoveredItem === index;
@@ -110,7 +177,12 @@ export const AutoCompleter = ({
                 truncate
                 lineHeight="1"
               >
-                {suggestion.value}
+                <HighlightedValue
+                  value={suggestion.value}
+                  query={writtenWord}
+                  colorPalette={meta.colorPalette}
+                  isActive={isActive}
+                />
               </Text>
               <Badge
                 size="xs"

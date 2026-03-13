@@ -6,8 +6,6 @@ import React, {
   useMemo,
   useRef,
   useState,
-  useDeferredValue,
-  CSSProperties,
 } from "react";
 import { useDebouncer } from "@tanstack/react-pacer";
 import { createPortal } from "react-dom";
@@ -19,7 +17,6 @@ import {
   Icon,
   IconButton,
   Menu,
-  Popover,
   Text,
 } from "@chakra-ui/react";
 import { Tooltip } from "~components/presets/Tooltip";
@@ -28,7 +25,12 @@ import { useAtom } from "jotai";
 import { atomWithStorage } from "jotai/utils";
 import { useIdle, useLatest } from "react-use";
 
-import { AutoCompleter, compareSuggestions, Suggestion } from "./AutoCompleter";
+import {
+  AutoCompleter,
+  compareSuggestions,
+  fuzzyMatch,
+  Suggestion,
+} from "./AutoCompleter";
 import {
   HighlightData,
   LuExternalLink,
@@ -43,7 +45,14 @@ import {
   useResolvedShortcuts,
 } from "~core/keymaps";
 import { Coordinates, getCaretCoordinates } from "./getCoordinates";
-import { useFloating, offset, flip, shift } from "@floating-ui/react";
+import {
+  useFloating,
+  offset,
+  flip,
+  shift,
+  arrow,
+  FloatingArrow,
+} from "@floating-ui/react";
 import { autoUpdate } from "@floating-ui/dom";
 import type { VirtualElement } from "@floating-ui/dom";
 
@@ -52,7 +61,18 @@ export const idleHintsEnabledAtom = atomWithStorage(
   true,
 );
 
-const POPOVER_POSITIONING = { placement: "bottom" } as const;
+const ARROW_HEIGHT = 7; // FloatingArrow default tip height
+
+const HintCard = styled.div`
+  background: ${token("colors.bg.panel")};
+  border: 1px solid ${token("colors.border")};
+  border-radius: ${token("radii.md")};
+  padding: ${token("spacing.4")};
+  max-width: 280px;
+  min-width: 160px;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+  position: relative;
+`;
 
 const EditorWrapper = styled.div`
   display: grid;
@@ -240,7 +260,6 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
     const [hoveredCompletionItem, setHoveredCompletionItem] = useState<
       number | undefined
     >(undefined);
-    const deferredHoveredItem = useDeferredValue(hoveredCompletionItem);
     const [hasInteractedWithMenu, setHasInteractedWithMenu] = useState(false);
 
     const ctrlSpaceOpenRef = useRef(false);
@@ -273,17 +292,28 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
       }
 
       return Array.from(results.values())
-        .filter((suggestion) => {
-          if (!writtenWord) return true;
-          // For quoted values like `"main"`, match the inner text when the user
-          // hasn't typed the opening quote yet, or the full value when they have.
+        .flatMap((suggestion) => {
+          if (!writtenWord) return [{ suggestion, score: 0 }];
           const valueToMatch =
             suggestion.value.startsWith('"') && !writtenWord.startsWith('"')
               ? suggestion.value.slice(1, -1)
               : suggestion.value;
-          return valueToMatch.startsWith(writtenWord);
+          const match = fuzzyMatch(valueToMatch, writtenWord);
+          if (!match.matched) return [];
+          let score = 0;
+          if (valueToMatch.startsWith(writtenWord)) score += 100;
+          for (let i = 1; i < match.indices.length; i++) {
+            if (match.indices[i] === match.indices[i - 1] + 1) score += 1;
+          }
+          if (match.indices.length > 0) score -= match.indices[0];
+          return [{ suggestion, score }];
         })
-        .sort(compareSuggestions);
+        .sort((a, b) => {
+          const priorityDiff = compareSuggestions(a.suggestion, b.suggestion);
+          if (priorityDiff !== 0) return priorityDiff;
+          return b.score - a.score;
+        })
+        .map((entry) => entry.suggestion);
     }, [suggestions, cursorPosition, writtenWord]);
 
     const acceptCompletion = () => {
@@ -328,46 +358,6 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
       });
     };
 
-    const ghostTextInfo = useMemo(() => {
-      if (!isCompleterOpen || filteredSuggestions.length === 0)
-        return undefined;
-      const suggestion = filteredSuggestions[deferredHoveredItem ?? 0];
-      if (!suggestion) return undefined;
-
-      // Suppress ghost text inside string literals unless at a word boundary
-      if (isInsideString(value, cursorPosition)) {
-        const nextChar = value[cursorPosition];
-        const isWordBoundary =
-          nextChar === undefined || nextChar === " " || nextChar === "\n";
-        if (!isWordBoundary) return undefined;
-      }
-
-      const sv = suggestion.value;
-      let ghost: string;
-      if (sv.startsWith('"') && !writtenWord.startsWith('"')) {
-        // Suggestion is quoted but user hasn't typed the opening quote yet.
-        // Nothing typed: show the full quoted value (the `"` will be inserted too).
-        // Some chars typed: show the inner suffix + closing quote.
-        if (writtenWord.length === 0) {
-          ghost = sv;
-        } else {
-          ghost = sv.slice(1, -1).slice(writtenWord.length) + '"';
-        }
-      } else {
-        ghost = sv.slice(writtenWord.length);
-      }
-
-      if (!ghost) return undefined;
-      return { text: ghost, offset: cursorPosition };
-    }, [
-      isCompleterOpen,
-      filteredSuggestions,
-      deferredHoveredItem,
-      writtenWord,
-      cursorPosition,
-      value,
-    ]);
-
     const [popoverOpen, setPopoverOpen] = useState(false);
     const [tokenContent, setTokenContent] = useState<TooltipContent | null>(
       null,
@@ -383,6 +373,7 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
     const idleHintsEnabledRef = useLatest(idleHintsEnabled);
     const cursorPosRef = useLatest(cursorPosition);
     const referenceElementRef = useLatest(referenceElement);
+    const anchorRectRef = useLatest(anchorRect);
     const isFocusedRef = useRef(false);
 
     const dismissAutoHint = useCallback(() => {
@@ -405,28 +396,49 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
     const closeDebouncerRef = useLatest(closeDebouncer);
     const openDebouncerRef = useLatest(openDebouncer);
     const dismissHintDebouncerRef = useLatest(dismissHintDebouncer);
+    const popoverOpenRef = useLatest(popoverOpen);
 
-    const anchorStyle = useMemo((): CSSProperties => {
-      if (!anchorRect)
-        return {
-          position: "fixed",
-          width: 0,
-          height: 0,
-          top: 0,
-          left: 0,
-          pointerEvents: "none",
-          opacity: 0,
-        };
-      return {
-        position: "fixed",
-        left: anchorRect.left,
-        top: anchorRect.top,
-        width: anchorRect.width,
-        height: anchorRect.height,
-        pointerEvents: "none",
-        opacity: 0,
-      };
-    }, [anchorRect]);
+    const hintVirtualEl = useMemo<VirtualElement>(
+      () => ({
+        getBoundingClientRect: () => anchorRectRef.current ?? new DOMRect(),
+      }),
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      [],
+    );
+
+    const arrowRef = useRef<SVGSVGElement>(null);
+
+    const {
+      refs: hintRefs,
+      floatingStyles: hintFloatingStyles,
+      update: updateHintFloating,
+      context: hintContext,
+    } = useFloating({
+      strategy: "fixed",
+      placement: "bottom",
+      middleware: [
+        offset(ARROW_HEIGHT + 4),
+        flip({ padding: 8 }),
+        shift({ padding: 8 }),
+        arrow({ element: arrowRef }),
+      ],
+    });
+
+    const updateHintFloatingRef = useLatest(updateHintFloating);
+
+    useEffect(() => {
+      hintRefs.setReference(hintVirtualEl);
+    }, [hintRefs, hintVirtualEl]);
+
+    useEffect(() => {
+      if (popoverOpen) updateHintFloatingRef.current();
+    }, [anchorRect, popoverOpen, updateHintFloatingRef]);
+
+    useEffect(() => {
+      const floating = hintRefs.floating.current;
+      if (!popoverOpen || !floating) return;
+      return autoUpdate(hintVirtualEl, floating, updateHintFloatingRef.current);
+    }, [popoverOpen, hintRefs.floating, hintVirtualEl, updateHintFloatingRef]);
 
     const scheduleClose = useCallback(
       () => closeDebouncerRef.current.maybeExecute(),
@@ -445,6 +457,7 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
 
     const showHintAtCursor = useCallback(() => {
       if (!idleHintsEnabledRef.current) return;
+      if (popoverOpenRef.current && !isAutoHintRef.current) return;
       const cursor = cursorPosRef.current;
       const hd = highlightDataRef.current;
       const el = referenceElementRef.current;
@@ -492,6 +505,7 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
       cursorPosRef,
       idleHintsEnabledRef,
       referenceElementRef,
+      popoverOpenRef,
     ]);
 
     const isIdle = useIdle(2_000);
@@ -504,18 +518,6 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
         dismissHintDebouncerRef.current.maybeExecute();
       }
     }, [isIdle, showHintAtCursor, dismissHintDebouncerRef]);
-
-    const handlePopoverOpenChange = useCallback(
-      ({ open }: { open: boolean }) => {
-        setPopoverOpen(open);
-      },
-      [],
-    );
-
-    const getInitialFocusEl = useCallback(
-      () => referenceElementRef.current,
-      [referenceElementRef],
-    );
 
     const handleMouseMove = useCallback(
       (e: React.MouseEvent<HTMLTextAreaElement>) => {
@@ -573,7 +575,7 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
         onMouseLeave={() => setIsEditorHovered(false)}
       >
         <TextareaCustom
-          placeholder={ghostTextInfo ? "" : "Type your query here..."}
+          placeholder="Type your query here..."
           value={value}
           ref={setReferenceElement}
           data-1p-ignore="disabled"
@@ -694,8 +696,6 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
           value={value}
           highlightData={highlightData}
           ref={preElement}
-          ghostText={ghostTextInfo?.text}
-          ghostTextOffset={ghostTextInfo?.offset}
         />
         {isCompleterOpen &&
           popperRoot &&
@@ -707,90 +707,75 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
               <AutoCompleter
                 suggestions={filteredSuggestions}
                 hoveredItem={hoveredCompletionItem}
+                writtenWord={writtenWord}
               />
             </div>,
             popperRoot,
           )}
-        <Popover.Root
-          open={popoverOpen}
-          onOpenChange={handlePopoverOpenChange}
-          positioning={POPOVER_POSITIONING}
-          closeOnInteractOutside={false}
-          initialFocusEl={getInitialFocusEl}
-          lazyMount
-          unmountOnExit
-        >
-          <Popover.Trigger asChild>
-            <div style={anchorStyle} />
-          </Popover.Trigger>
+        {popoverOpen && tokenContent && (
           <Portal>
-            <Popover.Positioner>
-              <Popover.Content
-                onMouseEnter={cancelClose}
-                onMouseLeave={scheduleClose}
-              >
-                <Popover.Arrow />
-                <Popover.Body>
-                  {tokenContent && (
-                    <>
-                      <HStack gap="2" mb="2" align="center">
-                        <Icon
-                          as={tokenContent.icon}
-                          boxSize="4"
-                          color="fg.muted"
-                        />
-                        <Text fontWeight="semibold" fontSize="sm" color="fg">
-                          {tokenContent.label}
-                        </Text>
-                        {tokenContent.badge && (
-                          <Badge size="sm" variant="subtle" colorPalette="blue">
-                            {tokenContent.badge}
-                          </Badge>
-                        )}
-                        {tokenContent.docsUrl && (
-                          <Tooltip text="Open documentation" openDelay={400}>
-                            <IconButton
-                              aria-label="Open documentation"
-                              size="2xs"
-                              variant="ghost"
-                              colorPalette="blue"
-                              ms="auto"
-                              onClick={() =>
-                                window.electronAPI.openExternal(
-                                  tokenContent.docsUrl!,
-                                )
-                              }
-                            >
-                              <Icon as={LuExternalLink} />
-                            </IconButton>
-                          </Tooltip>
-                        )}
-                      </HStack>
-                      {tokenContent.syntax && (
-                        <Box mb="2">
-                          <Code
-                            fontSize="xs"
-                            px="2"
-                            py="1"
-                            borderRadius="md"
-                            display="block"
-                            whiteSpace="pre-wrap"
-                            colorPalette="gray"
-                          >
-                            {tokenContent.syntax}
-                          </Code>
-                        </Box>
-                      )}
-                      <Text fontSize="sm" color="fg.muted" lineHeight="1.5">
-                        {tokenContent.description}
-                      </Text>
-                    </>
-                  )}
-                </Popover.Body>
-              </Popover.Content>
-            </Popover.Positioner>
+            <HintCard
+              ref={hintRefs.setFloating}
+              style={{ ...hintFloatingStyles, zIndex: 9999 }}
+              onMouseEnter={cancelClose}
+              onMouseLeave={scheduleClose}
+              role="tooltip"
+            >
+              <FloatingArrow
+                ref={arrowRef}
+                context={hintContext}
+                fill={token("colors.bg.panel")}
+                stroke={token("colors.border")}
+                strokeWidth={1}
+              />
+              <HStack gap="2" mb="2" align="center">
+                <Icon as={tokenContent.icon} boxSize="4" color="fg.muted" />
+                <Text fontWeight="semibold" fontSize="sm" color="fg">
+                  {tokenContent.label}
+                </Text>
+                {tokenContent.badge && (
+                  <Badge size="sm" variant="subtle" colorPalette="blue">
+                    {tokenContent.badge}
+                  </Badge>
+                )}
+                {tokenContent.docsUrl && (
+                  <Tooltip text="Open documentation" openDelay={400}>
+                    <IconButton
+                      aria-label="Open documentation"
+                      size="2xs"
+                      variant="ghost"
+                      colorPalette="blue"
+                      ms="auto"
+                      onClick={() =>
+                        window.electronAPI.openExternal(tokenContent.docsUrl!)
+                      }
+                    >
+                      <Icon as={LuExternalLink} />
+                    </IconButton>
+                  </Tooltip>
+                )}
+              </HStack>
+              {tokenContent.syntax && (
+                <Box mb="2">
+                  <Code
+                    fontSize="xs"
+                    px="2"
+                    py="1"
+                    borderRadius="md"
+                    display="block"
+                    whiteSpace="pre-wrap"
+                    colorPalette="gray"
+                  >
+                    {tokenContent.syntax}
+                  </Code>
+                </Box>
+              )}
+              <Text fontSize="sm" color="fg.muted" lineHeight="1.5">
+                {tokenContent.description}
+              </Text>
+            </HintCard>
           </Portal>
-        </Popover.Root>
+        )}
         <div
           style={{
             position: "absolute",
@@ -874,12 +859,4 @@ const lastIndexOfRegex = (word: string, regex: RegExp): number => {
   }
 
   return match;
-};
-
-const isInsideString = (text: string, position: number): boolean => {
-  let count = 0;
-  for (let i = 0; i < position; i++) {
-    if (text[i] === '"' && (i === 0 || text[i - 1] !== "\\")) count++;
-  }
-  return count % 2 === 1;
 };

@@ -1,29 +1,31 @@
-import React, { useCallback } from "react";
-import { useEvent } from "react-use";
+import React, { useCallback, useEffect } from "react";
 import { getCruncherRoot } from "~core/utils/shadowUtils";
 
 export function useOutsideDetector(onOutsideClick = () => {}) {
   const ref = React.useRef<HTMLDivElement>(null);
-  const root = getCruncherRoot();
+  const onOutsideClickRef = React.useRef(onOutsideClick);
+  onOutsideClickRef.current = onOutsideClick;
 
-  if (!root) {
-    console.warn("Root not found - useOutsideDetector will not work");
-  }
+  const handleMouseDown = useCallback((event: Event) => {
+    if (
+      ref.current &&
+      event.target instanceof Node &&
+      !ref.current.contains(event.target)
+    ) {
+      onOutsideClickRef.current();
+    }
+  }, []);
 
-  const handleClickOutside = useCallback(
-    (event: Event) => {
-      if (
-        ref.current &&
-        event.target instanceof Node &&
-        !ref.current.contains(event.target)
-      ) {
-        onOutsideClick();
-      }
-    },
-    [onOutsideClick],
-  );
-
-  useEvent("mousedown", root ? handleClickOutside : null, root ?? undefined);
+  useEffect(() => {
+    const shadowRoot = getCruncherRoot()?.getRootNode() as ShadowRoot | null;
+    if (!shadowRoot) {
+      console.warn("Shadow root not found - useOutsideDetector will not work");
+      return;
+    }
+    shadowRoot.addEventListener("mousedown", handleMouseDown, true);
+    return () =>
+      shadowRoot.removeEventListener("mousedown", handleMouseDown, true);
+  }, [handleMouseDown]);
 
   return ref;
 }

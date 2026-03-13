@@ -41,8 +41,6 @@ export type HighlightData = {
 export type HighlighterProps = {
   value: string;
   highlightData: HighlightData[];
-  ghostText?: string;
-  ghostTextOffset?: number;
 };
 
 type HighlightedText = {
@@ -354,20 +352,11 @@ const TokenSpan = styled.span`
   pointer-events: none;
 `;
 
-const GhostSpan = styled.span`
-  opacity: 0.35;
-  pointer-events: none;
-`;
-
 const renderChunks = (text: string, highlightData: HighlightData[]) => {
   const nodes = splitTextToChunks(text, highlightData).map<React.ReactNode>(
     (chunk, index) => {
       if (typeof chunk === "string") {
         return chunk;
-      }
-
-      if (chunk.type === "ghost") {
-        return <GhostSpan key={index}>{chunk.value}</GhostSpan>;
       }
 
       const style = typeToStyle(chunk.type);
@@ -392,52 +381,16 @@ const renderChunks = (text: string, highlightData: HighlightData[]) => {
 export const TextHighlighter = React.forwardRef<
   HTMLPreElement,
   HighlighterProps
->(({ value, highlightData, ghostText, ghostTextOffset }, ref) => {
-  const { displayText, displayHighlightData } = useMemo(() => {
+>(({ value, highlightData }, ref) => {
+  const displayText = useMemo(() => {
     let text = value;
     if (text[text.length - 1] == "\n") {
       text += " ";
     }
-
-    // Insert ghost text at the cursor offset and shift token offsets accordingly
-    let data = highlightData;
-    if (ghostText && ghostTextOffset !== undefined && ghostText.length > 0) {
-      text =
-        text.slice(0, ghostTextOffset) +
-        ghostText +
-        text.slice(ghostTextOffset);
-
-      const ghostLen = ghostText.length;
-      data = [
-        ...highlightData.map((h) => {
-          if (h.token.startOffset < ghostTextOffset) return h;
-          return {
-            ...h,
-            token: {
-              startOffset: h.token.startOffset + ghostLen,
-              endOffset:
-                h.token.endOffset !== undefined
-                  ? h.token.endOffset + ghostLen
-                  : undefined,
-            },
-          };
-        }),
-        {
-          type: "ghost",
-          token: {
-            startOffset: ghostTextOffset,
-            endOffset: ghostTextOffset + ghostLen - 1,
-          },
-        },
-      ];
-    }
-
-    return { displayText: text, displayHighlightData: data };
-  }, [value, highlightData, ghostText, ghostTextOffset]);
+    return text;
+  }, [value]);
 
   return (
-    <StyledPre ref={ref}>
-      {renderChunks(displayText, displayHighlightData)}
-    </StyledPre>
+    <StyledPre ref={ref}>{renderChunks(displayText, highlightData)}</StyledPre>
   );
 });
