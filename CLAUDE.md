@@ -10,8 +10,8 @@ Cruncher is a Turborepo-based monorepo containing:
 ## Build & Release
 - Uses **Changesets** for versioning and releases
 - **OIDC trusted publishing** to npm (no NPM_TOKEN needed)
-- Electron app published via `workflow_dispatch` only
-- `.changeset/config.json` ignores: `cruncher-tools`, `docs-cruncher`, `cruncher` (electron)
+- Electron app releases automatically when `apps/cruncher` version is bumped by a changeset
+- `.changeset/config.json` ignores: `cruncher-tools`, `docs-cruncher` — **`cruncher` (Electron app) is NOT ignored and needs a changeset when it changes**
 - Local testing: `pnpm local-registry` + `pnpm release:local`
 
 ## Code Style & Conventions

@@ -22,6 +22,7 @@ jobs:
     outputs:
       published: ${{ steps.changesets.outputs.published }}
       publishedPackages: ${{ steps.changesets.outputs.publishedPackages }}
+      electron-version-changed: ${{ steps.electron-version.outputs.changed }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -59,11 +60,22 @@ jobs:
           # See: https://github.com/changesets/action/issues/542
           NODE_AUTH_TOKEN: ""
 
+      - name: Check if Electron app version changed
+        id: electron-version
+        run: |
+          PREV=$(git show HEAD~1:apps/cruncher/package.json 2>/dev/null | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>console.log(JSON.parse(d).version))" || echo "")
+          CURR=$(node -p "require('./apps/cruncher/package.json').version")
+          if [ -n "$PREV" ] && [ "$PREV" != "$CURR" ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+
   publish-electron:
     name: Publish Electron app (${{ matrix.os }})
     needs: release-npm
     runs-on: ${{ matrix.os }}
-    if: always() && (needs.release-npm.outputs.published == 'true' || github.event_name == 'workflow_dispatch')
+    if: always() && (needs.release-npm.outputs.published == 'true' || needs.release-npm.outputs.electron-version-changed == 'true' || github.event_name == 'workflow_dispatch')
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
@@ -94,7 +106,7 @@ jobs:
     name: Publish Electron release
     needs: [release-npm, publish-electron]
     runs-on: ubuntu-latest
-    if: always() && needs.publish-electron.result == 'success' && (needs.release-npm.outputs.published == 'true' || github.event_name == 'workflow_dispatch')
+    if: always() && needs.publish-electron.result == 'success' && (needs.release-npm.outputs.published == 'true' || needs.release-npm.outputs.electron-version-changed == 'true' || github.event_name == 'workflow_dispatch')
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
