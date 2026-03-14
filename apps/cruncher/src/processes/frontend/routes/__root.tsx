@@ -3,10 +3,7 @@ import { css } from "@emotion/react";
 import styled from "@emotion/styled";
 import { token } from "~components/ui/system";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { TanStackDevtools } from "@tanstack/react-devtools";
-import { ReactQueryDevtoolsPanel } from "@tanstack/react-query-devtools";
 import { createRootRoute, Outlet } from "@tanstack/react-router";
-import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { Provider as JotaiProvider } from "jotai";
 import { Provider } from "~components/ui/provider";
 import { Toaster } from "~components/ui/toaster";
@@ -17,6 +14,7 @@ import { KeybindingsProvider } from "~core/KeybindingsContext";
 import { Shortcuts } from "~features/shortcuts/Shortcuts";
 import { SideMenu } from "~features/SideMenu";
 import { TopBar } from "~features/TopBar";
+import { lazy, Suspense } from "react";
 import {
   useApplicationStore,
   useIsShortcutsShown,
@@ -25,6 +23,14 @@ import {
 import { ErrorBoundary } from "~components/ErrorBoundary";
 
 import "../index.css";
+
+const Devtools = import.meta.env.DEV
+  ? lazy(() =>
+      import("./_devtools").then((mod) => ({
+        default: mod.Devtools,
+      })),
+    )
+  : null;
 
 const Wrapper = styled.div`
   flex: 1;
@@ -65,21 +71,11 @@ export const Route = createRootRoute({
           </ApplicationProvider>
         </Provider>
       </QueryClientProvider>
-      <TanStackDevtools
-        config={{
-          hideUntilHover: true,
-        }}
-        plugins={[
-          {
-            name: "TanStack Query",
-            render: <ReactQueryDevtoolsPanel />,
-          },
-          {
-            name: "TanStack Router",
-            render: <TanStackRouterDevtoolsPanel />,
-          },
-        ]}
-      />
+      {Devtools && (
+        <Suspense fallback={null}>
+          <Devtools />
+        </Suspense>
+      )}
     </div>
   ),
 });

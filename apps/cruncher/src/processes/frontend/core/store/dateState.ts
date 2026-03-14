@@ -1,9 +1,9 @@
 import { format, isValid, parse, subMinutes } from "date-fns";
 import { utc } from "@date-fns/utc";
-import { atom, PrimitiveAtom, useAtom, useAtomValue } from "jotai";
+import { atom, PrimitiveAtom, useAtom } from "jotai";
 import { DateRange } from "react-day-picker";
 import { DateType, FullDate, isTimeNow } from "~lib/dateUtils";
-import { timezoneAtom } from "./liveState";
+import { appStore, useApplicationStore } from "./appStore";
 import type { TimezoneOption } from "src/processes/server/config/schema";
 
 export const dateFormat = "yyyy/MM/dd HH:mm:ss";
@@ -119,14 +119,14 @@ const formatTime = (date: FullDate | undefined, timezone: TimezoneOption) => {
 
 const renderedDateAtom = (dateAtom: PrimitiveAtom<FullDate | undefined>) =>
   atom((get) => {
-    return formatTime(get(dateAtom), get(timezoneAtom));
+    return formatTime(get(dateAtom), appStore.getState().generalSettings?.timezone ?? ("local" as TimezoneOption));
   });
 
 export const useTryToUpdateDate = (
   dateAtom: PrimitiveAtom<FullDate | undefined>,
 ) => {
   const [fullDate, setFullDate] = useAtom(dateAtom);
-  const timezone = useAtomValue(timezoneAtom);
+  const timezone = useApplicationStore((s) => s.generalSettings?.timezone ?? "local");
   const opts = tzOptions(timezone);
   const ref = () => (fullDate instanceof Date ? fullDate : new Date());
 

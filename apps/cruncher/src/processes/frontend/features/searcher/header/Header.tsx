@@ -66,7 +66,7 @@ import {
 import {
   isLiveFetchingAtom,
   isLiveModeAtom,
-} from "../../../core/store/liveState";
+} from "../../../core/store/queryState";
 import LiveModeButton from "./LiveModeButton";
 import {
   ApplicationStore,

@@ -21,16 +21,12 @@ import {
   endFullDateAtom,
   startFullDateAtom,
 } from "./store/dateState";
+import { LIVE_INTERVAL_MS } from "src/processes/server/config/schema";
 import {
   isLiveFetchingAtom,
   isLiveModeAtom,
   lastLiveRefreshTimeAtom,
-  liveIntervalAtom,
-  maxLogsAtom,
   newLogSinceAtom,
-} from "./store/liveState";
-import { LIVE_INTERVAL_MS } from "src/processes/server/config/schema";
-import {
   jobMetadataAtom,
   searchQueryAtom,
   tabNameAtom,
@@ -163,6 +159,7 @@ export const queryStartTimeAtom = atom<Date | undefined>(undefined);
 export const queryEndTimeAtom = atom<Date | undefined>(undefined);
 export const isQuerySuccessAtom = atom(true);
 export const lastRanJobAtom = atom<QueryTask | undefined>(undefined);
+export const pendingNavigationUrlAtom = atom<string | null>(null);
 
 export const dynamicSuggestionsCacheAtom = atom<{
   cacheKey: string; // JSON.stringify({profile, indexes})
@@ -290,7 +287,7 @@ export const useRunQuery = () => {
 
 export const useLiveMode = () => {
   const isLiveMode = useAtomValue(isLiveModeAtom);
-  const liveInterval = useAtomValue(liveIntervalAtom);
+  const liveInterval = useApplicationStore((s) => s.generalSettings?.liveInterval ?? "5s");
   const intervalMs = LIVE_INTERVAL_MS[liveInterval];
   const job = useAtomValue(lastRanJobAtom);
   const isLoading = useAtomValue(isLoadingAtom);
@@ -320,12 +317,10 @@ export const useLiveMode = () => {
           store.set(lastLiveRefreshTimeAtom, now);
 
           try {
-            const maxLogs = store.get(maxLogsAtom);
             const result = await controller.appendQueryResults(
               job.id,
               fromTime,
               now,
-              maxLogs,
             );
             store.set(actualEndTimeAtom, now);
             store.set(endFullDateAtom, now);

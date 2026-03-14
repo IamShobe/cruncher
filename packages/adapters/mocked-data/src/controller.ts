@@ -8,6 +8,8 @@ import {
 import { ControllerIndexParam, Search } from "@cruncher/qql/grammar";
 import { buildDoesLogMatchCallback } from "@cruncher/qql/searchTree";
 
+const FAST_TESTS = process.env["CRUNCHER_FAST_TESTS"] === "1";
+const MAX_ROWS = FAST_TESTS ? 5000 : 100000;
 const tagsOptions = ["nice", "developer", "collector"];
 const data: Record<string, unknown>[] = [
   {
@@ -100,7 +102,7 @@ const longMessages = [
   "Kubernetes pod eviction triggered on node/worker-node-3 (region: eu-west-1, zone: eu-west-1b). Evicted pods: pod/api-server-7d9f8b-xkp2q, pod/api-server-7d9f8b-mn3rt, pod/worker-7f6c9d-pp1qz. Reason: The node was low on resource: memory. Threshold quantity: 100Mi, available: 43Mi. Node capacity: cpu=8, memory=16Gi. Pending daemonsets: fluentd, prometheus-node-exporter. Recommended actions: (1) increase node memory to 32Gi, (2) set pod memory requests to 256Mi and limits to 512Mi, (3) enable cluster autoscaler with min=3 max=10 nodes, (4) add PodDisruptionBudget to prevent simultaneous evictions.",
 ];
 
-for (let i = 2; i <= 100000; i++) {
+for (let i = 2; i <= MAX_ROWS; i++) {
   const randomTags = [
     tagsOptions[Math.floor(Math.random() * tagsOptions.length)],
     tagsOptions[Math.floor(Math.random() * tagsOptions.length)],
@@ -185,7 +187,7 @@ export const MockController = {
         return { object: fields, message: itemToMessage(item) };
       };
 
-      const shuffled = [...filteredData].sort(() => Math.random() - 0.5);
+      const shuffled = FAST_TESTS ? filteredData : [...filteredData].sort(() => Math.random() - 0.5);
 
       if (options.isLiveQuery) {
         // Live: simulate 1–10 new events arriving
@@ -196,7 +198,7 @@ export const MockController = {
             asNumberField(b.object._time).value -
             asNumberField(a.object._time).value,
         );
-        const delay = Math.floor(Math.random() * 1000) + 500;
+        const delay = FAST_TESTS ? 0 : Math.floor(Math.random() * 1000) + 500;
         const timeout = setTimeout(() => {
           options.onBatchDone(result);
           resolve();
@@ -207,8 +209,8 @@ export const MockController = {
         });
       } else {
         // Initial load: stream up to 10k items in batches of 2000
-        const BATCH_SIZE = 2000;
-        const capped = shuffled.slice(0, 10000);
+        const BATCH_SIZE = FAST_TESTS ? 5000 : 2000;
+        const capped = shuffled.slice(0, FAST_TESTS ? 5000 : 10000);
         let batchIndex = 0;
         let cancelled = false;
 
@@ -231,14 +233,14 @@ export const MockController = {
           batchIndex += BATCH_SIZE;
 
           if (batchIndex < capped.length) {
-            const delay = Math.floor(Math.random() * 400) + 100;
+            const delay = FAST_TESTS ? 0 : Math.floor(Math.random() * 400) + 100;
             setTimeout(sendNextBatch, delay);
           } else {
             resolve();
           }
         };
 
-        const initialDelay = Math.floor(Math.random() * 500) + 200;
+        const initialDelay = FAST_TESTS ? 0 : Math.floor(Math.random() * 500) + 200;
         setTimeout(sendNextBatch, initialDelay);
       }
     });

@@ -1,0 +1,10 @@
+# build artifacts
+out/
+dist/
+.vite/
+# packaged server runtime
+resources/server/
+resources/native-node-modules/
+# dev-only
+node_modules/
+*.log

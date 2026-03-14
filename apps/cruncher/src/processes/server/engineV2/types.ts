@@ -1,11 +1,9 @@
 import { Mutex } from "async-mutex";
 import EventEmitter from "node:events";
-import BTree from "sorted-btree";
 import { JSONSchema } from "zod/v4/core";
 import { PluginRef, QueryProvider } from "@cruncher/adapter-utils";
 import { ProcessedData } from "@cruncher/adapter-utils/logTypes";
 import { FullDate } from "~lib/dateUtils";
-import { DisplayResults } from "~lib/displayTypes";
 import { ControllerIndexParam, Search } from "@cruncher/qql/grammar";
 import { Brand, Signal } from "@cruncher/utils";
 
@@ -27,7 +25,7 @@ export const finishedStatuses = new Set<QueryTask["status"]>([
 export type QueryInput = {
   searchTerm: string;
   searchProfileRef: SearchProfileRef;
-  queryOptions: SerializeableParams;
+  queryOptions: SerializableParams;
 };
 
 export type QueryTaskState = {
@@ -35,13 +33,35 @@ export type QueryTaskState = {
 
   subTasks: SubTask[];
   abortController: AbortController;
-  index: BTree<number, ProcessedData[]>;
-  rawData: ProcessedData[]; // Pre-pipeline merged data, used for live mode appends
-  displayResults: DisplayResults;
+  /** Unique IDs seen so far — used by appendQuery() to deduplicate live rows. */
+  uniqueIds: Set<string>;
+  /** True once appendQuery() has been called at least once on this task. */
+  isLive: boolean;
+  /** Maps instanceRef → subtaskId for routing live-mode inserts. */
+  subtaskByInstance: Map<InstanceRef, string>;
+  /** Accumulated raw parquet chunk paths (from subtasks) */
+  chunkPaths: string[];
+  /** Path to events result Parquet (pipeline output), null until pipeline runs */
+  eventsResultPath: string | null;
+  eventsResultRowCount: number;
+  /** Path to table result Parquet (| stats / | table output), null if not produced */
+  tableResultPath: string | null;
+  tableResultRowCount: number;
+  tableResultColumns: string[] | null;
+  /** Path to view result JSON (| timechart output), null if not produced */
+  viewResultPath: string | null;
   lastBatchStatus: JobBatchFinished | null;
+  batchHistory: JobBatchFinished[];
   finishedQuerying: Signal;
   mutex: Mutex;
   ee: EventEmitter;
+  /** Unix timestamp (ms) of the last batch received — updated on every onBatchDone. */
+  lastActivityAt: number;
+  /** In-memory pipeline output; set after _runPipelineAndSave, cleared when task is released */
+  eventsCache: ProcessedData[] | null;
+  tableCache: { data: ProcessedData[]; columns: string[] } | null;
+  /** Pre-computed byte estimate of eventsCache + tableCache, updated whenever cache is set. */
+  cachedBytesSnapshot: number;
 };
 
 export type QueryExecutionHistory = {
@@ -79,7 +99,7 @@ export type SerializableAdapter = {
 };
 
 // MUST BE SERIALIZABLE
-export type SerializeableParams = {
+export type SerializableParams = {
   fromTime: number;
   toTime: number;
   limit: number;
@@ -109,10 +129,13 @@ export type ClosestPoint = {
 export type SubTaskRef = Brand<string, "SubTaskRef">;
 export type SubTask = {
   id: SubTaskRef;
-  createdAt: Date;
+  subtaskId: string;      // references subtask_history.id
   instanceRef: InstanceRef;
-  cacheKey: string;
+  dataDir: string;        // path to subtask Parquet chunk directory
+  dedupKey: string;
   isReady: Promise<void>;
+  fromDedup: boolean;     // true if reusing an existing subtask
+  sourceSubtaskId: string | null;
 };
 
 export type JobBatchFinished = {
@@ -139,4 +162,38 @@ export type ExportResults = {
   payload: string; // The exported data in a string format (e.g., CSV, JSON)
   fileName: string; // The name of the file to be downloaded
   contentType: string; // The type of the file (e.g., "text/csv", "application/json")
+};
+
+export type ActiveTaskInfo = {
+  taskId: string;
+  status: string;
+  searchTerm: string;
+  searchProfile: string;
+  createdAt: number;
+  error: string | null;
+  subTaskCount: number;
+  subtaskIds: string[];
+  lastActivityAt: number;
+  /** Row count of results currently held in the in-process memory cache (0 if not cached). */
+  cachedRowCount: number;
+  /** Estimated byte size of in-process memory cache (0 if not cached). */
+  cachedBytes: number;
+};
+
+export type EngineStatus = {
+  activeTaskCount: number;
+  activeTasks: ActiveTaskInfo[];
+  initializedPlugins: PluginInstance[];
+  searchProfiles: SearchProfile[];
+  totalDiskBytes: number | null;
+  workerStats: {
+    inflightOps: number;
+    pendingOps: number;
+    isDead: boolean;
+    totalOpsDispatched: number;
+  };
+  historyStats: {
+    totalQueryCount: number;
+    totalRowCount: number;
+  };
 };

@@ -1,3 +1,20 @@
+// Debug file writer — runs before anything else, survives electron-log/IPC failures.
+// Writes to the same file as electron-log so it appears in the existing log stream.
+import { appendFileSync, mkdirSync } from "node:fs";
+import { homedir } from "node:os";
+import { join } from "node:path";
+let _LOG_DIR = join(homedir(), "Library", "Logs", "cruncher");
+let _DBG = join(_LOG_DIR, "main.log");
+const _setLogDir = (dir: string) => {
+  _LOG_DIR = dir;
+  _DBG = join(_LOG_DIR, "main.log");
+};
+const _dbg = (msg: string) => {
+  const line = `[${new Date().toISOString()}] [debug] (server) ${msg}\n`;
+  try { mkdirSync(_LOG_DIR, { recursive: true }); appendFileSync(_DBG, line); } catch { /* ignore */ }
+};
+_dbg("module top");
+
 import { applyWSSHandler } from "@trpc/server/adapters/ws";
 import { EventEmitter } from "node:events";
 import { WebSocketServer } from "ws";
@@ -21,14 +38,30 @@ import { IPCMessage } from "./types";
 import log from "electron-log/main";
 import { init as initLoki } from "./loki/runner";
 import { appGeneralSettings, readConfig } from "./plugins_engine/config";
+import { DEFAULT_MAX_HISTORY_ENTRIES } from "./config/schema";
 export type { AppRouter } from "./plugins_engine/router_messages";
 
+_dbg("before log.initialize");
 log.initialize();
+_dbg("after log.initialize");
 Object.assign(console, log.functions);
+_dbg("after Object.assign console");
 
 process.on("uncaughtException", (error: NodeJS.ErrnoException) => {
   if (error.code === "EIO") return; // ignore broken pipe/disconnected stdout
+  _dbg(`uncaughtException: ${error.message}\n${error.stack ?? ""}`);
   throw error;
+});
+
+process.on("unhandledRejection", (reason) => {
+  const msg = reason instanceof Error ? `${reason.message}\n${reason.stack ?? ""}` : String(reason);
+  _dbg(`unhandledRejection: ${msg}`);
+});
+process.on("beforeExit", (code) => {
+  _dbg(`beforeExit: ${code}`);
+});
+process.on("exit", (code) => {
+  _dbg(`exit: ${code}`);
 });
 
 log.transports.console.level = false; // utility process has no reliable stdio
@@ -37,8 +70,6 @@ process.title = "cruncher-server";
 
 const eventEmitter = new EventEmitter();
 
-// let serverContainer: Awaited<ReturnType<typeof getServer>> | undefined =
-//   undefined;
 const messageSenderReady = createSignal();
 
 const startServer = async (engineV2: Engine, eventEmitter: EventEmitter) => {
@@ -99,20 +130,35 @@ const startServer = async (engineV2: Engine, eventEmitter: EventEmitter) => {
   );
 };
 
-const initializeServer = async (authProvider: ExternalAuthProvider) => {
+const initializeServer = async (
+  authProvider: ExternalAuthProvider,
+  opts: { userDataPath?: string; logDir?: string } = {},
+) => {
+  _dbg("initializeServer start");
+  if (opts.logDir) _setLogDir(opts.logDir);
+  if (opts.userDataPath) _dbg(`initializeServer userDataPath: ${opts.userDataPath}`);
+  if (opts.logDir) _dbg(`initializeServer logDir: ${opts.logDir}`);
+  if (opts.logDir) {
+    log.transports.file.resolvePath = () => join(opts.logDir as string, "main.log");
+  }
+  console.log("[server-init] log file:", log.transports.file.getFile().path);
+  _dbg("step: readConfig");
   const { config: appConfig } = readConfig(appGeneralSettings);
-  initLoki(appConfig.loki).catch((error) => {
-    console.error("Failed to initialize Loki:", error);
+  _dbg("step: new Engine");
+  const engineV2 = new Engine(authProvider, {
+    userDataPath: opts.userDataPath,
   });
-  console.log("Initializing server...");
-  // get free port
-  //   serverContainer = await getServer();
-  //   console.log(`Server is running on port ${serverContainer.port}`);
-  // messageSender = getWebsocketMessageSender(serverContainer);
-  const engineV2 = new Engine(authProvider);
-  const server = await startServer(engineV2, eventEmitter);
+  _dbg("step: setMaxHistoryEntries");
+  engineV2.setMaxHistoryEntries(appConfig.ui?.maxHistoryEntries ?? DEFAULT_MAX_HISTORY_ENTRIES);
 
-  //   messageSender = serverContainer;
+  _dbg("step: recoverInterruptedSessions");
+  // Mark any sessions that were mid-flight when the process last crashed
+  await engineV2.recoverInterruptedSessions();
+  _dbg("step: recoverInterruptedSessions done");
+  engineV2.startWatchdog();
+
+  _dbg("step: startServer");
+  const server = await startServer(engineV2, eventEmitter);
 
   // TODO: dynamically load supported plugins
   engineV2.registerPlugin(loki);
@@ -122,9 +168,6 @@ const initializeServer = async (authProvider: ExternalAuthProvider) => {
   engineV2.registerPlugin(k8s);
   engineV2.registerPlugin(coralogix);
   engineV2.registerPlugin(datadog);
-
-  //   const routes = await getRoutes(engineV2);
-  //   await setupEngine(serverContainer, routes);
 
   return {
     port: server.port,
@@ -136,8 +179,8 @@ const sendUrlNavigationMessage = (url: string) => {
 };
 
 console.log("Server process started, waiting for IPC messages...");
-// If this file is run directly, start the server and listen for IPC messages
-if (require.main === module) {
+// Start when run directly or when launched as a utility process (parentPort present).
+if (require.main === module || "parentPort" in process) {
   (async () => {
     try {
       if (!("parentPort" in process)) {
@@ -145,9 +188,31 @@ if (require.main === module) {
       } else {
         (process.parentPort as EventEmitter)?.on("message", async (e) => {
           const [port] = e.ports;
-          const serverData = await initializeServer(
-            new ElectronExternalAuthProvider(port),
-          );
+          const initPayload = (e as { data?: unknown }).data as
+            | { userDataPath?: string; logDir?: string }
+            | undefined;
+          _dbg("message handler fired, port received");
+          let serverData: { port: number };
+          try {
+            _dbg("calling initializeServer");
+            serverData = await initializeServer(
+              new ElectronExternalAuthProvider(port),
+              {
+                userDataPath: initPayload?.userDataPath,
+                logDir: initPayload?.logDir,
+              },
+            );
+            _dbg("initializeServer completed successfully");
+          } catch (error) {
+            const msg = error instanceof Error
+              ? `${error.message}\n${error.stack ?? ""}`
+              : String(error);
+            _dbg(`FATAL: initializeServer threw: ${msg}`);
+            console.error("[server-init] FATAL: initializeServer threw:", msg);
+            // Send the error back through the port so the main process can log it
+            try { port.postMessage({ type: "initError", error: msg }); } catch { /* ignore */ }
+            process.exit(1);
+          }
 
           console.log("Server is online!");
 
@@ -188,6 +253,7 @@ if (require.main === module) {
         });
       }
     } catch (error) {
+      _dbg(`outer catch: ${error instanceof Error ? error.stack : String(error)}`);
       console.error("Error initializing server:", error);
       process.exit(1);
     }

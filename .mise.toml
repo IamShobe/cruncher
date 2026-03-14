@@ -1,4 +1,11 @@
 [tools]
+ast-grep = "latest"
+difftastic = "latest"
+fd = "latest"
+hyperfine = "latest"
 java = "latest"
 node = "lts"
 pnpm = "latest"
+shellcheck = "latest"
+watchexec = "latest"
+yq = "latest"

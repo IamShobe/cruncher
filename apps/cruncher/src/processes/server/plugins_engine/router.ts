@@ -15,12 +15,25 @@ import {
 } from "./config";
 import {
   CruncherConfig,
+  DEFAULT_MAX_HISTORY_ENTRIES,
   LIVE_INTERVAL_OPTIONS,
   TIMEZONE_OPTIONS,
 } from "../config/schema";
 import { DEFAULT_THEME } from "../lib/themeDefaults.js";
 import { QueryBatchDone, QueryJobUpdated, UrlNavigation } from "./protocolOut";
 import { publicProcedure, router } from "./trpc";
+
+function getUiDefaults(config: CruncherConfig) {
+  return {
+    theme: config.ui?.theme ?? DEFAULT_THEME,
+    liveInterval: config.ui?.liveInterval ?? "5s",
+    maxLogs: config.ui?.maxLogs ?? 100000,
+    liveAutoStopMinutes: config.ui?.liveAutoStopMinutes ?? 30,
+    timezone: config.ui?.timezone ?? "local",
+    maxHistoryEntries: config.ui?.maxHistoryEntries ?? DEFAULT_MAX_HISTORY_ENTRIES,
+    keybindings: config.ui?.keybindings ?? {},
+  };
+}
 
 export const appRouter = router({
   reloadConfig: publicProcedure.mutation(async ({ ctx }) => {
@@ -96,15 +109,6 @@ export const appRouter = router({
       ctx.engine.cancelQuery(input.taskId as TaskRef);
       return { success: true };
     }),
-  getLogs: publicProcedure
-    .input(
-      z.object({
-        jobId: z.string(),
-      }),
-    )
-    .query(async ({ ctx, input }) => {
-      return ctx.engine.getLogs(input.jobId as TaskRef);
-    }),
   getLogsPaginated: publicProcedure
     .input(
       z.object({
@@ -172,12 +176,13 @@ export const appRouter = router({
       readMergedConfig(appGeneralSettings);
     return {
       ...appGeneralSettings,
-      theme: merged.ui?.theme ?? DEFAULT_THEME,
-      liveInterval: merged.ui?.liveInterval ?? "5s",
-      maxLogs: merged.ui?.maxLogs ?? 100000,
-      liveAutoStopMinutes: merged.ui?.liveAutoStopMinutes ?? 30,
-      timezone: merged.ui?.timezone ?? "local",
-      keybindings: merged.ui?.keybindings ?? {},
+      theme: merged.ui.theme,
+      liveInterval: merged.ui.liveInterval,
+      maxLogs: merged.ui.maxLogs,
+      liveAutoStopMinutes: merged.ui.liveAutoStopMinutes,
+      timezone: merged.ui.timezone,
+      maxHistoryEntries: merged.ui.maxHistoryEntries,
+      keybindings: merged.ui.keybindings,
       globalKeybindings: globalConfig.ui?.keybindings ?? {},
       localKeybindings: localConfig.ui?.keybindings ?? {},
       configError: error,
@@ -200,11 +205,7 @@ export const appRouter = router({
       write((config) => ({
         ...config,
         ui: {
-          theme: config.ui?.theme ?? DEFAULT_THEME,
-          liveInterval: config.ui?.liveInterval ?? "5s",
-          maxLogs: config.ui?.maxLogs ?? 100000,
-          liveAutoStopMinutes: config.ui?.liveAutoStopMinutes ?? 30,
-          timezone: config.ui?.timezone ?? "local",
+          ...getUiDefaults(config),
           keybindings: {
             ...config.ui?.keybindings,
             [input.shortcut]: { Mac: input.Mac, Windows: input.Windows },
@@ -222,11 +223,7 @@ export const appRouter = router({
         return {
           ...config,
           ui: {
-            theme: config.ui?.theme ?? DEFAULT_THEME,
-            liveInterval: config.ui?.liveInterval ?? "5s",
-            maxLogs: config.ui?.maxLogs ?? 100000,
-            liveAutoStopMinutes: config.ui?.liveAutoStopMinutes ?? 30,
-            timezone: config.ui?.timezone ?? "local",
+            ...getUiDefaults(config),
             keybindings,
           },
         };
@@ -239,11 +236,7 @@ export const appRouter = router({
     const clearKeybindings = (config: CruncherConfig): CruncherConfig => ({
       ...config,
       ui: {
-        theme: config.ui?.theme ?? DEFAULT_THEME,
-        liveInterval: config.ui?.liveInterval ?? "5s",
-        maxLogs: config.ui?.maxLogs ?? 100000,
-        liveAutoStopMinutes: config.ui?.liveAutoStopMinutes ?? 30,
-        timezone: config.ui?.timezone ?? "local",
+        ...getUiDefaults(config),
         keybindings: {},
       },
     });
@@ -251,16 +244,17 @@ export const appRouter = router({
     writeLocalConfig(clearKeybindings);
     return { success: true };
   }),
-  setLiveSettings: publicProcedure
+  setGeneralSettings: publicProcedure
     .input(
       z.object({
         liveInterval: z.enum(LIVE_INTERVAL_OPTIONS),
         maxLogs: z.number(),
         liveAutoStopMinutes: z.number().nullable(),
         timezone: z.enum(TIMEZONE_OPTIONS),
+        maxHistoryEntries: z.number().nullable(),
       }),
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       writeConfig(appGeneralSettings, (config) => ({
         ...config,
         ui: {
@@ -271,8 +265,10 @@ export const appRouter = router({
           maxLogs: input.maxLogs,
           liveAutoStopMinutes: input.liveAutoStopMinutes,
           timezone: input.timezone,
+          maxHistoryEntries: input.maxHistoryEntries,
         },
       }));
+      ctx.engine.setMaxHistoryEntries(input.maxHistoryEntries);
       return { success: true };
     }),
   setTheme: publicProcedure
@@ -285,12 +281,8 @@ export const appRouter = router({
       writeConfig(appGeneralSettings, (config) => ({
         ...config,
         ui: {
+          ...getUiDefaults(config),
           theme: input.theme,
-          liveInterval: config.ui?.liveInterval ?? "5s",
-          maxLogs: config.ui?.maxLogs ?? 100000,
-          liveAutoStopMinutes: config.ui?.liveAutoStopMinutes ?? 30,
-          timezone: config.ui?.timezone ?? "local",
-          keybindings: config.ui?.keybindings ?? {},
         },
       }));
       return { success: true };
@@ -324,7 +316,6 @@ export const appRouter = router({
         jobId: z.string(),
         fromTime: z.number(),
         toTime: z.number(),
-        maxLogs: z.number().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -332,8 +323,59 @@ export const appRouter = router({
         input.jobId as TaskRef,
         new Date(input.fromTime),
         new Date(input.toTime),
-        input.maxLogs,
       );
+    }),
+
+  // Session manager
+  listSessions: publicProcedure.query(({ ctx }) => {
+    return ctx.engine.listSessions();
+  }),
+  deleteSession: publicProcedure
+    .input(z.object({ taskId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      await ctx.engine.deleteSession(input.taskId as TaskRef);
+      return { success: true };
+    }),
+  restoreSession: publicProcedure
+    .input(z.object({ taskId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      return ctx.engine.restoreSession(input.taskId as TaskRef);
+    }),
+
+  // Engine status & history
+  getLoadedTaskIds: publicProcedure.query(({ ctx }) => {
+    return ctx.engine.getLoadedTaskIds();
+  }),
+  getEngineStatus: publicProcedure.query(({ ctx }) => {
+    return ctx.engine.getEngineStatus();
+  }),
+  getQueryHistory: publicProcedure
+    .input(
+      z.object({
+        limit: z.number(),
+        offset: z.number(),
+        search: z.string().optional(),
+        sortBy: z.enum(["createdAt", "completedAt", "diskBytes", "rowCount", "status"]).optional(),
+        sortDir: z.enum(["asc", "desc"]).optional(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      return ctx.engine.getQueryHistory(input.limit, input.offset, input.search, input.sortBy, input.sortDir);
+    }),
+  deleteHistoryEntry: publicProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      await ctx.engine.deleteHistoryEntry(input.id);
+      return { success: true };
+    }),
+  clearQueryHistory: publicProcedure.mutation(async ({ ctx }) => {
+    await ctx.engine.clearQueryHistory();
+    return { success: true };
+  }),
+  getSubtasksWithChunks: publicProcedure
+    .input(z.object({ subtaskIds: z.array(z.string()) }))
+    .query(async ({ ctx, input }) => {
+      return ctx.engine.getSubtasksWithChunks(input.subtaskIds);
     }),
 
   // Subscriptions
@@ -375,6 +417,13 @@ export const appRouter = router({
       yield newUrlNavigationMessage(data);
     }
   }),
+
+  navigateToUrl: publicProcedure
+    .input(z.object({ url: z.string() }))
+    .mutation(({ ctx, input }) => {
+      ctx.eventEmitter.emit("urlNavigation", input.url);
+      return { success: true };
+    }),
 });
 
 export const newBatchDoneMessage = (

@@ -9,6 +9,8 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as HistoryRouteImport } from './routes/history'
+import { Route as EngineStatusRouteImport } from './routes/engine-status'
 import { Route as SettingsRouteRouteImport } from './routes/settings/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SettingsIndexRouteImport } from './routes/settings/index'
@@ -16,6 +18,16 @@ import { Route as SettingsKeybindingsRouteImport } from './routes/settings/keybi
 import { Route as SettingsInitializedDatasetsRouteImport } from './routes/settings/initialized-datasets'
 import { Route as SettingsGeneralRouteImport } from './routes/settings/general'
 
+const HistoryRoute = HistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EngineStatusRoute = EngineStatusRouteImport.update({
+  id: '/engine-status',
+  path: '/engine-status',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsRouteRoute = SettingsRouteRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -51,6 +63,8 @@ const SettingsGeneralRoute = SettingsGeneralRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/settings': typeof SettingsRouteRouteWithChildren
+  '/engine-status': typeof EngineStatusRoute
+  '/history': typeof HistoryRoute
   '/settings/general': typeof SettingsGeneralRoute
   '/settings/initialized-datasets': typeof SettingsInitializedDatasetsRoute
   '/settings/keybindings': typeof SettingsKeybindingsRoute
@@ -58,6 +72,8 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/engine-status': typeof EngineStatusRoute
+  '/history': typeof HistoryRoute
   '/settings/general': typeof SettingsGeneralRoute
   '/settings/initialized-datasets': typeof SettingsInitializedDatasetsRoute
   '/settings/keybindings': typeof SettingsKeybindingsRoute
@@ -67,6 +83,8 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/settings': typeof SettingsRouteRouteWithChildren
+  '/engine-status': typeof EngineStatusRoute
+  '/history': typeof HistoryRoute
   '/settings/general': typeof SettingsGeneralRoute
   '/settings/initialized-datasets': typeof SettingsInitializedDatasetsRoute
   '/settings/keybindings': typeof SettingsKeybindingsRoute
@@ -77,6 +95,8 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/settings'
+    | '/engine-status'
+    | '/history'
     | '/settings/general'
     | '/settings/initialized-datasets'
     | '/settings/keybindings'
@@ -84,6 +104,8 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/engine-status'
+    | '/history'
     | '/settings/general'
     | '/settings/initialized-datasets'
     | '/settings/keybindings'
@@ -92,6 +114,8 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/settings'
+    | '/engine-status'
+    | '/history'
     | '/settings/general'
     | '/settings/initialized-datasets'
     | '/settings/keybindings'
@@ -101,10 +125,26 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   SettingsRouteRoute: typeof SettingsRouteRouteWithChildren
+  EngineStatusRoute: typeof EngineStatusRoute
+  HistoryRoute: typeof HistoryRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/history': {
+      id: '/history'
+      path: '/history'
+      fullPath: '/history'
+      preLoaderRoute: typeof HistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/engine-status': {
+      id: '/engine-status'
+      path: '/engine-status'
+      fullPath: '/engine-status'
+      preLoaderRoute: typeof EngineStatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings': {
       id: '/settings'
       path: '/settings'
@@ -171,6 +211,8 @@ const SettingsRouteRouteWithChildren = SettingsRouteRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SettingsRouteRoute: SettingsRouteRouteWithChildren,
+  EngineStatusRoute: EngineStatusRoute,
+  HistoryRoute: HistoryRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

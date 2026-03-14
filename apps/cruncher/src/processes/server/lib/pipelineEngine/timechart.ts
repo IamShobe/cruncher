@@ -10,6 +10,75 @@ import { AggregationFunction } from "@cruncher/qql/grammar";
 type TimechartParams = { span?: string; timeCol?: string; maxGroups?: number };
 import { bucketData } from "./aggregateData";
 
+function buildAggregatedBuckets(
+  dataPoints: ProcessedData[],
+  timeCol: string,
+  groupByColumns: string[],
+  aggregatedColumns: string[],
+): { aggregatedBucketData: Map<number, ProcessedData>; yAxis: Set<string> } {
+  const yAxis = new Set<string>();
+  const aggregatedBucketData = new Map<number, ProcessedData>();
+
+  for (const dataPoint of dataPoints) {
+    const time = asDateField(dataPoint.object[timeCol]).value;
+    const groupKey = groupByColumns.reduce(
+      (acc, col) => acc + (dataPoint.object[col]?.value.toString() ?? ""),
+      "",
+    );
+    for (const col of aggregatedColumns) {
+      const value = dataPoint.object[col];
+      if (!value || !isHashableField(value)) continue;
+      const fullKey = groupKey ? `${groupKey}_${col}` : col;
+      yAxis.add(fullKey);
+      let existing = aggregatedBucketData.get(time);
+      if (!existing) {
+        existing = { object: { [timeCol]: dataPoint.object[timeCol] }, message: "" };
+        aggregatedBucketData.set(time, existing);
+      }
+      existing.object[fullKey] = value;
+    }
+  }
+
+  return { aggregatedBucketData, yAxis };
+}
+
+/**
+ * Build the chart view from data that has already been bucketed + aggregated
+ * (e.g. by DuckDB). Handles only the pivot and YAxis/allBuckets construction.
+ */
+export const buildChartView = (
+  dataPoints: ProcessedData[],
+  timeCol: string,
+  groupByColumns: string[],
+  aggregatedColumns: string[],
+  fromTime: Date,
+  toTime: Date,
+  span: string,
+  maxGroups: number,
+): NonNullable<DisplayResults["view"]> => {
+  const spanMs = parseTimeSpan(span);
+  const allBuckets: number[] = [];
+  for (let i = fromTime.getTime(); i < toTime.getTime(); i += spanMs) {
+    allBuckets.push(i);
+  }
+
+  const { aggregatedBucketData, yAxis } = buildAggregatedBuckets(
+    dataPoints, timeCol, groupByColumns, aggregatedColumns,
+  );
+
+  const buckets = Array.from(yAxis)
+    .slice(0, maxGroups === -1 ? undefined : maxGroups)
+    .map((name) => ({ name, color: getRandomColor() }));
+
+  return {
+    type: "view",
+    data: Array.from(aggregatedBucketData.values()),
+    XAxis: timeCol,
+    YAxis: buckets,
+    allBuckets,
+  };
+};
+
 export const processTimeChart = (
   data: DisplayResults,
   functions: AggregationFunction[],
@@ -58,43 +127,9 @@ export const processTimeChart = (
     groupBy,
   );
 
-  const yAxis = new Set<string>();
-  const aggregatedBucketData: Map<number, ProcessedData> = new Map();
-
-  for (const dataPoint of result.data) {
-    const time = asDateField(dataPoint.object[timeCol]).value;
-    const key = result.groupByColumns.reduce((acc, col) => {
-      return acc + (dataPoint.object[col]?.value.toString() ?? "");
-    }, "");
-
-    const allYAxis: Record<string, HashableField> = {};
-    for (const col of result.aggregatedColumns) {
-      if (!isHashableField(dataPoint.object[col])) {
-        continue;
-      }
-
-      const value = dataPoint.object[col];
-
-      const fullKey = [key, col].join("_");
-      allYAxis[fullKey] = value;
-      yAxis.add(fullKey);
-    }
-
-    let existing = aggregatedBucketData.get(time);
-    if (!existing) {
-      existing = {
-        object: {
-          [timeCol]: dataPoint.object[timeCol],
-        },
-        message: "",
-      };
-      aggregatedBucketData.set(time, existing);
-    }
-
-    Object.entries(allYAxis).forEach(([key, value]) => {
-      existing.object[key] = value;
-    });
-  }
+  const { aggregatedBucketData, yAxis } = buildAggregatedBuckets(
+    result.data, timeCol, result.groupByColumns, result.aggregatedColumns,
+  );
 
   const buckets = Array.from(yAxis)
     .slice(0, maxBuckets === -1 ? undefined : maxBuckets)
@@ -122,7 +157,7 @@ export const processTimeChart = (
   };
 };
 
-const parseTimeSpan = (span: string): number => {
+export const parseTimeSpan = (span: string): number => {
   const unit = span[span.length - 1];
   const value = parseInt(span.slice(0, -1), 10);
 

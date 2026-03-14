@@ -5,7 +5,8 @@ import { Button } from "@chakra-ui/react";
 import { useAtom, useAtomValue } from "jotai";
 import React, { useEffect } from "react";
 import { useTimeoutFn } from "react-use";
-import { isLiveModeAtom, liveAutoStopMinutesAtom } from "~core/store/liveState";
+import { isLiveModeAtom } from "~core/store/queryState";
+import { useApplicationStore } from "~core/store/appStore";
 import { isLoadingAtom, lastRanJobAtom } from "~core/search";
 import { Tooltip } from "~components/ui/tooltip";
 import { Shortcut } from "~components/ui/shortcut";
@@ -47,7 +48,7 @@ const LiveModeButton: React.FC = () => {
   const [isLiveMode, setIsLiveMode] = useAtom(isLiveModeAtom);
   const isLoading = useAtomValue(isLoadingAtom);
   const job = useAtomValue(lastRanJobAtom);
-  const liveAutoStopMinutes = useAtomValue(liveAutoStopMinutesAtom);
+  const liveAutoStopMinutes = useApplicationStore((s) => s.generalSettings?.liveAutoStopMinutes ?? 30);
   const delay =
     isLiveMode && liveAutoStopMinutes && liveAutoStopMinutes > 0
       ? liveAutoStopMinutes * 60 * 1000

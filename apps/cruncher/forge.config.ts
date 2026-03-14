@@ -10,8 +10,12 @@ import { FuseV1Options, FuseVersion } from "@electron/fuses";
 const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
+    asarUnpack: ["**/*.node", "**/duckdb-worker.js", "**/localstate-migrations/**"],
     icon: "src/icons/mac/icon.icns",
-    extraResource: ["src/icons/mac/icon.icns"],
+    extraResource: [
+      "src/icons/mac/icon.icns",
+      "resources/server",
+    ],
     protocols: [
       {
         name: "Cruncher Protocol",
@@ -19,7 +23,7 @@ const config: ForgeConfig = {
       },
     ],
   },
-  rebuildConfig: {},
+  rebuildConfig: { force: true },
   makers: [
     new MakerSquirrel({}),
     new MakerZIP({}, ["darwin"]),

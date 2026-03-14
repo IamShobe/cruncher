@@ -50,17 +50,19 @@ export class ApiController {
     return await this.connection.getGeneralSettings.query();
   };
 
-  setLiveSettings = async (
+  setGeneralSettings = async (
     liveInterval: string,
     maxLogs: number,
     liveAutoStopMinutes: number | null,
     timezone: string,
+    maxHistoryEntries: number | null = null,
   ) => {
-    return await this.connection.setLiveSettings.mutate({
+    return await this.connection.setGeneralSettings.mutate({
       liveInterval: liveInterval as "1s" | "3s" | "5s" | "10s",
       maxLogs,
       liveAutoStopMinutes,
       timezone: timezone as "local" | "utc",
+      maxHistoryEntries,
     });
   };
 
@@ -183,22 +185,43 @@ export class ApiController {
     jobId: TaskRef,
     fromTime: Date,
     toTime: Date,
-    maxLogs?: number,
   ): Promise<{ newCount: number; batchStatus: JobBatchFinished }> {
     return await this.connection.appendQueryResults.mutate({
       jobId,
       fromTime: fromTime.getTime(),
       toTime: toTime.getTime(),
-      maxLogs,
     });
   }
 
   async releaseResources(taskId: TaskRef): Promise<void> {
     await removeJobQueries(taskId);
-    this.connection.releaseTaskResources.mutate({
+    await this.connection.releaseTaskResources.mutate({
       jobId: taskId,
     });
   }
+
+  getLoadedTaskIds = () => this.connection.getLoadedTaskIds.query();
+
+  getEngineStatus = () => this.connection.getEngineStatus.query();
+
+  getQueryHistory = (
+    limit: number,
+    offset: number,
+    search?: string,
+    sortBy?: "createdAt" | "completedAt" | "diskBytes" | "rowCount" | "status",
+    sortDir?: "asc" | "desc",
+  ) => this.connection.getQueryHistory.query({ limit, offset, search, sortBy, sortDir });
+
+  deleteHistoryEntry = (id: string) =>
+    this.connection.deleteHistoryEntry.mutate({ id });
+
+  clearQueryHistory = () => this.connection.clearQueryHistory.mutate();
+
+  getSubtasksWithChunks = (_taskId: string | null, subtaskIds: string[]) =>
+    this.connection.getSubtasksWithChunks.query({ subtaskIds });
+
+  navigateToUrl = (url: string) =>
+    this.connection.navigateToUrl.mutate({ url });
 
   async query(
     searchProfileRef: SearchProfileRef,

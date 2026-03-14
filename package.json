@@ -11,6 +11,7 @@
     },
     "onlyBuiltDependencies": [
       "@swc/core",
+      "better-sqlite3",
       "bufferutil",
       "core-js",
       "electron",
@@ -27,6 +28,7 @@
     "url": "https://github.com/IamShobe/cruncher.git"
   },
   "scripts": {
+    "postinstall": "electron-rebuild --module-dir apps/cruncher --only better-sqlite3",
     "start": "npm run serve",
     "serve": "turbo watch build serve generate:watch --filter=!docs-cruncher --filter=!cruncher-tools",
     "serve:docs": "pnpm run -F ./docs serve",

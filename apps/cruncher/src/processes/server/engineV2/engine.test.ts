@@ -1,16 +1,45 @@
+import path from "node:path";
+import os from "node:os";
+import fs from "node:fs";
 import { sub } from "date-fns";
-import { expect, test, describe } from "vitest";
+import { expect, test, describe, afterEach } from "vitest";
 import mockedData from "@cruncher/adapter-mock";
 import { ExternalAuthProvider } from "@cruncher/adapter-utils";
 import { Engine } from "./engine";
 import { InstanceRef, SearchProfileRef, TaskRef } from "./types";
+
+const WORKER_TS = path.join(__dirname, "duckdb", "worker.ts");
+
+// Each test gets an isolated temp directory so tests never touch the real app
+// data dir and can run while the Electron app is open.
+let testDataDir: string;
+let testEngine: Engine | null = null;
+
+afterEach(async () => {
+  // Terminate the engine first to close all DuckDB connections, then clean up files.
+  await testEngine?.terminate();
+  testEngine = null;
+  if (testDataDir) {
+    fs.rmSync(testDataDir, { recursive: true, force: true });
+  }
+});
+
+function tmpDir(): string {
+  testDataDir = fs.mkdtempSync(path.join(os.tmpdir(), "cruncher-test-"));
+  return testDataDir;
+}
+
+function trackEngine(engine: Engine): Engine {
+  testEngine = engine;
+  return engine;
+}
 
 test("engine register plugin", () => {
   const externalAuthProvider = {
     getCookies: () => Promise.resolve({}),
   } satisfies ExternalAuthProvider;
 
-  const engine = new Engine(externalAuthProvider);
+  const engine = trackEngine(new Engine(externalAuthProvider, { userDataPath: tmpDir() }));
   engine.registerPlugin(mockedData);
 
   expect(engine.getSupportedPlugins().length).toBe(1);
@@ -22,7 +51,7 @@ test("engine initialize plugin", () => {
     getCookies: () => Promise.resolve({}),
   } satisfies ExternalAuthProvider;
 
-  const engine = new Engine(externalAuthProvider);
+  const engine = trackEngine(new Engine(externalAuthProvider, { userDataPath: tmpDir() }));
   engine.registerPlugin(mockedData);
 
   const plugins = engine.getSupportedPlugins();
@@ -45,7 +74,7 @@ test("engine initialize profile", () => {
     getCookies: () => Promise.resolve({}),
   } satisfies ExternalAuthProvider;
 
-  const engine = new Engine(externalAuthProvider);
+  const engine = trackEngine(new Engine(externalAuthProvider, { userDataPath: tmpDir() }));
   engine.registerPlugin(mockedData);
 
   const plugins = engine.getSupportedPlugins();
@@ -71,7 +100,7 @@ test("engine query", async () => {
     getCookies: () => Promise.resolve({}),
   } satisfies ExternalAuthProvider;
 
-  const engine = new Engine(externalAuthProvider);
+  const engine = trackEngine(new Engine(externalAuthProvider, { userDataPath: tmpDir(), workerScriptPath: WORKER_TS }));
   engine.registerPlugin(mockedData);
 
   const plugins = engine.getSupportedPlugins();
@@ -111,7 +140,7 @@ const makeEngine = () => {
   const authProvider: ExternalAuthProvider = {
     getCookies: () => Promise.resolve({}),
   };
-  const engine = new Engine(authProvider);
+  const engine = trackEngine(new Engine(authProvider, { userDataPath: tmpDir(), workerScriptPath: WORKER_TS }));
   engine.registerPlugin(mockedData);
   const instance = engine.initializePlugin(
     mockedData.ref,
@@ -151,7 +180,7 @@ describe("plugin registration", () => {
     const authProvider: ExternalAuthProvider = {
       getCookies: () => Promise.resolve({}),
     };
-    const engine = new Engine(authProvider);
+    const engine = new Engine(authProvider, { userDataPath: tmpDir() });
     engine.registerPlugin(mockedData);
     expect(() =>
       engine.initializePlugin("no_such_ref" as any, "x" as InstanceRef, {}),
@@ -166,7 +195,7 @@ describe("search profile", () => {
     const authProvider: ExternalAuthProvider = {
       getCookies: () => Promise.resolve({}),
     };
-    const engine = new Engine(authProvider);
+    const engine = new Engine(authProvider, { userDataPath: tmpDir() });
     engine.registerPlugin(mockedData);
     expect(() =>
       engine.initializeSearchProfile("default" as SearchProfileRef, [
@@ -210,7 +239,7 @@ describe("query lifecycle", () => {
     const state = engine.getTaskState(task.id);
     await state.finishedQuerying.wait();
     expect(state.task.status).toBe("completed");
-    expect(state.displayResults.events.data.length).toBeGreaterThan(0);
+    expect(state.eventsResultRowCount).toBeGreaterThan(0);
   });
 
   test("getJobUpdates yields at least one batch status after completion", async () => {
@@ -266,8 +295,8 @@ describe("pagination", () => {
     const state = engine.getTaskState(task.id);
     await state.finishedQuerying.wait();
 
-    const total = state.displayResults.events.data.length;
-    const page = engine.getLogsPaginated(task.id, 0, 2);
+    const total = state.eventsResultRowCount;
+    const page = await engine.getLogsPaginated(task.id, 0, 2);
     expect(page.data).toHaveLength(Math.min(2, total));
     expect(page.total).toBe(total);
   });
@@ -278,8 +307,8 @@ describe("pagination", () => {
     const state = engine.getTaskState(task.id);
     await state.finishedQuerying.wait();
 
-    const total = state.displayResults.events.data.length;
-    const page = engine.getLogsPaginated(task.id, 0, total + 100);
+    const total = state.eventsResultRowCount;
+    const page = await engine.getLogsPaginated(task.id, 0, total + 100);
     expect(page.next).toBeNull();
   });
 
@@ -289,15 +318,15 @@ describe("pagination", () => {
     const state = engine.getTaskState(task.id);
     await state.finishedQuerying.wait();
 
-    const page = engine.getLogsPaginated(task.id, 0, 2);
+    const page = await engine.getLogsPaginated(task.id, 0, 2);
     expect(page.prev).toBeNull();
   });
 
-  test("getLogsPaginated on unknown task throws", () => {
+  test("getLogsPaginated on unknown task throws", async () => {
     const { engine } = makeEngine();
-    expect(() =>
+    await expect(() =>
       engine.getLogsPaginated("no-such" as TaskRef, 0, 10),
-    ).toThrow();
+    ).rejects.toThrow();
   });
 });
 
@@ -316,9 +345,9 @@ describe("pipeline integration", () => {
     await state.finishedQuerying.wait();
 
     expect(state.task.status).toBe("completed");
-    const rows = state.displayResults.events.data;
-    expect(rows.length).toBeGreaterThan(0);
-    rows.forEach((row) => {
+    const result = await engine.getLogsPaginated(task.id, 0, 100000);
+    expect(result.data.length).toBeGreaterThan(0);
+    result.data.forEach((row) => {
       expect(row.object["computed"]).toEqual({ type: "number", value: 1 });
     });
   });
@@ -334,11 +363,26 @@ describe("pipeline integration", () => {
     await state.finishedQuerying.wait();
 
     expect(state.task.status).toBe("completed");
-    expect(state.displayResults.table).toBeDefined();
-    expect(state.displayResults.table!.dataPoints).toHaveLength(1);
-    expect(
-      state.displayResults.table!.dataPoints[0].object["count"],
-    ).toBeDefined();
+    expect(state.tableResultPath).toBeDefined();
+    const tableResult = await engine.getTableDataPaginated(task.id, 0, 10);
+    expect(tableResult.data).toHaveLength(1);
+    expect(tableResult.data[0].object["count"]).toBeDefined();
+  });
+
+  test("stats grouped by field followed by sort uses direct column ref", async () => {
+    const { engine, profile } = makeEngine();
+    const task = await engine.runQuery(
+      profile.name,
+      "| stats count() by message | sort count desc",
+      defaultQueryOptions,
+    );
+    const state = engine.getTaskState(task.id);
+    await state.finishedQuerying.wait();
+
+    expect(state.task.status).toBe("completed");
+    expect(state.tableResultPath).toBeDefined();
+    const tableResult = await engine.getTableDataPaginated(task.id, 0, 1000);
+    expect(tableResult.data.length).toBeGreaterThan(0);
   });
 
   test("query with where pipeline filters rows", async () => {
@@ -351,7 +395,7 @@ describe("pipeline integration", () => {
     );
     const stateAll = engine.getTaskState(taskAll.id);
     await stateAll.finishedQuerying.wait();
-    const totalRows = stateAll.displayResults.events.data.length;
+    const totalRows = stateAll.eventsResultRowCount;
 
     // Run with a filter that matches nothing
     const taskFiltered = await engine.runQuery(
@@ -363,9 +407,103 @@ describe("pipeline integration", () => {
     await stateFiltered.finishedQuerying.wait();
 
     expect(stateFiltered.task.status).toBe("completed");
-    expect(stateFiltered.displayResults.events.data.length).toBeLessThan(
-      totalRows,
+    expect(stateFiltered.eventsResultRowCount).toBeLessThan(totalRows);
+  });
+});
+
+// ─── Orphan recovery ──────────────────────────────────────────────────────────
+
+describe("orphan recovery", () => {
+  test("no spurious entries when no orphans exist", async () => {
+    const { engine, profile } = makeEngine();
+    const task = await engine.runQuery(profile.name, "", defaultQueryOptions);
+    const state = engine.getTaskState(task.id);
+    await state.finishedQuerying.wait();
+
+    await engine.recoverInterruptedSessions();
+
+    const history = engine.getQueryHistory(100, 0);
+    const recoveryEntries = history.entries.filter((e) =>
+      e.searchTerm === "[Recovered orphaned data]",
     );
+    expect(recoveryEntries).toHaveLength(0);
+  });
+
+  test("subtask_history row with no query_history parent surfaces as interrupted entry", async () => {
+    const { engine } = makeEngine();
+
+    // Manually insert an orphaned subtask row (no parent query_history entry)
+    engine["stateDB"].upsertSubtask({
+      id: "orphan-subtask-1",
+      dedupKey: "orphan-key-1",
+      dataDir: "v1/orphan-subtask-1",
+      adapterLock: { instanceRef: "test", pluginRef: "unknown", version: "unknown" },
+      searchTerm: "orphan query",
+      searchProfile: "test",
+      fromTime: null,
+      toTime: null,
+      status: "running",
+      createdAt: Date.now(),
+      rowCount: null,
+      diskBytes: null,
+      fromDedup: false,
+    });
+
+    await engine.recoverInterruptedSessions();
+
+    const history = engine.getQueryHistory(100, 0);
+    const recoveryEntries = history.entries.filter((e) =>
+      e.searchTerm === "[Recovered orphaned data]",
+    );
+    expect(recoveryEntries).toHaveLength(1);
+    expect(recoveryEntries[0]!.status).toBe("interrupted");
+    expect(recoveryEntries[0]!.subtaskIds).toContain("orphan-subtask-1");
+  });
+
+  test("disk-only directory with no subtask_history row surfaces as interrupted entry", async () => {
+    const { engine } = makeEngine();
+
+    // Manually create a v1/ directory on disk with no DB row
+    const v1Dir = path.join(engine["sessionsDir"], "v1", "disk-orphan-dir");
+    fs.mkdirSync(v1Dir, { recursive: true });
+
+    await engine.recoverInterruptedSessions();
+
+    const history = engine.getQueryHistory(100, 0);
+    const recoveryEntries = history.entries.filter((e) =>
+      e.searchTerm === "[Recovered orphaned data]",
+    );
+    expect(recoveryEntries).toHaveLength(1);
+    expect(recoveryEntries[0]!.status).toBe("interrupted");
+  });
+
+  test("idempotency: second recoverInterruptedSessions does not create duplicate entry", async () => {
+    const { engine } = makeEngine();
+
+    engine["stateDB"].upsertSubtask({
+      id: "orphan-subtask-idem",
+      dedupKey: "orphan-key-idem",
+      dataDir: "v1/orphan-subtask-idem",
+      adapterLock: { instanceRef: "test", pluginRef: "unknown", version: "unknown" },
+      searchTerm: "orphan query",
+      searchProfile: "test",
+      fromTime: null,
+      toTime: null,
+      status: "running",
+      createdAt: Date.now(),
+      rowCount: null,
+      diskBytes: null,
+      fromDedup: false,
+    });
+
+    await engine.recoverInterruptedSessions();
+    await engine.recoverInterruptedSessions();
+
+    const history = engine.getQueryHistory(100, 0);
+    const recoveryEntries = history.entries.filter((e) =>
+      e.searchTerm === "[Recovered orphaned data]",
+    );
+    expect(recoveryEntries).toHaveLength(1);
   });
 });
 

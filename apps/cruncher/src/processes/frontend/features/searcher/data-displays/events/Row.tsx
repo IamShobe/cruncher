@@ -17,7 +17,8 @@ import {
 } from "./state";
 import { highlightItemQueryAtom } from "~core/search";
 import { highlightText } from "~core/utils/highlight";
-import { newLogSinceAtom, timezoneAtom } from "~core/store/liveState";
+import { newLogSinceAtom } from "~core/store/queryState";
+import { useTimezone } from "~core/store/appStore";
 
 type DataRowProps = {
   row: ProcessedData;
@@ -102,7 +103,7 @@ const DataRow: React.FC<DataRowProps> = ({ row }) => {
 
   const highlightItemQuery = useAtomValue(highlightItemQueryAtom);
   const newLogSince = useAtomValue(newLogSinceAtom);
-  const timezone = useAtomValue(timezoneAtom);
+  const timezone = useTimezone();
   const logTime = asDateField(row.object._time).value;
   const isNew = newLogSince !== null && logTime > newLogSince;
 

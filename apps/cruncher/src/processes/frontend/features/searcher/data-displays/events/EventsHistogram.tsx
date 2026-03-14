@@ -21,7 +21,7 @@ import { scrollToIndexAtom } from "~features/searcher/data-displays/events/DataL
 import { rangeInViewAtom } from "~features/searcher/data-displays/events/state";
 import { lastRanJobAtom, useInitializedController } from "~core/search";
 import { dataBucketsAtom, scaleAtom } from "~core/store/queryState";
-import { timezoneAtom } from "~core/store/liveState";
+import { useTimezone } from "~core/store/appStore";
 
 export const EventsHistogram = () => {
   const scrollToIndex = useAtomValue(scrollToIndexAtom);
@@ -39,7 +39,7 @@ export const EventsHistogram = () => {
   const dataBuckets = useAtomValue(dataBucketsAtom);
   const controller = useInitializedController();
   const displayedJob = useAtomValue(lastRanJobAtom);
-  const timezone = useAtomValue(timezoneAtom);
+  const timezone = useTimezone();
 
   if (!scale) {
     return null;

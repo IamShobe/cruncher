@@ -18,9 +18,9 @@ import { asDateField } from "@cruncher/adapter-utils/logTypes";
 import DataRow from "./Row";
 import { RowDetails } from "./RowDetails";
 import { getLogId, rangeInViewAtom } from "./state";
-import { isLiveFetchingAtom, isLiveModeAtom } from "~core/store/liveState";
+import { isLiveFetchingAtom, isLiveModeAtom } from "~core/store/queryState";
 
-export const scrollToIndexAtom = atom<(index: number) => void>();
+export const scrollToIndexAtom = atom<((index: number) => void) | null>(null);
 
 type DataRowProps = {};
 

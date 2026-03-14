@@ -13,6 +13,7 @@ import {
 } from "electron";
 import log from "electron-log/main";
 import started from "electron-squirrel-startup";
+import fs from "node:fs";
 import path from "node:path";
 import { createAuthWindow } from "./utils/auth";
 import { isIpcMessage } from "./utils/ipc";
@@ -41,6 +42,9 @@ console.log("feed URL for autoUpdater:", updateUrl);
 
 const version = app.getVersion();
 console.log(`Cruncher version: ${version}`);
+const logDir = app.getPath("logs");
+log.transports.file.resolvePath = () => path.join(logDir, "main.log");
+console.log(`Log file: ${log.transports.file.getFile().path}`);
 
 const checkForUpdates = async () => {
   console.log("Checking for updates...");
@@ -113,6 +117,19 @@ const createWindow = () => {
     icon: path.join(__dirname, "icons", "png", "icon.png"),
   });
   mainWindow.setMenuBarVisibility(false);
+  mainWindow.webContents.on("console-message", (_event, level, message, line, sourceId) => {
+    const levelName = ["debug", "info", "warn", "error"][level] ?? `level:${level}`;
+    log.info(`[renderer:${levelName}] ${message} (${sourceId}:${line})`);
+  });
+  mainWindow.webContents.on("did-finish-load", () => {
+    log.info("Renderer did-finish-load");
+  });
+  mainWindow.webContents.on("did-fail-load", (_event, code, desc, url) => {
+    log.error(`Renderer did-fail-load: ${code} ${desc} ${url}`);
+  });
+  mainWindow.webContents.on("render-process-gone", (_event, details) => {
+    log.error(`Renderer process gone: ${details.reason} (exitCode=${details.exitCode})`);
+  });
 
   // and load the index.html of the app.
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
@@ -137,6 +154,9 @@ let serverWatcher: FSWatcher | null = null;
 let port: MessagePortMain | null = null;
 let shouldRestartServer = true;
 let processActive = false;
+let serverStdoutBuffer: string[] = [];
+let serverStderrBuffer: string[] = [];
+const MAX_SERVER_LOG_LINES = 200;
 
 function startServerProcess() {
   if (serverProcess) {
@@ -145,29 +165,73 @@ function startServerProcess() {
   }
 
   console.log("Starting server process...");
-  serverProcess = utilityProcess.fork(path.join(__dirname, "server.js"), [], {
+  const serverEntry = isDev()
+    ? path.join(__dirname, "server.js")
+    : path.join(process.resourcesPath, "server", "server.js");
+  if (!fs.existsSync(serverEntry)) {
+    const msg = `Server entry not found: ${serverEntry}`;
+    console.error(msg);
+    dialog.showErrorBox("FATAL ERROR", msg);
+    return;
+  }
+  const serverCwd = isDev() ? undefined : path.dirname(serverEntry);
+  serverProcess = utilityProcess.fork(serverEntry, [], {
     execArgv: isDev() ? ["--inspect=9230"] : [],
+    stdio: "pipe",
+    cwd: serverCwd,
+  });
+  serverStdoutBuffer = [];
+  serverStderrBuffer = [];
+  serverProcess.stdout?.on("data", (d: Buffer) => {
+    const line = d.toString().trim();
+    if (line) {
+      serverStdoutBuffer.push(line);
+      if (serverStdoutBuffer.length > MAX_SERVER_LOG_LINES) serverStdoutBuffer.shift();
+      console.log("[server-stdout]", line);
+    }
+  });
+  serverProcess.stderr?.on("data", (d: Buffer) => {
+    const line = d.toString().trim();
+    if (line) {
+      serverStderrBuffer.push(line);
+      if (serverStderrBuffer.length > MAX_SERVER_LOG_LINES) serverStderrBuffer.shift();
+      console.error("[server-stderr]", line);
+    }
   });
   processActive = true;
 
+  const thisProcess = serverProcess;
   serverProcess.on("exit", (code) => {
     console.log(`Server process exited with code: ${code}`);
+    if (code !== 0) {
+      if (serverStdoutBuffer.length) {
+        console.error("[server-exit] last stdout lines:\n" + serverStdoutBuffer.join("\n"));
+      }
+      if (serverStderrBuffer.length) {
+        console.error("[server-exit] last stderr lines:\n" + serverStderrBuffer.join("\n"));
+      }
+    }
     processActive = false;
     if (code !== 0) {
       dialog.showErrorBox(
         "FATAL ERROR",
         `Server process exited with code: ${code}`,
       );
-      serverProcess = null;
-      serverReady = null;
-      port = null;
+      // Only reset shared state if we are still the active server process.
+      // A chokidar-triggered restart may have already replaced these with new
+      // values before this exit event fires.
+      if (serverProcess === thisProcess) {
+        serverProcess = null;
+        serverReady = null;
+        port = null;
 
-      // Optionally, restart the server process
-      if (!shouldRestartServer) return;
-      setTimeout(() => {
-        console.log("Restarting server process...");
-        startServerProcess();
-      }, 1000); // Restart after 1 second
+        // Optionally, restart the server process
+        if (!shouldRestartServer) return;
+        setTimeout(() => {
+          console.log("Restarting server process...");
+          startServerProcess();
+        }, 1000); // Restart after 1 second
+      }
     }
   });
   const { port1, port2 } = new MessageChannelMain();
@@ -183,10 +247,17 @@ function startServerProcess() {
     serverProcess = null;
     serverReady = null;
   });
-  serverProcess.postMessage({ type: "init" }, [port1]);
+  serverProcess.postMessage(
+    { type: "init", userDataPath: app.getPath("userData"), logDir },
+    [port1],
+  );
 
   port2.on("message", async (payload) => {
     const msg = payload.data;
+    if (isIpcMessage(msg) && msg.type === "initError") {
+      console.error("[server-process] FATAL init error:\n", msg.error);
+      return;
+    }
     if (isIpcMessage(msg) && msg.type === "getAuth") {
       const authUrl = msg.authUrl as string;
       const requestedCookies = msg.cookies as string[];
@@ -243,11 +314,18 @@ function startServerProcess() {
 
 // Cleanup on quit
 app.on("before-quit", () => {
+  log.info("App before-quit fired");
   if (serverProcess) {
     console.log("Killing child process...");
     shouldRestartServer = false; // Prevent automatic restart
     serverProcess.kill(); // or .kill('SIGTERM')
   }
+});
+app.on("will-quit", () => {
+  log.info("App will-quit fired");
+});
+app.on("quit", (_event, exitCode) => {
+  log.info(`App quit fired with exitCode=${exitCode}`);
 });
 
 if (isDev()) {
@@ -264,15 +342,12 @@ if (isDev()) {
 const ready = async () => {
   if (!serverProcess) startServerProcess();
 
-  // Register handlers that don't depend on the server immediately
+  // Register all IPC handlers immediately so they are available even while
+  // the server process is still initialising.  Handlers that depend on the
+  // server await serverReady internally.
   ipcMain.handle("openExternal", (_event, url: string) => {
     shell.openExternal(url);
   });
-
-  console.log("Waiting for server process to be ready...");
-  await serverReady;
-
-  // --- IPC Handlers ---
 
   ipcMain.handle("getPort", async () => {
     await serverReady; // Ensure the server is ready before requesting the port
@@ -291,6 +366,9 @@ const ready = async () => {
       return { tag: "unknown", isDev: isDev() };
     }
   });
+
+  console.log("Waiting for server process to be ready...");
+  await serverReady;
 
   createWindow();
 };
@@ -331,6 +409,7 @@ if (!gotTheLock) {
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
 app.on("window-all-closed", () => {
+  log.info("App window-all-closed fired");
   if (process.platform !== "darwin") {
     app.quit();
   }

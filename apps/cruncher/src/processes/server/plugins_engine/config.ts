@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import { DEFAULT_THEME } from "../lib/themeDefaults.js";
-import { CruncherConfig, CruncherConfigSchema } from "../config/schema";
+import { CruncherConfig, CruncherConfigSchema, DEFAULT_MAX_HISTORY_ENTRIES, UIConfig } from "../config/schema";
 import { Engine } from "../engineV2/engine";
 import { InstanceRef, SearchProfileRef } from "../engineV2/types";
 import YAML from "yaml";
@@ -114,8 +114,10 @@ const writeConfigToPath = (
   fs.writeFileSync(filePath, YAML.stringify(updated), "utf8");
 };
 
+export type ResolvedConfig = Omit<CruncherConfig, "ui"> & { ui: UIConfig };
+
 export type MergedConfigResult = {
-  merged: CruncherConfig;
+  merged: ResolvedConfig;
   globalConfig: CruncherConfig;
   localConfig: CruncherConfig;
   error: string | null;
@@ -145,6 +147,8 @@ export const readMergedConfig = (
         30,
       timezone:
         localConfig.ui?.timezone ?? globalConfig.ui?.timezone ?? "local",
+      maxHistoryEntries:
+        localConfig.ui?.maxHistoryEntries ?? globalConfig.ui?.maxHistoryEntries ?? DEFAULT_MAX_HISTORY_ENTRIES,
       keybindings: mergedKeybindings,
     },
   };

@@ -34,6 +34,8 @@ export const LIVE_INTERVAL_MS: Record<LiveInterval, number> = {
 export const TIMEZONE_OPTIONS = ["local", "utc"] as const;
 export type TimezoneOption = (typeof TIMEZONE_OPTIONS)[number];
 
+export const DEFAULT_MAX_HISTORY_ENTRIES = 100;
+
 export const KeybindingOverrideSchema = z.object({
   Mac: z.string(),
   Windows: z.string(),
@@ -49,6 +51,7 @@ export const UIConfigSchema = z.object({
   maxLogs: z.number().optional().default(100000),
   liveAutoStopMinutes: z.number().nullable().optional().default(30),
   timezone: z.enum(TIMEZONE_OPTIONS).optional().default("local"),
+  maxHistoryEntries: z.number().nullable().default(DEFAULT_MAX_HISTORY_ENTRIES),
   keybindings: z
     .record(z.string(), KeybindingOverrideSchema)
     .optional()

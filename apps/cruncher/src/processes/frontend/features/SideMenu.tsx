@@ -1,7 +1,7 @@
 import { Badge, IconButton, Separator, Stack } from "@chakra-ui/react";
 import { Link } from "@tanstack/react-router";
 import { ReactNode } from "react";
-import { LuBolt, LuFileSearch, LuKeyboard } from "react-icons/lu";
+import { LuActivity, LuBolt, LuFileSearch, LuHistory, LuKeyboard } from "react-icons/lu";
 import {
   ApplicationStore,
   useApplicationStore,
@@ -11,6 +11,12 @@ import { Tooltip } from "../components/presets/Tooltip";
 import { globalShortcuts, useResolvedShortcuts } from "~core/keymaps";
 
 export type MenuItem = "searcher" | "settings";
+
+const NAV_ITEMS = [
+  { to: "/", icon: <LuFileSearch />, tooltip: "Searcher" },
+  { to: "/history", icon: <LuHistory />, tooltip: "Query History" },
+  { to: "/engine-status", icon: <LuActivity />, tooltip: "Engine Status" },
+] as const;
 
 const versionSelector = (state: ApplicationStore) => {
   const version = state.version;
@@ -31,15 +37,13 @@ export const SideMenu = () => {
       <Stack p={2} justify="space-between" align="center">
         <Stack>
           <Stack gap={2} align="center">
-            <Link to="/">
-              {({ isActive }) => (
-                <MenuButton
-                  isActive={isActive}
-                  tooltip="Searcher"
-                  icon={<LuFileSearch />}
-                />
-              )}
-            </Link>
+            {NAV_ITEMS.map(({ to, icon, tooltip }) => (
+              <Link key={to} to={to}>
+                {({ isActive }) => (
+                  <MenuButton isActive={isActive} tooltip={tooltip} icon={icon} />
+                )}
+              </Link>
+            ))}
           </Stack>
         </Stack>
 
