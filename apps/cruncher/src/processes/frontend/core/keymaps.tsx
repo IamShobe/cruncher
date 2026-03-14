@@ -162,7 +162,6 @@ export const globalShortcuts = new ShortcutHolder({
   },
 });
 
-
 export type ShortcutHandler<T extends ShortcutDefinitions> = (
   shortcut: keyof T,
 ) => void;
