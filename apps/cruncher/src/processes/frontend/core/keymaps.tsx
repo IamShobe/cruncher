@@ -162,8 +162,6 @@ export const globalShortcuts = new ShortcutHolder({
   },
 });
 
-export type ExtractShortcutType<T> =
-  T extends ShortcutHolder<infer U> ? U : never;
 
 export type ShortcutHandler<T extends ShortcutDefinitions> = (
   shortcut: keyof T,

@@ -84,8 +84,6 @@ export const highlightItemQueryAtom = atom<string | undefined>(undefined);
 
 export const initializedInstancesSelector = (state: ApplicationStore) =>
   state.initializedInstances;
-export const supportedPluginsSelector = (state: ApplicationStore) =>
-  state.supportedPlugins;
 export const searchProfilesSelector = (state: ApplicationStore) =>
   state.searchProfiles;
 

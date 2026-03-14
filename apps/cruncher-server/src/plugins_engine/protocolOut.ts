@@ -19,10 +19,6 @@ export const QueryJobUpdatedSchema = z.object({
 });
 export type QueryJobUpdated = z.infer<typeof QueryJobUpdatedSchema>;
 
-export const ReceivedMessageSchema = z.discriminatedUnion("type", [
-  QueryBatchDoneSchema,
-  QueryJobUpdatedSchema,
-]);
 
 export const UrlNavigationSchema = z.object({
   type: z.literal("url_navigation"),
