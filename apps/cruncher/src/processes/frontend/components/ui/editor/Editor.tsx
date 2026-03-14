@@ -280,53 +280,60 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
     }, [cursorPosition, value]);
 
     const filteredSuggestions = useMemo(() => {
-      // First pass: collect position-matching suggestions (contextual)
-      const positionFiltered = new Map<string, Suggestion>();
-      // Second pass: collect all suggestions (fallback for Ctrl+Space mid-word)
-      const allDeduped = new Map<string, Suggestion>();
+      const scoreSuggestions = (list: Suggestion[]) =>
+        list
+          .flatMap((suggestion) => {
+            if (!writtenWord) return [{ suggestion, score: 0 }];
+            const valueToMatch =
+              suggestion.value.startsWith('"') && !writtenWord.startsWith('"')
+                ? suggestion.value.slice(1, -1)
+                : suggestion.value;
+            if (valueToMatch.toLowerCase() === writtenWord.toLowerCase())
+              return [];
+            const match = fuzzyMatch(valueToMatch, writtenWord);
+            if (!match.matched) return [];
+            let score = 0;
+            if (valueToMatch.startsWith(writtenWord)) score += 100;
+            for (let i = 1; i < match.indices.length; i++) {
+              if (match.indices[i] === match.indices[i - 1] + 1) score += 1;
+            }
+            if (match.indices.length > 0) score -= match.indices[0];
+            return [{ suggestion, score }];
+          })
+          .sort((a, b) => {
+            const priorityDiff = compareSuggestions(a.suggestion, b.suggestion);
+            if (priorityDiff !== 0) return priorityDiff;
+            return b.score - a.score;
+          })
+          .map((entry) => entry.suggestion);
 
-      for (const suggestion of suggestions) {
-        const key = `${suggestion.type}:${suggestion.value}`;
+      const dedupe = (list: Suggestion[]) => {
+        const map = new Map<string, Suggestion>();
+        for (const s of list) {
+          const key = `${s.type}:${s.value}`;
+          if (!map.has(key)) map.set(key, s);
+        }
+        return Array.from(map.values());
+      };
 
-        if (!allDeduped.has(key)) allDeduped.set(key, suggestion);
+      // Position-filtered suggestions (contextual/smart)
+      const positionFiltered = suggestions.filter((s) => {
+        if (cursorPosition < s.fromPosition) return false;
+        if (s.toPosition && cursorPosition > s.toPosition) return false;
+        return true;
+      });
 
-        if (cursorPosition < suggestion.fromPosition) continue;
-        if (suggestion.toPosition && cursorPosition > suggestion.toPosition)
-          continue;
-        if (!positionFiltered.has(key)) positionFiltered.set(key, suggestion);
-      }
+      const positionResults = scoreSuggestions(dedupe(positionFiltered));
 
-      // Use position-filtered (smart) suggestions when available.
-      // Fall back to all suggestions only when Ctrl+Space is active
-      // and no position-based suggestions match the cursor.
-      const candidates =
-        positionFiltered.size > 0 || !ctrlSpaceOpen
-          ? positionFiltered
-          : allDeduped;
+      // Prefer position-filtered when they yield results.
+      // Also prefer them when there's no typed word (nothing to broaden for)
+      // or when the user didn't explicitly request autocomplete.
+      if (positionResults.length > 0 || !ctrlSpaceOpen || !writtenWord)
+        return positionResults;
 
-      return Array.from(candidates.values())
-        .flatMap((suggestion) => {
-          if (!writtenWord) return [{ suggestion, score: 0 }];
-          const valueToMatch =
-            suggestion.value.startsWith('"') && !writtenWord.startsWith('"')
-              ? suggestion.value.slice(1, -1)
-              : suggestion.value;
-          const match = fuzzyMatch(valueToMatch, writtenWord);
-          if (!match.matched) return [];
-          let score = 0;
-          if (valueToMatch.startsWith(writtenWord)) score += 100;
-          for (let i = 1; i < match.indices.length; i++) {
-            if (match.indices[i] === match.indices[i - 1] + 1) score += 1;
-          }
-          if (match.indices.length > 0) score -= match.indices[0];
-          return [{ suggestion, score }];
-        })
-        .sort((a, b) => {
-          const priorityDiff = compareSuggestions(a.suggestion, b.suggestion);
-          if (priorityDiff !== 0) return priorityDiff;
-          return b.score - a.score;
-        })
-        .map((entry) => entry.suggestion);
+      // Fallback: Ctrl+Space active, typed word present, but no contextual
+      // matches — broaden to all suggestions so mid-word completion works.
+      return scoreSuggestions(dedupe(suggestions));
     }, [suggestions, cursorPosition, writtenWord, ctrlSpaceOpen]);
 
     const acceptCompletion = () => {
