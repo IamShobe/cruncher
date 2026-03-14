@@ -37,6 +37,7 @@ import { createContext } from "./plugins_engine/trpc";
 import { IPCMessage } from "./types";
 import log from "electron-log/main";
 import { appGeneralSettings, readConfig } from "./plugins_engine/config";
+import { init as initLoki } from "./loki/runner";
 import { DEFAULT_MAX_HISTORY_ENTRIES } from "@cruncher/server-shared";
 export type { AppRouter } from "./router_messages";
 
@@ -144,6 +145,9 @@ const initializeServer = async (
   console.log("[server-init] log file:", log.transports.file.getFile().path);
   _dbg("step: readConfig");
   const { config: appConfig } = readConfig(appGeneralSettings);
+  initLoki(appConfig.loki).catch((error) => {
+    console.error("Failed to initialize Loki:", error);
+  });
   _dbg("step: new Engine");
   const engineV2 = new Engine(authProvider, {
     userDataPath: opts.userDataPath,
