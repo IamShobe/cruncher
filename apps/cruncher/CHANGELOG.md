@@ -1,3 +1,9 @@
+## 2.4.1
+
+### Patch Changes
+
+- [#40](https://github.com/IamShobe/cruncher/pull/40) [`0d1de8c`](https://github.com/IamShobe/cruncher/commit/0d1de8c17d38c88d6af12148addd5f66e1e3163d) Thanks [@yarinba](https://github.com/yarinba)! - Fix Ctrl+Space autocomplete so it stays open while typing and can be triggered mid-word. Previously, opening autocomplete with Ctrl+Space would close as soon as you typed a character, and pressing Ctrl+Space after partially typing a word (e.g. "app_c") showed no suggestions. Now the completer remains open, filtering results with fuzzy matching as you type, and closes naturally on space, newline, Escape, or accepting a completion.
+
 ## 2.4.0
 
 ### Minor Changes
