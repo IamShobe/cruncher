@@ -280,22 +280,31 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
     }, [cursorPosition, value]);
 
     const filteredSuggestions = useMemo(() => {
-      const results = new Map<string, Suggestion>();
-      for (const suggestion of suggestions) {
-        // When user explicitly triggered autocomplete (Ctrl+Space), skip
-        // position-based filtering so all suggestions are available for
-        // fuzzy matching against the word at the cursor.
-        if (!ctrlSpaceOpen) {
-          if (cursorPosition < suggestion.fromPosition) continue;
-          if (suggestion.toPosition && cursorPosition > suggestion.toPosition)
-            continue;
-        }
+      // First pass: collect position-matching suggestions (contextual)
+      const positionFiltered = new Map<string, Suggestion>();
+      // Second pass: collect all suggestions (fallback for Ctrl+Space mid-word)
+      const allDeduped = new Map<string, Suggestion>();
 
+      for (const suggestion of suggestions) {
         const key = `${suggestion.type}:${suggestion.value}`;
-        if (!results.has(key)) results.set(key, suggestion);
+
+        if (!allDeduped.has(key)) allDeduped.set(key, suggestion);
+
+        if (cursorPosition < suggestion.fromPosition) continue;
+        if (suggestion.toPosition && cursorPosition > suggestion.toPosition)
+          continue;
+        if (!positionFiltered.has(key)) positionFiltered.set(key, suggestion);
       }
 
-      return Array.from(results.values())
+      // Use position-filtered (smart) suggestions when available.
+      // Fall back to all suggestions only when Ctrl+Space is active
+      // and no position-based suggestions match the cursor.
+      const candidates =
+        positionFiltered.size > 0 || !ctrlSpaceOpen
+          ? positionFiltered
+          : allDeduped;
+
+      return Array.from(candidates.values())
         .flatMap((suggestion) => {
           if (!writtenWord) return [{ suggestion, score: 0 }];
           const valueToMatch =
