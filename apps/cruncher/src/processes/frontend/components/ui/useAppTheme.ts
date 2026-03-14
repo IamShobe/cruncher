@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { ThemeId, THEMES } from "./themes";
-import { DEFAULT_THEME } from "~lib/themeDefaults";
+import { DEFAULT_THEME } from "@cruncher/server-shared";
 import { appStore, useApplicationStore } from "~core/store/appStore";
 import { notifyError } from "~core/notifyError";
 

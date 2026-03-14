@@ -12,19 +12,11 @@
     "isolatedModules": true,
     "moduleDetection": "force",
     "resolveJsonModule": true,
-    "paths": {
-      "~lib/*": [
-        "./src/processes/server/lib/*"
-      ],
-    },
     "strict": true
   },
   "include": [
     "./*.mts",
-    "./src/**/*",
-    "../server/src/lib",
-    "../server/src/config",
-    "../../packages/adapters/coralogix/src"
+    "./src/**/*"
   ],
   "exclude": [
     "./src/processes/frontend/**/*"

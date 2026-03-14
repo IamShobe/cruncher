@@ -9,9 +9,6 @@
     "module": "ESNext",
     "skipLibCheck": true,
     "paths": {
-      "~lib/*": [
-        "./src/processes/server/lib/*"
-      ],
       "~*": [
         "./src/processes/frontend/*"
       ],
@@ -33,6 +30,5 @@
   },
   "include": [
     "./src/processes/frontend/**/*",
-    "./src/processes/server/plugins_engine/router_messages.d.ts",
   ],
 }

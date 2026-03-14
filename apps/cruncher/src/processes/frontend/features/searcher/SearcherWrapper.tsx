@@ -3,12 +3,12 @@ import { css } from "@emotion/react";
 import { token } from "~components/ui/system";
 import { atom, createStore, Provider, useAtom, useAtomValue } from "jotai";
 import { v4 as uuidv4 } from "uuid";
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { VscAdd, VscClose } from "react-icons/vsc";
 import { createSignal } from "@cruncher/utils";
 import { useMount } from "react-use";
 import { MiniIconButton } from "~components/presets/IconButton";
-import { parseDate } from "src/processes/server/lib/dateUtils";
+import { parseDate } from "@cruncher/server-shared";
 import { Signal } from "@cruncher/utils";
 import { useDebouncer } from "@tanstack/react-pacer";
 import { Searcher } from "./Searcher";
@@ -21,6 +21,7 @@ import { notifyError } from "~core/notifyError";
 import {
   appStoreAtom,
   lastRanJobAtom,
+  pendingNavigationUrlAtom,
   runQueryForStore,
   selectedSearchProfileAtom,
   selectedSearchProfileIndexAtom,
@@ -152,58 +153,82 @@ export const SearcherWrapper = () => {
     searcherGlobalShortcuts,
   );
 
-  useUrlNavigation(async (url) => {
-    console.log("URL Navigation message received:", url);
-    const parsedUrl = new URL(url);
-    const tabName = parsedUrl.searchParams.get("name") || "New Search";
-    const startFullDate = parsedUrl.searchParams.get("startTime");
-    const endFullDate = parsedUrl.searchParams.get("endTime");
-    const searchQuery = parsedUrl.searchParams.get("searchQuery");
-    const selectedProfile = parsedUrl.searchParams.get("profile");
-    const initialStartTime = parseDate(startFullDate) ?? undefined;
-    const initialEndTime = parseDate(endFullDate) ?? undefined;
-    const initialQuery = searchQuery || "";
+  const handleUrlNavigation = useCallback(
+    async (url: string) => {
+      console.log("URL Navigation message received:", url);
+      const parsedUrl = new URL(url);
+      const tabName = parsedUrl.searchParams.get("name") || "New Search";
+      const startFullDate = parsedUrl.searchParams.get("startTime");
+      const endFullDate = parsedUrl.searchParams.get("endTime");
+      const searchQuery = parsedUrl.searchParams.get("searchQuery");
+      const selectedProfile = parsedUrl.searchParams.get("profile");
+      const initialStartTime = parseDate(startFullDate) ?? undefined;
+      const initialEndTime = parseDate(endFullDate) ?? undefined;
+      const initialQuery = searchQuery || "";
 
-    console.log("Parsed URL parameters:", {
-      startFullDate: initialStartTime,
-      endFullDate: initialEndTime,
-      searchQuery: initialQuery,
-      profile: selectedProfile,
-      tabName,
-    });
-
-    // create new tab with label from URL
-    const createdTab = addTab(tabName);
-
-    const querySpecificStore = createdTab.createdTab.store;
-
-    querySpecificStore.set(searchQueryAtom, initialQuery);
-    querySpecificStore.set(startFullDateAtom, initialStartTime);
-    querySpecificStore.set(endFullDateAtom, initialEndTime);
-
-    if (selectedProfile) {
-      const profiles = appStore.getState().searchProfiles;
-      const selectedInstanceIndex = profiles.findIndex(
-        (profile) => profile.name === selectedProfile,
-      );
-      if (selectedInstanceIndex === -1) {
-        notifyError(
-          `Profile \"${selectedProfile}\" not found. Please select a valid profile.`,
-          new Error(`Profile \"${selectedProfile}\" not found.`),
-        );
+      // Reuse the single default tab if it hasn't been used yet; otherwise open a new tab
+      let querySpecificStore: ReturnType<typeof createStore>;
+      let tabIndex: number;
+      let readySignal: Tab["readySignal"] | undefined;
+      const isSingleUnusedTab =
+        tabs.length === 1 && tabs[0].store.get(lastRanJobAtom) === undefined;
+      if (isSingleUnusedTab) {
+        tabs[0].store.set(tabNameAtom, tabName);
+        querySpecificStore = tabs[0].store;
+        tabIndex = 0;
+      } else {
+        const createdTab = addTab(tabName);
+        querySpecificStore = createdTab.createdTab.store;
+        tabIndex = createdTab.index;
+        readySignal = createdTab.createdTab.readySignal;
       }
 
-      querySpecificStore.set(
-        selectedSearchProfileIndexAtom,
-        selectedInstanceIndex,
-      );
-    }
-    setSelectedTab(createdTab.index);
-    await createdTab.createdTab.readySignal.wait({
-      timeout: 5000,
-    });
-    await runQueryForStore(createdTab.createdTab.store, true);
-  });
+      querySpecificStore.set(searchQueryAtom, initialQuery);
+      querySpecificStore.set(startFullDateAtom, initialStartTime);
+      querySpecificStore.set(endFullDateAtom, initialEndTime);
+
+      if (selectedProfile) {
+        const profiles = appStore.getState().searchProfiles;
+        const selectedInstanceIndex = profiles.findIndex(
+          (profile) => profile.name === selectedProfile,
+        );
+        if (selectedInstanceIndex === -1) {
+          notifyError(
+            `Profile \"${selectedProfile}\" not found. Please select a valid profile.`,
+            new Error(`Profile \"${selectedProfile}\" not found.`),
+          );
+        }
+
+        querySpecificStore.set(
+          selectedSearchProfileIndexAtom,
+          selectedInstanceIndex,
+        );
+      }
+      setSelectedTab(tabIndex);
+      if (readySignal) {
+        await readySignal.wait({ timeout: 5000 });
+      }
+      await runQueryForStore(querySpecificStore, false);
+    },
+    [addTab, setSelectedTab, tabs],
+  );
+
+  useUrlNavigation(handleUrlNavigation);
+
+  const handleUrlNavigationRef = useRef(handleUrlNavigation);
+  handleUrlNavigationRef.current = handleUrlNavigation;
+
+  const [pendingUrl, setPendingUrl] = useAtom(pendingNavigationUrlAtom);
+  const handledPendingUrlRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!pendingUrl) return;
+    // Guard against double-invocation (React StrictMode fires effects twice
+    // with the same closure value before the atom update is visible)
+    if (handledPendingUrlRef.current === pendingUrl) return;
+    handledPendingUrlRef.current = pendingUrl;
+    setPendingUrl(null);
+    handleUrlNavigationRef.current(pendingUrl);
+  }, [pendingUrl, setPendingUrl]);
 
   const initializeProfilesDebouncer = useDebouncer(
     async () => {

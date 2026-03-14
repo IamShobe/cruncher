@@ -11,10 +11,7 @@ import { css } from "@emotion/react";
 import { token } from "~components/ui/system";
 import { createFileRoute } from "@tanstack/react-router";
 import { LuPlay, LuRefreshCw } from "react-icons/lu";
-import {
-  PluginInstance,
-  SearchProfile,
-} from "src/processes/server/engineV2/types";
+import { PluginInstance, SearchProfile } from "@cruncher/server-shared";
 import {
   DatasetMetadata,
   DatasetStatus,

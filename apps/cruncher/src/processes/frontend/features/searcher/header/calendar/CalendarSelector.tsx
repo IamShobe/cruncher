@@ -6,7 +6,7 @@ import {
   DayProps,
   NavProps,
 } from "react-day-picker";
-import { isTimeNow } from "src/processes/server/lib/dateUtils";
+import { isTimeNow } from "@cruncher/server-shared";
 import { dateRangeAtom } from "~core/store/dateState";
 
 import { IconButton } from "@chakra-ui/react";

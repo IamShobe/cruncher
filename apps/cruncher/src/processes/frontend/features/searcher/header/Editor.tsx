@@ -4,11 +4,11 @@ import React, { ReactNode, useEffect, useMemo } from "react";
 import { Suggestion } from "~components/ui/editor/AutoCompleter";
 import { Editor as EditorComponent } from "~components/ui/editor/Editor";
 import { HighlightData } from "~components/ui/editor/Highlighter";
-import { SUPPORTED_AGG_FUNCTIONS } from "~lib/pipelineEngine/aggregateData";
+import { SUPPORTED_AGG_FUNCTIONS } from "@cruncher/server-shared";
 import {
   isBooleanFunction,
   SUPPORTED_BOOLEAN_FUNCTIONS,
-} from "~lib/pipelineEngine/logicalExpression";
+} from "@cruncher/server-shared";
 import { HighlightData as ParserHighlightData } from "@cruncher/qql/grammar";
 import { getPopperRoot } from "~core/utils/shadowUtils";
 import { availableColumnsAtom, queryDataAtom } from "~core/store/queryState";

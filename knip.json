@@ -1,0 +1,59 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "ignoreExportsUsedInFile": true,
+  "ignoreBinaries": ["electron-rebuild"],
+  "ignoreWorkspaces": ["tools/*"],
+  "workspaces": {
+    ".": {
+      "entry": ["scripts/**/*.{mjs,ts}"],
+      "project": ["scripts/**/*.{mjs,ts}"],
+      "ignoreDependencies": ["ts-node", "vite-plugin-dts", "@vitest/coverage-v8", "copyfiles", "vite"]
+    },
+    "docs": {
+      "entry": ["src/**/*.{astro,ts}"],
+      "project": ["src/**/*.{astro,ts}"],
+      "ignoreDependencies": ["sharp", "zod"],
+      "ignore": ["src/content/**"]
+    },
+    "apps/cruncher": {
+      "entry": [
+        "src/processes/main/main.ts",
+        "src/processes/main/preload.ts",
+        "src/processes/frontend/routes/**/*.tsx",
+        "forge.config.ts",
+        "vite.*.{mts,ts}",
+        "scripts/**/*.mjs"
+      ],
+      "project": ["src/**/*.{ts,tsx}", "*.{mts,ts}", "scripts/**/*.mjs"],
+      "ignore": ["**/*.d.ts"],
+      "ignoreDependencies": [
+        "@electron-forge/publisher-github",
+        "@floating-ui/dom",
+        "babel-plugin-react-compiler",
+        "utf-8-validate",
+        "solid-js"
+      ],
+      "ignoreBinaries": ["electron-rebuild"]
+    },
+    "apps/cruncher-server": {
+      "entry": ["src/main.ts", "src/engineV2/duckdb/worker.ts"],
+      "project": ["src/**/*.ts"]
+    },
+    "packages/server-shared": {
+      "project": ["src/**/*.ts"]
+    },
+    "packages/qql": {
+      "project": ["src/**/*.ts"],
+      "ignoreDependencies": ["antlr4ng-cli"]
+    },
+    "packages/utils": {
+      "project": ["src/**/*.ts"]
+    },
+    "packages/adapters/utils": {
+      "project": ["src/**/*.ts"]
+    },
+    "packages/adapters/*": {
+      "project": ["src/**/*.ts"]
+    }
+  }
+}

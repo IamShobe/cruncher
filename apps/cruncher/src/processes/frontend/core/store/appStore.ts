@@ -4,12 +4,16 @@ import {
   SearchProfile,
   SearchProfileRef,
   SerializableAdapter,
-} from "src/processes/server/engineV2/types";
-import { AppGeneralSettings } from "src/processes/server/plugins_engine/config";
+} from "@cruncher/server-shared";
+import { inferRouterOutputs } from "@trpc/server";
+import type { AppRouter } from "cruncher-server/router_messages";
 import { useStore } from "zustand";
 import { createStore } from "zustand/vanilla";
 import { ApiController } from "~core/ApiController";
 import { notifyError } from "~core/notifyError";
+
+export type GeneralSettings =
+  inferRouterOutputs<AppRouter>["getGeneralSettings"];
 
 type ControllerParams = Record<string, string[]>;
 
@@ -29,7 +33,8 @@ export type ApplicationStore = {
     tag: string;
     isDev: boolean;
   };
-  generalSettings: AppGeneralSettings;
+  generalSettings: GeneralSettings | null;
+  updateGeneralSettings: (partial: Partial<GeneralSettings>) => void;
   isInitialized: boolean;
   reload: () => Promise<void>;
   initialize: (controller: ApiController) => Promise<void>;
@@ -61,7 +66,13 @@ export const appStore = createStore<ApplicationStore>((set, get) => ({
     isDev: false,
   },
 
-  generalSettings: null as unknown as AppGeneralSettings,
+  generalSettings: null,
+  updateGeneralSettings: (partial) =>
+    set((state) => ({
+      generalSettings: state.generalSettings
+        ? { ...state.generalSettings, ...partial }
+        : state.generalSettings,
+    })),
   isInitialized: false,
   hasError: false,
   reload: async () => {
@@ -232,3 +243,14 @@ export const useIsShortcutsShown = () => {
 export const useSetShortcutsShown = () => {
   return useApplicationStore((state) => state.setIsShortcutsShown);
 };
+
+export const useGeneralSettingsValue = <T>(
+  selector: (s: GeneralSettings) => T,
+  fallback: T,
+): T =>
+  useApplicationStore((state) =>
+    state.generalSettings ? selector(state.generalSettings) : fallback,
+  );
+
+export const useTimezone = () =>
+  useGeneralSettingsValue((s) => s.timezone, "local" as const);

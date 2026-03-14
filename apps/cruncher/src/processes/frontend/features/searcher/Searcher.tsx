@@ -31,7 +31,7 @@ import { TableView } from "~features/searcher/data-displays/table/TableView";
 import { EventsHistogram } from "~features/searcher/data-displays/events/EventsHistogram";
 import { ViewChart } from "~features/searcher/data-displays/view/ViewChart";
 import { TabsLineButtons } from "~features/searcher/TabsLineButtons";
-import { isLiveModeAtom } from "~core/store/liveState";
+import { isLiveModeAtom } from "~core/store/queryState";
 import { isLoadingAtom, lastRanJobAtom } from "~core/search";
 import { idleHintsEnabledAtom } from "~components/ui/editor/Editor";
 
@@ -77,9 +77,7 @@ const MainContainer = styled.section`
 
 const onQueryExecuted = (_state: QueryState) => {};
 
-export type SearcherProps = {};
-
-export const Searcher: React.FC<SearcherProps> = () => {
+export const Searcher: React.FC = () => {
   const [selectedTab, setSelectedTab] = useState<string | null>("logs");
   const jobStatus = useAtomValue(jobMetadataAtom);
 

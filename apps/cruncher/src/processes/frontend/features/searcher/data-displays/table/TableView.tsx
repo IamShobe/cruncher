@@ -96,9 +96,9 @@ export const TableView: React.FC<TableViewProps> = (_props: TableViewProps) => {
         <Table.Row
           style={{ borderBottom: `1px solid ${token("colors.border")}` }}
         >
-          {columns.map((column) => (
+          {columns.map((column, i) => (
             <Table.ColumnHeader
-              key={column}
+              key={i}
               style={{
                 width: `${columnSizes[column] ?? 3}ch`,
                 background: token("colors.bg.subtle"),
@@ -122,7 +122,7 @@ export const TableView: React.FC<TableViewProps> = (_props: TableViewProps) => {
         <>
           {prepareItem(item, columns).map((value, i) => (
             <Table.Cell
-              key={columns[i]}
+              key={i}
               style={{
                 whiteSpace: "pre-wrap",
                 verticalAlign: "top",
@@ -139,146 +139,4 @@ export const TableView: React.FC<TableViewProps> = (_props: TableViewProps) => {
       )}
     />
   );
-
-  // TODO: change to react table when possible...
-  //   return (
-  //     <div ref={parentRef} className="container" style={{
-  //         flex: 1,
-  //         overflow: "auto",
-  //         minHeight: 0,
-  //         position: "relative",
-  //     }}>
-  //         <Table.Root stickyHeader>
-  //           <Table.Header>
-  //             {table.getHeaderGroups().map((headerGroup) => (
-  //               <Table.Row key={headerGroup.id}>
-  //                 {headerGroup.headers.map((header) => {
-  //                   return (
-  //                     <Table.ColumnHeader
-  //                       key={header.id}
-  //                       colSpan={header.colSpan}
-  //                       style={{ width: header.getSize() }}
-  //                     >
-  //                       {header.isPlaceholder ? null : (
-  //                         <div
-  //                           {...{
-  //                             className: header.column.getCanSort()
-  //                               ? "cursor-pointer select-none"
-  //                               : "",
-  //                             onClick: header.column.getToggleSortingHandler(),
-  //                           }}
-  //                         >
-  //                           {flexRender(
-  //                             header.column.columnDef.header,
-  //                             header.getContext()
-  //                           )}
-  //                           {{
-  //                             asc: " 🔼",
-  //                             desc: " 🔽",
-  //                           }[header.column.getIsSorted() as string] ?? null}
-  //                         </div>
-  //                       )}
-  //                     </Table.ColumnHeader>
-  //                   );
-  //                 })}
-  //               </Table.Row>
-  //             ))}
-  //           </Table.Header>
-  //           <Table.Body height={virtualizer.getTotalSize()}>
-  //             {virtualizer.getVirtualItems().map((virtualRow, index) => {
-  //               const row = rows[virtualRow.index];
-  //               return (
-  //                 <Table.Row
-  //                   key={row.id}
-  //                   style={{
-  //                     height: `${virtualRow.size}px`,
-  //                     position: 'absolute',
-  //                     transform: `translateY(${
-  //                       virtualRow.start - index * virtualRow.size
-  //                     }px)`,
-  //                   }}
-  //                 >
-  //                   {row.getVisibleCells().map((cell) => {
-  //                     return (
-  //                       <Table.Cell key={cell.id}>
-  //                         {flexRender(
-  //                           cell.column.columnDef.cell,
-  //                           cell.getContext()
-  //                         )}
-  //                       </Table.Cell>
-  //                     );
-  //                   })}
-  //                 </Table.Row>
-  //               );
-  //             })}
-  //           </Table.Body>
-  //         </Table.Root>
-  //       </div>
-  //   );
-
-  //   return (
-  //     <Table.ScrollArea ref={parentRef} borderWidth="1px" rounded="md" flex={1}>
-  //       <Table.Root stickyHeader height={virtualizer.getTotalSize()}>
-  //         <Table.Header>
-  //           {table.getHeaderGroups().map((headerGroup) => (
-  //             <Table.Row key={headerGroup.id}>
-  //               {headerGroup.headers.map((header) => (
-  //                 <Table.ColumnHeader
-  //                   style={{ width: header.getSize() }}
-  //                   colSpan={header.colSpan}
-  //                   key={header.id}
-  //                 >
-  //                   {header.isPlaceholder ? null : (
-  //                     <div
-  //                       {...{
-  //                         className: header.column.getCanSort()
-  //                           ? "cursor-pointer select-none"
-  //                           : "",
-  //                         onClick: header.column.getToggleSortingHandler(),
-  //                       }}
-  //                     >
-  //                       {flexRender(
-  //                         header.column.columnDef.header,
-  //                         header.getContext()
-  //                       )}
-  //                       {{
-  //                         asc: " 🔼",
-  //                         desc: " 🔽",
-  //                       }[header.column.getIsSorted() as string] ?? null}
-  //                     </div>
-  //                   )}
-  //                 </Table.ColumnHeader>
-  //               ))}
-  //             </Table.Row>
-  //           ))}
-  //         </Table.Header>
-  //         <Table.Body>
-  //           {virtualizer.getVirtualItems().map((virtualRow) => {
-  //             const row = rows[virtualRow.index];
-  //             return (
-  //               <Table.Row
-  //                 key={row.id}
-  //                 height={virtualRow.size}
-  //                 position={"absolute"}
-  //                 style={{
-  //                   transform: `translateY(${virtualRow.start}px)`,
-  //                 }}
-  //               >
-  //                 {row.getVisibleCells().map((cell) => {
-  //                   return (
-  //                     <Table.Cell key={cell.id}>
-  //                       {flexRender(
-  //                         cell.column.columnDef.cell,
-  //                         cell.getContext()
-  //                       )}
-  //                     </Table.Cell>
-  //                   );
-  //                 })}
-  //               </Table.Row>
-  //             );
-  //           })}
-  //         </Table.Body>
-  //       </Table.Root>
-  //     </Table.ScrollArea>
-  //   );
 };

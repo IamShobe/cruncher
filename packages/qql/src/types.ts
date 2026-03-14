@@ -333,36 +333,3 @@ export type QueryNode = {
   search: Search;
   pipeline: PipelineCommand[];
 };
-
-// --------------------- Visitor Result Union ---------------------
-
-export type ASTNode =
-  | QueryNode
-  | Datasource
-  | ControllerIndexParam
-  | Search
-  | SearchLiteral
-  | SearchAND
-  | SearchOR
-  | PipelineCommand
-  | TableColumn
-  | AggregationFunction
-  | SortColumnRef
-  | LogicalExpression
-  | AndExpression
-  | OrExpression
-  | UnitExpression
-  | NotExpression
-  | InArrayExpression
-  | ComparisonExpression
-  | FunctionExpression
-  | EvalCaseThen
-  | CalcExpression
-  | CalcAction
-  | CalcTerm
-  | CalcTermAction
-  | CalculateUnit
-  | FactorType
-  | RegexLiteral
-  | TimechartParams
-  | string[];
