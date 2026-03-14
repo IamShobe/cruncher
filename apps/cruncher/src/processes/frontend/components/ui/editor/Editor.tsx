@@ -262,7 +262,7 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
     >(undefined);
     const [hasInteractedWithMenu, setHasInteractedWithMenu] = useState(false);
 
-    const ctrlSpaceOpenRef = useRef(false);
+    const [ctrlSpaceOpen, setCtrlSpaceOpen] = useState(false);
     const resolvedHeaderShortcuts = useResolvedShortcuts(headerShortcuts);
     const resolvedSearcherShortcuts = useResolvedShortcuts(searcherShortcuts);
 
@@ -280,41 +280,61 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
     }, [cursorPosition, value]);
 
     const filteredSuggestions = useMemo(() => {
-      const results = new Map<string, Suggestion>();
-      for (const suggestion of suggestions) {
-        // filter suggestions based on cursor position
-        if (cursorPosition < suggestion.fromPosition) continue;
-        if (suggestion.toPosition && cursorPosition > suggestion.toPosition)
-          continue;
+      const scoreSuggestions = (list: Suggestion[]) =>
+        list
+          .flatMap((suggestion) => {
+            if (!writtenWord) return [{ suggestion, score: 0 }];
+            const valueToMatch =
+              suggestion.value.startsWith('"') && !writtenWord.startsWith('"')
+                ? suggestion.value.slice(1, -1)
+                : suggestion.value;
+            if (valueToMatch.toLowerCase() === writtenWord.toLowerCase())
+              return [];
+            const match = fuzzyMatch(valueToMatch, writtenWord);
+            if (!match.matched) return [];
+            let score = 0;
+            if (valueToMatch.startsWith(writtenWord)) score += 100;
+            for (let i = 1; i < match.indices.length; i++) {
+              if (match.indices[i] === match.indices[i - 1] + 1) score += 1;
+            }
+            if (match.indices.length > 0) score -= match.indices[0];
+            return [{ suggestion, score }];
+          })
+          .sort((a, b) => {
+            const priorityDiff = compareSuggestions(a.suggestion, b.suggestion);
+            if (priorityDiff !== 0) return priorityDiff;
+            return b.score - a.score;
+          })
+          .map((entry) => entry.suggestion);
 
-        const key = `${suggestion.type}:${suggestion.value}`;
-        if (!results.has(key)) results.set(key, suggestion);
-      }
+      const dedupe = (list: Suggestion[]) => {
+        const map = new Map<string, Suggestion>();
+        for (const s of list) {
+          const key = `${s.type}:${s.value}`;
+          if (!map.has(key)) map.set(key, s);
+        }
+        return Array.from(map.values());
+      };
 
-      return Array.from(results.values())
-        .flatMap((suggestion) => {
-          if (!writtenWord) return [{ suggestion, score: 0 }];
-          const valueToMatch =
-            suggestion.value.startsWith('"') && !writtenWord.startsWith('"')
-              ? suggestion.value.slice(1, -1)
-              : suggestion.value;
-          const match = fuzzyMatch(valueToMatch, writtenWord);
-          if (!match.matched) return [];
-          let score = 0;
-          if (valueToMatch.startsWith(writtenWord)) score += 100;
-          for (let i = 1; i < match.indices.length; i++) {
-            if (match.indices[i] === match.indices[i - 1] + 1) score += 1;
-          }
-          if (match.indices.length > 0) score -= match.indices[0];
-          return [{ suggestion, score }];
-        })
-        .sort((a, b) => {
-          const priorityDiff = compareSuggestions(a.suggestion, b.suggestion);
-          if (priorityDiff !== 0) return priorityDiff;
-          return b.score - a.score;
-        })
-        .map((entry) => entry.suggestion);
-    }, [suggestions, cursorPosition, writtenWord]);
+      // Position-filtered suggestions (contextual/smart)
+      const positionFiltered = suggestions.filter((s) => {
+        if (cursorPosition < s.fromPosition) return false;
+        if (s.toPosition && cursorPosition > s.toPosition) return false;
+        return true;
+      });
+
+      const positionResults = scoreSuggestions(dedupe(positionFiltered));
+
+      // Prefer position-filtered when they yield results.
+      // Also prefer them when there's no typed word (nothing to broaden for)
+      // or when the user didn't explicitly request autocomplete.
+      if (positionResults.length > 0 || !ctrlSpaceOpen || !writtenWord)
+        return positionResults;
+
+      // Fallback: Ctrl+Space active, typed word present, but no contextual
+      // matches — broaden to all suggestions so mid-word completion works.
+      return scoreSuggestions(dedupe(suggestions));
+    }, [suggestions, cursorPosition, writtenWord, ctrlSpaceOpen]);
 
     const acceptCompletion = () => {
       let startPos = cursorPosition - writtenWord.length;
@@ -339,7 +359,7 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
         }
       }, 0);
 
-      ctrlSpaceOpenRef.current = false;
+      setCtrlSpaceOpen(false);
       setIsCompleterOpen(false);
       setHasInteractedWithMenu(false);
     };
@@ -587,13 +607,13 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
             // TODO move it to shortcuts system
             // if key is esc - close completer
             if (e.key === "Escape") {
-              ctrlSpaceOpenRef.current = false;
+              setCtrlSpaceOpen(false);
               setIsCompleterOpen(false);
               setHasInteractedWithMenu(false);
             }
             if (resolvedHeaderShortcuts.isPressed(e, "trigger-autocomplete")) {
               e.preventDefault();
-              ctrlSpaceOpenRef.current = true;
+              setCtrlSpaceOpen(true);
               setIsCompleterOpen(true);
             }
 
@@ -677,10 +697,16 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
             dismissAutoHint();
             onChange(e.target.value);
             setCursorPosition(e.currentTarget.selectionStart);
-            if (!isCharAdded && !hasFreshSuggestions) {
-              ctrlSpaceOpenRef.current = false;
+
+            if (ctrlSpaceOpen) {
+              // Keep autocomplete open while typing; close on space/newline
+              if (char === "\n" || (char === " " && !hasFreshSuggestions)) {
+                setCtrlSpaceOpen(false);
+                setIsCompleterOpen(false);
+              }
+            } else {
+              setIsCompleterOpen(isCharAdded || hasFreshSuggestions);
             }
-            setIsCompleterOpen(isCharAdded || hasFreshSuggestions);
             setHoveredCompletionItem(undefined);
             setHasInteractedWithMenu(false);
 
