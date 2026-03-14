@@ -1,3 +1,9 @@
+## 0.4.5
+
+### Patch Changes
+
+- [#41](https://github.com/IamShobe/cruncher/pull/41) [`73a494e`](https://github.com/IamShobe/cruncher/commit/73a494e4f16d067dcc82100ac29fa2dcf2e77a4d) Thanks [@IamShobe](https://github.com/IamShobe)! - Engine revamped with disk-composed queries: the server process is now a standalone package (`cruncher-server`) with shared types in `@cruncher/server-shared`, enabling better separation of concerns and disk-based query composition.
+
 ## 0.4.4
 
 ### Patch Changes
