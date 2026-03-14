@@ -99,7 +99,7 @@ function GeneralSettings() {
             Config File Path
             <Field.RequiredIndicator />
           </Field.Label>
-          <Input value={generalSettings.configFilePath} />
+          <Input value={generalSettings?.configFilePath} />
           <Field.HelperText />
           <Field.ErrorText />
         </Field.Root>

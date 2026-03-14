@@ -4,7 +4,7 @@ import type React from "react";
 import styled from "@emotion/styled";
 import { css, keyframes } from "@emotion/react";
 import { token } from "~components/ui/system";
-import { isLiveModeAtom } from "~core/store/liveState";
+import { isLiveModeAtom } from "~core/store/queryState";
 import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
 import { DateRange } from "react-day-picker";
 import {
@@ -33,8 +33,8 @@ import { CalendarSelector } from "./CalendarSelector";
 import { searcherShortcuts, useResolvedShortcuts } from "~core/keymaps";
 
 const ringGlow = keyframes`
-  0%, 100% { box-shadow: 0 0 0 1.5px ${token("colors.teal.600")}, 0 0 8px ${token("colors.teal.600")}55; }
-  50%       { box-shadow: 0 0 0 1.5px ${token("colors.teal.400")}, 0 0 16px ${token("colors.teal.400")}66; }
+  0%, 100% { box-shadow: 0 0 0 1.5px ${token("colors.teal.600")}, 0 0 8px color-mix(in srgb, ${token("colors.teal.600")} 33%, transparent); }
+  50%       { box-shadow: 0 0 0 1.5px ${token("colors.teal.400")}, 0 0 16px color-mix(in srgb, ${token("colors.teal.400")} 40%, transparent); }
 `;
 
 const LiveDateButton = styled(Button)<{ $isLive: boolean }>`
@@ -46,7 +46,7 @@ const LiveDateButton = styled(Button)<{ $isLive: boolean }>`
 `;
 import { useQueryActions } from "~core/search";
 import { useQuerySpecificStoreInternal } from "~core/store/queryState";
-import { compareFullDates } from "src/processes/server/lib/dateUtils";
+import { compareFullDates } from "@cruncher/server-shared";
 
 const useDateOperations = () => {
   const setStartFullDate = useSetAtom(startFullDateAtom);

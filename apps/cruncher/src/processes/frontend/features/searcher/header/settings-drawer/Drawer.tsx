@@ -8,23 +8,16 @@ import {
   SegmentGroup,
   Stack,
 } from "@chakra-ui/react";
-import { useAtom } from "jotai";
-import { useEffect } from "react";
 import { LuSettings } from "react-icons/lu";
 import { Tooltip } from "~components/presets/Tooltip";
 import { useInitializedController } from "~core/search";
-import {
-  liveAutoStopMinutesAtom,
-  liveIntervalAtom,
-  maxLogsAtom,
-  timezoneAtom,
-} from "~core/store/liveState";
+import { useApplicationStore, useGeneralSettings } from "~core/store/appStore";
 import {
   LiveInterval,
   LIVE_INTERVAL_OPTIONS,
   TIMEZONE_OPTIONS,
   TimezoneOption,
-} from "src/processes/server/config/schema";
+} from "@cruncher/server-shared";
 
 const INTERVAL_OPTIONS = LIVE_INTERVAL_OPTIONS.map((v) => ({
   label: v,
@@ -36,57 +29,56 @@ const TZ_OPTIONS = TIMEZONE_OPTIONS.map((v) => ({
 }));
 
 export const SettingsDrawer = () => {
-  const [maxLogs, setMaxLogs] = useAtom(maxLogsAtom);
-  const [liveInterval, setLiveInterval] = useAtom(liveIntervalAtom);
-  const [liveAutoStopMinutes, setLiveAutoStopMinutes] = useAtom(
-    liveAutoStopMinutesAtom,
+  const settings = useGeneralSettings();
+  const updateGeneralSettings = useApplicationStore(
+    (s) => s.updateGeneralSettings,
   );
-  const [timezone, setTimezone] = useAtom(timezoneAtom);
   const controller = useInitializedController();
 
-  // Load persisted settings on mount
-  useEffect(() => {
-    controller.getGeneralSettings().then((settings) => {
-      setLiveInterval(settings.liveInterval);
-      setMaxLogs(settings.maxLogs);
-      setLiveAutoStopMinutes(settings.liveAutoStopMinutes ?? 30);
-      setTimezone(settings.timezone ?? "local");
-    });
-  }, [
-    controller,
-    setLiveInterval,
-    setMaxLogs,
-    setLiveAutoStopMinutes,
-    setTimezone,
-  ]);
+  const liveInterval = settings?.liveInterval ?? "5s";
+  const maxLogs = settings?.maxLogs ?? 100000;
+  const liveAutoStopMinutes = settings?.liveAutoStopMinutes ?? 30;
+  const timezone = settings?.timezone ?? "local";
+  const maxHistoryEntries = settings?.maxHistoryEntries ?? 100;
 
   const saveSettings = (
     interval = liveInterval,
     logs = maxLogs,
-    autoStop = liveAutoStopMinutes,
+    autoStop: number | null = liveAutoStopMinutes,
     tz = timezone,
-  ) => controller.setLiveSettings(interval, logs, autoStop, tz);
-
-  const handleIntervalChange = (value: LiveInterval) => {
-    setLiveInterval(value);
-    saveSettings(value);
+    maxHistory: number | null = maxHistoryEntries,
+  ) => {
+    void controller.setGeneralSettings(
+      interval,
+      logs,
+      autoStop,
+      tz,
+      maxHistory,
+    );
+    updateGeneralSettings({
+      liveInterval: interval,
+      maxLogs: logs,
+      liveAutoStopMinutes: autoStop,
+      timezone: tz,
+      maxHistoryEntries: maxHistory,
+    });
   };
 
-  const handleMaxLogsChange = (value: number) => {
-    setMaxLogs(value);
+  const handleIntervalChange = (value: LiveInterval) => saveSettings(value);
+  const handleMaxLogsChange = (value: number) =>
     saveSettings(liveInterval, value);
-  };
-
-  const handleAutoStopChange = (value: number) => {
-    const minutes = value <= 0 ? null : value;
-    setLiveAutoStopMinutes(minutes);
-    saveSettings(liveInterval, maxLogs, minutes);
-  };
-
-  const handleTimezoneChange = (value: TimezoneOption) => {
-    setTimezone(value);
+  const handleAutoStopChange = (value: number) =>
+    saveSettings(liveInterval, maxLogs, value <= 0 ? null : value);
+  const handleTimezoneChange = (value: TimezoneOption) =>
     saveSettings(liveInterval, maxLogs, liveAutoStopMinutes, value);
-  };
+  const handleMaxHistoryChange = (value: number) =>
+    saveSettings(
+      liveInterval,
+      maxLogs,
+      liveAutoStopMinutes,
+      timezone,
+      value <= 0 ? null : value,
+    );
 
   return (
     <Drawer.Root size="xs">
@@ -168,6 +160,27 @@ export const SettingsDrawer = () => {
                     width="24"
                     size="xs"
                     onValueChange={(e) => handleAutoStopChange(Number(e.value))}
+                  >
+                    <NumberInput.Input />
+                    <NumberInput.Control>
+                      <NumberInput.IncrementTrigger />
+                      <NumberInput.DecrementTrigger />
+                    </NumberInput.Control>
+                  </NumberInput.Root>
+                </Field.Root>
+                <Field.Root orientation="horizontal" gap="2">
+                  <Field.Label flex="1" fontSize="xs" whiteSpace="nowrap">
+                    Max history entries (0=∞)
+                  </Field.Label>
+                  <NumberInput.Root
+                    value={String(maxHistoryEntries ?? 0)}
+                    min={0}
+                    step={100}
+                    width="24"
+                    size="xs"
+                    onValueChange={(e) =>
+                      handleMaxHistoryChange(Number(e.value))
+                    }
                   >
                     <NumberInput.Input />
                     <NumberInput.Control>

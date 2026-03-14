@@ -3,8 +3,13 @@ import { atom, createStore, useAtom, useAtomValue } from "jotai";
 import { atomWithStore } from "jotai-zustand";
 import { loadable } from "jotai/utils";
 import React, { useEffect } from "react";
-import { QueryTask } from "src/processes/server/engineV2/types";
-import { dateAsString, DateType, FullDate, isTimeNow } from "~lib/dateUtils";
+import { QueryTask } from "@cruncher/server-shared";
+import {
+  dateAsString,
+  DateType,
+  FullDate,
+  isTimeNow,
+} from "@cruncher/server-shared";
 import { parse } from "@cruncher/qql";
 import { ControllerIndexParam, Search } from "@cruncher/qql/grammar";
 import { invalidateJobQueries } from "./api";
@@ -21,16 +26,12 @@ import {
   endFullDateAtom,
   startFullDateAtom,
 } from "./store/dateState";
+import { LIVE_INTERVAL_MS } from "@cruncher/server-shared";
 import {
   isLiveFetchingAtom,
   isLiveModeAtom,
   lastLiveRefreshTimeAtom,
-  liveIntervalAtom,
-  maxLogsAtom,
   newLogSinceAtom,
-} from "./store/liveState";
-import { LIVE_INTERVAL_MS } from "src/processes/server/config/schema";
-import {
   jobMetadataAtom,
   searchQueryAtom,
   tabNameAtom,
@@ -83,17 +84,11 @@ export const highlightItemQueryAtom = atom<string | undefined>(undefined);
 
 export const initializedInstancesSelector = (state: ApplicationStore) =>
   state.initializedInstances;
-export const supportedPluginsSelector = (state: ApplicationStore) =>
-  state.supportedPlugins;
 export const searchProfilesSelector = (state: ApplicationStore) =>
   state.searchProfiles;
 
 export const useInitializedInstances = () => {
   return useApplicationStore(initializedInstancesSelector);
-};
-
-export const useAvailablePlugins = () => {
-  return useApplicationStore(supportedPluginsSelector);
 };
 
 export const selectedSearchProfileIndexAtom = atom<number>(0);
@@ -163,6 +158,7 @@ export const queryStartTimeAtom = atom<Date | undefined>(undefined);
 export const queryEndTimeAtom = atom<Date | undefined>(undefined);
 export const isQuerySuccessAtom = atom(true);
 export const lastRanJobAtom = atom<QueryTask | undefined>(undefined);
+export const pendingNavigationUrlAtom = atom<string | null>(null);
 
 export const dynamicSuggestionsCacheAtom = atom<{
   cacheKey: string; // JSON.stringify({profile, indexes})
@@ -290,7 +286,9 @@ export const useRunQuery = () => {
 
 export const useLiveMode = () => {
   const isLiveMode = useAtomValue(isLiveModeAtom);
-  const liveInterval = useAtomValue(liveIntervalAtom);
+  const liveInterval = useApplicationStore(
+    (s) => s.generalSettings?.liveInterval ?? "5s",
+  );
   const intervalMs = LIVE_INTERVAL_MS[liveInterval];
   const job = useAtomValue(lastRanJobAtom);
   const isLoading = useAtomValue(isLoadingAtom);
@@ -320,12 +318,10 @@ export const useLiveMode = () => {
           store.set(lastLiveRefreshTimeAtom, now);
 
           try {
-            const maxLogs = store.get(maxLogsAtom);
             const result = await controller.appendQueryResults(
               job.id,
               fromTime,
               now,
-              maxLogs,
             );
             store.set(actualEndTimeAtom, now);
             store.set(endFullDateAtom, now);

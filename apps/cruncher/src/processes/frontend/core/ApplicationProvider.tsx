@@ -1,6 +1,6 @@
 import { createTRPCClient, createWSClient, wsLink } from "@trpc/client";
 import type { FC, ReactNode } from "react";
-import type { AppRouter } from "src/processes/server/plugins_engine/router_messages";
+import type { AppRouter } from "cruncher-server/router_messages";
 import { debounceInitialize } from "@cruncher/utils";
 import { useEffectOnce } from "react-use";
 import { ApiController } from "./ApiController";

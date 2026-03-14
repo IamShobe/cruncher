@@ -85,11 +85,6 @@ interface DockerLogEntry {
   stream: Stream;
 }
 
-export type LogPattern = {
-  name: string;
-  regex: RegExp;
-};
-
 export class DockerController implements QueryProvider {
   constructor(private params: DockerParams) {}
 

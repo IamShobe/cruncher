@@ -16,9 +16,9 @@ import {
 import { useViewDataQuery } from "~core/api";
 import { actualEndTimeAtom, actualStartTimeAtom } from "~core/store/dateState";
 import { formatDataTimeShort } from "@cruncher/adapter-utils/formatters";
-import { timezoneAtom } from "~core/store/liveState";
+import { useTimezone } from "~core/store/appStore";
 import { toJsonObject } from "@cruncher/adapter-utils/logTypes";
-import { Bucket } from "~lib/displayTypes";
+import { Bucket } from "@cruncher/server-shared";
 
 const LIMIT = 10000;
 
@@ -27,7 +27,7 @@ export const ViewChart = (_props: ViewChartProps) => {
   // TODO: use fixed values instead of the actual atoms
   const selectedStartTime = useAtomValue(actualStartTimeAtom);
   const selectedEndTime = useAtomValue(actualEndTimeAtom);
-  const timezone = useAtomValue(timezoneAtom);
+  const timezone = useTimezone();
 
   const { data: view } = useViewDataQuery();
 

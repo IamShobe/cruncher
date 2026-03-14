@@ -1,0 +1,60 @@
+{
+  "name": "cruncher-server",
+  "private": true,
+  "version": "0.0.1",
+  "main": "dist/server.js",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "default": "./dist/server.js"
+    },
+    "./router_messages": {
+      "types": "./src/router_messages.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "vite build --config vite.server.config.mts",
+    "build:server": "vite build --config vite.server.config.mts",
+    "build:watch": "vite build --config vite.server.config.mts --watch",
+    "typecheck": "tsc -p tsconfig.node.json --noEmit"
+  },
+  "dependencies": {
+    "@cruncher/adapter-coralogix": "workspace:*",
+    "@cruncher/adapter-datadog": "workspace:*",
+    "@cruncher/adapter-docker": "workspace:*",
+    "@cruncher/adapter-grafana-loki-browser": "workspace:*",
+    "@cruncher/adapter-k8s": "workspace:*",
+    "@cruncher/adapter-loki": "workspace:*",
+    "@cruncher/adapter-mock": "workspace:*",
+    "@cruncher/adapter-utils": "workspace:*",
+    "@cruncher/qql": "workspace:*",
+    "@cruncher/server-shared": "workspace:*",
+    "@cruncher/utils": "workspace:*",
+    "@duckdb/node-api": "^1.5.0-r.1",
+    "@trpc/server": "^11.12.0",
+    "apache-arrow": "^18.0.0",
+    "async-mutex": "^0.5.0",
+    "better-sqlite3": "^12.6.2",
+    "date-fns": "^4.1.0",
+    "drizzle-orm": "^0.45.1",
+    "electron-log": "^5.4.3",
+    "export-to-csv": "^1.4.0",
+    "merge-k-sorted-arrays": "^2.1.0",
+    "object-hash": "^3.0.0",
+    "uuid": "^13.0.0",
+    "winston": "^3.19.0",
+    "winston-daily-rotate-file": "^5.0.0",
+    "ws": "^8.19.0",
+    "yaml": "^2.8.2",
+    "yauzl": "^3.2.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "electron": "^40.8.0",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.1",
+    "vite-tsconfig-paths": "^6.1.1"
+  }
+}

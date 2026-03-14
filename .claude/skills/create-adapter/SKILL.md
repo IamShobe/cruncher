@@ -244,7 +244,7 @@ Fix any TypeScript errors before moving on.
 "@cruncher/adapter-<name>": "workspace:*"
 ```
 
-**`apps/cruncher/src/processes/server/main.ts`** — add import and registration:
+**`apps/cruncher-server/src/main.ts`** — add import and registration:
 ```ts
 import myAdapter from "@cruncher/adapter-<name>";
 // ...inside initializeServer():
@@ -297,7 +297,7 @@ Stage only the adapter-related files:
 ```bash
 git add packages/adapters/<name>/ \
         apps/cruncher/package.json \
-        apps/cruncher/src/processes/server/main.ts \
+        apps/cruncher-server/src/main.ts \
         docs/src/content/docs/adapters/<name>.mdx \
         docs/src/content/docs/adapters/examples/<name>*.yaml \
         .changeset/<changeset-file>.md \

@@ -1,6 +1,6 @@
 {
   "name": "@cruncher/adapter-grafana-loki-browser",
-  "version": "0.3.6",
+  "version": "0.3.7",
   "repository": {
     "type": "git",
     "url": "https://github.com/IamShobe/cruncher"
@@ -44,12 +44,10 @@
     "@cruncher/adapter-utils": "workspace:*",
     "@cruncher/qql": "workspace:*",
     "async-mutex": "^0.5.0",
-    "regex-escape": "^3.4.11",
     "zod": "^4.3.6"
   },
   "devDependencies": {
     "@types/node": "^25.3.5",
-    "@types/regex-escape": "^3.4.1",
     "typescript": "^5.9.3"
   }
 }
