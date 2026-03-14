@@ -1,7 +1,13 @@
 import { Badge, IconButton, Separator, Stack } from "@chakra-ui/react";
 import { Link } from "@tanstack/react-router";
 import { ReactNode } from "react";
-import { LuActivity, LuBolt, LuFileSearch, LuHistory, LuKeyboard } from "react-icons/lu";
+import {
+  LuActivity,
+  LuBolt,
+  LuFileSearch,
+  LuHistory,
+  LuKeyboard,
+} from "react-icons/lu";
 import {
   ApplicationStore,
   useApplicationStore,
@@ -9,8 +15,6 @@ import {
 } from "~core/store/appStore";
 import { Tooltip } from "../components/presets/Tooltip";
 import { globalShortcuts, useResolvedShortcuts } from "~core/keymaps";
-
-export type MenuItem = "searcher" | "settings";
 
 const NAV_ITEMS = [
   { to: "/", icon: <LuFileSearch />, tooltip: "Searcher" },
@@ -40,7 +44,11 @@ export const SideMenu = () => {
             {NAV_ITEMS.map(({ to, icon, tooltip }) => (
               <Link key={to} to={to}>
                 {({ isActive }) => (
-                  <MenuButton isActive={isActive} tooltip={tooltip} icon={icon} />
+                  <MenuButton
+                    isActive={isActive}
+                    tooltip={tooltip}
+                    icon={icon}
+                  />
                 )}
               </Link>
             ))}

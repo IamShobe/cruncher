@@ -3,6 +3,7 @@ packages:
   - packages/qql
   - packages/adapters/utils
   - packages/adapters/*
+  - packages/server-shared
   - docs/
   - apps/*
   - tools/*

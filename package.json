@@ -36,6 +36,7 @@
     "typecheck": "turbo run typecheck",
     "publish": "pnpm run --filter=cruncher publish",
     "package": "pnpm run --filter=cruncher package",
+    "knip": "knip",
     "lint": "oxlint packages/ apps/ tools/",
     "lint:fix": "oxlint --fix packages/ apps/ tools/",
     "format": "turbo run format",
@@ -58,6 +59,7 @@
   "license": "GPL-3.0-only",
   "devDependencies": {
     "@changesets/changelog-github": "^0.6.0",
+    "knip": "^5.86.0",
     "@changesets/cli": "^2.30.0",
     "@types/node": "25.3.5",
     "@vitest/coverage-v8": "^4.0.18",

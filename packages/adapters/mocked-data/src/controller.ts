@@ -187,7 +187,9 @@ export const MockController = {
         return { object: fields, message: itemToMessage(item) };
       };
 
-      const shuffled = FAST_TESTS ? filteredData : [...filteredData].sort(() => Math.random() - 0.5);
+      const shuffled = FAST_TESTS
+        ? filteredData
+        : [...filteredData].sort(() => Math.random() - 0.5);
 
       if (options.isLiveQuery) {
         // Live: simulate 1–10 new events arriving
@@ -233,14 +235,18 @@ export const MockController = {
           batchIndex += BATCH_SIZE;
 
           if (batchIndex < capped.length) {
-            const delay = FAST_TESTS ? 0 : Math.floor(Math.random() * 400) + 100;
+            const delay = FAST_TESTS
+              ? 0
+              : Math.floor(Math.random() * 400) + 100;
             setTimeout(sendNextBatch, delay);
           } else {
             resolve();
           }
         };
 
-        const initialDelay = FAST_TESTS ? 0 : Math.floor(Math.random() * 500) + 200;
+        const initialDelay = FAST_TESTS
+          ? 0
+          : Math.floor(Math.random() * 500) + 200;
         setTimeout(sendNextBatch, initialDelay);
       }
     });

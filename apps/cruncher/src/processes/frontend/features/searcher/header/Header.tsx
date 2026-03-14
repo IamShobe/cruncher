@@ -19,7 +19,7 @@ import {
 } from "@chakra-ui/react";
 import { css } from "@emotion/react";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
-import type { ValueChangeDetails } from "node_modules/@chakra-ui/react/dist/types/components/select/namespace";
+import type { SelectValueChangeDetails as ValueChangeDetails } from "@chakra-ui/react";
 import { useMemo } from "react";
 import { CiExport } from "react-icons/ci";
 import {
@@ -34,10 +34,10 @@ import {
   LuX,
 } from "react-icons/lu";
 import { Link } from "@tanstack/react-router";
-import { SearchProfileRef } from "../../../../server/engineV2/types";
+import { SearchProfileRef } from "@cruncher/server-shared";
 import { Shortcut } from "~components/ui/shortcut";
 import { Tooltip } from "~components/ui/tooltip";
-import { DateType } from "~lib/dateUtils";
+import { DateType } from "@cruncher/server-shared";
 import { DateSelector, isDateSelectorOpenAtom } from "./calendar/DateSelector";
 import { SettingsDrawer } from "~features/searcher/header/settings-drawer/Drawer";
 import { Editor, EditorErrorBoundary } from "./Editor";

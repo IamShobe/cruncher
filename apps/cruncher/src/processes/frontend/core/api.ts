@@ -1,6 +1,6 @@
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
-import { TaskRef } from "src/processes/server/engineV2/types";
+import { TaskRef } from "@cruncher/server-shared";
 import { queryClient } from "~core/client";
 import { lastRanJobAtom, useInitializedController } from "~core/search";
 

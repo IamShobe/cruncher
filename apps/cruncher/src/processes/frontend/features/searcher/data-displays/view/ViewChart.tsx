@@ -18,7 +18,7 @@ import { actualEndTimeAtom, actualStartTimeAtom } from "~core/store/dateState";
 import { formatDataTimeShort } from "@cruncher/adapter-utils/formatters";
 import { useTimezone } from "~core/store/appStore";
 import { toJsonObject } from "@cruncher/adapter-utils/logTypes";
-import { Bucket } from "~lib/displayTypes";
+import { Bucket } from "@cruncher/server-shared";
 
 const LIMIT = 10000;
 

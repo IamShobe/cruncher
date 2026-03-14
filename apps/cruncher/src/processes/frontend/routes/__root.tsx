@@ -26,7 +26,7 @@ import "../index.css";
 
 const Devtools = import.meta.env.DEV
   ? lazy(() =>
-      import("./_devtools").then((mod) => ({
+      import("./-_devtools").then((mod) => ({
         default: mod.Devtools,
       })),
     )

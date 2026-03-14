@@ -9,10 +9,10 @@ import {
   SearchProfileRef,
   TableDataResponse,
   TaskRef,
-} from "src/processes/server/engineV2/types";
-import { AppRouter } from "src/processes/server/plugins_engine/router_messages";
+} from "@cruncher/server-shared";
+import type { AppRouter } from "cruncher-server/router_messages";
 import { ProcessedData } from "@cruncher/adapter-utils/logTypes";
-import { DisplayResults } from "src/processes/server/lib/displayTypes";
+import { DisplayResults } from "@cruncher/server-shared";
 import { removeJobQueries } from "./api";
 
 export type QueryOptions = {
@@ -210,7 +210,14 @@ export class ApiController {
     search?: string,
     sortBy?: "createdAt" | "completedAt" | "diskBytes" | "rowCount" | "status",
     sortDir?: "asc" | "desc",
-  ) => this.connection.getQueryHistory.query({ limit, offset, search, sortBy, sortDir });
+  ) =>
+    this.connection.getQueryHistory.query({
+      limit,
+      offset,
+      search,
+      sortBy,
+      sortDir,
+    });
 
   deleteHistoryEntry = (id: string) =>
     this.connection.deleteHistoryEntry.mutate({ id });

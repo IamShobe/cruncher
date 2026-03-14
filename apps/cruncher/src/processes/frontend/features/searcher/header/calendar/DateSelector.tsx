@@ -46,7 +46,7 @@ const LiveDateButton = styled(Button)<{ $isLive: boolean }>`
 `;
 import { useQueryActions } from "~core/search";
 import { useQuerySpecificStoreInternal } from "~core/store/queryState";
-import { compareFullDates } from "src/processes/server/lib/dateUtils";
+import { compareFullDates } from "@cruncher/server-shared";
 
 const useDateOperations = () => {
   const setStartFullDate = useSetAtom(startFullDateAtom);

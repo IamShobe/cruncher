@@ -48,7 +48,9 @@ const LiveModeButton: React.FC = () => {
   const [isLiveMode, setIsLiveMode] = useAtom(isLiveModeAtom);
   const isLoading = useAtomValue(isLoadingAtom);
   const job = useAtomValue(lastRanJobAtom);
-  const liveAutoStopMinutes = useApplicationStore((s) => s.generalSettings?.liveAutoStopMinutes ?? 30);
+  const liveAutoStopMinutes = useApplicationStore(
+    (s) => s.generalSettings?.liveAutoStopMinutes ?? 30,
+  );
   const delay =
     isLiveMode && liveAutoStopMinutes && liveAutoStopMinutes > 0
       ? liveAutoStopMinutes * 60 * 1000

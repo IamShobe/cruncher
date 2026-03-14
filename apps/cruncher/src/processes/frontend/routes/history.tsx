@@ -25,7 +25,7 @@ import {
   useInitializedController,
 } from "~core/search";
 import { useApplicationStore } from "~core/store/appStore";
-import { HistoryCard, type HistoryEntry } from "./-_shared";
+import { HistoryCard } from "./-_shared";
 
 export const Route = createFileRoute("/history")({
   component: QueryHistoryPage,

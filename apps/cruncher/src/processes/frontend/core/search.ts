@@ -3,8 +3,13 @@ import { atom, createStore, useAtom, useAtomValue } from "jotai";
 import { atomWithStore } from "jotai-zustand";
 import { loadable } from "jotai/utils";
 import React, { useEffect } from "react";
-import { QueryTask } from "src/processes/server/engineV2/types";
-import { dateAsString, DateType, FullDate, isTimeNow } from "~lib/dateUtils";
+import { QueryTask } from "@cruncher/server-shared";
+import {
+  dateAsString,
+  DateType,
+  FullDate,
+  isTimeNow,
+} from "@cruncher/server-shared";
 import { parse } from "@cruncher/qql";
 import { ControllerIndexParam, Search } from "@cruncher/qql/grammar";
 import { invalidateJobQueries } from "./api";
@@ -21,7 +26,7 @@ import {
   endFullDateAtom,
   startFullDateAtom,
 } from "./store/dateState";
-import { LIVE_INTERVAL_MS } from "src/processes/server/config/schema";
+import { LIVE_INTERVAL_MS } from "@cruncher/server-shared";
 import {
   isLiveFetchingAtom,
   isLiveModeAtom,
@@ -86,10 +91,6 @@ export const searchProfilesSelector = (state: ApplicationStore) =>
 
 export const useInitializedInstances = () => {
   return useApplicationStore(initializedInstancesSelector);
-};
-
-export const useAvailablePlugins = () => {
-  return useApplicationStore(supportedPluginsSelector);
 };
 
 export const selectedSearchProfileIndexAtom = atom<number>(0);
@@ -287,7 +288,9 @@ export const useRunQuery = () => {
 
 export const useLiveMode = () => {
   const isLiveMode = useAtomValue(isLiveModeAtom);
-  const liveInterval = useApplicationStore((s) => s.generalSettings?.liveInterval ?? "5s");
+  const liveInterval = useApplicationStore(
+    (s) => s.generalSettings?.liveInterval ?? "5s",
+  );
   const intervalMs = LIVE_INTERVAL_MS[liveInterval];
   const job = useAtomValue(lastRanJobAtom);
   const isLoading = useAtomValue(isLoadingAtom);

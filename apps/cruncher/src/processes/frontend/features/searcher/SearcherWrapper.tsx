@@ -8,7 +8,7 @@ import { VscAdd, VscClose } from "react-icons/vsc";
 import { createSignal } from "@cruncher/utils";
 import { useMount } from "react-use";
 import { MiniIconButton } from "~components/presets/IconButton";
-import { parseDate } from "src/processes/server/lib/dateUtils";
+import { parseDate } from "@cruncher/server-shared";
 import { Signal } from "@cruncher/utils";
 import { useDebouncer } from "@tanstack/react-pacer";
 import { Searcher } from "./Searcher";

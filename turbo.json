@@ -15,7 +15,7 @@
     },
     "build:server": {
       "dependsOn": ["^build:server"],
-      "outputs": [".vite/build/server/**"]
+      "outputs": ["dist/**"]
     },
     "prepare-server-runtime": {
       "dependsOn": ["build:server", "^build"],

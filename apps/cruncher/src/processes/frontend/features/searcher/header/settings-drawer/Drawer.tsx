@@ -17,7 +17,7 @@ import {
   LIVE_INTERVAL_OPTIONS,
   TIMEZONE_OPTIONS,
   TimezoneOption,
-} from "src/processes/server/config/schema";
+} from "@cruncher/server-shared";
 
 const INTERVAL_OPTIONS = LIVE_INTERVAL_OPTIONS.map((v) => ({
   label: v,
@@ -30,7 +30,9 @@ const TZ_OPTIONS = TIMEZONE_OPTIONS.map((v) => ({
 
 export const SettingsDrawer = () => {
   const settings = useGeneralSettings();
-  const updateGeneralSettings = useApplicationStore((s) => s.updateGeneralSettings);
+  const updateGeneralSettings = useApplicationStore(
+    (s) => s.updateGeneralSettings,
+  );
   const controller = useInitializedController();
 
   const liveInterval = settings?.liveInterval ?? "5s";
@@ -42,19 +44,41 @@ export const SettingsDrawer = () => {
   const saveSettings = (
     interval = liveInterval,
     logs = maxLogs,
-    autoStop = liveAutoStopMinutes,
+    autoStop: number | null = liveAutoStopMinutes,
     tz = timezone,
-    maxHistory = maxHistoryEntries,
+    maxHistory: number | null = maxHistoryEntries,
   ) => {
-    void controller.setGeneralSettings(interval, logs, autoStop, tz, maxHistory);
-    updateGeneralSettings({ liveInterval: interval, maxLogs: logs, liveAutoStopMinutes: autoStop, timezone: tz, maxHistoryEntries: maxHistory });
+    void controller.setGeneralSettings(
+      interval,
+      logs,
+      autoStop,
+      tz,
+      maxHistory,
+    );
+    updateGeneralSettings({
+      liveInterval: interval,
+      maxLogs: logs,
+      liveAutoStopMinutes: autoStop,
+      timezone: tz,
+      maxHistoryEntries: maxHistory,
+    });
   };
 
   const handleIntervalChange = (value: LiveInterval) => saveSettings(value);
-  const handleMaxLogsChange = (value: number) => saveSettings(liveInterval, value);
-  const handleAutoStopChange = (value: number) => saveSettings(liveInterval, maxLogs, value <= 0 ? null : value);
-  const handleTimezoneChange = (value: TimezoneOption) => saveSettings(liveInterval, maxLogs, liveAutoStopMinutes, value);
-  const handleMaxHistoryChange = (value: number) => saveSettings(liveInterval, maxLogs, liveAutoStopMinutes, timezone, value <= 0 ? null : value);
+  const handleMaxLogsChange = (value: number) =>
+    saveSettings(liveInterval, value);
+  const handleAutoStopChange = (value: number) =>
+    saveSettings(liveInterval, maxLogs, value <= 0 ? null : value);
+  const handleTimezoneChange = (value: TimezoneOption) =>
+    saveSettings(liveInterval, maxLogs, liveAutoStopMinutes, value);
+  const handleMaxHistoryChange = (value: number) =>
+    saveSettings(
+      liveInterval,
+      maxLogs,
+      liveAutoStopMinutes,
+      timezone,
+      value <= 0 ? null : value,
+    );
 
   return (
     <Drawer.Root size="xs">
@@ -154,7 +178,9 @@ export const SettingsDrawer = () => {
                     step={100}
                     width="24"
                     size="xs"
-                    onValueChange={(e) => handleMaxHistoryChange(Number(e.value))}
+                    onValueChange={(e) =>
+                      handleMaxHistoryChange(Number(e.value))
+                    }
                   >
                     <NumberInput.Input />
                     <NumberInput.Control>

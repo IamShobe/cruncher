@@ -4,15 +4,16 @@ import {
   SearchProfile,
   SearchProfileRef,
   SerializableAdapter,
-} from "src/processes/server/engineV2/types";
+} from "@cruncher/server-shared";
 import { inferRouterOutputs } from "@trpc/server";
-import type { AppRouter } from "src/processes/server/plugins_engine/router_messages";
+import type { AppRouter } from "cruncher-server/router_messages";
 import { useStore } from "zustand";
 import { createStore } from "zustand/vanilla";
 import { ApiController } from "~core/ApiController";
 import { notifyError } from "~core/notifyError";
 
-export type GeneralSettings = inferRouterOutputs<AppRouter>["getGeneralSettings"];
+export type GeneralSettings =
+  inferRouterOutputs<AppRouter>["getGeneralSettings"];
 
 type ControllerParams = Record<string, string[]>;
 
@@ -243,11 +244,13 @@ export const useSetShortcutsShown = () => {
   return useApplicationStore((state) => state.setIsShortcutsShown);
 };
 
-export const useGeneralSettingsValue = <T>(selector: (s: GeneralSettings) => T, fallback: T): T =>
-  useApplicationStore((state) => (state.generalSettings ? selector(state.generalSettings) : fallback));
+export const useGeneralSettingsValue = <T>(
+  selector: (s: GeneralSettings) => T,
+  fallback: T,
+): T =>
+  useApplicationStore((state) =>
+    state.generalSettings ? selector(state.generalSettings) : fallback,
+  );
 
-export const useLiveInterval = () => useGeneralSettingsValue((s) => s.liveInterval, "5s" as const);
-export const useMaxLogs = () => useGeneralSettingsValue((s) => s.maxLogs, 100000);
-export const useLiveAutoStopMinutes = () => useGeneralSettingsValue((s) => s.liveAutoStopMinutes, 30);
-export const useTimezone = () => useGeneralSettingsValue((s) => s.timezone, "local" as const);
-export const useMaxHistoryEntries = () => useGeneralSettingsValue((s) => s.maxHistoryEntries, 100);
+export const useTimezone = () =>
+  useGeneralSettingsValue((s) => s.timezone, "local" as const);

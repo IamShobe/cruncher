@@ -1,7 +1,7 @@
 import { scaleLinear } from "d3-scale";
 import { atom, createStore } from "jotai";
 import React from "react";
-import { JobBatchFinished } from "src/processes/server/engineV2/types";
+import { JobBatchFinished } from "@cruncher/server-shared";
 import { allData } from "@cruncher/qql";
 
 export const tabNameAtom = atom<string>("New Search");
@@ -26,8 +26,6 @@ export const useQuerySpecificStoreInternal = () => {
 
   return store;
 };
-
-export const lastUpdateAtom = atom<Date | null>(null);
 
 export const jobMetadataAtom = atom<JobBatchFinished | undefined>(undefined);
 

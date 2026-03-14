@@ -10,7 +10,7 @@ import { FuseV1Options, FuseVersion } from "@electron/fuses";
 const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
-    asarUnpack: ["**/*.node", "**/duckdb-worker.js", "**/localstate-migrations/**"],
+    asarUnpack: ["**/*.node"],
     icon: "src/icons/mac/icon.icns",
     extraResource: [
       "src/icons/mac/icon.icns",
@@ -53,10 +53,6 @@ const config: ForgeConfig = {
           entry: "src/processes/main/preload.ts",
           config: "vite.preload.config.mts",
           target: "preload",
-        },
-        {
-          entry: "src/processes/server/main.ts",
-          config: "vite.server.config.mts",
         },
       ],
       renderer: [

@@ -117,10 +117,14 @@ const createWindow = () => {
     icon: path.join(__dirname, "icons", "png", "icon.png"),
   });
   mainWindow.setMenuBarVisibility(false);
-  mainWindow.webContents.on("console-message", (_event, level, message, line, sourceId) => {
-    const levelName = ["debug", "info", "warn", "error"][level] ?? `level:${level}`;
-    log.info(`[renderer:${levelName}] ${message} (${sourceId}:${line})`);
-  });
+  mainWindow.webContents.on(
+    "console-message",
+    (_event, level, message, line, sourceId) => {
+      const levelName =
+        ["debug", "info", "warn", "error"][level] ?? `level:${level}`;
+      log.info(`[renderer:${levelName}] ${message} (${sourceId}:${line})`);
+    },
+  );
   mainWindow.webContents.on("did-finish-load", () => {
     log.info("Renderer did-finish-load");
   });
@@ -128,7 +132,9 @@ const createWindow = () => {
     log.error(`Renderer did-fail-load: ${code} ${desc} ${url}`);
   });
   mainWindow.webContents.on("render-process-gone", (_event, details) => {
-    log.error(`Renderer process gone: ${details.reason} (exitCode=${details.exitCode})`);
+    log.error(
+      `Renderer process gone: ${details.reason} (exitCode=${details.exitCode})`,
+    );
   });
 
   // and load the index.html of the app.
@@ -165,16 +171,23 @@ function startServerProcess() {
   }
 
   console.log("Starting server process...");
+  const devServerEntry = path.resolve(
+    app.getAppPath(),
+    "..",
+    "cruncher-server",
+    "dist",
+    "server.js",
+  );
   const serverEntry = isDev()
-    ? path.join(__dirname, "server.js")
-    : path.join(process.resourcesPath, "server", "server.js");
+    ? devServerEntry
+    : path.join(process.resourcesPath, "server", "dist", "server.js");
   if (!fs.existsSync(serverEntry)) {
     const msg = `Server entry not found: ${serverEntry}`;
     console.error(msg);
     dialog.showErrorBox("FATAL ERROR", msg);
     return;
   }
-  const serverCwd = isDev() ? undefined : path.dirname(serverEntry);
+  const serverCwd = path.dirname(serverEntry);
   serverProcess = utilityProcess.fork(serverEntry, [], {
     execArgv: isDev() ? ["--inspect=9230"] : [],
     stdio: "pipe",
@@ -186,7 +199,8 @@ function startServerProcess() {
     const line = d.toString().trim();
     if (line) {
       serverStdoutBuffer.push(line);
-      if (serverStdoutBuffer.length > MAX_SERVER_LOG_LINES) serverStdoutBuffer.shift();
+      if (serverStdoutBuffer.length > MAX_SERVER_LOG_LINES)
+        serverStdoutBuffer.shift();
       console.log("[server-stdout]", line);
     }
   });
@@ -194,7 +208,8 @@ function startServerProcess() {
     const line = d.toString().trim();
     if (line) {
       serverStderrBuffer.push(line);
-      if (serverStderrBuffer.length > MAX_SERVER_LOG_LINES) serverStderrBuffer.shift();
+      if (serverStderrBuffer.length > MAX_SERVER_LOG_LINES)
+        serverStderrBuffer.shift();
       console.error("[server-stderr]", line);
     }
   });
@@ -205,10 +220,14 @@ function startServerProcess() {
     console.log(`Server process exited with code: ${code}`);
     if (code !== 0) {
       if (serverStdoutBuffer.length) {
-        console.error("[server-exit] last stdout lines:\n" + serverStdoutBuffer.join("\n"));
+        console.error(
+          "[server-exit] last stdout lines:\n" + serverStdoutBuffer.join("\n"),
+        );
       }
       if (serverStderrBuffer.length) {
-        console.error("[server-exit] last stderr lines:\n" + serverStderrBuffer.join("\n"));
+        console.error(
+          "[server-exit] last stderr lines:\n" + serverStderrBuffer.join("\n"),
+        );
       }
     }
     processActive = false;
@@ -329,7 +348,13 @@ app.on("quit", (_event, exitCode) => {
 });
 
 if (isDev()) {
-  const serverJsPath = path.join(__dirname, "server.js");
+  const serverJsPath = path.resolve(
+    app.getAppPath(),
+    "..",
+    "cruncher-server",
+    "dist",
+    "server.js",
+  );
   if (!serverWatcher) {
     serverWatcher = chokidar.watch(serverJsPath, { ignoreInitial: true });
     serverWatcher.on("change", () => {
