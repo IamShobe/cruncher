@@ -262,7 +262,7 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
     >(undefined);
     const [hasInteractedWithMenu, setHasInteractedWithMenu] = useState(false);
 
-    const ctrlSpaceOpenRef = useRef(false);
+    const [ctrlSpaceOpen, setCtrlSpaceOpen] = useState(false);
     const resolvedHeaderShortcuts = useResolvedShortcuts(headerShortcuts);
     const resolvedSearcherShortcuts = useResolvedShortcuts(searcherShortcuts);
 
@@ -282,10 +282,14 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
     const filteredSuggestions = useMemo(() => {
       const results = new Map<string, Suggestion>();
       for (const suggestion of suggestions) {
-        // filter suggestions based on cursor position
-        if (cursorPosition < suggestion.fromPosition) continue;
-        if (suggestion.toPosition && cursorPosition > suggestion.toPosition)
-          continue;
+        // When user explicitly triggered autocomplete (Ctrl+Space), skip
+        // position-based filtering so all suggestions are available for
+        // fuzzy matching against the word at the cursor.
+        if (!ctrlSpaceOpen) {
+          if (cursorPosition < suggestion.fromPosition) continue;
+          if (suggestion.toPosition && cursorPosition > suggestion.toPosition)
+            continue;
+        }
 
         const key = `${suggestion.type}:${suggestion.value}`;
         if (!results.has(key)) results.set(key, suggestion);
@@ -314,7 +318,7 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
           return b.score - a.score;
         })
         .map((entry) => entry.suggestion);
-    }, [suggestions, cursorPosition, writtenWord]);
+    }, [suggestions, cursorPosition, writtenWord, ctrlSpaceOpen]);
 
     const acceptCompletion = () => {
       let startPos = cursorPosition - writtenWord.length;
@@ -339,7 +343,7 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
         }
       }, 0);
 
-      ctrlSpaceOpenRef.current = false;
+      setCtrlSpaceOpen(false);
       setIsCompleterOpen(false);
       setHasInteractedWithMenu(false);
     };
@@ -587,13 +591,13 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
             // TODO move it to shortcuts system
             // if key is esc - close completer
             if (e.key === "Escape") {
-              ctrlSpaceOpenRef.current = false;
+              setCtrlSpaceOpen(false);
               setIsCompleterOpen(false);
               setHasInteractedWithMenu(false);
             }
             if (resolvedHeaderShortcuts.isPressed(e, "trigger-autocomplete")) {
               e.preventDefault();
-              ctrlSpaceOpenRef.current = true;
+              setCtrlSpaceOpen(true);
               setIsCompleterOpen(true);
             }
 
@@ -677,10 +681,16 @@ export const Editor = React.forwardRef<HTMLTextAreaElement, EditorProps>(
             dismissAutoHint();
             onChange(e.target.value);
             setCursorPosition(e.currentTarget.selectionStart);
-            if (!isCharAdded && !hasFreshSuggestions) {
-              ctrlSpaceOpenRef.current = false;
+
+            if (ctrlSpaceOpen) {
+              // Keep autocomplete open while typing; close on space/newline
+              if (char === "\n" || (char === " " && !hasFreshSuggestions)) {
+                setCtrlSpaceOpen(false);
+                setIsCompleterOpen(false);
+              }
+            } else {
+              setIsCompleterOpen(isCharAdded || hasFreshSuggestions);
             }
-            setIsCompleterOpen(isCharAdded || hasFreshSuggestions);
             setHoveredCompletionItem(undefined);
             setHasInteractedWithMenu(false);
 
