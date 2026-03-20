@@ -43,10 +43,12 @@
     "@cruncher/adapter-utils": "workspace:*",
     "@cruncher/qql": "workspace:*",
     "ansicolor": "^2.0.3",
+    "dockerode": "^4.0.4",
     "merge-k-sorted-arrays": "^2.1.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@types/dockerode": "^3.3.38",
     "@types/node": "^25.3.5",
     "typescript": "^5.9.3"
   }
