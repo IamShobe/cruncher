@@ -510,7 +510,7 @@ export class Engine {
     const onBatchDone = async (data: ProcessedData[]): Promise<void> => {
       if (queryTaskState.abortController.signal.aborted) return;
       for (const item of data) {
-        if (!item.id) item.id = crypto.randomUUID();
+        if (!item.id) item.id = uuidv7();
         item.object["_source"] = { type: "string", value: instanceRef };
       }
       const bytes = serializeBatch(data);
@@ -621,7 +621,7 @@ export class Engine {
             cancelToken: queryTaskState.abortController.signal,
             onBatchDone: async (batch) => {
               for (const item of batch) {
-                if (!item.id) item.id = crypto.randomUUID();
+                if (!item.id) item.id = uuidv7();
                 item.object["_source"] = {
                   type: "string",
                   value: instanceRef,
@@ -779,7 +779,7 @@ export class Engine {
         searchProfile: taskState.task.input.searchProfileRef,
         createdAt: taskState.task.createdAt,
         completedAt,
-        rowCount: taskState.lastBatchStatus?.views.events.total ?? (totalRowCount > 0 ? totalRowCount : null),
+        rowCount: taskState.lastBatchStatus?.views.events.total ?? null,
         status: finalStatus,
         error: taskState.task.error,
         subtaskIds: taskState.subTasks.map((s) => s.subtaskId),
@@ -937,18 +937,18 @@ export class Engine {
     toTime: number,
   ): Promise<JobBatchFinished> {
     const queryTaskState = this.taskStore.get(taskId)!;
-    const [
-      { displayResults: pipelineData, rawEventCount, autoCompleteKeys },
-      backendBuckets,
-    ] = await Promise.all([
-      runPipelineAndSave(this.ctx, taskId, parsedTree, { ...queryTaskState.task.input.queryOptions, fromTime, toTime }),
-      this.ctx.backend.computeHistogram(queryTaskState.chunkPaths, fromTime, toTime, 100),
-    ]);
+    const { displayResults: pipelineData, autoCompleteKeys, deferredWrites } = await runPipelineAndSave(
+      this.ctx, taskId, parsedTree, { ...queryTaskState.task.input.queryOptions, fromTime, toTime },
+    );
+    await deferredWrites;
+    const backendBuckets = queryTaskState.eventsResultPath
+      ? await this.ctx.backend.computeHistogram([queryTaskState.eventsResultPath], fromTime, toTime, 100)
+      : [];
 
     await queryTaskState.mutex.runExclusive(async () => {
       queryTaskState.lastBatchStatus = this._buildBatchStatus(queryTaskState, {
         scale: { from: fromTime, to: toTime },
-        total: rawEventCount,
+        total: pipelineData.events.data.length,
         buckets: backendBuckets,
         autoCompleteKeys,
         tableDataPoints: pipelineData.table?.dataPoints,

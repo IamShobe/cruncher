@@ -113,19 +113,20 @@ export async function restoreSession(ctx: EngineCtx, taskId: TaskRef): Promise<v
   queryTaskState.finishedQuerying.signal();
 
   const parsedTree = parse(meta.searchTerm);
-  const { displayResults: pipelineData, rawEventCount } = await runPipelineAndSave(
+  const { displayResults: pipelineData, autoCompleteKeys, deferredWrites } = await runPipelineAndSave(
     ctx,
     taskId,
     parsedTree,
     queryOptions,
   );
+  await deferredWrites;
 
   await queryTaskState.mutex.runExclusive(async () => {
     queryTaskState.lastBatchStatus = ctx.buildBatchStatus(queryTaskState, {
       scale: { from: queryOptions.fromTime, to: queryOptions.toTime },
-      total: rawEventCount,
+      total: pipelineData.events.data.length,
       buckets: [],
-      autoCompleteKeys: [],
+      autoCompleteKeys,
       tableDataPoints: pipelineData.table?.dataPoints,
     });
   });

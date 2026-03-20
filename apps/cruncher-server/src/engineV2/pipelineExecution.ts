@@ -6,19 +6,19 @@ import {
   asDisplayString,
   ProcessedData,
 } from "@cruncher/adapter-utils/logTypes";
-import { DisplayResults } from "@cruncher/server-shared";
-import { processEval } from "@cruncher/server-shared";
-import { processRegex } from "@cruncher/server-shared";
 import {
+  DisplayResults,
   PipelineItemProcessor,
+  processEval,
   processPipelineV2,
+  processRegex,
+  processSort,
+  processStats,
+  processTable,
+  processTimeChart,
+  processUnpack,
+  processWhere,
 } from "@cruncher/server-shared";
-import { processSort } from "@cruncher/server-shared";
-import { processStats } from "@cruncher/server-shared";
-import { processTable } from "@cruncher/server-shared";
-import { processTimeChart } from "@cruncher/server-shared";
-import { processWhere } from "@cruncher/server-shared";
-import { processUnpack } from "@cruncher/server-shared";
 import { ParsedQuery } from "@cruncher/qql";
 import { createSignal } from "@cruncher/utils";
 import { deserializeRows, serializeBatch } from "./duckdb/serialization";
@@ -117,11 +117,11 @@ export async function runPipelineAndSave(
   taskId: TaskRef,
   parsedTree: ParsedQuery,
   queryOptions: SerializableParams,
-): Promise<{ displayResults: DisplayResults; rawEventCount: number; autoCompleteKeys: string[] }> {
+): Promise<{ displayResults: DisplayResults; rawEventCount: number; autoCompleteKeys: string[]; deferredWrites: Promise<void> }> {
   const taskState: QueryTaskState | undefined = ctx.taskStore.get(taskId);
   if (!taskState) {
     const empty: DisplayResults = { events: { type: "events", data: [] }, table: undefined, view: undefined };
-    return { displayResults: empty, rawEventCount: 0, autoCompleteKeys: [] };
+    return { displayResults: empty, rawEventCount: 0, autoCompleteKeys: [], deferredWrites: Promise.resolve() };
   }
 
   const context = {
@@ -243,5 +243,5 @@ export async function runPipelineAndSave(
     ]),
   ];
 
-  return { displayResults, rawEventCount, autoCompleteKeys };
+  return { displayResults, rawEventCount, autoCompleteKeys, deferredWrites };
 }
