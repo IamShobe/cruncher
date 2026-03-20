@@ -1,6 +1,6 @@
 {
   "name": "@cruncher/adapter-docker",
-  "version": "0.3.7",
+  "version": "1.0.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/IamShobe/cruncher"
