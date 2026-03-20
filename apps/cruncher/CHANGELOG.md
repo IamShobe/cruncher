@@ -1,3 +1,9 @@
+## 2.4.2
+
+### Patch Changes
+
+- [`6a0061f`](https://github.com/IamShobe/cruncher/commit/6a0061f3aa9a27512b30ffa7aae0813388608af5) Thanks [@IamShobe](https://github.com/IamShobe)! - Fix pipeline execution and row count accuracy: use uuidv7 for sortable row IDs, compute row count from actual pipeline results, defer parquet writes for immediate availability, and fix histogram to use pipeline result path.
+
 ## 2.4.1
 
 ### Patch Changes

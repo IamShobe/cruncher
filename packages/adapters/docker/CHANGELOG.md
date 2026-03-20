@@ -1,3 +1,11 @@
+## 1.0.0
+
+### Major Changes
+
+- [#44](https://github.com/IamShobe/cruncher/pull/44) [`7bc9cd6`](https://github.com/IamShobe/cruncher/commit/7bc9cd64789ed96e123004b0154699577ddd9568) Thanks [@IamShobe](https://github.com/IamShobe)! - Replace subprocess spawning with Docker Engine HTTP API via dockerode. This eliminates per-query process fork/exec overhead, fixes line buffering bugs that could silently drop log lines spanning chunk boundaries, pre-compiles log pattern regexes, and delivers incremental results as each container completes instead of waiting for all.
+
+  BREAKING: The `binaryLocation` param has been removed since the adapter now communicates directly with the Docker socket instead of shelling out to the `docker` CLI binary.
+
 ## 0.3.7
 
 ### Patch Changes
