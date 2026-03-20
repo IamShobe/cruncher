@@ -285,7 +285,7 @@ export class LocalStateDB {
   }
 
   deleteEntry(id: string): void {
-    this.db.delete(queryHistory).where(sql`${queryHistory.id} = ${id}`).run();
+    this.db.delete(queryHistory).where(eq(queryHistory.id, id)).run();
   }
 
   clearHistory(): void {
@@ -713,7 +713,7 @@ export class LocalStateDB {
       searchProfile: r.searchProfile,
       createdAt: r.createdAt,
       completedAt: r.completedAt ?? null,
-      rowCount: rowCounts ? (rowCounts.get(r.id) ?? r.rowCount ?? null) : (r.rowCount ?? null),
+      rowCount: r.rowCount ?? (rowCounts ? (rowCounts.get(r.id) ?? null) : null),
       status: r.status,
       error: r.error ?? null,
       subtaskIds,
