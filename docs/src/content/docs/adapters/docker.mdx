@@ -14,14 +14,8 @@ import { Badge } from '@astrojs/starlight/components';
 
 ## Params
 
-<ParamItem label="binaryLocation" type="string" default="docker">
-    Path to the Docker binary. Override this if `docker` is not on your `PATH` or you want to use a specific version.
-    ```yaml
-    binaryLocation: /usr/local/bin/docker
-    ```
-</ParamItem>
-<ParamItem label="dockerHost" type="string">
-    The docker host url to use for docker commands.
+<ParamItem label="dockerHost" type="string" default="unix:///var/run/docker.sock">
+    The Docker Engine API endpoint. Supports Unix sockets (`unix:///var/run/docker.sock`) and TCP hosts (`tcp://localhost:2375`).
 </ParamItem>
 <ParamItem label="containerFilter" type="string">
     A filter to apply to the containers when listing them. This can be used to limit the containers that Cruncher will interact with.

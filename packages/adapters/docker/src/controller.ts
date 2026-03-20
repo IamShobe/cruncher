@@ -1,6 +1,6 @@
 import { QueryOptions, QueryProvider } from "@cruncher/adapter-utils";
 import { strip } from "ansicolor";
-import { spawn } from "child_process";
+import Dockerode from "dockerode";
 import merge from "merge-k-sorted-arrays";
 
 import {
@@ -17,12 +17,6 @@ import {
 } from "@cruncher/qql/searchTree";
 import { DockerLogPatterns, DockerParams } from ".";
 
-const env = Object.assign({}, process.env, {
-  PATH: "/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin", // include docker location
-});
-
-const DEFAULT_DOCKER_HOST = "unix:///var/run/docker.sock";
-
 // Dynamic log parsing utilities
 const parseJsonMessage = (message: string): Record<string, unknown> | null => {
   try {
@@ -35,7 +29,7 @@ const parseJsonMessage = (message: string): Record<string, unknown> | null => {
 const intelligentParse = (
   message: string,
   containerName: string,
-  logPatterns: DockerLogPatterns = [],
+  compiledPatterns: CompiledPattern[],
 ): { parsed: Record<string, unknown>; selectedMessageFieldName: string } => {
   const parsed: Record<string, unknown> = {};
   const jsonParsed = parseJsonMessage(message);
@@ -44,23 +38,26 @@ const intelligentParse = (
   }
 
   let selectedMessageFieldName = "_raw";
-  logPatterns.forEach((logPattern) => {
+  for (const { config: logPattern, pattern } of compiledPatterns) {
     if (
       (logPattern.applyToAll || logPattern.applyTo.includes(containerName)) &&
       !logPattern.exclude.includes(containerName)
     ) {
-      const match = new RegExp(logPattern.pattern).exec(message);
+      const match = pattern.exec(message);
       if (match) {
         Object.assign(parsed, match.groups);
         selectedMessageFieldName = logPattern.messageFieldName ?? "_raw";
-      } else {
-        console.warn(`Log pattern '${logPattern.name}' failed:`, match);
       }
     }
-  });
+  }
 
   return { parsed, selectedMessageFieldName };
 };
+
+interface CompiledPattern {
+  config: DockerLogPatterns[number];
+  pattern: RegExp;
+}
 
 interface DockerContainer {
   id: string;
@@ -86,68 +83,28 @@ interface DockerLogEntry {
 }
 
 export class DockerController implements QueryProvider {
-  constructor(private params: DockerParams) {}
+  private docker: Dockerode;
+  private compiledPatterns: CompiledPattern[];
+
+  constructor(private params: DockerParams) {
+    this.docker = params.dockerHost.startsWith("unix://")
+      ? new Dockerode({ socketPath: params.dockerHost.replace("unix://", "") })
+      : new Dockerode({ host: params.dockerHost });
+    this.compiledPatterns = params.logPatterns.map((p) => ({
+      config: p,
+      pattern: new RegExp(p.pattern),
+    }));
+  }
 
   private async getContainers(): Promise<DockerContainer[]> {
-    return new Promise((resolve, reject) => {
-      const args = ["ps", "-a", "--format", "json"];
-      if (this.params.dockerHost !== DEFAULT_DOCKER_HOST) {
-        args.unshift("-H", this.params.dockerHost);
-      }
-
-      const dockerProcess = spawn(this.params.binaryLocation, args, {
-        env: env,
-      });
-      let output = "";
-      let errorOutput = "";
-
-      dockerProcess.stdout.on("data", (data) => {
-        output += data.toString();
-      });
-
-      dockerProcess.stderr.on("data", (data) => {
-        errorOutput += data.toString();
-      });
-
-      dockerProcess.on("close", (code) => {
-        if (code !== 0) {
-          reject(new Error(`Docker command failed: ${errorOutput}`));
-          return;
-        }
-
-        try {
-          const containers: DockerContainer[] = [];
-          const lines = output
-            .trim()
-            .split("\n")
-            .filter((line) => line.trim());
-
-          for (const line of lines) {
-            try {
-              const container = JSON.parse(line);
-              containers.push({
-                id: container.ID,
-                name: container.Names,
-                image: container.Image,
-                status: container.Status,
-                created: container.CreatedAt,
-              });
-            } catch {
-              // Skip malformed JSON lines
-              console.warn("Failed to parse container JSON:", line);
-            }
-          }
-
-          resolve(containers);
-        } catch (error) {
-          reject(new Error(`Failed to parse Docker output: ${error}`));
-        }
-      });
-
-      dockerProcess.on("error", (error) => {
-        reject(new Error(`Failed to execute Docker command: ${error.message}`));
-      });
-    });
+    const containers = await this.docker.listContainers({ all: true });
+    return containers.map((c) => ({
+      id: c.Id,
+      name: c.Names[0]?.replace(/^\//, "") ?? c.Id,
+      image: c.Image,
+      status: c.Status,
+      created: new Date(c.Created * 1000).toISOString(),
+    }));
   }
 
   private async getContainerLogs(
@@ -158,152 +115,122 @@ export class DockerController implements QueryProvider {
     doesLogMatch: BooleanSearchCallback,
     cancelToken: AbortSignal,
   ): Promise<DockerLogEntry[]> {
-    return new Promise((resolve, reject) => {
-      if (cancelToken.aborted) {
-        reject(new Error("Query cancelled"));
-        return;
-      }
+    if (cancelToken.aborted) {
+      throw new Error("Query cancelled");
+    }
 
-      const selectedStreams = controllerParams
-        .filter((param) => param.name === "stream")
-        .map(processStreamControllerParam);
+    const selectedStreams = controllerParams
+      .filter((param) => param.name === "stream")
+      .map(processStreamControllerParam);
 
-      console.log(
-        `Selected streams for container ${container.name}: ${selectedStreams.join(", ")}`,
+    let isStdoutSelected = selectedStreams.some((stream) =>
+      stream.includes("stdout"),
+    );
+    let isStderrSelected = selectedStreams.some((stream) =>
+      stream.includes("stderr"),
+    );
+
+    if (!isStdoutSelected && !isStderrSelected) {
+      isStdoutSelected = true;
+      isStderrSelected = true;
+    }
+
+    const buf = (await this.docker.getContainer(container.id).logs({
+      stdout: isStdoutSelected,
+      stderr: isStderrSelected,
+      timestamps: true,
+      since: Math.floor(fromTime.getTime() / 1000),
+      until: Math.floor(toTime.getTime() / 1000),
+      follow: false,
+    })) as unknown as Buffer;
+
+    if (cancelToken.aborted) {
+      throw new Error("Query cancelled");
+    }
+
+    const logs: DockerLogEntry[] = [];
+
+    const processLogLine = (line: string, stream: Stream) => {
+      const indexOfSpace = line.indexOf(" ");
+      if (indexOfSpace === -1) return;
+      const originalMessage = line.slice(indexOfSpace + 1);
+      const timestampStr = line.slice(0, indexOfSpace);
+      const strippedOriginalMessage = strip(originalMessage).trim();
+      if (!strippedOriginalMessage) return;
+
+      const timestampMatch = timestampStr.match(
+        /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z$/,
+      );
+      if (!timestampMatch) return;
+
+      const timestamp = new Date(timestampStr);
+      if (!doesLogMatch(strippedOriginalMessage)) return;
+
+      const { parsed, selectedMessageFieldName } = intelligentParse(
+        strippedOriginalMessage,
+        container.name,
+        this.compiledPatterns,
       );
 
-      let isStdoutSelected = selectedStreams.some((stream) =>
-        stream.includes("stdout"),
-      );
-      let isStderrSelected = selectedStreams.some((stream) =>
-        stream.includes("stderr"),
-      );
+      logs.push({
+        timestamp,
+        message: originalMessage,
+        container: container.name,
+        containerId: container.id,
+        containerImage: container.image,
+        containerStatus: container.status,
+        parsedFields: parsed,
+        selectedMessageFieldName:
+          this.params.containerOverride?.[container.name]?.messageFieldName ??
+          selectedMessageFieldName,
+        ansiFreeLine: strippedOriginalMessage,
+        stream,
+      });
+    };
 
-      if (!isStdoutSelected && !isStderrSelected) {
-        // Default to both streams if none are selected
-        isStdoutSelected = true;
-        isStderrSelected = true;
+    // Parse Docker multiplex frame format:
+    // [1 byte stream type] [3 bytes padding] [4 bytes big-endian length] [payload]
+    let offset = 0;
+    let stdoutRemainder = "";
+    let stderrRemainder = "";
+
+    while (offset + 8 <= buf.length) {
+      const streamType = buf[offset];
+      const frameSize = buf.readUInt32BE(offset + 4);
+      offset += 8;
+      if (offset + frameSize > buf.length) break;
+
+      const chunk = buf.subarray(offset, offset + frameSize).toString("utf8");
+      offset += frameSize;
+
+      const isStdout = streamType === 1;
+      if (
+        (!isStdout && streamType !== 2) ||
+        (isStdout && !isStdoutSelected) ||
+        (!isStdout && !isStderrSelected)
+      ) {
+        continue;
       }
 
-      const args = ["logs"];
+      const stream: Stream = isStdout ? "stdout" : "stderr";
+      const prev = isStdout ? stdoutRemainder : stderrRemainder;
+      const data = prev + chunk;
+      const lines = data.split("\n");
+      const remainder = lines.pop() ?? "";
+      if (isStdout) stdoutRemainder = remainder;
+      else stderrRemainder = remainder;
 
-      if (this.params.dockerHost !== DEFAULT_DOCKER_HOST) {
-        args.unshift("-H", this.params.dockerHost);
+      for (const line of lines) {
+        const trimmed = line.replace(/\r$/, "");
+        if (trimmed) processLogLine(trimmed, stream);
       }
+    }
 
-      // Add timestamp and stream options
-      args.push("--timestamps");
+    // Flush remaining data
+    if (stdoutRemainder) processLogLine(stdoutRemainder, "stdout");
+    if (stderrRemainder) processLogLine(stderrRemainder, "stderr");
 
-      // Add time filters
-      args.push("--since", fromTime.toISOString());
-      args.push("--until", toTime.toISOString());
-
-      args.push(container.id);
-
-      //TODO: allow editing the command
-      const dockerProcess = spawn(this.params.binaryLocation, args, {
-        env: env,
-      });
-      const logs: DockerLogEntry[] = [];
-
-      const processLogLine = (line: string, stream: Stream) => {
-        const indexOfSpace = line.indexOf(" ");
-        const originalMessage = line.slice(indexOfSpace + 1);
-        const timestampStr = line.slice(0, indexOfSpace).trim();
-        const strippedOriginalMessage = strip(originalMessage).trim();
-        if (!strippedOriginalMessage) {
-          return; // Skip empty lines
-        }
-
-        try {
-          // Docker log format: TIMESTAMP MESSAGE
-          const timestampMatch = timestampStr.match(
-            /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z)$/,
-          );
-          if (timestampMatch) {
-            const [_row, timestampStr] = timestampMatch;
-            const timestamp = new Date(timestampStr);
-
-            // Apply search filter
-            if (doesLogMatch(strippedOriginalMessage)) {
-              const { parsed, selectedMessageFieldName } = intelligentParse(
-                strippedOriginalMessage,
-                container.name,
-                this.params.logPatterns,
-              );
-
-              const finalMessageFieldName =
-                this.params.containerOverride?.[container.name]
-                  ?.messageFieldName ?? selectedMessageFieldName;
-
-              logs.push({
-                timestamp,
-                message: originalMessage,
-                container: container.name,
-                containerId: container.id,
-                containerImage: container.image,
-                containerStatus: container.status,
-                parsedFields: parsed,
-                selectedMessageFieldName: finalMessageFieldName,
-                ansiFreeLine: strippedOriginalMessage,
-                stream: stream,
-              });
-            }
-          }
-        } catch {
-          // Skip malformed log lines
-          console.warn("Failed to parse log line:", strippedOriginalMessage);
-        }
-      };
-
-      const processData = (data: string, stream: Stream) => {
-        // process stdout line by line
-        const lines = data.split(/(\r?\n)/g);
-        for (let i = 0; i < lines.length; i++) {
-          processLogLine(lines[i], stream);
-        }
-      };
-
-      if (isStdoutSelected) {
-        dockerProcess.stdout.setEncoding("utf8");
-        dockerProcess.stdout.on("data", (data) => {
-          processData(data.toString(), "stdout");
-        });
-      }
-
-      if (isStderrSelected) {
-        dockerProcess.stderr.setEncoding("utf8");
-        dockerProcess.stderr.on("data", (data) => {
-          processData(data.toString(), "stderr");
-        });
-      }
-
-      dockerProcess.on("close", (code) => {
-        if (code !== 0 && code !== null) {
-          reject(new Error(`Docker logs command failed with code ${code}`));
-        } else {
-          resolve(logs);
-        }
-      });
-
-      dockerProcess.on("error", (error) => {
-        reject(
-          new Error(`Failed to execute Docker logs command: ${error.message}`),
-        );
-      });
-
-      // Handle cancellation
-      const abortHandler = () => {
-        dockerProcess.kill("SIGTERM");
-        reject(new Error("Query cancelled"));
-      };
-
-      cancelToken.addEventListener("abort", abortHandler);
-
-      dockerProcess.on("close", () => {
-        cancelToken.removeEventListener("abort", abortHandler);
-      });
-    });
+    return logs;
   }
 
   async query(
@@ -315,7 +242,6 @@ export class DockerController implements QueryProvider {
       const doesLogMatch = buildDoesLogMatchCallback(searchTerm);
       const containers = await this.getContainers();
 
-      // Filter containers based on containerFilter if provided
       const filteredContainers = this.params.containerFilter
         ? containers.filter(
             (container) =>
@@ -324,7 +250,6 @@ export class DockerController implements QueryProvider {
           )
         : containers;
 
-      // Apply controller params filtering if any
       const selectedContainers = controllerParams
         .filter((param) => param.name === "container")
         .map(processContainerControllerParam);
@@ -345,8 +270,12 @@ export class DockerController implements QueryProvider {
         return;
       }
 
-      const allLogs = await Promise.all(
-        finalContainers.map((container) =>
+      const accumulated: (ProcessedData[] | null)[] = new Array(
+        finalContainers.length,
+      ).fill(null);
+
+      await Promise.all(
+        finalContainers.map((container, i) =>
           this.processContainerLogs(
             controllerParams,
             container,
@@ -354,13 +283,16 @@ export class DockerController implements QueryProvider {
             options.toTime,
             doesLogMatch,
             options.cancelToken,
-          ),
+          ).then((logs) => {
+            accumulated[i] = logs;
+            const partial = merge<ProcessedData>(
+              accumulated.filter((a): a is ProcessedData[] => a !== null),
+              compareProcessedData,
+            ).slice(0, options.limit);
+            options.onBatchDone(partial);
+          }),
         ),
       );
-      const results = merge<ProcessedData>(allLogs, compareProcessedData);
-      const limitedLogs = results.slice(0, options.limit);
-
-      options.onBatchDone(limitedLogs);
     } catch (error) {
       if (options.cancelToken.aborted) {
         throw new Error("Query cancelled");
@@ -461,8 +393,6 @@ export class DockerController implements QueryProvider {
 }
 
 const processStreamControllerParam = (param: ControllerIndexParam) => {
-  console.log("Processing stream controller param:", param);
-
   if (param.value.type === "string") {
     return extractStreamsFromString(param.value.value);
   } else {
@@ -476,8 +406,6 @@ const extractStreamsFromString = (streamString: string): Stream[] => {
   for (const part of parts) {
     if (part === "stdout" || part === "stderr") {
       streams.push(part as Stream);
-    } else {
-      console.warn(`Unknown stream type: ${part}`);
     }
   }
   return streams;
