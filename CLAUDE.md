@@ -12,6 +12,7 @@ Cruncher is a Turborepo-based monorepo containing:
 - **OIDC trusted publishing** to npm (no NPM_TOKEN needed)
 - Electron app releases automatically when `apps/cruncher` version is bumped by a changeset
 - `.changeset/config.json` ignores: `cruncher-tools`, `docs-cruncher` — **`cruncher` (Electron app) is NOT ignored and needs a changeset when it changes**
+- **Whenever `cruncher-server` changes, always include `cruncher` in the same changeset too** (`"cruncher": patch` or appropriate bump) — `cruncher` depends on `cruncher-server`, so a server change means the Electron app needs a version bump to trigger its auto-release
 - Local testing: `pnpm local-registry` + `pnpm release:local`
 
 ## Code Style & Conventions
@@ -50,6 +51,19 @@ Cruncher is a Turborepo-based monorepo containing:
 - Wrap content areas with `ErrorBoundary` to catch parser/rendering errors gracefully
 - Error boundary should use existing theme colors and tokens
 - QQL parser errors (lexing/parsing) are automatically formatted in error messages
+
+## Migrations
+- **Never manually edit** `apps/cruncher/src/processes/server/engineV2/localstate/migrations/meta/_journal.json` — managed exclusively by drizzle-kit
+- Only create SQL migration files in the `migrations/` folder; run `pnpm drizzle-kit generate` to let drizzle-kit update the journal automatically
+
+## Preferred CLI tools (via `.mise.toml`)
+- **`ast-grep`** — AST-aware structural code search/transforms; prefer over `rg` for code patterns (function signatures, imports, specific constructs)
+- **`fd`** — fast file finder
+- **`yq`** — YAML/JSON processor (like `jq`, for YAML) — use for config files (`.changeset/config.json`, `pnpm-lock.yaml`, etc.)
+- **`difftastic`** — syntax-aware structural diffs
+- **`shellcheck`** — lint any `.sh` scripts before committing
+- **`watchexec`** — file watcher for running commands on change
+- **`hyperfine`** — CLI benchmarking
 
 ## Common Issues & Solutions
 
